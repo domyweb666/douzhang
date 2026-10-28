@@ -10,6 +10,9 @@
 <meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
 <title>豆帳</title>
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
 <style>
 :root{
   --bg:#F2F2F7; --card:#FFFFFF; --label:#000; --label2:rgba(60,60,67,.6); --label3:rgba(60,60,67,.3);
@@ -74,8 +77,9 @@ h1{font-size:34px;font-weight:700;letter-spacing:.01em;margin:6px 4px 2px;line-h
 .hero-card .k{align-self:flex-start;font-size:13px;color:var(--label2);font-weight:600;letter-spacing:.02em}
 .hero-card .clue{align-self:stretch;font-size:22px;line-height:1.45;font-weight:500;margin:6px 0 14px;word-break:break-word}
 .sprout-wrap{display:flex;flex-direction:column;align-items:center}
-.sprout{width:92px;height:84px;display:block}
-.mound{width:180px;height:40px;border-radius:50% 50% 0 0/100% 100% 0 0;background:var(--soil);margin-top:-8px}
+.sprout{width:150px;height:auto;display:block}
+.mound{width:150px;height:auto;display:block}
+.ill{display:block;margin:0 auto;height:auto}
 .grow-in{animation:growIn .8s cubic-bezier(.2,1.4,.4,1) both;transform-origin:50% 100%}
 @keyframes growIn{0%{transform:scaleY(0);opacity:0}100%{transform:scaleY(1);opacity:1}}
 
@@ -95,9 +99,9 @@ h1{font-size:34px;font-weight:700;letter-spacing:.01em;margin:6px 4px 2px;line-h
 .pod{display:inline-flex;align-items:center;gap:3px;padding:6px 10px;border-radius:999px;background:var(--pod);
   box-shadow:inset 0 -2px 0 var(--pod-d),inset 0 2px 0 rgba(255,255,255,.35);min-height:30px}
 .pod.empty{min-width:44px;opacity:.5}
-.p{width:16px;height:16px;border-radius:50%;background:var(--pea);box-shadow:inset -2px -2px 0 var(--pea-d),inset 2px 2px 0 rgba(255,255,255,.4);flex:none}
-.p.x2{width:30px;border-radius:9px}
-.p.void{background:transparent;box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.12)}
+.p{width:18px;height:18px;background:url(img/pea.webp) center/contain no-repeat;flex:none}
+.p.x2{width:33px;background-image:url(img/pea2.webp)}
+.p.void{background:none;border-radius:50%;box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.14)}
 .pod.bump{animation:bump .45s ease}
 @keyframes bump{40%{transform:scale(1.12)}100%{transform:scale(1)}}
 
@@ -125,7 +129,8 @@ h1{font-size:34px;font-weight:700;letter-spacing:.01em;margin:6px 4px 2px;line-h
   box-shadow:inset 0 0 0 0 transparent;transition:transform .1s}
 .tile:active{transform:scale(.97)}
 .tile .ti{width:30px;height:30px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.tile b{font-size:20px;font-weight:700}
+.tile b{font-size:20px;font-weight:700;position:relative;z-index:1}
+.tile img{position:absolute;right:8px;bottom:6px;height:84px;width:auto;filter:drop-shadow(0 2px 4px rgba(0,0,0,.12))}
 .tile.pick::after{content:"";position:absolute;inset:-4px;border-radius:28px;box-shadow:0 0 0 3px var(--tint)}
 .tile.c1{background:linear-gradient(135deg,#7DB7EC,#4C8FDB)}
 .tile.c2{background:linear-gradient(135deg,#8FD08A,#4FAE62)}
@@ -138,13 +143,9 @@ h1{font-size:34px;font-weight:700;letter-spacing:.01em;margin:6px 4px 2px;line-h
 /* 完成瞬間 */
 #burst{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;background:color-mix(in srgb,var(--bg) 94%,transparent);z-index:20}
 #burst.on{display:flex}
-.hero{position:relative;width:110px;height:110px;border-radius:50%;background:var(--pea);
-  box-shadow:inset -10px -12px 0 var(--pea-d),inset 10px 10px 0 rgba(255,255,255,.35)}
-.hero.x2{width:190px;border-radius:55px}
-.hero .e{position:absolute;top:44%;width:8px;height:10px;border-radius:50%;background:#2B2B2B}
-.hero .e.l{left:34%}.hero .e.r{right:34%}
-.hero .c{position:absolute;top:57%;width:17px;height:10px;border-radius:50%;background:var(--cheek);opacity:.85}
-.hero .c.l{left:18%}.hero .c.r{right:18%}
+.buddy{height:150px;width:auto;display:block;margin-bottom:6px}
+.hero{width:84px;height:auto;display:block}
+.hero.x2{width:146px}
 .hero-note{margin-top:22px;font-size:15px;color:var(--label2);max-width:280px;text-align:center;line-height:1.45;min-height:22px;transition:opacity .2s}
 .msg{margin-top:26px;font-size:20px;font-weight:600;min-height:28px;text-align:center;opacity:0;transition:opacity .4s}
 .msg.on{opacity:1}
@@ -183,7 +184,7 @@ h1{font-size:34px;font-weight:700;letter-spacing:.01em;margin:6px 4px 2px;line-h
 .sel{border:0;background:transparent;color:var(--label2);font-size:17px;text-align:right;text-align-last:right;outline:none;-webkit-appearance:none;appearance:none}
 .name-in{flex:1;border:0;background:transparent;font-size:17px;outline:none;min-width:0}
 
-.toast{position:absolute;left:50%;top:calc(env(safe-area-inset-top) + 64px);transform:translateX(-50%);background:var(--glass);
+.toast{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom) + 84px);transform:translateX(-50%);background:var(--glass);
   -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);box-shadow:0 0 0 .5px var(--glass-line),var(--shadow);
   padding:12px 18px;border-radius:999px;font-size:15px;z-index:40;opacity:0;transition:opacity .3s;pointer-events:none;width:max-content;max-width:calc(100% - 32px);text-align:center}
 .toast.on{opacity:1}
@@ -238,7 +239,7 @@ h1{font-size:34px;font-weight:700;letter-spacing:.01em;margin:6px 4px 2px;line-h
   <!-- 2a 鈴響 -->
   <section class="screen white" id="s-bell">
     <div class="nav"><span></span><span></span><span></span></div>
-    <h1 style="font-size:28px">響了。下一步是什麼？</h1>
+    <div style="display:flex;align-items:flex-end;gap:10px"><h1 style="font-size:28px;flex:1">響了。下一步是什麼？</h1><img src="img/face-think.webp" alt="" style="height:76px;width:auto;margin-bottom:2px"></div>
     <p class="sub" style="font-size:15px">寫一行給下一顆的自己。手上那句寫完再寫也行。</p>
     <textarea class="editor" id="clueIn" maxlength="120" placeholder="做到哪／從哪接／還卡著什麼"></textarea>
     <div class="err" id="clueErr"></div>
@@ -256,10 +257,10 @@ h1{font-size:34px;font-weight:700;letter-spacing:.01em;margin:6px 4px 2px;line-h
     <h1>休息</h1><p class="sub">離開螢幕，挑一個。</p>
     <div class="rest-clock"><div class="clock" id="rclock">5:00</div><div class="counts" id="restNote" style="margin-top:8px"></div></div>
     <div class="tiles" id="restMenu">
-      <button class="tile c1"><svg class="ti"><use href="#i-cup"/></svg><b>喝水</b></button>
-      <button class="tile c2"><svg class="ti"><use href="#i-mtn"/></svg><b>看遠處</b></button>
-      <button class="tile c3"><svg class="ti"><use href="#i-stretch"/></svg><b>伸展</b></button>
-      <button class="tile c4"><svg class="ti"><use href="#i-closed"/></svg><b>閉眼坐一下</b></button>
+      <button class="tile c1"><svg class="ti"><use href="#i-cup"/></svg><b>喝水</b><img src="img/rest-water.webp" alt=""></button>
+      <button class="tile c2"><svg class="ti"><use href="#i-mtn"/></svg><b>看遠處</b><img src="img/rest-far.webp" alt=""></button>
+      <button class="tile c3"><svg class="ti"><use href="#i-stretch"/></svg><b>伸展</b><img src="img/rest-stretch.webp" alt=""></button>
+      <button class="tile c4"><svg class="ti"><use href="#i-closed"/></svg><b>閉眼坐一下</b><img src="img/rest-closed.webp" alt=""></button>
     </div>
     <div class="pad-bottom"></div>
     <div class="dock"><button class="btn2" id="bBack" style="background:var(--glass);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);box-shadow:0 0 0 .5px var(--glass-line),var(--shadow);height:56px">回到桌前</button></div>
@@ -269,6 +270,7 @@ h1{font-size:34px;font-weight:700;letter-spacing:.01em;margin:6px 4px 2px;line-h
   <section class="screen" id="s-trellis">
     <div class="nav"><button class="circle" data-go="home" aria-label="返回"><svg class="i"><use href="#i-back"/></svg></button><span></span></div>
     <h1>豆棚</h1><p class="sub" id="rackSub"></p>
+    <div class="hero-card" style="padding:14px"><img class="ill" src="img/trellis.webp" alt="" style="width:100%;max-width:340px"></div>
     <div id="rackList"></div>
     <div class="pad-bottom"></div>
   </section>
@@ -282,7 +284,8 @@ h1{font-size:34px;font-weight:700;letter-spacing:.01em;margin:6px 4px 2px;line-h
   </section>
 
   <div id="burst">
-    <div class="hero" id="hero"><span class="e l"></span><span class="e r"></span><span class="c l"></span><span class="c r"></span></div>
+    <img class="buddy" id="buddy" src="img/face-happy.webp" alt="">
+    <img class="hero" id="hero" src="img/pea.webp" alt="">
     <div class="hero-note" id="heroNote"></div>
     <div class="msg" id="burstMsg"></div>
     <div class="burst-pod" id="burstPod"></div>
@@ -346,12 +349,12 @@ function podHTML(d,big){const idA=big?' id="todayPod"':'';if(!d)return `<span cl
   return `<span class="pod"${idA}>`+items.map(i=>i.k==='v'?'<span class="p void"></span>':`<span class="p${i.u>1?' x2':''}"></span>`).join('')+'</span>'}
 
 /* ---------- 首頁 ---------- */
-function sproutSVG(){return `<svg class="sprout grow-in" viewBox="0 0 120 110" aria-hidden="true">
+function sproutSVG(){return `<img class="sprout grow-in" src="img/sprout.webp" alt=""><!--
   <path d="M60 110 C60 86 58 70 60 52" stroke="#6FA84E" stroke-width="5" fill="none" stroke-linecap="round"/>
   <ellipse cx="40" cy="44" rx="22" ry="13" transform="rotate(-24 40 44)" fill="#8FC66B"/>
   <ellipse cx="80" cy="44" rx="22" ry="13" transform="rotate(24 80 44)" fill="#8FC66B"/>
   <ellipse cx="36" cy="40" rx="9" ry="4" transform="rotate(-24 36 40)" fill="#fff" opacity=".35"/>
-  <ellipse cx="76" cy="40" rx="9" ry="4" transform="rotate(24 76 40)" fill="#fff" opacity=".35"/></svg>`}
+  <ellipse cx="76" cy="40" rx="9" ry="4" transform="rotate(24 76 40)" fill="#fff" opacity=".35"/></svg>-->`}
 function setDock(html){let d=$('#homeDock');if(!d){d=document.createElement('div');d.className='dock';d.id='homeDock';$('#s-home').appendChild(d)}d.innerHTML=html}
 
 function renderHome(){
@@ -363,7 +366,7 @@ function renderHome(){
     body.innerHTML=`<div class="hero-card"><span class="k">第一件事</span>
       <textarea class="editor" id="firstIn" maxlength="120" style="min-height:110px;font-size:20px" placeholder="寫到具體的動作。例：打開讀書筆記，把三個重點各寫一句"></textarea>
       <div class="err" id="firstErr" style="align-self:flex-start"></div>
-      <div class="sprout-wrap"><div class="mound"></div></div></div>
+      <img class="ill" src="img/empty.webp" alt="" style="width:220px;margin-top:4px"></div>
       <p class="foot-note">這句會掛在芽上，等你按開始。之後每顆番茄響完，你都會留一句新的。</p>`;
     setDock(`<span></span><button class="cta" id="bPlant">種下去</button>`);
     $('#bPlant').onclick=()=>{const v=$('#firstIn').value.trim();if(!v){$('#firstErr').textContent='先寫一句再種';return}
@@ -375,7 +378,7 @@ function renderHome(){
   const has=d&&(d.beans.length||d.voids.length);
   body.innerHTML=`<div class="hero-card"><span class="k">${fresh?'昨天的你留了一句':'下一步'}</span>
       <div class="clue${fresh?' grow-in':''}">${esc(S.clue.text)}</div>
-      <div class="sprout-wrap">${sproutSVG()}<div class="mound"></div></div></div>
+      <div class="sprout-wrap">${sproutSVG()}</div></div>
     <div class="group">
       <button class="row" id="rType"><span class="t">類型</span><span class="v">${esc(t.name)}・${t.len} 分</span>${chev}</button>
       <button class="row" id="rEst"><span class="t">估幾顆</span><span class="v">${task?esc(task.name)+'・'+task.est+' 顆':'選填'}</span>${chev}</button>
@@ -473,7 +476,7 @@ function finish(text){const c=S.current;const d=day(dkey(c.startedAt));
 function pickLine(){let i;do{i=Math.floor(Math.random()*LINES.length)}while(i===S.lastLine&&LINES.length>1);S.lastLine=i;save();return LINES[i]}
 function celebrate(bean,next){
   const B=$('#burst'),H=$('#hero'),M=$('#burstMsg'),N=$('#heroNote');
-  H.classList.toggle('x2',units(bean.len)>1);N.textContent=bean.clue?'「'+bean.clue+'」':'';N.style.opacity='1';
+  const two=units(bean.len)>1;H.classList.toggle('x2',two);H.src=two?'img/pea2.webp':'img/pea.webp';$('#buddy').animate([{transform:'translateY(14px)',opacity:0},{transform:'none',opacity:1}],{duration:360,easing:'ease-out'});N.textContent=bean.clue?'「'+bean.clue+'」':'';N.style.opacity='1';
   $('#burstPod').innerHTML=podHTML(day(dkey(bean.start||bean.t)));
   const pod=$('#burstPod .pod');const last=pod?pod.lastElementChild:null;if(last)last.style.opacity='0';
   M.textContent=pickLine();M.classList.remove('on');B.classList.add('on');H.style.opacity='1';
@@ -498,7 +501,7 @@ $('#bBack').onclick=()=>{const c=S.current;if(c&&S.settings.restMode!=='self'){c
 
 /* ---------- 收工 ---------- */
 function openClose(){const d=day();
-  sheet(`<h3>收工</h3><p class="sub">今天的豆莢掛上架，最後那句種進土裡，明天打開就在。</p>
+  sheet(`<img class="ill" src="img/pod-closed.webp" alt="" style="width:150px;margin:4px auto 6px"><h3>收工</h3><p class="sub">今天的豆莢掛上架，最後那句種進土裡，明天打開就在。</p>
   <div class="group"><div class="row" style="flex-direction:column;align-items:flex-start;gap:4px"><span class="s" style="margin:0">明天的第一句</span><textarea class="editor" id="cTx" style="min-height:70px;font-size:19px;padding:0">${esc(S.clue?.text||'')}</textarea></div></div>
   <div class="two"><button class="btn2" id="cX">還沒</button><button class="cta" id="cOk">收工</button></div>
   ${!d.beans.length&&!d.voids.length?'<div class="group" style="margin-top:16px"><button class="row tint" id="cLeaf"><span class="t">今天整天在回訊息、開會？掛一片葉子<span class="s">不算缺</span></span></button></div>':''}`);
@@ -515,7 +518,7 @@ function weekStart(k){const d=new Date(k+'T00:00');const w=(d.getDay()+6)%7;d.se
 function renderTrellis(){const keys=Object.keys(S.days).filter(k=>{const d=S.days[k];return d.beans.length||d.voids.length||d.leaf}).sort().reverse();
   const total=keys.reduce((s,k)=>s+S.days[k].beans.length,0);
   $('#rackSub').textContent=keys.length?`${keys.length} 莢・${total} 顆`:'還沒有豆莢';
-  if(!keys.length){$('#rackList').innerHTML='<div class="group"><div class="row"><span class="t" style="color:var(--label2)">第一顆響完，這裡就會掛上今天的豆莢。</span></div></div>';return}
+  if(!keys.length){$('#rackList').innerHTML='<div class="hero-card"><img class="ill" src="img/sleep.webp" alt="" style="width:220px"><p class="foot-note" style="text-align:center;margin-top:10px">第一顆響完，這裡就會掛上今天的豆莢。</p></div>';return}
   const weeks={};keys.forEach(k=>(weeks[weekStart(k)]??=[]).push(k));
   const thisW=weekStart(dkey());
   $('#rackList').innerHTML=Object.keys(weeks).sort().reverse().map(ws=>`<div class="sec">${ws===thisW?'這週':md(ws)+' 那週'}</div>
