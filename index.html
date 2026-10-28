@@ -1,0 +1,601 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="豆帳">
+<meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<title>豆帳</title>
+<style>
+:root{
+  --bg:#F2F2F7; --card:#FFFFFF; --label:#000; --label2:rgba(60,60,67,.6); --label3:rgba(60,60,67,.3);
+  --sep:rgba(60,60,67,.18); --fill:rgba(120,120,128,.12); --fill2:rgba(120,120,128,.2);
+  --tint:#34C759; --tint-d:#2DA94C; --blue:#007AFF; --red:#FF3B30;
+  --glass:rgba(255,255,255,.78); --glass-line:rgba(0,0,0,.06); --shadow:0 6px 24px rgba(0,0,0,.08);
+  --pea:#8FC66B; --pea-d:#6FA84E; --pod:#BFE0A3; --pod-d:#9CC77E; --cheek:#F4A9A3; --soil:#C9A27E;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#000; --card:#1C1C1E; --label:#fff; --label2:rgba(235,235,245,.6); --label3:rgba(235,235,245,.3);
+  --sep:rgba(84,84,88,.6); --fill:rgba(118,118,128,.24); --fill2:rgba(118,118,128,.32);
+  --tint:#30D158; --tint-d:#28B44A; --blue:#0A84FF; --red:#FF453A;
+  --glass:rgba(44,44,46,.78); --glass-line:rgba(255,255,255,.08); --shadow:0 6px 24px rgba(0,0,0,.4);
+  --pod:#7FA86A; --pod-d:#5F8A4C; --soil:#8E6E52;
+}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--label);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang TC","Noto Sans TC",sans-serif;
+  -webkit-font-smoothing:antialiased;overscroll-behavior:none;font-size:17px;letter-spacing:-.01em}
+body{display:flex;justify-content:center}
+#app{position:relative;width:100%;max-width:430px;height:100%;min-height:100dvh;overflow:hidden}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
+textarea,input,select{font:inherit;color:var(--label)}
+svg.i{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+.screen{position:absolute;inset:0;display:none;flex-direction:column;
+  padding:calc(env(safe-area-inset-top) + 8px) 16px 0;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.screen.on{display:flex;animation:fade .22s ease}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.screen.white{background:var(--card)}
+.pad-bottom{height:calc(env(safe-area-inset-bottom) + 110px);flex:none}
+
+/* nav：玻璃圓鈕＋玻璃膠囊 */
+.nav{display:flex;justify-content:space-between;align-items:center;min-height:52px;position:sticky;top:0;z-index:5}
+.circle{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:var(--glass);
+  -webkit-backdrop-filter:blur(20px) saturate(1.6);backdrop-filter:blur(20px) saturate(1.6);
+  box-shadow:0 0 0 .5px var(--glass-line),var(--shadow)}
+.pill{display:flex;align-items:center;height:48px;border-radius:999px;padding:0 6px;background:var(--glass);
+  -webkit-backdrop-filter:blur(20px) saturate(1.6);backdrop-filter:blur(20px) saturate(1.6);box-shadow:0 0 0 .5px var(--glass-line),var(--shadow)}
+.pill button{height:48px;min-width:48px;padding:0 12px;display:flex;align-items:center;gap:6px;font-size:15px;border-radius:999px}
+.pill button:active,.circle:active{opacity:.6}
+
+h1{font-size:34px;font-weight:700;letter-spacing:.01em;margin:6px 4px 2px;line-height:1.15}
+.sub{font-size:17px;color:var(--label2);margin:0 4px 18px}
+.sec{font-size:22px;font-weight:700;margin:22px 4px 10px}
+.foot-note{font-size:13px;color:var(--label2);margin:8px 16px 0;line-height:1.45}
+
+/* 卡片與列 */
+.group{background:var(--card);border-radius:26px;overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;min-height:56px;padding:12px 18px;position:relative;width:100%;text-align:left}
+.row+.row::before{content:"";position:absolute;top:0;left:18px;right:0;height:.5px;background:var(--sep)}
+.row .t{flex:1;font-size:17px}
+.row .v{color:var(--label2);font-size:17px}
+.row .chev{color:var(--label3);width:16px;height:16px}
+.row:active{background:var(--fill)}
+.row.tint .t{color:var(--tint)}
+.row.danger .t{color:var(--red)}
+.row .s{display:block;font-size:13px;color:var(--label2);margin-top:2px}
+
+/* 首頁的芽卡 */
+.hero-card{background:var(--card);border-radius:26px;padding:22px 20px 20px;display:flex;flex-direction:column;align-items:center;margin-bottom:14px}
+.hero-card .k{align-self:flex-start;font-size:13px;color:var(--label2);font-weight:600;letter-spacing:.02em}
+.hero-card .clue{align-self:stretch;font-size:22px;line-height:1.45;font-weight:500;margin:6px 0 14px;word-break:break-word}
+.sprout-wrap{display:flex;flex-direction:column;align-items:center}
+.sprout{width:92px;height:84px;display:block}
+.mound{width:180px;height:40px;border-radius:50% 50% 0 0/100% 100% 0 0;background:var(--soil);margin-top:-8px}
+.grow-in{animation:growIn .8s cubic-bezier(.2,1.4,.4,1) both;transform-origin:50% 100%}
+@keyframes growIn{0%{transform:scaleY(0);opacity:0}100%{transform:scaleY(1);opacity:1}}
+
+/* 按鈕 */
+.cta{display:flex;align-items:center;justify-content:center;gap:8px;height:56px;padding:0 26px;border-radius:999px;
+  background:var(--tint);color:#fff;font-size:17px;font-weight:600;box-shadow:0 6px 20px rgba(52,199,89,.32)}
+.cta:active{background:var(--tint-d)}
+.cta.wide{width:100%}
+.cta[disabled]{opacity:.4}
+.btn2{display:flex;align-items:center;justify-content:center;height:50px;border-radius:999px;background:var(--fill);font-size:17px;font-weight:500;width:100%}
+.btn2:active{background:var(--fill2)}
+
+/* 底部浮動工具列 */
+.dock{position:absolute;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom) + 14px);display:flex;justify-content:space-between;align-items:center;gap:10px;z-index:6}
+
+/* 豆莢 */
+.pod{display:inline-flex;align-items:center;gap:3px;padding:6px 10px;border-radius:999px;background:var(--pod);
+  box-shadow:inset 0 -2px 0 var(--pod-d),inset 0 2px 0 rgba(255,255,255,.35);min-height:30px}
+.pod.empty{min-width:44px;opacity:.5}
+.p{width:16px;height:16px;border-radius:50%;background:var(--pea);box-shadow:inset -2px -2px 0 var(--pea-d),inset 2px 2px 0 rgba(255,255,255,.4);flex:none}
+.p.x2{width:30px;border-radius:9px}
+.p.void{background:transparent;box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.12)}
+.pod.bump{animation:bump .45s ease}
+@keyframes bump{40%{transform:scale(1.12)}100%{transform:scale(1)}}
+
+/* 計時 */
+.clock{font-size:92px;font-weight:200;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1;text-align:center}
+.clock.word{font-size:40px;font-weight:600}
+.center-stack{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding-bottom:80px}
+.doing{max-width:330px;text-align:center;font-size:17px;line-height:1.5;color:var(--label2)}
+.chips{display:flex;gap:10px}
+.chip{height:40px;padding:0 16px;border-radius:999px;background:var(--fill);font-size:15px;display:flex;align-items:center;gap:6px}
+.chip:active{background:var(--fill2)}
+.counts{font-size:13px;color:var(--label3);min-height:18px}
+.overlearn{font-size:15px;color:var(--label2);text-align:center;max-width:300px;line-height:1.5}
+
+/* 鈴響：像備忘錄 */
+.editor{width:100%;min-height:180px;border:0;outline:none;resize:none;background:transparent;font-size:22px;line-height:1.5;padding:6px 4px}
+.editor::placeholder{color:var(--label3)}
+.err{font-size:13px;color:var(--red);min-height:18px;margin:0 4px}
+.notes{list-style:none;margin:10px 0 0;padding:0}
+.notes li{font-size:15px;color:var(--label2);padding:10px 4px;border-top:.5px solid var(--sep)}
+
+/* 休息：提醒事項式的方塊 */
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px}
+.tile{position:relative;height:104px;border-radius:24px;color:#fff;text-align:left;padding:14px 16px;display:flex;flex-direction:column;justify-content:space-between;
+  box-shadow:inset 0 0 0 0 transparent;transition:transform .1s}
+.tile:active{transform:scale(.97)}
+.tile .ti{width:30px;height:30px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tile b{font-size:20px;font-weight:700}
+.tile.pick::after{content:"";position:absolute;inset:-4px;border-radius:28px;box-shadow:0 0 0 3px var(--tint)}
+.tile.c1{background:linear-gradient(135deg,#7DB7EC,#4C8FDB)}
+.tile.c2{background:linear-gradient(135deg,#8FD08A,#4FAE62)}
+.tile.c3{background:linear-gradient(135deg,#F2C48D,#E59A55)}
+.tile.c4{background:linear-gradient(135deg,#B9A6E6,#8A72CF)}
+.rest-clock{background:var(--card);border-radius:26px;padding:22px;text-align:center;margin-bottom:12px}
+.rest-clock .clock{font-size:64px}
+.rest-clock .clock.word{font-size:32px}
+
+/* 完成瞬間 */
+#burst{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;background:color-mix(in srgb,var(--bg) 94%,transparent);z-index:20}
+#burst.on{display:flex}
+.hero{position:relative;width:110px;height:110px;border-radius:50%;background:var(--pea);
+  box-shadow:inset -10px -12px 0 var(--pea-d),inset 10px 10px 0 rgba(255,255,255,.35)}
+.hero.x2{width:190px;border-radius:55px}
+.hero .e{position:absolute;top:44%;width:8px;height:10px;border-radius:50%;background:#2B2B2B}
+.hero .e.l{left:34%}.hero .e.r{right:34%}
+.hero .c{position:absolute;top:57%;width:17px;height:10px;border-radius:50%;background:var(--cheek);opacity:.85}
+.hero .c.l{left:18%}.hero .c.r{right:18%}
+.hero-note{margin-top:22px;font-size:15px;color:var(--label2);max-width:280px;text-align:center;line-height:1.45;min-height:22px;transition:opacity .2s}
+.msg{margin-top:26px;font-size:20px;font-weight:600;min-height:28px;text-align:center;opacity:0;transition:opacity .4s}
+.msg.on{opacity:1}
+.burst-pod{position:absolute;bottom:calc(env(safe-area-inset-bottom) + 90px);left:50%;transform:translateX(-50%)}
+
+/* 豆棚列 */
+.day-row .d{width:96px;flex:none}
+.day-row .d b{display:block;font-size:17px;font-weight:600}
+.day-row .d span{font-size:13px;color:var(--label2)}
+.leaf{display:inline-block;width:26px;height:16px;border-radius:0 100% 0 100%;background:var(--pod);box-shadow:inset -2px -2px 0 var(--pod-d)}
+
+/* sheet */
+#veil{position:absolute;inset:0;background:rgba(0,0,0,.25);display:none;z-index:30;align-items:flex-end}
+#veil.on{display:flex}
+.sheet{width:100%;background:var(--bg);border-radius:34px 34px 0 0;padding:8px 16px calc(env(safe-area-inset-bottom) + 18px);max-height:88%;overflow-y:auto;animation:up .28s cubic-bezier(.2,.9,.3,1)}
+.grabber{width:36px;height:5px;border-radius:3px;background:var(--label3);margin:0 auto 12px}
+@keyframes up{from{transform:translateY(60px);opacity:0}to{transform:none;opacity:1}}
+.sheet h3{font-size:22px;font-weight:700;margin:4px 4px 4px}
+.sheet .sub{margin-bottom:14px;font-size:15px}
+.seg{display:flex;background:var(--fill);border-radius:12px;padding:2px;gap:2px;margin:6px 0 14px}
+.seg button{flex:1;height:36px;border-radius:10px;font-size:15px}
+.seg button.pick{background:var(--card);box-shadow:0 1px 4px rgba(0,0,0,.12);font-weight:600}
+.field{width:100%;height:52px;padding:0 18px;border:0;background:var(--card);border-radius:16px;font-size:17px;outline:none}
+.two{display:flex;gap:10px;margin-top:14px}
+.two>*{flex:1}
+.receipt .row{min-height:48px;align-items:flex-start}
+.receipt .tm{width:46px;flex:none;color:var(--label2);font-variant-numeric:tabular-nums;font-size:15px;padding-top:1px}
+.receipt .tx{flex:1;font-size:16px;line-height:1.45;word-break:break-word}
+.muted{color:var(--label3)}
+
+/* switch、select */
+.sw{position:relative;width:51px;height:31px;border-radius:999px;background:var(--fill2);transition:background .2s;flex:none}
+.sw.on{background:var(--tint)}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.2);transition:transform .2s}
+.sw.on::after{transform:translateX(20px)}
+.sel{border:0;background:transparent;color:var(--label2);font-size:17px;text-align:right;text-align-last:right;outline:none;-webkit-appearance:none;appearance:none}
+.name-in{flex:1;border:0;background:transparent;font-size:17px;outline:none;min-width:0}
+
+.toast{position:absolute;left:50%;top:calc(env(safe-area-inset-top) + 64px);transform:translateX(-50%);background:var(--glass);
+  -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);box-shadow:0 0 0 .5px var(--glass-line),var(--shadow);
+  padding:12px 18px;border-radius:999px;font-size:15px;z-index:40;opacity:0;transition:opacity .3s;pointer-events:none;width:max-content;max-width:calc(100% - 32px);text-align:center}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/><circle cx="19" cy="12" r="1.3" fill="currentColor"/></symbol>
+  <symbol id="i-rack" viewBox="0 0 24 24"><path d="M5 20C5 11 11 5 20 4c-1 9-7 15-15 16z"/><path d="M5 20c4-5 8-8 11-11"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 5l12 7-12 7z" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></symbol>
+  <symbol id="i-tally" viewBox="0 0 24 24"><path d="M4 7h16M4 12h10M4 17h7"/></symbol>
+  <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></symbol>
+  <symbol id="i-person" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-flow" viewBox="0 0 24 24"><path d="M3 12c3-6 6 6 9 0s6 6 9 0"/></symbol>
+  <symbol id="i-cup" viewBox="0 0 24 24"><path d="M5 8h12v5a6 6 0 0 1-12 0z"/><path d="M17 9h1.5a2.5 2.5 0 0 1 0 5H17M8 3v2M11 3v2M14 3v2"/></symbol>
+  <symbol id="i-mtn" viewBox="0 0 24 24"><path d="M3 19l6-10 4 6 2-3 6 7z"/></symbol>
+  <symbol id="i-stretch" viewBox="0 0 24 24"><circle cx="12" cy="4.5" r="2"/><path d="M5 7l7 3 7-3M12 10v5l-3 6M12 15l3 6"/></symbol>
+  <symbol id="i-closed" viewBox="0 0 24 24"><path d="M3 11c2.5 3 5.5 4.5 9 4.5s6.5-1.5 9-4.5M7 14.5l-1.5 2.5M12 15.5V18M17 14.5l1.5 2.5"/></symbol>
+</svg>
+
+<div id="app">
+
+  <!-- 1 首頁＝芽 -->
+  <section class="screen" id="s-home">
+    <div class="nav"><span></span>
+      <div class="pill"><button data-go="trellis" aria-label="豆棚"><svg class="i"><use href="#i-rack"/></svg></button><button data-go="settings" aria-label="設定"><svg class="i"><use href="#i-gear"/></svg></button></div>
+    </div>
+    <h1>豆帳</h1><p class="sub" id="homeDate"></p>
+    <div id="homeBody"></div>
+    <div class="pad-bottom"></div>
+  </section>
+
+  <!-- 2 計時 -->
+  <section class="screen" id="s-timer">
+    <div class="nav"><span></span><span class="v" id="tType" style="font-size:15px;color:var(--label2)"></span><span style="width:48px"></span></div>
+    <div class="center-stack">
+      <div class="clock" id="clock">25:00</div>
+      <div class="doing" id="doing"></div>
+      <div class="overlearn" id="overMsg" hidden>剩下的時間，把剛做的唸一遍、檢查、小修。鈴響再停。</div>
+      <div class="chips"><button class="chip" id="bNote"><svg class="i" style="width:18px;height:18px"><use href="#i-bulb"/></svg>冒出念頭</button><button class="chip" id="bPing"><svg class="i" style="width:18px;height:18px"><use href="#i-person"/></svg>有人找</button></div>
+      <div class="counts" id="counts"></div>
+    </div>
+    <div class="dock"><div class="pill"><button id="bVoid">作廢</button></div><div class="pill"><button id="bDone">做完了</button></div></div>
+  </section>
+
+  <!-- 2a 鈴響 -->
+  <section class="screen white" id="s-bell">
+    <div class="nav"><span></span><span></span><span></span></div>
+    <h1 style="font-size:28px">響了。下一步是什麼？</h1>
+    <p class="sub" style="font-size:15px">寫一行給下一顆的自己。手上那句寫完再寫也行。</p>
+    <textarea class="editor" id="clueIn" maxlength="120" placeholder="做到哪／從哪接／還卡著什麼"></textarea>
+    <div class="err" id="clueErr"></div>
+    <ul class="notes" id="bellNotes"></ul>
+    <div class="pad-bottom"></div>
+    <div class="dock">
+      <div class="pill"><button id="bSkip"><svg class="i" style="width:18px;height:18px"><use href="#i-eye"/></svg>畫面就是線索</button><button id="bFlow"><svg class="i" style="width:18px;height:18px"><use href="#i-flow"/></svg>在狀態裡</button></div>
+      <button class="cta" id="bKeep">收下</button>
+    </div>
+  </section>
+
+  <!-- 4 休息 -->
+  <section class="screen" id="s-rest">
+    <div class="nav"><span></span><span></span><span></span></div>
+    <h1>休息</h1><p class="sub">離開螢幕，挑一個。</p>
+    <div class="rest-clock"><div class="clock" id="rclock">5:00</div><div class="counts" id="restNote" style="margin-top:8px"></div></div>
+    <div class="tiles" id="restMenu">
+      <button class="tile c1"><svg class="ti"><use href="#i-cup"/></svg><b>喝水</b></button>
+      <button class="tile c2"><svg class="ti"><use href="#i-mtn"/></svg><b>看遠處</b></button>
+      <button class="tile c3"><svg class="ti"><use href="#i-stretch"/></svg><b>伸展</b></button>
+      <button class="tile c4"><svg class="ti"><use href="#i-closed"/></svg><b>閉眼坐一下</b></button>
+    </div>
+    <div class="pad-bottom"></div>
+    <div class="dock"><button class="btn2" id="bBack" style="background:var(--glass);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);box-shadow:0 0 0 .5px var(--glass-line),var(--shadow);height:56px">回到桌前</button></div>
+  </section>
+
+  <!-- 3 豆棚 -->
+  <section class="screen" id="s-trellis">
+    <div class="nav"><button class="circle" data-go="home" aria-label="返回"><svg class="i"><use href="#i-back"/></svg></button><span></span></div>
+    <h1>豆棚</h1><p class="sub" id="rackSub"></p>
+    <div id="rackList"></div>
+    <div class="pad-bottom"></div>
+  </section>
+
+  <!-- 5 設定 -->
+  <section class="screen" id="s-settings">
+    <div class="nav"><button class="circle" data-go="home" aria-label="返回"><svg class="i"><use href="#i-back"/></svg></button><span></span></div>
+    <h1>設定</h1><p class="sub"></p>
+    <div id="setBody"></div>
+    <div class="pad-bottom"></div>
+  </section>
+
+  <div id="burst">
+    <div class="hero" id="hero"><span class="e l"></span><span class="e r"></span><span class="c l"></span><span class="c r"></span></div>
+    <div class="hero-note" id="heroNote"></div>
+    <div class="msg" id="burstMsg"></div>
+    <div class="burst-pod" id="burstPod"></div>
+  </div>
+  <div id="veil"><div class="sheet" id="sheet"></div></div>
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+(()=>{
+const KEY='douzhang.v1';
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const chev='<svg class="i chev"><use href="#i-chev"/></svg>';
+
+const LINES=['收下了，這顆是完整的。','豆莢裡多一顆。','響完了，起來喝口水。','那句會在下一顆等你。','寫下來了，腦袋可以先放掉它。',
+'好，停在這裡剛剛好。','一顆，沒有半顆。','先離開螢幕五分鐘。','收據開好了。','去窗邊看一下遠的地方。','這一句留給五分鐘後的你。',
+'豆莢又長一點了。','站起來伸個懶腰吧。','手機先別拿，走兩步。','剛那段辛苦了。','下一步在這裡了，不用一直記著。','這顆長得挺飽滿。',
+'記好了，休息去。','一段沒被打斷的，收進來。','好，喝水時間。','豆子入莢。','先閉眼坐一下也行。','這顆算數。','去倒杯水，鈴響再回來。'];
+const VOIDLINES=['記一筆就好，下一顆重新來。','空一格，沒關係。','記下來了，原因寫事實就好。','這顆先放著，等下再開一顆。','豆莢留個位置，不影響別的。'];
+const WD=['日','一','二','三','四','五','六'];
+
+/* ---------- 資料 ---------- */
+function blank(){return{v:1,
+  settings:{types:[{id:'t1',name:'一般',len:25}],typeId:'t1',restMode:'auto',sound:true,demo:false,closeTime:'19:00'},
+  current:null,clue:null,days:{},planted:null,lastLine:-1}}
+let S;
+function load(){try{S=JSON.parse(localStorage.getItem(KEY))||blank()}catch(e){S=blank()}if(!S.settings)S=blank()}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('這台裝置沒辦法存，記得匯出備份')}}
+const dkey=(t=Date.now())=>{const d=new Date(t);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+function day(k=dkey()){return S.days[k]||(S.days[k]={beans:[],voids:[],tasks:[],closed:false,leaf:false,restOver:0})}
+const typeOf=id=>S.settings.types.find(t=>t.id===id)||S.settings.types[0];
+const units=len=>Math.max(1,Math.round(len/25));
+const unitMs=()=>S.settings.demo?1000:60000;
+const restLen=len=>Math.max(3,Math.round(len/5));
+const hm=t=>{const d=new Date(t);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
+const mmss=ms=>{ms=Math.max(0,ms);const s=Math.ceil(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+const md=k=>{const d=new Date(k+'T00:00');return `${d.getMonth()+1}月${d.getDate()}日`};
+
+/* ---------- 聲音 ---------- */
+let AC;
+function ac(){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume()}catch(e){}return AC}
+function tone(f,dur,vol,type='sine',when=0){const a=ac();if(!a||!S.settings.sound)return;const o=a.createOscillator(),g=a.createGain();
+  o.type=type;o.frequency.value=f;const t=a.currentTime+when;g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+.015);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur);o.connect(g).connect(a.destination);o.start(t);o.stop(t+dur+.05)}
+const chime=()=>{tone(784,1.6,.18);tone(1175,1.4,.08,'sine',.02)};
+const pop=()=>{tone(180,.18,.25,'triangle');tone(320,.08,.08,'sine',.01)};
+
+/* ---------- 畫面切換 ---------- */
+let screen='home';
+function go(n){screen=n;document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id==='s-'+n));
+  ({home:renderHome,trellis:renderTrellis,settings:renderSettings,timer:renderTimer,bell:renderBell,rest:renderRest})[n]?.()}
+document.addEventListener('click',e=>{const g=e.target.closest('[data-go]');if(g)go(g.dataset.go)});
+function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>el.classList.remove('on'),2400)}
+
+/* ---------- 豆莢 ---------- */
+function podHTML(d,big){const idA=big?' id="todayPod"':'';if(!d)return `<span class="pod empty"${idA}></span>`;
+  const items=[...d.beans.map(b=>({t:b.t,k:'b',u:units(b.len)})),...d.voids.map(v=>({t:v.t,k:'v',u:1}))].sort((a,b)=>a.t-b.t);
+  if(!items.length)return `<span class="pod empty"${idA}></span>`;
+  return `<span class="pod"${idA}>`+items.map(i=>i.k==='v'?'<span class="p void"></span>':`<span class="p${i.u>1?' x2':''}"></span>`).join('')+'</span>'}
+
+/* ---------- 首頁 ---------- */
+function sproutSVG(){return `<svg class="sprout grow-in" viewBox="0 0 120 110" aria-hidden="true">
+  <path d="M60 110 C60 86 58 70 60 52" stroke="#6FA84E" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <ellipse cx="40" cy="44" rx="22" ry="13" transform="rotate(-24 40 44)" fill="#8FC66B"/>
+  <ellipse cx="80" cy="44" rx="22" ry="13" transform="rotate(24 80 44)" fill="#8FC66B"/>
+  <ellipse cx="36" cy="40" rx="9" ry="4" transform="rotate(-24 36 40)" fill="#fff" opacity=".35"/>
+  <ellipse cx="76" cy="40" rx="9" ry="4" transform="rotate(24 76 40)" fill="#fff" opacity=".35"/></svg>`}
+function setDock(html){let d=$('#homeDock');if(!d){d=document.createElement('div');d.className='dock';d.id='homeDock';$('#s-home').appendChild(d)}d.innerHTML=html}
+
+function renderHome(){
+  const now=new Date();$('#homeDate').textContent=`${now.getMonth()+1}月${now.getDate()}日 星期${WD[now.getDay()]}`;
+  const t=typeOf(S.settings.typeId);const d=S.days[dkey()];const body=$('#homeBody');
+  let fresh=false;
+  if(S.planted&&S.planted.day!==dkey()&&!S.planted.shown){S.planted.shown=true;fresh=true;save()}
+  if(!S.clue){
+    body.innerHTML=`<div class="hero-card"><span class="k">第一件事</span>
+      <textarea class="editor" id="firstIn" maxlength="120" style="min-height:110px;font-size:20px" placeholder="寫到具體的動作。例：打開讀書筆記，把三個重點各寫一句"></textarea>
+      <div class="err" id="firstErr" style="align-self:flex-start"></div>
+      <div class="sprout-wrap"><div class="mound"></div></div></div>
+      <p class="foot-note">這句會掛在芽上，等你按開始。之後每顆番茄響完，你都會留一句新的。</p>`;
+    setDock(`<span></span><button class="cta" id="bPlant">種下去</button>`);
+    $('#bPlant').onclick=()=>{const v=$('#firstIn').value.trim();if(!v){$('#firstErr').textContent='先寫一句再種';return}
+      S.clue={text:v,at:Date.now()};save();pop();renderHome()};
+    $('#firstIn').oninput=()=>$('#firstErr').textContent='';
+    return;
+  }
+  const task=(d?.tasks||[]).find(x=>x.id===S.taskId);
+  const has=d&&(d.beans.length||d.voids.length);
+  body.innerHTML=`<div class="hero-card"><span class="k">${fresh?'昨天的你留了一句':'下一步'}</span>
+      <div class="clue${fresh?' grow-in':''}">${esc(S.clue.text)}</div>
+      <div class="sprout-wrap">${sproutSVG()}<div class="mound"></div></div></div>
+    <div class="group">
+      <button class="row" id="rType"><span class="t">類型</span><span class="v">${esc(t.name)}・${t.len} 分</span>${chev}</button>
+      <button class="row" id="rEst"><span class="t">估幾顆</span><span class="v">${task?esc(task.name)+'・'+task.est+' 顆':'選填'}</span>${chev}</button>
+      <div class="row"><span class="t">今天</span>${d?.leaf?'<span class="leaf"></span>':has?podHTML(d,true):'<span class="v" style="font-size:15px">第一顆響完就長出來</span>'}</div>
+    </div>
+    ${d?.closed&&!d.leaf?'<p class="foot-note">今天收工了，要再做一顆也行。</p>':''}`;
+  setDock(`<div class="pill"><button id="bClose"><svg class="i" style="width:20px;height:20px"><use href="#i-moon"/></svg>收工</button></div>
+    <button class="cta" id="bStart"><svg class="i" style="width:18px;height:18px"><use href="#i-play"/></svg>開始這一顆</button>`);
+  if(fresh)setTimeout(()=>toast('早。昨天最後那句在這裡'),900);
+  $('#bStart').onclick=startFocus;$('#rEst').onclick=openEst;$('#bClose').onclick=openClose;$('#rType').onclick=openType;
+}
+function openType(){const s=S.settings;sheet(`<h3>現在做哪一類？</h3><p class="sub">每一類固定一個長度，到設定裡改。</p>
+  <div class="group">${s.types.map(t=>`<button class="row" data-t="${t.id}"><span class="t">${esc(t.name)}</span><span class="v">${t.len} 分</span>${t.id===s.typeId?'<span style="color:var(--tint);font-weight:600">✓</span>':''}</button>`).join('')}</div>`);
+  $('#sheet').querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{s.typeId=b.dataset.t;save();closeSheet();renderHome()})}
+
+/* ---------- 估算 ---------- */
+function openEst(){const d=day();const tid=S.settings.typeId;let n=0;
+  sheet(`<h3>這件事估幾顆？</h3><p class="sub">估是預測，不是目標。收工時對帳用。</p>
+  <input class="field" id="eName" maxlength="30" placeholder="這件事叫什麼（例：腳本第 12 集）">
+  <div class="seg" id="eN">${[1,2,3,4,5,6,7].map(k=>`<button data-n="${k}">${k}</button>`).join('')}</div>
+  <div class="group"><div class="row"><span class="t">第一次做這種事<span class="s">不列入對帳</span></span><button class="sw" id="eNew" aria-label="第一次做"></button></div></div>
+  <div class="err" id="eErr" style="margin-top:8px"></div>
+  <button class="cta wide" id="eOk">記下來</button>
+  ${d.tasks.length?`<div class="sec" style="font-size:17px">今天估過的</div><div class="group">${d.tasks.map(t=>`<button class="row" data-tid="${t.id}"><span class="t">${esc(t.name)}</span><span class="v">估 ${t.est}</span>${t.id===S.taskId?'<span style="color:var(--tint)">✓</span>':''}</button>`).join('')}<button class="row" data-tid=""><span class="t" style="color:var(--label2)">不掛任務</span></button></div>`:''}`);
+  $('#eN').onclick=e=>{const b=e.target.closest('[data-n]');if(!b)return;n=+b.dataset.n;$('#eN').querySelectorAll('button').forEach(x=>x.classList.toggle('pick',x===b))};
+  $('#eNew').onclick=e=>e.currentTarget.classList.toggle('on');
+  $('#eOk').onclick=()=>{const name=$('#eName').value.trim();if(!name||!n){$('#eErr').textContent='寫個名字、選個顆數';return}
+    const t={id:'k'+Date.now(),name,est:n,typeId:tid,novel:$('#eNew').classList.contains('on')};d.tasks.push(t);S.taskId=t.id;save();closeSheet();renderHome()};
+  $('#sheet').querySelectorAll('[data-tid]').forEach(b=>b.onclick=()=>{S.taskId=b.dataset.tid||null;save();closeSheet();renderHome()})}
+
+/* ---------- 計時 ---------- */
+function startFocus(){ac();const t=typeOf(S.settings.typeId);const now=Date.now();
+  S.current={phase:'focus',typeId:t.id,len:t.len,startedAt:now,endAt:now+t.len*unitMs(),notes:[],pings:[],done:false,flowed:false,taskId:S.taskId||null,clue:S.clue?.text||''};
+  save();go('timer')}
+function renderTimer(){const c=S.current;if(!c)return go('home');const t=typeOf(c.typeId);
+  $('#tType').textContent=`${t.name}・${c.phase==='flow'?'延長中':c.len+' 分'}`;
+  $('#doing').textContent=c.clue||'';$('#overMsg').hidden=!c.done;
+  $('#bDone').parentElement.style.visibility=c.done||c.phase==='flow'?'hidden':'visible';
+  $('#bVoid').parentElement.style.visibility=c.phase==='flow'?'hidden':'visible';
+  counts();tick()}
+function counts(){const c=S.current;if(!c)return;const a=[];if(c.notes.length)a.push(`念頭 ${'\''.repeat(c.notes.length)}`);if(c.pings.length)a.push(`有人找 ${'-'.repeat(c.pings.length)}`);$('#counts').textContent=a.join('　')}
+function tick(){const c=S.current;
+  if(c&&(c.phase==='focus'||c.phase==='flow')){const left=c.endAt-Date.now();if(screen==='timer')$('#clock').textContent=mmss(left);
+    if(left<=0){c.phase='bell';c.bellAt=Date.now();save();chime();go('bell')}}
+  if(c&&c.phase==='rest'){const left=c.endAt-Date.now();if(screen==='rest'){const rc=$('#rclock');
+      if(S.settings.restMode==='self'){rc.textContent=mmss(Date.now()-c.restStart);rc.classList.remove('word')}
+      else{rc.textContent=left>0?mmss(left):'該回來了';rc.classList.toggle('word',left<=0)}}
+    if(S.settings.restMode!=='self'&&left<=0&&!c.rang){c.rang=true;save();chime();$('#restNote').textContent='到點了，慢慢走回來就好'}}
+}
+setInterval(tick,250);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)tick()});
+
+function quickNote(kind){const c=S.current;const lab=kind==='n'?'冒出什麼念頭？':'誰找你、什麼事？';
+  sheet(`<h3>${lab}</h3><p class="sub">寫一行就好，休息時再處理。</p><input class="field" id="qIn" maxlength="60">
+  <div class="two"><button class="btn2" id="qX">算了</button><button class="cta" id="qOk">記下</button></div>`);
+  setTimeout(()=>$('#qIn').focus(),50);
+  const ok=()=>{const v=$('#qIn').value.trim();(kind==='n'?c.notes:c.pings).push(v||'（沒寫）');save();closeSheet();counts()};
+  $('#qOk').onclick=ok;$('#qIn').onkeydown=e=>{if(e.key==='Enter')ok()};$('#qX').onclick=closeSheet}
+$('#bNote').onclick=()=>quickNote('n');$('#bPing').onclick=()=>quickNote('p');
+$('#bDone').onclick=()=>{S.current.done=true;save();renderTimer()};
+$('#bVoid').onclick=()=>{const c=S.current;const mins=(Date.now()-c.startedAt)/unitMs();
+  if(mins<5){S.current=null;save();go('home');toast('五分鐘內停下來，不算這顆');return}
+  let r='';
+  sheet(`<h3>作廢這顆</h3><p class="sub">記一筆就好。原因選填，寫事實。</p>
+  <div class="seg" id="vR">${['念頭','訊息','卡住','其他'].map(x=>`<button>${x}</button>`).join('')}</div>
+  <input class="field" id="vTx" maxlength="40" placeholder="例：去看留言（分鐘數會自動記）">
+  <div class="two"><button class="btn2" id="vX">繼續做</button><button class="cta" id="vOk">記一筆</button></div>`);
+  $('#vR').onclick=e=>{const b=e.target.closest('button');if(!b)return;r=b.textContent;$('#vR').querySelectorAll('button').forEach(x=>x.classList.toggle('pick',x===b))};
+  $('#vX').onclick=closeSheet;
+  $('#vOk').onclick=()=>{const d=day(dkey(c.startedAt));d.voids.push({t:Date.now(),typeId:c.typeId,minute:Math.floor(mins),reason:r,text:$('#vTx').value.trim(),taskId:c.taskId});
+    S.current=null;save();closeSheet();go('home');let L=VOIDLINES[Math.floor(Math.random()*VOIDLINES.length)];if(r&&Math.random()<.4)L='好，回頭看看是什麼把你叫走的。';setTimeout(()=>{bumpPod();toast(L)},150)}};
+
+/* ---------- 鈴響 ---------- */
+function renderBell(){const c=S.current;if(!c)return go('home');
+  $('#clueIn').value=c.draft||'';$('#clueErr').textContent='';
+  const items=[...c.notes.map(n=>'念頭　'+n),...c.pings.map(n=>'有人找　'+n)];
+  $('#bellNotes').innerHTML=items.map(x=>`<li>${esc(x)}</li>`).join('');
+  $('#bFlow').style.display=c.flowed?'none':'flex';
+  setTimeout(()=>$('#clueIn').focus(),80)}
+$('#clueIn').oninput=e=>{if(S.current){S.current.draft=e.target.value;save()}$('#clueErr').textContent=''};
+$('#bKeep').onclick=()=>{const v=$('#clueIn').value.trim();if(!v){$('#clueErr').textContent='寫一行，或按「畫面就是線索」';return}finish(v)};
+$('#bSkip').onclick=()=>finish('');
+$('#bFlow').onclick=()=>{sheet(`<h3>在狀態裡，繼續</h3><p class="sub">先定一個上限，到點會再響一次，那時再寫下一步。</p>
+  <div class="two"><button class="btn2" data-m="15">再 15 分</button><button class="btn2" data-m="30">再 30 分</button></div>`);
+  $('#sheet').querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{const c=S.current;c.phase='flow';c.flowed=true;c.flowMin=+b.dataset.m;c.endAt=Date.now()+c.flowMin*unitMs();save();closeSheet();go('timer')})};
+
+function finish(text){const c=S.current;const d=day(dkey(c.startedAt));
+  const bean={t:Date.now(),typeId:c.typeId,len:c.len,clue:text,notes:c.notes,pings:c.pings,flow:c.flowMin||0,taskId:c.taskId,start:c.startedAt};
+  d.beans.push(bean);if(d.closed)d.closed=false;
+  if(text)S.clue={text,at:Date.now()};
+  S.current={phase:'rest',typeId:c.typeId,restStart:Date.now()+2100,endAt:Date.now()+2100+restLen(c.len)*unitMs(),rang:false};
+  save();celebrate(bean,()=>go('rest'))}
+
+/* ---------- 完成瞬間 ---------- */
+function pickLine(){let i;do{i=Math.floor(Math.random()*LINES.length)}while(i===S.lastLine&&LINES.length>1);S.lastLine=i;save();return LINES[i]}
+function celebrate(bean,next){
+  const B=$('#burst'),H=$('#hero'),M=$('#burstMsg'),N=$('#heroNote');
+  H.classList.toggle('x2',units(bean.len)>1);N.textContent=bean.clue?'「'+bean.clue+'」':'';N.style.opacity='1';
+  $('#burstPod').innerHTML=podHTML(day(dkey(bean.start||bean.t)));
+  const pod=$('#burstPod .pod');const last=pod?pod.lastElementChild:null;if(last)last.style.opacity='0';
+  M.textContent=pickLine();M.classList.remove('on');B.classList.add('on');H.style.opacity='1';
+  if(reduce){if(last)last.style.opacity='1';M.classList.add('on');pop();setTimeout(()=>{B.classList.remove('on');next()},1600);return}
+  H.animate([{transform:'scale(.2)',opacity:0},{transform:'scale(1.12,.9)',opacity:1,offset:.6},{transform:'scale(.95,1.06)',offset:.8},{transform:'scale(1)'}],{duration:450,easing:'ease-out'});
+  pop();
+  setTimeout(()=>{N.style.opacity='0';
+    const hr=H.getBoundingClientRect(),tr=(last||pod).getBoundingClientRect();
+    const dx=tr.left+tr.width/2-(hr.left+hr.width/2),dy=tr.top+tr.height/2-(hr.top+hr.height/2),sc=tr.height/hr.height;
+    const a=H.animate([{transform:'translate(0,0) scale(1)'},{transform:`translate(${dx*.5}px,${dy*.5-90}px) scale(${(1+sc)/2})`},{transform:`translate(${dx}px,${dy}px) scale(${sc})`}],{duration:520,easing:'cubic-bezier(.45,0,.55,1)',fill:'forwards'});
+    a.onfinish=()=>{H.style.opacity='0';a.cancel();if(last)last.style.opacity='1';pod&&pod.classList.add('bump');tone(260,.12,.15,'triangle');M.classList.add('on')}},700);
+  setTimeout(()=>{B.classList.remove('on');H.style.opacity='1';next()},2600)}
+function bumpPod(){const p=$('#todayPod');if(p){p.classList.remove('bump');void p.offsetWidth;p.classList.add('bump')}}
+
+/* ---------- 休息 ---------- */
+function renderRest(){const c=S.current;if(!c||c.phase!=='rest')return go('home');
+  $('#restNote').textContent='';$('#rclock').classList.remove('word');$('#restMenu').querySelectorAll('.tile').forEach(b=>b.classList.remove('pick'));
+  $('#bBack').textContent=S.settings.restMode==='self'?'回來了':'回到桌前';tick()}
+$('#restMenu').onclick=e=>{const b=e.target.closest('.tile');if(!b)return;$('#restMenu').querySelectorAll('.tile').forEach(x=>x.classList.toggle('pick',x===b))};
+$('#bBack').onclick=()=>{const c=S.current;if(c&&S.settings.restMode!=='self'){const over=Math.floor((Date.now()-c.endAt)/unitMs());if(over>0)day().restOver+=over}
+  S.current=null;save();go('home')};
+
+/* ---------- 收工 ---------- */
+function openClose(){const d=day();
+  sheet(`<h3>收工</h3><p class="sub">今天的豆莢掛上架，最後那句種進土裡，明天打開就在。</p>
+  <div class="group"><div class="row" style="flex-direction:column;align-items:flex-start;gap:4px"><span class="s" style="margin:0">明天的第一句</span><textarea class="editor" id="cTx" style="min-height:70px;font-size:19px;padding:0">${esc(S.clue?.text||'')}</textarea></div></div>
+  <div class="two"><button class="btn2" id="cX">還沒</button><button class="cta" id="cOk">收工</button></div>
+  ${!d.beans.length&&!d.voids.length?'<div class="group" style="margin-top:16px"><button class="row tint" id="cLeaf"><span class="t">今天整天在回訊息、開會？掛一片葉子<span class="s">不算缺</span></span></button></div>':''}`);
+  $('#cX').onclick=closeSheet;
+  $('#cLeaf')&&($('#cLeaf').onclick=()=>{d.leaf=true;d.closed=true;save();closeSheet();renderHome();toast('掛了一片葉子')});
+  $('#cOk').onclick=()=>{const v=$('#cTx').value.trim();if(v)S.clue={text:v,at:Date.now()};
+    d.closed=true;S.planted={text:S.clue?.text||'',day:dkey(),shown:false};save();closeSheet();closeAnim()}}
+function closeAnim(){const p=$('#todayPod');
+  if(!reduce&&p)p.animate([{transform:'translateY(0)'},{transform:'translateY(-30px)',opacity:.5},{transform:'translateY(-60px)',opacity:0}],{duration:700,easing:'ease-in',fill:'forwards'});
+  pop();setTimeout(()=>{renderHome();toast('收工了。最後那句已經種下去，明天打開就在。')},750)}
+
+/* ---------- 豆棚 ---------- */
+function weekStart(k){const d=new Date(k+'T00:00');const w=(d.getDay()+6)%7;d.setDate(d.getDate()-w);return dkey(d.getTime())}
+function renderTrellis(){const keys=Object.keys(S.days).filter(k=>{const d=S.days[k];return d.beans.length||d.voids.length||d.leaf}).sort().reverse();
+  const total=keys.reduce((s,k)=>s+S.days[k].beans.length,0);
+  $('#rackSub').textContent=keys.length?`${keys.length} 莢・${total} 顆`:'還沒有豆莢';
+  if(!keys.length){$('#rackList').innerHTML='<div class="group"><div class="row"><span class="t" style="color:var(--label2)">第一顆響完，這裡就會掛上今天的豆莢。</span></div></div>';return}
+  const weeks={};keys.forEach(k=>(weeks[weekStart(k)]??=[]).push(k));
+  const thisW=weekStart(dkey());
+  $('#rackList').innerHTML=Object.keys(weeks).sort().reverse().map(ws=>`<div class="sec">${ws===thisW?'這週':md(ws)+' 那週'}</div>
+    <div class="group">${weeks[ws].map(k=>{const d=S.days[k];const dt=new Date(k+'T00:00');
+      return `<button class="row day-row" data-day="${k}"><span class="d"><b>${md(k)}</b><span>星期${WD[dt.getDay()]}</span></span><span style="flex:1">${d.leaf&&!d.beans.length?'<span class="leaf"></span>':podHTML(d)}</span>${chev}</button>`}).join('')}
+      <button class="row tint" data-wk="${ws}"><span class="t">翻到背面：這週的收據</span>${chev}</button></div>`).join('');
+  $('#rackList').querySelectorAll('[data-day]').forEach(b=>b.onclick=()=>openReceipt(b.dataset.day));
+  $('#rackList').querySelectorAll('[data-wk]').forEach(b=>b.onclick=()=>openWeek(b.dataset.wk))}
+function taskRows(d){return d.tasks.map(t=>({t,act:d.beans.filter(b=>b.taskId===t.id).reduce((s,b)=>s+units(b.len),0)}))}
+function openReceipt(k){const d=S.days[k];
+  const items=[...d.beans.map(b=>({t:b.t,html:`<span class="tm">${hm(b.start||b.t)}</span><span class="tx">${b.clue?esc(b.clue):'<span class="muted">畫面就是線索</span>'}${units(b.len)>1?'<span class="muted">　雙仁</span>':''}${b.flow?`<span class="muted">　延長 ${b.flow} 分</span>`:''}${b.notes.length||b.pings.length?`<br><span class="muted">${'\''.repeat(b.notes.length)}${'-'.repeat(b.pings.length)}</span>`:''}</span>`})),
+    ...d.voids.map(v=>({t:v.t,html:`<span class="tm">${hm(v.t)}</span><span class="tx muted">作廢，第 ${v.minute} 分鐘${v.reason?'・'+esc(v.reason):''}${v.text?'：'+esc(v.text):''}</span>`}))].sort((a,b)=>a.t-b.t);
+  const tr=taskRows(d);
+  sheet(`<h3>${md(k)}的收據</h3><p class="sub">${podHTML(d)}</p>
+  <div class="group receipt">${items.map(i=>`<div class="row">${i.html}</div>`).join('')||'<div class="row"><span class="tx muted">這天掛的是一片葉子。</span></div>'}</div>
+  ${tr.length?`<div class="sec" style="font-size:17px">估算對帳</div><div class="group">${tr.map(({t,act})=>`<div class="row"><span class="t">${esc(t.name)}${t.novel?'<span class="s">第一次做</span>':''}</span><span class="v">估 ${t.est}・實 ${act}</span></div>`).join('')}</div>`:''}
+  ${d.restOver?`<p class="foot-note">休息多了 ${d.restOver} 分鐘。</p>`:''}
+  <div class="two"><button class="btn2" id="rX">好</button></div>`);$('#rX').onclick=closeSheet}
+function openWeek(ws){const ks=Object.keys(S.days).filter(k=>weekStart(k)===ws).sort();
+  let under=0,over=0,even=0;const byType={},voids={};let flowN=0,beanN=0;
+  ks.forEach(k=>{const d=S.days[k];taskRows(d).forEach(({t,act})=>{if(t.novel||!act)return;if(act>t.est)under++;else if(act<t.est)over++;else even++});
+    d.beans.forEach(b=>{const n=typeOf(b.typeId).name;byType[n]=(byType[n]||0)+units(b.len);beanN++;if(b.flow)flowN++});
+    d.voids.forEach(v=>{const key=typeOf(v.typeId).name+(v.reason?'・'+v.reason:'');voids[key]=(voids[key]||0)+1})});
+  const totalV=Object.values(voids).reduce((a,b)=>a+b,0);
+  const verdict=under+over+even<3?'對帳的資料還不多，先繼續估。':under>over*2?'這週大多估少了。下次估同類的事，直接多加一些。':over>under*2?'這週大多估多了。':'估少和估多差不多，代表沒有一直往同一邊偏。';
+  sheet(`<h3>這週的收據</h3><p class="sub">${md(ws)}起的一週。只看方向，不看分數。</p>
+  <div class="group">${Object.entries(byType).map(([n,u])=>`<div class="row"><span class="t">${esc(n)}</span><span class="v">${u} 格</span></div>`).join('')||'<div class="row"><span class="t muted">這週還沒有豆子。</span></div>'}</div>
+  <div class="sec" style="font-size:17px">估算對帳</div>
+  <div class="group"><div class="row"><span class="t">估少了</span><span class="v">${under} 次</span></div><div class="row"><span class="t">估多了</span><span class="v">${over} 次</span></div><div class="row"><span class="t">剛好</span><span class="v">${even} 次</span></div></div>
+  <p class="foot-note">${verdict}</p>
+  ${totalV?`<div class="sec" style="font-size:17px">作廢分佈</div><div class="group">${Object.entries(voids).map(([n,c])=>`<div class="row"><span class="t">${esc(n)}</span><span class="v">${c}</span></div>`).join('')}</div>
+  ${totalV>=3?'<p class="foot-note">作廢多半跟番茄長度、或任務沒切小有關，不是意志力。</p>':''}`:''}
+  ${beanN>=4&&flowN*2>beanN?'<p class="foot-note">這週一半以上的番茄都延長了，這類事可以試試把番茄拉長。</p>':''}
+  <div class="two"><button class="btn2" id="wX">好</button></div>`);$('#wX').onclick=closeSheet}
+
+/* ---------- 設定 ---------- */
+function renderSettings(){const s=S.settings;
+  $('#setBody').innerHTML=`<div class="sec" style="font-size:13px;font-weight:400;color:var(--label2);margin:0 16px 8px">任務類型（每種一個固定長度）</div>
+  <div class="group">${s.types.map(t=>`<div class="row"><input class="name-in" data-tn="${t.id}" value="${esc(t.name)}" maxlength="12">
+    <select class="sel" data-tl="${t.id}">${[15,20,25,30,45,50,60].map(m=>`<option value="${m}" ${m==t.len?'selected':''}>${m} 分</option>`).join('')}</select>
+    ${s.types.length>1?`<button data-td="${t.id}" style="color:var(--red);font-size:15px">刪除</button>`:''}</div>`).join('')}
+    <button class="row tint" id="addType"><span class="t">加一種</span></button></div>
+  <div class="sec" style="font-size:13px;font-weight:400;color:var(--label2);margin:22px 16px 8px">節奏</div>
+  <div class="group">
+    <div class="row"><span class="t">休息</span><select class="sel" id="restMode"><option value="auto" ${s.restMode==='auto'?'selected':''}>到點提醒我</option><option value="self" ${s.restMode==='self'?'selected':''}>我自己決定</option></select></div>
+    <div class="row"><span class="t">收工提醒<span class="s">原型不會真的推播</span></span><input type="time" id="closeT" value="${s.closeTime}" class="sel"></div>
+    <div class="row"><span class="t">聲音</span><button class="sw ${s.sound?'on':''}" id="swSound" aria-label="聲音"></button></div>
+    <div class="row"><span class="t">試玩速度<span class="s">1 分鐘變 1 秒，自用時關掉</span></span><button class="sw ${s.demo?'on':''}" id="swDemo" aria-label="試玩速度"></button></div>
+  </div>
+  <div class="sec" style="font-size:13px;font-weight:400;color:var(--label2);margin:22px 16px 8px">備份</div>
+  <div class="group"><button class="row tint" id="bExp"><span class="t">匯出備份</span></button><button class="row tint" id="bImp"><span class="t">從備份匯入</span></button></div>
+  <p class="foot-note">刪掉主畫面捷徑會連資料一起刪，每週匯出一次。</p>
+  <input type="file" id="impFile" accept="application/json,.json" hidden>
+  <p class="foot-note" style="margin-top:22px">睡不好、生病、情緒低落的時候，任何方法都會看起來沒用。那時該照顧的是自己，不是方法。</p>
+  <div class="group" style="margin-top:22px"><button class="row danger" id="bWipe"><span class="t">清空所有資料</span></button></div>`;
+  const B=$('#setBody');
+  B.querySelectorAll('[data-tn]').forEach(i=>i.onchange=()=>{typeOf(i.dataset.tn).name=i.value.trim()||'未命名';save()});
+  B.querySelectorAll('[data-tl]').forEach(i=>i.onchange=()=>{typeOf(i.dataset.tl).len=+i.value;save();toast('這類的對帳從現在重新累積')});
+  B.querySelectorAll('[data-td]').forEach(i=>i.onclick=()=>{s.types=s.types.filter(t=>t.id!==i.dataset.td);if(!s.types.find(t=>t.id===s.typeId))s.typeId=s.types[0].id;save();renderSettings()});
+  $('#addType').onclick=()=>{s.types.push({id:'t'+Date.now(),name:'新類型',len:25});save();renderSettings()};
+  $('#restMode').onchange=e=>{s.restMode=e.target.value;save()};
+  $('#swSound').onclick=()=>{s.sound=!s.sound;save();renderSettings()};
+  $('#swDemo').onclick=()=>{s.demo=!s.demo;save();renderSettings()};
+  $('#closeT').onchange=e=>{s.closeTime=e.target.value;save()};
+  $('#bExp').onclick=()=>{const blob=new Blob([JSON.stringify(S,null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='豆帳備份-'+dkey()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)};
+  $('#bImp').onclick=()=>$('#impFile').click();
+  $('#impFile').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const o=JSON.parse(t);if(!o.settings||!o.days)throw 0;if(confirm('用備份覆蓋現在的資料？')){S=o;save();toast('匯入好了');renderSettings()}}catch(err){toast('這個檔案讀不懂')}})};
+  $('#bWipe').onclick=()=>{if(confirm('清空所有豆子、豆莢和設定？這個沒辦法復原。')){S=blank();save();go('home')}}}
+
+/* ---------- sheet ---------- */
+function sheet(html){$('#sheet').innerHTML='<div class="grabber"></div>'+html;$('#veil').classList.add('on')}
+function closeSheet(){$('#veil').classList.remove('on')}
+$('#veil').onclick=e=>{if(e.target.id==='veil')closeSheet()};
+
+/* ---------- 開機 ---------- */
+load();
+const c=S.current;
+if(c&&(c.phase==='focus'||c.phase==='flow'))go('timer');else if(c&&c.phase==='bell')go('bell');else if(c&&c.phase==='rest')go('rest');else go('home');
+window.__dz={get S(){return S},go};
+})();
+</script>
+</body>
+</html>
