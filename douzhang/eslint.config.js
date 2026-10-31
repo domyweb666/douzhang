@@ -45,7 +45,7 @@ module.exports = [
     },
   },
   {
-    files: ['screens/**/*.js', 'core/**/*.js', 'ui/**/*.js'],
+    files: ['screens/**/*.js', 'core/**/*.js', 'ui/**/*.js', '__tests__/**/*.js'],
     rules: {
       'no-restricted-imports': [
         'error',

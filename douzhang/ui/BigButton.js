@@ -1,6 +1,7 @@
 // 滿版主要按鈕：每個畫面只出現一次（Tokens 使用規則）。primary＝品牌綠底深字；second＝系統填色底。
 import { Pressable, Text } from 'react-native';
 import { useTokens } from '../design/Tokens';
+import { params } from '../design/params';
 
 export function BigButton({ label, onPress, onLongPress, disabled, second, style }) {
   const T = useTokens();
@@ -11,6 +12,7 @@ export function BigButton({ label, onPress, onLongPress, disabled, second, style
       disabled={disabled}
       onPress={onPress}
       onLongPress={onLongPress}
+      delayLongPress={params.devLongPressMs}
       style={({ pressed }) => [
         {
           height: T.shape.tapPrimary,

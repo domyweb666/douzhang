@@ -115,7 +115,7 @@ function TypeChip({ type }) {
         justifyContent: 'center',
       }}
     >
-      <Text style={{ ...T.font.sub, fontWeight: '600', color: T.color.textPrimary }}>
+      <Text style={{ ...T.font.chip, color: T.color.textPrimary }}>
         {typeChipLabel(type.name, type.len)}
       </Text>
     </View>

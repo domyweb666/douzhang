@@ -15,21 +15,28 @@ export default function App() {
   const now = useNow();
   const [state, setState] = useState(null); // null＝還在讀檔
   const [saveFailed, setSaveFailed] = useState(false);
+  const [unreadable, setUnreadable] = useState(false); // 本機檔讀不懂：先不覆蓋（I1），清空要等 G4
 
   useEffect(() => {
     let alive = true;
-    load().then(({ state: loaded }) => {
-      if (alive) setState(settle(loaded, Date.now()));
+    load().then(({ state: loaded, unreadable: broken }) => {
+      if (!alive) return;
+      setUnreadable(broken);
+      setState(settle(loaded, Date.now()));
     });
     return () => {
       alive = false;
     };
   }, []);
 
-  const commit = useCallback((next) => {
-    setState(next);
-    save(next).then((ok) => setSaveFailed(!ok)); // S6：寫失敗要被看到
-  }, []);
+  const commit = useCallback(
+    (next) => {
+      setState(next);
+      if (unreadable) return; // 壞檔不蓋（I1）：畫面照常，只是不寫回去
+      save(next).then((ok) => setSaveFailed(!ok)); // S6：寫失敗要被看到
+    },
+    [unreadable],
+  );
 
   if (!state) {
     return <View style={{ flex: 1, backgroundColor: T.color.background }} />;
@@ -49,6 +56,11 @@ export default function App() {
         style={{ flex: 1, paddingHorizontal: T.space.l, paddingBottom: T.space.m }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
+        {unreadable ? (
+          <Text style={{ ...T.font.caption, color: T.color.danger, marginTop: T.space.s }}>
+            {words.importUnreadable}
+          </Text>
+        ) : null}
         {saveFailed ? (
           <Text style={{ ...T.font.caption, color: T.color.danger, marginTop: T.space.s }}>
             {words.saveFailed}
