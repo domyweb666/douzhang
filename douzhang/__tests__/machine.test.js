@@ -231,14 +231,19 @@ describe('休息（A6）', () => {
     expect(phaseOf(saved, T0 + 85 * MIN)).toBe(PHASE.rest);
   });
 
-  test('收下後那句從 24 句裡抽，記進 lastLine，連續兩次不同句', () => {
-    let s = keep(start(withClue(), T0), T0 + 25 * MIN, 'x');
+  test('收下後那句從 24 句裡抽，記進 lastLine', () => {
+    const s = keep(start(withClue(), T0), T0 + 25 * MIN, 'x');
     expect(words.restLines).toContain(s.current.msg);
     expect(words.restLines[s.lastLine]).toBe(s.current.msg);
-    for (let i = 0; i < 30; i++) {
-      const prev = s.lastLine;
-      s = keep(start(backFromRest(s), T0), T0 + 25 * MIN, 'x');
-      expect(s.lastLine).not.toBe(prev);
-    }
+  });
+
+  test('抽到跟上一次同一句時改抽下一句，連續兩顆不會同句（亂數固定成一定撞到）', () => {
+    const spy = jest.spyOn(Math, 'random').mockReturnValue(0.5); // 24 句 → 永遠抽到第 12 句
+    const first = keep(start(withClue(), T0), T0 + 25 * MIN, 'x');
+    expect(first.lastLine).toBe(12);
+    const second = keep(start(backFromRest(first), T0), T0 + 25 * MIN, 'x');
+    expect(second.lastLine).toBe(13);
+    expect(second.current.msg).not.toBe(first.current.msg);
+    spy.mockRestore();
   });
 });

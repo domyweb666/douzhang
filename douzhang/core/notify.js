@@ -30,7 +30,10 @@ export async function askPermissionOnce() {
   const before = await Notifications.getPermissionsAsync();
   if (before.granted) return true;
   if (!before.canAskAgain) return false;
-  const after = await Notifications.requestPermissionsAsync();
+  // 只要橫幅與聲音，不要徽章（安全 P1 的精神：只申請用得到的）
+  const after = await Notifications.requestPermissionsAsync({
+    ios: { allowAlert: true, allowSound: true, allowBadge: false },
+  });
   return after.granted;
 }
 
@@ -39,8 +42,15 @@ export async function isGranted() {
   return p.granted;
 }
 
+let queue = Promise.resolve(); // 連續兩次轉態時，後一次要等前一次「取消＋排」做完，不然會排出兩則
+
 /** 全部取消再照 planned() 重排。排不進去（沒權限）不丟例外：那一行提示由殼顯示。 */
-export async function sync(state, now = Date.now()) {
+export function sync(state, now = Date.now()) {
+  queue = queue.then(() => arm(state, now));
+  return queue;
+}
+
+async function arm(state, now) {
   try {
     await Notifications.cancelAllScheduledNotificationsAsync();
     for (const n of planned(state, now)) {

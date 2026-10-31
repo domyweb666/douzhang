@@ -156,7 +156,7 @@ function CardBody({ phase, state, now, firstLine, onFirstLine }) {
     return <Countdown left={left} label={words.doing} body={state.current.clue} />;
   if (phase === PHASE.rest) {
     // 「我自己決定」的休息沒有結束時刻：大時間數正數（休息了多久），只有按回來才結束
-    const self = state.settings.restMode === 'self';
+    const self = state.current.endAt == null; // 看資料不看設定：休息中改設定也不會卡住
     const shown = self ? now - state.current.restStart : left;
     return <Countdown left={shown} label={words.rest} body={words.restBody} />;
   }

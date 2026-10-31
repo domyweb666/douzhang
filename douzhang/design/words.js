@@ -11,8 +11,7 @@ export const words = {
   rang: '響了。', // 鈴響頁標題
   keepThis: '收下這顆',
   keepWithoutNote: '這顆不留話',
-  flow15: '再做 15 分',
-  flow30: '再做 30 分',
+  flowMore: (minutes) => `再做 ${minutes} 分`, // 分鐘數從 params.flowMinutes 來
   flowTitle: '在狀態裡，再做一下', // 只當說明句
   rest: '休息',
 

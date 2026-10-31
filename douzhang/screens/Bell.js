@@ -31,19 +31,18 @@ function Header({ current, now, onOpenFlow }) {
 function Jotted({ current }) {
   const T = useTokens();
   const rows = [
-    ...current.notes.map((v) => ({ k: words.noteThought, v })),
-    ...current.pings.map((v) => ({ k: words.notePing, v })),
+    ...(current.notes || []).map((v) => ({ k: words.noteThought, v })),
+    ...(current.pings || []).map((v) => ({ k: words.notePing, v })),
   ];
   if (!rows.length) return null;
+  const sub = { ...T.font.sub, color: T.color.textSecondary };
   return (
     <View style={{ marginTop: T.space.m }}>
       {rows.map((r, i) => (
-        <Text
-          key={i}
-          style={{ ...T.font.sub, color: T.color.textSecondary, marginTop: T.space.xs }}
-        >
-          {r.k}　{r.v}
-        </Text>
+        <View key={i} style={{ flexDirection: 'row', marginTop: T.space.xs }}>
+          <Text style={{ ...sub, marginRight: T.space.m }}>{r.k}</Text>
+          <Text style={{ ...sub, flex: 1 }}>{r.v}</Text>
+        </View>
       ))}
     </View>
   );
@@ -53,13 +52,15 @@ function FlowSheet({ visible, onClose, onFlow }) {
   const T = useTokens();
   return (
     <Sheet visible={visible} title={words.flowTitle} sub={words.flowSub} onClose={onClose}>
-      <BigButton second label={words.flow15} onPress={() => onFlow(15)} />
-      <BigButton
-        second
-        label={words.flow30}
-        onPress={() => onFlow(30)}
-        style={{ marginTop: T.space.m }}
-      />
+      {params.flowMinutes.map((minutes, i) => (
+        <BigButton
+          key={minutes}
+          second
+          label={words.flowMore(minutes)}
+          onPress={() => onFlow(minutes)}
+          style={i ? { marginTop: T.space.m } : null}
+        />
+      ))}
     </Sheet>
   );
 }

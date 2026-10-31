@@ -16,21 +16,21 @@ export function typeOf(state, typeId) {
 }
 
 /** 休息有沒有到點。「我自己決定」的休息沒有 endAt，永遠不自己結束。 */
-const restOver = (c, now) => c.endAt != null && now >= c.endAt;
+const restEnded = (c, now) => c.endAt != null && now >= c.endAt;
 
 /** 現在該顯示哪一態：由 current 與時鐘算出來，不另外存。 */
 export function phaseOf(state, now) {
   const c = state.current;
   if (!c) return PHASE.idle;
   if (c.phase === PHASE.focus) return now >= c.endAt ? PHASE.bell : PHASE.focus;
-  if (c.phase === PHASE.rest) return restOver(c, now) ? PHASE.idle : PHASE.rest;
+  if (c.phase === PHASE.rest) return restEnded(c, now) ? PHASE.idle : PHASE.rest;
   return PHASE.idle;
 }
 
 /** 休息到點就算回待機了：把過期的 rest 收掉。每次 tick 與開機讀檔後呼叫。 */
 export function settle(state, now) {
   const c = state.current;
-  if (c && c.phase === PHASE.rest && restOver(c, now)) return { ...state, current: null };
+  if (c && c.phase === PHASE.rest && restEnded(c, now)) return { ...state, current: null };
   return state;
 }
 

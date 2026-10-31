@@ -42,67 +42,108 @@ function NotificationOffLine({ onOpen }) {
   );
 }
 
-export default function App() {
-  const T = useTokens();
+/** 權限狀態：開機與回前景各看一次（使用者可能剛從系統設定改回來）。剛打開時要重排一次通知，所以回報「翻成允許」。 */
+function useNotificationDenied(onGranted) {
+  const [denied, setDenied] = useState(false);
+  const wasDenied = useRef(false);
+  useEffect(() => {
+    const refresh = () =>
+      isGranted()
+        .then((ok) => {
+          setDenied(!ok);
+          if (ok && wasDenied.current) onGranted();
+          wasDenied.current = !ok;
+        })
+        .catch(() => {});
+    refresh();
+    const sub = AppState.addEventListener('change', (next) => {
+      if (next === 'active') refresh();
+    });
+    return () => sub.remove();
+  }, [onGranted]);
+  return [denied, setDenied];
+}
+
+/** 狀態與通知對齊：內容沒變就不重排（存草稿每個字都 commit，不該每個字都取消再排）。 */
+function useArm() {
+  const lastPlan = useRef('');
+  return useCallback((next, force) => {
+    const plan = JSON.stringify(planned(next, Date.now()));
+    if (!force && plan === lastPlan.current) return;
+    lastPlan.current = plan;
+    sync(next);
+  }, []);
+}
+
+/** 狀態與動作全在這裡：殼只負責排版。每個動作先算新狀態（純函式），再 commit（存檔＋對齊通知）。 */
+function useDouzhang() {
   const now = useNow();
   const [state, setState] = useState(null); // null＝還在讀檔
   const [saveFailed, setSaveFailed] = useState(false);
   const [unreadable, setUnreadable] = useState(false); // 本機檔讀不懂：先不覆蓋（I1），清空要等 G4
-  const [notifDenied, setNotifDenied] = useState(false);
-  const lastPlan = useRef(''); // 上次排給系統的內容；沒變就不重排（存草稿每個字都 commit，不該每個字都取消再排）
+  const arm = useArm();
+  const stateRef = useRef(null);
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
+  const rearm = useCallback(() => {
+    if (stateRef.current) arm(stateRef.current, true);
+  }, [arm]);
+  const [notifDenied, setNotifDenied] = useNotificationDenied(rearm);
 
   useEffect(() => {
     let alive = true;
     load().then(({ state: loaded, unreadable: broken }) => {
       if (!alive) return;
       setUnreadable(broken);
-      setState(settle(loaded, Date.now()));
+      const settled = settle(loaded, Date.now());
+      setState(settled);
+      arm(settled, true); // 開機對齊：系統裡排的要跟現在的狀態一致
     });
     return () => {
       alive = false;
     };
-  }, []);
-
-  // 權限狀態：開機與回前景各看一次（使用者可能剛從系統設定改回來）
-  useEffect(() => {
-    const refresh = () => isGranted().then((ok) => setNotifDenied(!ok));
-    refresh();
-    const sub = AppState.addEventListener('change', (next) => {
-      if (next === 'active') refresh();
-    });
-    return () => sub.remove();
-  }, []);
+  }, [arm]);
 
   const commit = useCallback(
     (next) => {
       setState(next);
       if (!unreadable) save(next).then((ok) => setSaveFailed(!ok)); // 壞檔不蓋（I1）；S6：寫失敗要被看到
-      const plan = JSON.stringify(planned(next, Date.now()));
-      if (plan !== lastPlan.current) {
-        lastPlan.current = plan;
-        sync(next);
-      }
+      arm(next);
     },
-    [unreadable],
+    [unreadable, arm],
   );
+  // 動作都在「按下那一刻」看時鐘：recipe 拿到現在的毫秒，回新狀態
+  const act = useCallback((recipe) => commit(recipe(Date.now())), [commit]);
 
-  if (!state) {
-    return <View style={{ flex: 1, backgroundColor: T.color.background }} />;
-  }
-
+  if (!state) return null;
   // 休息到點沒按也回待機：每一拍在 render 時把過期的休息收掉，下一次動作才存回去
   const live = settle(state, now);
-  const phase = phaseOf(live, now);
-  const onStart = async (opts) => {
-    // 只有第一次（還沒問過）才會真的跳框；之後這一行只是讀狀態
-    const ok = await askPermissionOnce();
-    setNotifDenied(!ok);
-    commit(start(live, Date.now(), opts));
+  const actions = {
+    onStart: async (opts) => {
+      // 只有第一次（還沒問過）才會真的跳框；問不到也照樣開始（核心不靠通知）
+      let ok = false;
+      try {
+        ok = await askPermissionOnce();
+      } catch {
+        ok = false;
+      }
+      setNotifDenied(!ok);
+      act((t) => start(live, t, opts));
+    },
+    onKeep: (text) => act((t) => keep(live, t, text)),
+    onBackFromRest: () => commit(backFromRest(live)),
+    onFlow: (minutes) => act((t) => flow(live, t, minutes)),
+    onDraft: (text) => commit(setDraft(live, text)), // 每個字都存：殺掉再開草稿才在
   };
-  const onKeep = (text) => commit(keep(live, Date.now(), text));
-  const onBackFromRest = () => commit(backFromRest(live));
-  const onFlow = (minutes) => commit(flow(live, Date.now(), minutes));
-  const onDraft = (text) => commit(setDraft(live, text)); // 每個字都存：殺掉再開草稿才在
+  return { live, now, phase: phaseOf(live, now), saveFailed, unreadable, notifDenied, actions };
+}
+
+export default function App() {
+  const T = useTokens();
+  const dz = useDouzhang();
+  if (!dz) return <View style={{ flex: 1, backgroundColor: T.color.background }} />;
+  const { live, now, phase, saveFailed, unreadable, notifDenied, actions } = dz;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: T.color.background }}>
@@ -121,17 +162,17 @@ export default function App() {
             current={live.current}
             now={now}
             draft={live.current.draft || ''}
-            onDraft={onDraft}
-            onKeep={onKeep}
-            onFlow={onFlow}
+            onDraft={actions.onDraft}
+            onKeep={actions.onKeep}
+            onFlow={actions.onFlow}
           />
         ) : (
           <Home
             state={live}
             phase={phase}
             now={now}
-            onStart={onStart}
-            onBackFromRest={onBackFromRest}
+            onStart={actions.onStart}
+            onBackFromRest={actions.onBackFromRest}
           />
         )}
       </KeyboardAvoidingView>

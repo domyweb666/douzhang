@@ -12,8 +12,6 @@ export function Sheet({ visible, title, sub, onClose, children }) {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={title}
           onPress={onClose}
           style={{ flex: 1, backgroundColor: T.color.separator, opacity: T.opacity.disabled }}
         />

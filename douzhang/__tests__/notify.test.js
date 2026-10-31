@@ -42,10 +42,28 @@ describe('該排什麼', () => {
     expect(planned(rang, T0 + 40 * MIN)).toEqual([]);
   });
 
-  test('休息模式是我自己決定時，不排休息通知', () => {
-    const s = keep(start(withClue(), T0), T0 + 25 * MIN, 'x');
-    s.settings = { ...s.settings, restMode: 'self' };
+  test('休息模式是我自己決定時（休息沒有結束時刻），不排休息通知', () => {
+    const base = withClue();
+    base.settings = { ...base.settings, restMode: 'self' };
+    const s = keep(start(base, T0), T0 + 25 * MIN, 'x');
+    expect(s.current.endAt).toBeNull();
     expect(planned(s, T0 + 26 * MIN)).toEqual([]);
+  });
+
+  test('連續兩次同步會排隊：後一次等前一次做完，系統裡只留最後那一份', async () => {
+    const order = [];
+    Notifications.cancelAllScheduledNotificationsAsync.mockImplementation(
+      () => new Promise((r) => setTimeout(() => (order.push('cancel'), r()), 5)),
+    );
+    Notifications.scheduleNotificationAsync.mockImplementation((req) => {
+      order.push(req.content.title);
+      return Promise.resolve('id');
+    });
+    const focus = start(withClue(), T0);
+    const p1 = sync(focus, T0);
+    const p2 = sync(withClue(), T0);
+    await Promise.all([p1, p2]);
+    expect(order).toEqual(['cancel', '響了。', 'cancel']);
   });
 });
 
