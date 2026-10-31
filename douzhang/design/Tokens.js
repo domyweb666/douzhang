@@ -86,8 +86,8 @@ export function makeTokens(dark = false, hc = false) {
       section: { fontSize: 22, fontWeight: '700' }, // 豆棚週標題、半頁標題
       body: { fontSize: 17 },
       callout: { fontSize: 16 },
-      sub: { fontSize: 15 },
-      chip: { fontSize: 15, fontWeight: '600' }, // 類型 chip（原型 .chip 15/600） // 列副標、chip、hint 連結
+      sub: { fontSize: 15 }, // 列副標、chip、hint 連結
+      chip: { fontSize: 15, fontWeight: '600' }, // 類型 chip（原型 .chip 15/600）
       caption: { fontSize: 13 }, // 小標 cap、foot-note、卡片標籤
       clock: {
         fontSize: 92,

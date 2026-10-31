@@ -122,55 +122,75 @@ function TypeChip({ type }) {
   );
 }
 
+/** 計時中與休息共用：大時間＋小標＋一句。 */
+function Countdown({ left, label, body }) {
+  return (
+    <View>
+      <Clock focus text={mmss(left)} />
+      <Label>{label}</Label>
+      <Body>{body}</Body>
+    </View>
+  );
+}
+
+function CardBody({ phase, state, now, firstLine, onFirstLine }) {
+  const left = state.current ? state.current.endAt - now : 0;
+  if (phase === PHASE.focus)
+    return <Countdown left={left} label={words.doing} body={state.current.clue} />;
+  if (phase === PHASE.rest)
+    return <Countdown left={left} label={words.rest} body={words.restBody} />;
+  if (!state.clue) return <FirstInput value={firstLine} onChange={onFirstLine} />;
+  return <ClueCard text={state.clue.text} />;
+}
+
+function PrimaryButton({ phase, first, firstLine, onStart, onBackFromRest }) {
+  // 開發期快轉：長按開始＝一分鐘測試顆。正式 build 沒有這個手勢。
+  const devStart = __DEV__ ? () => onStart({ typeId: DEV_TYPE.id, firstLine }) : undefined;
+  if (phase === PHASE.rest)
+    return <BigButton label={words.backFromRest} onPress={onBackFromRest} />;
+  if (phase !== PHASE.idle) return null;
+  if (first) {
+    return (
+      <BigButton
+        label={words.startFirst}
+        disabled={!firstLine.trim()}
+        onPress={() => onStart({ firstLine })}
+        onLongPress={devStart}
+      />
+    );
+  }
+  return <BigButton label={words.start} onPress={() => onStart({})} onLongPress={devStart} />;
+}
+
 export function Home({ state, phase, now, onStart, onBackFromRest }) {
   const T = useTokens();
   const [firstLine, setFirstLine] = useState('');
   const first = !state.clue;
   const type = typeOf(state, state.settings.typeId);
-  const left = state.current ? state.current.endAt - now : 0;
   const idle = phase === PHASE.idle;
-
-  // 開發期快轉：長按開始＝一分鐘測試顆。正式 build 沒有這個手勢。
-  const devStart = __DEV__ ? () => onStart({ typeId: DEV_TYPE.id, firstLine }) : undefined;
 
   return (
     <View style={{ flex: 1 }}>
       <Nav />
       <Card>
-        {idle && first ? <FirstInput value={firstLine} onChange={setFirstLine} /> : null}
-        {idle && !first ? <ClueCard text={state.clue.text} /> : null}
-        {phase === PHASE.focus ? (
-          <View>
-            <Clock focus text={mmss(left)} />
-            <Label>{words.doing}</Label>
-            <Body>{state.current.clue}</Body>
-          </View>
-        ) : null}
-        {phase === PHASE.rest ? (
-          <View>
-            <Clock focus text={mmss(left)} />
-            <Label>{words.rest}</Label>
-            <Body>{words.restBody}</Body>
-          </View>
-        ) : null}
+        <CardBody
+          phase={phase}
+          state={state}
+          now={now}
+          firstLine={firstLine}
+          onFirstLine={setFirstLine}
+        />
       </Card>
       {idle ? <TypeChip type={type} /> : null}
       {idle ? <Clock text={`${type.len}:00`} style={{ marginTop: T.space.s }} /> : null}
       <View style={{ flex: 1 }} />
-      {idle && first ? (
-        <BigButton
-          label={words.startFirst}
-          disabled={!firstLine.trim()}
-          onPress={() => onStart({ firstLine })}
-          onLongPress={devStart}
-        />
-      ) : null}
-      {idle && !first ? (
-        <BigButton label={words.start} onPress={() => onStart({})} onLongPress={devStart} />
-      ) : null}
-      {phase === PHASE.rest ? (
-        <BigButton label={words.backFromRest} onPress={onBackFromRest} />
-      ) : null}
+      <PrimaryButton
+        phase={phase}
+        first={first}
+        firstLine={firstLine}
+        onStart={onStart}
+        onBackFromRest={onBackFromRest}
+      />
     </View>
   );
 }
