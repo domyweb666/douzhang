@@ -1,6 +1,6 @@
 // 設定（全頁模態）。五區依序：任務類型、節奏、提醒、手感、備份（PRD S18）。
-// C1 先有「任務類型」；節奏、提醒、手感是 G1，備份與清空是 G2–G4。狀態機在 core/settings.js。
-import { ScrollView, Text, TextInput, View } from 'react-native';
+// 任務類型 C1；節奏、提醒、手感 G1；備份與清空 G2–G4。狀態機在 core/settings.js，改完立刻生效（下一拍就讀新設定）。
+import { Linking, ScrollView, Switch, Text, TextInput, View } from 'react-native';
 import { useTokens } from '../design/Tokens';
 import { words } from '../design/words';
 import { params } from '../design/params';
@@ -8,6 +8,11 @@ import { TextButton } from '../ui/TextButton';
 import { Segmented } from '../ui/Segmented';
 
 const LENGTHS = params.typeLengths.map((len) => ({ value: len, label: words.typeLen(len) }));
+const REST_MODES = [
+  { value: 'auto', label: words.restModeAuto },
+  { value: 'self', label: words.restModeSelf },
+];
+const CLOSE_TIMES = params.closeTimes.map((t) => ({ value: t, label: t }));
 
 function Cap({ children }) {
   const T = useTokens();
@@ -68,6 +73,125 @@ function TypeRow({ type, canDelete, onRename, onSetLen, onRemove }) {
   );
 }
 
+/** 設定裡的一列：左邊主字（可帶副標），右邊放開關或狀態；下面可以再放一排分段。 */
+function SettingRow({ title, sub, right, children, last }) {
+  const T = useTokens();
+  return (
+    <View
+      style={{
+        paddingVertical: T.space.m,
+        borderBottomWidth: last ? 0 : T.shape.hairline,
+        borderBottomColor: T.color.separator,
+      }}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: T.shape.tapMin }}>
+        <View style={{ flex: 1 }}>
+          <Text style={{ ...T.font.body, color: T.color.textPrimary }}>{title}</Text>
+          {sub ? (
+            <Text
+              style={{ ...T.font.caption, color: T.color.textSecondary, marginTop: T.space.xs }}
+            >
+              {sub}
+            </Text>
+          ) : null}
+        </View>
+        {right}
+      </View>
+      {children}
+    </View>
+  );
+}
+
+function Toggle({ value, onChange, label }) {
+  const T = useTokens();
+  return (
+    <Switch
+      accessibilityLabel={label}
+      value={!!value}
+      onValueChange={onChange}
+      trackColor={{ false: T.color.fillButton, true: T.color.accent }}
+      ios_backgroundColor={T.color.fillButton}
+    />
+  );
+}
+
+function RhythmSection({ settings, actions }) {
+  const T = useTokens();
+  return (
+    <View>
+      <Cap>{words.rhythm}</Cap>
+      <Group>
+        <SettingRow title={words.restRow}>
+          <Segmented
+            options={REST_MODES}
+            value={settings.restMode}
+            onChange={actions.onSetRestMode}
+            style={{ marginTop: T.space.s }}
+          />
+        </SettingRow>
+        <SettingRow last title={words.closeTimeRow} sub={words.closeTimeSub}>
+          <Segmented
+            options={CLOSE_TIMES}
+            value={settings.closeTime}
+            onChange={actions.onSetCloseTime}
+            style={{ marginTop: T.space.s }}
+          />
+        </SettingRow>
+      </Group>
+    </View>
+  );
+}
+
+/** 到點通知：允許就「開著」；沒開就「沒開」＋「打開」去系統設定（06 設定狀態表）。 */
+function NotifStatus({ denied }) {
+  const T = useTokens();
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+      <Text style={{ ...T.font.sub, color: T.color.textSecondary }}>
+        {denied ? words.notifOff : words.notifOn}
+      </Text>
+      {denied ? (
+        <TextButton label={words.notifOpen} onPress={() => Linking.openSettings()} />
+      ) : null}
+    </View>
+  );
+}
+
+function ReminderSection({ settings, actions, notifDenied }) {
+  return (
+    <View>
+      <Cap>{words.reminders}</Cap>
+      <Group>
+        <SettingRow title={words.notifRow} right={<NotifStatus denied={notifDenied} />} />
+        <SettingRow
+          last
+          title={words.soundRow}
+          right={
+            <Toggle value={settings.sound} onChange={actions.onSetSound} label={words.soundRow} />
+          }
+        />
+      </Group>
+    </View>
+  );
+}
+
+function FeelSection({ settings, actions }) {
+  return (
+    <View>
+      <Cap>{words.feel}</Cap>
+      <Group>
+        <SettingRow
+          last
+          title={words.tiltRow}
+          right={
+            <Toggle value={settings.tilt} onChange={actions.onSetTilt} label={words.tiltRow} />
+          }
+        />
+      </Group>
+    </View>
+  );
+}
+
 function TypesSection({ settings, actions }) {
   const T = useTokens();
   return (
@@ -95,7 +219,7 @@ function TypesSection({ settings, actions }) {
   );
 }
 
-export function Settings({ state, actions, onBack }) {
+export function Settings({ state, actions, notifDenied, onBack }) {
   const T = useTokens();
   return (
     <View style={{ flex: 1 }}>
@@ -117,6 +241,9 @@ export function Settings({ state, actions, onBack }) {
         contentContainerStyle={{ paddingBottom: T.space.xl }}
       >
         <TypesSection settings={state.settings} actions={actions} />
+        <RhythmSection settings={state.settings} actions={actions} />
+        <ReminderSection settings={state.settings} actions={actions} notifDenied={notifDenied} />
+        <FeelSection settings={state.settings} actions={actions} />
       </ScrollView>
     </View>
   );

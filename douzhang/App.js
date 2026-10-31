@@ -37,6 +37,10 @@ import {
   pickType,
   removeType,
   renameType,
+  setCloseTime,
+  setRestMode,
+  setSound,
+  setTilt,
   setTypeLen,
 } from './core/settings';
 import { useNow } from './ui/useNow';
@@ -217,6 +221,11 @@ function makeActions(live, act, commit) {
     onRemoveType: (id) => commit(removeType(live, id)),
     onEstimate: (v) => act((t) => estimate(live, t, v)),
     onPickTask: (id) => act((t) => pickTask(live, t, id)),
+    // 節奏、提醒、手感（G1）
+    onSetRestMode: (mode) => commit(setRestMode(live, mode)),
+    onSetCloseTime: (time) => commit(setCloseTime(live, time)),
+    onSetSound: (on) => commit(setSound(live, on)),
+    onSetTilt: (on) => commit(setTilt(live, on)),
     // 收工與葉子（F）
     onCloseDay: (text) => act((t) => closeDay(live, t, text)),
     onHangLeaf: () => act((t) => hangLeaf(live, t)),
@@ -259,7 +268,12 @@ export default function App() {
             }}
           />
         ) : screen === 'settings' ? (
-          <Settings state={live} actions={actions} onBack={() => setScreen('home')} />
+          <Settings
+            state={live}
+            actions={actions}
+            notifDenied={notifDenied}
+            onBack={() => setScreen('home')}
+          />
         ) : screen === 'rack' ? (
           <Rack state={live} now={now} actions={actions} onBack={() => setScreen('home')} />
         ) : (

@@ -61,17 +61,23 @@ describe('任務類型（C1）', () => {
   });
 });
 
-describe('節奏、提醒、手感（G1 先備好）', () => {
+describe('節奏、提醒、手感（G1）', () => {
   test('休息怎麼算只有 auto／self 兩種', () => {
     expect(setRestMode(blank(), 'self').settings.restMode).toBe('self');
     expect(setRestMode(blank(), 'whatever').settings.restMode).toBe('auto');
   });
 
   test('收工時間、聲音、傾斜各改各的', () => {
-    const s = setTilt(setSound(setCloseTime(blank(), '21:30'), false), false);
-    expect(s.settings.closeTime).toBe('21:30');
+    const s = setTilt(setSound(setCloseTime(blank(), '21:00'), false), false);
+    expect(s.settings.closeTime).toBe('21:00');
     expect(s.settings.sound).toBe(false);
     expect(s.settings.tilt).toBe(false);
+  });
+
+  test('收工時間只能選刻度上的整點；刻度外的值不改', () => {
+    const s = blank();
+    expect(setCloseTime(s, '21:30')).toBe(s);
+    expect(setCloseTime(s, 'x')).toBe(s);
   });
 });
 

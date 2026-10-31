@@ -106,6 +106,22 @@ export const words = {
   unnamedType: '未命名',
   back: '回去',
 
+  // 設定的節奏、提醒、手感（G1；原型 renderSettings、06 設定狀態表）
+  rhythm: '節奏',
+  restRow: '休息',
+  restModeAuto: '到點提醒我',
+  restModeSelf: '我自己決定',
+  closeTimeRow: '收工時間',
+  closeTimeSub: '過了這個時間，主畫面才會出現「收工」',
+  reminders: '提醒',
+  notifRow: '到點通知',
+  notifOn: '開著',
+  notifOff: '沒開',
+  notifOpen: '打開',
+  soundRow: '聲音',
+  feel: '手感',
+  tiltRow: '傾斜手機，豆子跟著滾',
+
   // 收工與葉子（F1、F2）：06 收工半頁、豆棚頂端列；待機那一行照原型 renderHome
   close: '收工', // 半頁標題與按鈕同字
   closeSub: '今天的豆莢掛上架，最後那句種進土裡，明天打開就在。',

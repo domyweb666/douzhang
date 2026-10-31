@@ -39,7 +39,9 @@ export function removeType(state, id) {
 
 export const setRestMode = (state, restMode) =>
   withSettings(state, { restMode: restMode === 'self' ? 'self' : 'auto' });
-export const setCloseTime = (state, closeTime) => withSettings(state, { closeTime });
+/** 收工時間只准刻度上的值（params.closeTimes）；匯入的舊檔可以是別的值，設定頁就是沒有一格亮。 */
+export const setCloseTime = (state, closeTime) =>
+  params.closeTimes.includes(closeTime) ? withSettings(state, { closeTime }) : state;
 export const setSound = (state, sound) => withSettings(state, { sound: !!sound });
 export const setTilt = (state, tilt) => withSettings(state, { tilt: !!tilt });
 
