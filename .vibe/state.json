@@ -1,6 +1,6 @@
 {
-  "station": "spec-standards",
-  "updated_at": "2026-11-01T04:45:00+08:00",
+  "station": "plan-readback",
+  "updated_at": "2026-11-01T05:00:00+08:00",
   "updated_by": "vibe-traffic-control",
   "pieces": { "todo": 22, "machine_verified": 0, "human_verified": 0 },
   "chunks": [
