@@ -11,7 +11,8 @@
     "accent(B 深綠)": {"light": "#1F7A3A", "dark": "#30D158", "hc_light": "#165A2A", "hc_dark": "#30DB5B"},
     "accentText":  {"light": "#1F7A3A", "dark": "#30D158", "hc_light": "#165A2A", "hc_dark": "#5EE37C"},
     "danger":      {"light": "#C8102E", "dark": "#FF453A", "hc_light": "#A3000F", "hc_dark": "#FF6961"},
-    "角色色 pod":  {"light": "#BFE0A3", "dark": "#7FA86A", "hc_light": "#BFE0A3", "hc_dark": "#7FA86A"}
+    "角色色 pod":  {"light": "#E5553C", "dark": "#D94C34", "hc_light": "#E5553C", "hc_dark": "#D94C34"},
+    "角色色 podShade": {"light": "#B83A26", "dark": "#F07A62", "hc_light": "#B83A26", "hc_dark": "#F07A62"}
   },
   "pairs": [
     {"fg": "textPrimary", "bg": "背景", "large": false, "where": "標題、內文、大時間"},
@@ -24,6 +25,8 @@
     {"fg": "accentText", "bg": "卡片底", "large": false, "where": "「加一種」「收工」「翻到背面」等可點文字"},
     {"fg": "accentText", "bg": "背景", "large": false, "where": "hint 裡的連結"},
     {"fg": "danger", "bg": "卡片底", "large": false, "where": "清空所有資料、錯誤字"},
-    {"fg": "textPrimary", "bg": "角色色 pod", "large": false, "where": "禁止組合：角色色當文字底（證明用）"}
+    {"fg": "textPrimary", "bg": "角色色 pod", "large": false, "where": "禁止組合：角色色當文字底（證明用）"},
+    {"fg": "角色色 pod", "bg": "卡片底", "large": true, "where": "番茄串小圓點（非文字圖形，門檻 3:1）"},
+    {"fg": "角色色 podShade", "bg": "卡片底", "large": true, "where": "作廢空心圈的框（非文字圖形，門檻 3:1）"}
   ]
 }

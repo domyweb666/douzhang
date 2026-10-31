@@ -26,10 +26,12 @@ const palette = {
   cardDark: '#1C1C1E',
 };
 
-// 角色色：另外放，不進介面語意層。只准畫豆子、豆莢、葉子；不當文字色、不當按鈕色。
+// 角色色：另外放，不進介面語意層。只准畫番茄、番茄串、葉子；不當文字色、不當按鈕色。
+// 2026-11-01 多米：番茄串的小圓點改番茄紅（取自番茄圖平均色 #CB4B34 附近，淺深各調到在卡片底上 ≥ 3:1）；葉子維持原本的綠。
 export const CharacterColors = {
-  pod: { light: '#BFE0A3', dark: '#7FA86A' },
-  podShade: { light: '#9CC77E', dark: '#5F8A4C' },
+  pod: { light: '#E5553C', dark: '#D94C34' }, // 白卡 3.69:1、深卡 4.08:1
+  podShade: { light: '#B83A26', dark: '#F07A62' }, // 作廢空心圈的框：白卡 5.72:1、深卡 6.21:1
+  leaf: { light: '#BFE0A3', dark: '#7FA86A' }, // 原本的豆綠，留給葉子
   // 番茄本身用插圖 img/tomato.webp、tomato2.webp（2026-11-01 多米給，原本是豌豆 pea.webp），不是純色
 };
 

@@ -44,7 +44,7 @@ export function Pod({ items }) {
 export function Leaf() {
   const T = useTokens();
   const dot = T.shape.podDot;
-  const fill = T._dark ? CharacterColors.pod.dark : CharacterColors.pod.light;
+  const fill = T._dark ? CharacterColors.leaf.dark : CharacterColors.leaf.light;
   return (
     <View
       accessibilityLabel={words.leafA11y}
