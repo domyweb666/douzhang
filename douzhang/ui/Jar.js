@@ -21,10 +21,17 @@ const SFX = {
     require('../assets/sfx/hit350.wav'),
   ],
 };
+// 番茄圖（2026-11-01 多米給的黏土番茄）：圖的寬＝本體寬、本體中心＝圖中心，蒂與藤往上露出物理圓圈外；
+// 圖的下方補了等高的透明，雙番茄才會繞本體中心轉。高度照圖的比例算，不寫死。
 const IMG = {
-  single: require('../assets/img/pea.webp'),
-  double: require('../assets/img/pea2.webp'),
+  single: require('../assets/img/tomato.webp'),
+  double: require('../assets/img/tomato2.webp'),
 };
+const aspectOf = (src) => {
+  const { width, height } = Image.resolveAssetSource(src);
+  return height / width;
+};
+const ASPECT = { single: aspectOf(IMG.single), double: aspectOf(IMG.double) };
 const HAPTIC = {
   'impact.rigid': Haptics.ImpactFeedbackStyle.Rigid,
   'impact.light': Haptics.ImpactFeedbackStyle.Light,
@@ -222,30 +229,31 @@ function useLoop(worldRef, onLowFps) {
 }
 
 function Bean({ x, y, R }) {
+  const height = R * 2 * ASPECT.single;
   return (
     <Image
       source={IMG.single}
       style={{
         position: 'absolute',
         width: R * 2,
-        height: R * 2,
-        transform: [{ translateX: x - R }, { translateY: y - R }],
+        height,
+        transform: [{ translateX: x - R }, { translateY: y - height / 2 }],
       }}
     />
   );
 }
 
-function DoubleBean({ cx, cy, ang, R, width }) {
+function DoubleBean({ cx, cy, ang, width }) {
   return (
     <Image
       source={IMG.double}
       style={{
         position: 'absolute',
         width,
-        height: R * 2,
+        height: width * ASPECT.double,
         transform: [
           { translateX: cx - width / 2 },
-          { translateY: cy - R },
+          { translateY: cy - (width * ASPECT.double) / 2 },
           { rotate: `${ang}rad` },
         ],
       }}
@@ -325,7 +333,7 @@ export function Jar({ beans, seenRef, sound, tilt, style }) {
         <Bean key={b.id} x={b.x} y={b.y} R={R} />
       ))}
       {frame.doubles.map((L) => (
-        <DoubleBean key={L.id} cx={L.cx} cy={L.cy} ang={L.ang} R={R} width={P.link + R * 2} />
+        <DoubleBean key={L.id} cx={L.cx} cy={L.cy} ang={L.ang} width={P.link + R * 2} />
       ))}
     </Pressable>
   );

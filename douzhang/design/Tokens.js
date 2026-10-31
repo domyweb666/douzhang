@@ -30,7 +30,7 @@ const palette = {
 export const CharacterColors = {
   pod: { light: '#BFE0A3', dark: '#7FA86A' },
   podShade: { light: '#9CC77E', dark: '#5F8A4C' },
-  // 豆子本身用插圖 img/pea.webp、pea2.webp（原型），不是純色
+  // 番茄本身用插圖 img/tomato.webp、tomato2.webp（2026-11-01 多米給，原本是豌豆 pea.webp），不是純色
 };
 
 // ---------- 系統語意色（iOS 由 UIKit 處理深色與增加對比） ----------
