@@ -58,6 +58,11 @@ export const words = {
   bellPlaceholder: '寫一行給下一顆的自己',
   devTypeName: '測試',
   settings: '設定',
+
+  // 通知（A4）：文案固定，不含那句（安全 P3）
+  restDone: '休息完了',
+  notificationOffLine: '到點通知沒開。鈴只在豆帳打開時響。',
+  openNotifications: '打開通知',
 };
 /** 類型 chip 的字：「一般・25 分」 */
 export const typeChipLabel = (name, len) => `${name}・${len} 分`;
