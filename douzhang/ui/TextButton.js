@@ -2,7 +2,8 @@
 import { Pressable, Text } from 'react-native';
 import { useTokens } from '../design/Tokens';
 
-export function TextButton({ label, onPress, secondary, style }) {
+/** flush＝貼齊左邊（導覽列、群組裡的那一列），不加左右內距。 */
+export function TextButton({ label, onPress, secondary, flush, style }) {
   const T = useTokens();
   return (
     <Pressable
@@ -12,7 +13,7 @@ export function TextButton({ label, onPress, secondary, style }) {
         {
           minHeight: T.shape.tapMin,
           justifyContent: 'center',
-          paddingHorizontal: T.space.s,
+          paddingHorizontal: flush ? undefined : T.space.s,
           opacity: pressed ? T.opacity.pressed : 1,
         },
         style,

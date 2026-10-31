@@ -28,6 +28,7 @@ export function blank() {
     days: {},
     planted: null,
     lastLine: -1,
+    taskId: null, // 目前估的那件事（PWA 在執行期才掛上這欄，正式版從 blank 就有）
   };
 }
 
@@ -89,6 +90,7 @@ export function normalize(raw) {
     days,
     planted: isObject(raw.planted) ? raw.planted : null,
     lastLine: pick(raw.lastLine, -1, 'number'),
+    taskId: pick(raw.taskId, null, 'string'),
   };
 }
 

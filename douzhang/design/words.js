@@ -84,6 +84,26 @@ export const words = {
   voidReasons: ['念頭', '訊息', '卡住', '其他'],
   voidTextPlaceholder: '例：去看留言（分鐘數會自動記）',
 
+  // 類型與估幾顆（C1、C2）
+  typeTitle: '現在做哪一類？',
+  typeSub: '每一類一個固定長度，到設定裡改。',
+  typeLen: (len) => `${len} 分`,
+  estTitle: '這件事估幾顆？',
+  estSub: '估是預測，不是目標。收工時對帳用。',
+  estRowSub: '選填，對帳用',
+  estOptional: '選填',
+  estNamePlaceholder: '這件事叫什麼（例：腳本第 12 集）',
+  estSave: '記下來',
+  estValue: (name, n) => `${name}・${n} 顆`,
+  estShort: (n) => `估 ${n}`,
+  estListCap: '今天估過的',
+  noTask: '不掛任務',
+  addType: '加一種',
+  deleteType: '刪除',
+  newTypeName: '新類型',
+  unnamedType: '未命名',
+  back: '回去',
+
   // 休息（A6）：收下後那 24 句，輪替、不連續重複（原型 LINES 原文）。可愛的話只准由這裡說。
   restLines: [
     '收下了，這顆是完整的。',

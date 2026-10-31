@@ -11,6 +11,7 @@ import { BigButton } from '../ui/BigButton';
 import { Clock } from '../ui/Clock';
 import { mmss } from '../ui/useNow';
 import { EndSheet, NoteSheet, VoidSheet } from '../ui/FocusSheets';
+import { EstimateSheet, TypeSheet } from '../ui/TypeSheets';
 
 function Label({ children }) {
   const T = useTokens();
@@ -26,8 +27,8 @@ function Body({ children }) {
   );
 }
 
-/** 左上豆棚、右上設定。A2 只是兩個字在對的位置，按了沒反應（E1、G1 接）。 */
-function Nav() {
+/** 左上豆棚、右上設定（導覽 A）。豆棚 E1 接。 */
+function Nav({ onRack, onSettings }) {
   const T = useTokens();
   const btn = { minWidth: T.shape.tapPrimary, height: T.shape.tapMin, justifyContent: 'center' };
   const txt = { ...T.font.body, color: T.color.accentText };
@@ -41,10 +42,14 @@ function Nav() {
         justifyContent: 'space-between',
       }}
     >
-      <Pressable accessibilityRole="button" style={btn}>
+      <Pressable accessibilityRole="button" onPress={onRack} style={btn}>
         <Text style={txt}>{words.rack}</Text>
       </Pressable>
-      <Pressable accessibilityRole="button" style={[btn, { alignItems: 'flex-end' }]}>
+      <Pressable
+        accessibilityRole="button"
+        onPress={onSettings}
+        style={[btn, { alignItems: 'flex-end' }]}
+      >
         <Text style={txt}>{words.settings}</Text>
       </Pressable>
     </View>
@@ -125,11 +130,12 @@ function Chip({ label, onPress, style }) {
   );
 }
 
-function TypeChip({ type }) {
+function TypeChip({ type, onPress }) {
   const T = useTokens();
   return (
     <Chip
       label={typeChipLabel(type.name, type.len)}
+      onPress={onPress}
       style={{ alignSelf: 'center', marginTop: T.space.m }}
     />
   );
@@ -224,10 +230,11 @@ function PrimaryButton({ phase, first, firstLine, onStart, onBackFromRest, onEnd
   return <BigButton label={words.start} onPress={() => onStart({})} onLongPress={devStart} />;
 }
 
-export function Home({ state, phase, now, onStart, onBackFromRest, onJot, onDoneEarly, onVoid }) {
+export function Home({ state, phase, now, actions, onRack, onSettings }) {
   const T = useTokens();
+  const { onStart, onBackFromRest } = actions;
   const [firstLine, setFirstLine] = useState('');
-  const [sheet, setSheet] = useState(null); // null｜'notes'｜'pings'｜'end'｜'void'
+  const [sheet, setSheet] = useState(null); // null｜'notes'｜'pings'｜'end'｜'void'｜'type'｜'estimate'
   const first = !state.clue;
   const type = typeOf(state, state.settings.typeId);
   const idle = phase === PHASE.idle;
@@ -235,7 +242,7 @@ export function Home({ state, phase, now, onStart, onBackFromRest, onJot, onDone
 
   return (
     <View style={{ flex: 1 }}>
-      <Nav />
+      <Nav onRack={onRack} onSettings={onSettings} />
       <Card>
         <CardBody
           phase={phase}
@@ -245,7 +252,7 @@ export function Home({ state, phase, now, onStart, onBackFromRest, onJot, onDone
           onFirstLine={setFirstLine}
         />
       </Card>
-      {idle ? <TypeChip type={type} /> : null}
+      {idle ? <TypeChip type={type} onPress={() => setSheet('type')} /> : null}
       {idle ? <Clock text={`${type.len}:00`} style={{ marginTop: T.space.s }} /> : null}
       {focus ? <JotChips current={state.current} onOpen={setSheet} /> : null}
       {phase === PHASE.rest && state.current.msg ? <RestLine text={state.current.msg} /> : null}
@@ -264,9 +271,28 @@ export function Home({ state, phase, now, onStart, onBackFromRest, onJot, onDone
           setSheet={setSheet}
           current={state.current}
           now={now}
-          onJot={onJot}
-          onDoneEarly={onDoneEarly}
-          onVoid={onVoid}
+          onJot={actions.onJot}
+          onDoneEarly={actions.onDoneEarly}
+          onVoid={actions.onVoid}
+        />
+      ) : null}
+      {idle ? (
+        <TypeSheet
+          visible={sheet === 'type'}
+          state={state}
+          onClose={() => setSheet(null)}
+          onPickType={actions.onPickType}
+          onOpenEstimate={() => setSheet('estimate')}
+        />
+      ) : null}
+      {idle ? (
+        <EstimateSheet
+          key={`est-${sheet}`}
+          visible={sheet === 'estimate'}
+          state={state}
+          onClose={() => setSheet(null)}
+          onEstimate={actions.onEstimate}
+          onPickTask={actions.onPickTask}
         />
       ) : null}
     </View>

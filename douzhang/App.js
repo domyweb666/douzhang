@@ -12,7 +12,7 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { useTokens } from './design/Tokens';
 import { words } from './design/words';
-import { load, save } from './core/store';
+import { dayKey, load, save } from './core/store';
 import {
   PHASE,
   backFromRest,
@@ -27,10 +27,20 @@ import {
   voidBean,
 } from './core/machine';
 import { askPermissionOnce, isGranted, planned, sync } from './core/notify';
+import {
+  addType,
+  estimate,
+  pickTask,
+  pickType,
+  removeType,
+  renameType,
+  setTypeLen,
+} from './core/settings';
 import { useNow } from './ui/useNow';
 import { TextButton } from './ui/TextButton';
 import { Home } from './screens/Home';
 import { Bell } from './screens/Bell';
+import { Settings } from './screens/Settings';
 
 function DangerLine({ children }) {
   const T = useTokens();
@@ -150,13 +160,31 @@ function useDouzhang() {
     onJot: (kind, text) => commit(jot(live, kind, text)),
     onDoneEarly: () => commit(markDone(live)),
     onVoid: (v) => act((t) => voidBean(live, t, v)),
+    // 類型與估幾顆（C）
+    onPickType: (id) => commit(pickType(live, id)),
+    onAddType: () => act((t) => addType(live, t)),
+    onRenameType: (id, name) => commit(renameType(live, id, name)),
+    onSetTypeLen: (id, len) => commit(setTypeLen(live, id, len)),
+    onRemoveType: (id) => commit(removeType(live, id)),
+    onEstimate: (v) => act((t) => estimate(live, t, v)),
+    onPickTask: (id) => commit(pickTask(live, id)),
   };
-  return { live, now, phase: phaseOf(live, now), saveFailed, unreadable, notifDenied, actions };
+  const view = { ...live, todayKey: dayKey(now) }; // 畫面要知道「今天」是哪一天（估過的事只看今天）
+  return {
+    live: view,
+    now,
+    phase: phaseOf(live, now),
+    saveFailed,
+    unreadable,
+    notifDenied,
+    actions,
+  };
 }
 
 export default function App() {
   const T = useTokens();
   const dz = useDouzhang();
+  const [screen, setScreen] = useState('home'); // 'home'｜'settings'；豆棚 E1 加
   if (!dz) return <View style={{ flex: 1, backgroundColor: T.color.background }} />;
   const { live, now, phase, saveFailed, unreadable, notifDenied, actions } = dz;
 
@@ -181,16 +209,16 @@ export default function App() {
             onKeep={actions.onKeep}
             onFlow={actions.onFlow}
           />
+        ) : screen === 'settings' ? (
+          <Settings state={live} actions={actions} onBack={() => setScreen('home')} />
         ) : (
           <Home
             state={live}
             phase={phase}
             now={now}
-            onStart={actions.onStart}
-            onBackFromRest={actions.onBackFromRest}
-            onJot={actions.onJot}
-            onDoneEarly={actions.onDoneEarly}
-            onVoid={actions.onVoid}
+            actions={actions}
+            onRack={() => {}}
+            onSettings={() => setScreen('settings')}
           />
         )}
       </KeyboardAvoidingView>

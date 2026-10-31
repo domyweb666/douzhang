@@ -55,7 +55,7 @@ export function start(state, now, { typeId = state.settings.typeId, firstLine } 
       notes: [],
       pings: [],
       flowed: false,
-      taskId: null,
+      taskId: state.taskId || null,
       clue: clue ? clue.text : '',
     },
   };

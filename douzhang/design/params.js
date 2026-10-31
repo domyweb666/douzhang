@@ -6,6 +6,10 @@ export const params = {
   flowMinutes: [15, 30], // 鈴響後「再做一下」的兩個選項（PRD S11）
   noteMaxChars: 60, // 記一筆一行（原型 maxlength）
   voidTextMaxChars: 40, // 作廢原因選填那一行（原型 maxlength）
+  typeLengths: [15, 20, 25, 30, 45, 50, 60], // 類型長度只有這些刻度（原型 select）
+  typeNameMaxChars: 20, // 安全標準 I7
+  taskNameMaxChars: 30, // 原型 maxlength
+  estimateMax: 7, // 估幾顆的上限（原型 1–7）
   stopNoRecordMinutes: 5, // 開始不到這麼久就停，不留紀錄（06 結束這顆半頁）
   // 豆罐（參數表 B）：雙豆連結。其餘物理數字在 Tokens.motion.jarPhysics
   jar: { link: 32, linkMix: 0.3 },

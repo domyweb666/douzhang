@@ -28,9 +28,9 @@ describe('全新安裝', () => {
     expect(state.days).toEqual({});
   });
 
-  test('空的狀態檔跟 PWA 的 blank() 欄位一樣多、一樣名', () => {
+  test('空的狀態檔是 PWA 的 blank() 七欄加 taskId（PWA 執行期才掛上的那欄）', () => {
     expect(Object.keys(blank()).sort()).toEqual(
-      ['clue', 'current', 'days', 'lastLine', 'planted', 'settings', 'v'].sort(),
+      ['clue', 'current', 'days', 'lastLine', 'planted', 'settings', 'taskId', 'v'].sort(),
     );
     expect(Object.keys(blank().settings).sort()).toEqual(
       ['closeTime', 'demo', 'restMode', 'sound', 'tilt', 'typeId', 'types'].sort(),
