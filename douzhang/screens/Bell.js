@@ -1,15 +1,13 @@
 // 鈴響・寫一句（方向 A：底部收下，貼鍵盤上緣）。
 // A2 只有輸入框與收下；「這顆不留話」守門與「再做 15／30」是 A5，念頭列表是 B1。
-import { useState } from 'react';
 import { Text, TextInput, View } from 'react-native';
 import { useTokens } from '../design/Tokens';
 import { words } from '../design/words';
 import { params } from '../design/params';
 import { BigButton } from '../ui/BigButton';
 
-export function Bell({ onKeep }) {
+export function Bell({ draft, onDraft, onKeep }) {
   const T = useTokens();
-  const [draft, setDraft] = useState('');
   return (
     <View style={{ flex: 1 }}>
       <View style={{ marginTop: T.space.l }}>
@@ -23,7 +21,7 @@ export function Bell({ onKeep }) {
         multiline
         maxLength={params.firstLineMaxChars}
         value={draft}
-        onChangeText={setDraft}
+        onChangeText={onDraft}
         placeholder={words.bellPlaceholder}
         placeholderTextColor={T.color.textSecondary}
         style={{

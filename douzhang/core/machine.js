@@ -81,6 +81,9 @@ export function keep(state, now, text) {
   const prev = state.days[key] || blankDay();
   const days = { ...state.days, [key]: { ...prev, beans: [...prev.beans, bean] } };
   const clue = line ? { text: line, at: now } : state.clue;
+  // 響了沒理、拖到超過這顆的休息長度才回來收：休息早過了，直接待機（PRD S8）
+  const restMs = restMinutes(c.len) * MS_PER_MINUTE;
+  if (now - c.endAt >= restMs) return { ...state, days, clue, current: null };
   return {
     ...state,
     days,
@@ -90,7 +93,7 @@ export function keep(state, now, text) {
       typeId: c.typeId,
       len: c.len,
       restStart: now,
-      endAt: now + restMinutes(c.len) * MS_PER_MINUTE,
+      endAt: now + restMs,
       rang: false,
     },
   };
@@ -100,4 +103,11 @@ export function keep(state, now, text) {
 export function backFromRest(state) {
   if (!state.current || state.current.phase !== PHASE.rest) return state;
   return { ...state, current: null };
+}
+
+/** 鈴響頁打到一半的字：存進 current.draft（PWA 同名欄位），切走或殺掉再開還在；收下時隨 current 一起消失。 */
+export function setDraft(state, text) {
+  const c = state.current;
+  if (!c || c.phase !== PHASE.focus) return state;
+  return { ...state, current: { ...c, draft: text } };
 }

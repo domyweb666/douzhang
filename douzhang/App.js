@@ -5,7 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useTokens } from './design/Tokens';
 import { words } from './design/words';
 import { load, save } from './core/store';
-import { PHASE, backFromRest, keep, phaseOf, settle, start } from './core/machine';
+import { PHASE, backFromRest, keep, phaseOf, setDraft, settle, start } from './core/machine';
 import { useNow } from './ui/useNow';
 import { Home } from './screens/Home';
 import { Bell } from './screens/Bell';
@@ -48,6 +48,7 @@ export default function App() {
   const onStart = (opts) => commit(start(live, Date.now(), opts));
   const onKeep = (text) => commit(keep(live, Date.now(), text));
   const onBackFromRest = () => commit(backFromRest(live));
+  const onDraft = (text) => commit(setDraft(live, text)); // 每個字都存：殺掉再開草稿才在
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: T.color.background }}>
@@ -67,7 +68,7 @@ export default function App() {
           </Text>
         ) : null}
         {phase === PHASE.bell ? (
-          <Bell onKeep={onKeep} />
+          <Bell draft={live.current.draft || ''} onDraft={onDraft} onKeep={onKeep} />
         ) : (
           <Home
             state={live}

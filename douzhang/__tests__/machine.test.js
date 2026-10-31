@@ -1,6 +1,15 @@
 // 狀態機測試。名稱是多米讀得懂的中文句子（標準清單 A2）。
 import { blank } from '../core/store';
-import { DEV_TYPE, PHASE, backFromRest, keep, phaseOf, settle, start } from '../core/machine';
+import {
+  DEV_TYPE,
+  PHASE,
+  backFromRest,
+  keep,
+  phaseOf,
+  setDraft,
+  settle,
+  start,
+} from '../core/machine';
 
 const MIN = 60 * 1000;
 const T0 = new Date(2026, 10, 1, 9, 0, 0).getTime(); // 2026-11-01 09:00 本地
@@ -111,5 +120,48 @@ describe('重開讀回來', () => {
   test('重開時已經過了結束時刻，直接是鈴響', () => {
     const saved = JSON.parse(JSON.stringify(start(withClue(), T0)));
     expect(phaseOf(saved, T0 + 40 * MIN)).toBe(PHASE.bell);
+  });
+});
+
+describe('響了沒理（A3）', () => {
+  test('鈴響後拖超過休息長度才收下，直接回待機不進休息，豆子與那句照記', () => {
+    const rang = T0 + 25 * MIN;
+    const s = keep(start(withClue(), T0), rang + 5 * MIN, '拖很久才寫的');
+    expect(s.current).toBeNull();
+    expect(phaseOf(s, rang + 5 * MIN)).toBe(PHASE.idle);
+    expect(s.clue.text).toBe('拖很久才寫的');
+    expect(s.days['2026-11-01'].beans).toHaveLength(1);
+  });
+
+  test('鈴響後在休息長度內收下，照常進休息', () => {
+    const rang = T0 + 25 * MIN;
+    const s = keep(start(withClue(), T0), rang + 4 * MIN, 'x');
+    expect(s.current.phase).toBe(PHASE.rest);
+    expect(s.current.endAt).toBe(rang + 4 * MIN + 5 * MIN);
+  });
+
+  test('測試顆拖超過 3 分才收下，也是直接待機', () => {
+    const rang = T0 + MIN;
+    const s = keep(start(withClue(), T0, { typeId: DEV_TYPE.id }), rang + 3 * MIN, 'x');
+    expect(s.current).toBeNull();
+  });
+});
+
+describe('打一半被打斷（A3）', () => {
+  test('草稿存進 current，重開讀回來還在', () => {
+    const s = setDraft(start(withClue(), T0), '把第三節');
+    const saved = JSON.parse(JSON.stringify(s));
+    expect(saved.current.draft).toBe('把第三節');
+    expect(phaseOf(saved, T0 + 30 * MIN)).toBe(PHASE.bell);
+  });
+
+  test('收下後草稿清掉', () => {
+    const s = keep(setDraft(start(withClue(), T0), '把第三節'), T0 + 25 * MIN, '把第三節也改');
+    expect(s.current.draft).toBeUndefined();
+  });
+
+  test('不在計時中（例如休息）存草稿，什麼都不變', () => {
+    const resting = keep(start(withClue(), T0), T0 + 25 * MIN, 'x');
+    expect(setDraft(resting, 'y')).toBe(resting);
   });
 });
