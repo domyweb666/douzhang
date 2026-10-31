@@ -1,6 +1,6 @@
 {
-  "station": "plan-readback",
-  "updated_at": "2026-11-01T08:00:00+08:00",
+  "station": "self-review",
+  "updated_at": "2026-11-01T09:10:00+08:00",
   "updated_by": "vibe-traffic-control",
   "pieces": {
     "todo": 21,
