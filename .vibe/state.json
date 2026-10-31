@@ -1,45 +1,45 @@
 {
   "station": "spec-standards",
-  "updated_at": "2026-11-01T13:20:00+08:00",
+  "updated_at": "2026-11-01T18:30:00+08:00",
   "updated_by": "vibe-traffic-control",
   "pieces": {
-    "todo": 19,
-    "machine_verified": 3,
+    "todo": 8,
+    "machine_verified": 14,
     "human_verified": 3
   },
   "chunks": [
     {
       "name": "A 核心迴圈「接」",
       "total": 6,
-      "machine_done": 3,
+      "machine_done": 6,
       "human_verified": false,
       "approved": true
     },
     {
       "name": "B 中途保護",
       "total": 2,
-      "machine_done": 0,
+      "machine_done": 2,
       "human_verified": false,
       "approved": true
     },
     {
       "name": "C 類型與估幾顆",
       "total": 2,
-      "machine_done": 0,
+      "machine_done": 2,
       "human_verified": false,
       "approved": true
     },
     {
       "name": "D 豆罐手感",
       "total": 2,
-      "machine_done": 0,
+      "machine_done": 2,
       "human_verified": false,
       "approved": true
     },
     {
       "name": "E 豆棚與收據",
       "total": 2,
-      "machine_done": 0,
+      "machine_done": 2,
       "human_verified": false,
       "approved": true
     },

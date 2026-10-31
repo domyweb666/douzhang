@@ -104,6 +104,44 @@ export const words = {
   unnamedType: '未命名',
   back: '回去',
 
+  // 豆棚與收據（E1、E2）：原型 renderRack／openReceipt／openWeek 的字
+  ok: '好', // 06 狀態表：收據半頁的關閉鈕叫「好」（詞彙表「不用好」是對動作鈕說的，這裡沒有動作）
+  thisWeek: '這週',
+  weekOf: (key) => `${words.monthDay(key)} 那週`,
+  monthDay: (key) => {
+    const d = new Date(`${key}T00:00`);
+    return `${d.getMonth() + 1}月${d.getDate()}日`;
+  },
+  weekday: (key) =>
+    `星期${['日', '一', '二', '三', '四', '五', '六'][new Date(`${key}T00:00`).getDay()]}`,
+  rackEmpty: '第一顆響完，這裡就會掛上今天的豆莢。',
+  rackEmptyAction: '回去開始一顆',
+  flipToBackRow: '翻到背面：這週的收據',
+  dayReceiptTitle: (key) => `${words.monthDay(key)}的收據`,
+  leafDay: '這天掛的是一片葉子。',
+  noNoteMark: '沒留話',
+  flowMark: (minutes) => `延長 ${minutes} 分`,
+  jotMark: (notes, pings) => `${'′'.repeat(notes)}${'–'.repeat(pings)}`, // 原型：念頭一撇、有人找一橫
+  voidLine: ({ minute, reason, text }) =>
+    `作廢，第 ${minute} 分鐘${reason ? `・${reason}` : ''}${text ? `：${text}` : ''}`,
+  restOverLine: (minutes) => `休息多了 ${minutes} 分鐘。`,
+  novelMark: '第一次做',
+  estActual: (est, actual) => `估 ${est}・實 ${actual}`,
+  weekSub: (key) => `${words.monthDay(key)}起的一週。只看方向，不看分數。`,
+  unitsLabel: (units) => `${units} 格`,
+  weekEmpty: '這週還沒有豆子。',
+  underLabel: '估少了',
+  overLabel: '估多了',
+  evenLabel: '剛好',
+  timesLabel: (n) => `${n} 次`,
+  verdictFewData: '對帳的資料還不多，先繼續估。',
+  verdictUnder: '這週大多估少了。下次估同類的事，直接多加一些。',
+  verdictOver: '這週大多估多了。',
+  verdictEven: '估少和估多差不多，代表沒有一直往同一邊偏。',
+  voidDist: '作廢分佈',
+  voidHint: '作廢多半跟番茄長度、或任務沒切小有關，不是意志力。',
+  flowHint: '這週一半以上的番茄都延長了，這類事可以試試把番茄拉長。',
+
   // 休息（A6）：收下後那 24 句，輪替、不連續重複（原型 LINES 原文）。可愛的話只准由這裡說。
   restLines: [
     '收下了，這顆是完整的。',

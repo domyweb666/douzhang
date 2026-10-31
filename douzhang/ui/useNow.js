@@ -26,3 +26,9 @@ export function mmss(ms) {
   const seconds = String(totalSeconds % 60).padStart(2, '0');
   return `${minutes}:${seconds}`;
 }
+
+/** 時刻 → 「HH:MM」（收據用）。 */
+export function hhmm(timestamp) {
+  const d = new Date(timestamp);
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}

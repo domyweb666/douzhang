@@ -41,6 +41,7 @@ import { TextButton } from './ui/TextButton';
 import { Home } from './screens/Home';
 import { Bell } from './screens/Bell';
 import { Settings } from './screens/Settings';
+import { Rack } from './screens/Rack';
 
 function DangerLine({ children }) {
   const T = useTokens();
@@ -184,7 +185,7 @@ function useDouzhang() {
 export default function App() {
   const T = useTokens();
   const dz = useDouzhang();
-  const [screen, setScreen] = useState('home'); // 'home'｜'settings'；豆棚 E1 加
+  const [screen, setScreen] = useState('home'); // 'home'｜'settings'｜'rack'
   if (!dz) return <View style={{ flex: 1, backgroundColor: T.color.background }} />;
   const { live, now, phase, saveFailed, unreadable, notifDenied, actions } = dz;
 
@@ -211,13 +212,15 @@ export default function App() {
           />
         ) : screen === 'settings' ? (
           <Settings state={live} actions={actions} onBack={() => setScreen('home')} />
+        ) : screen === 'rack' ? (
+          <Rack state={live} onBack={() => setScreen('home')} />
         ) : (
           <Home
             state={live}
             phase={phase}
             now={now}
             actions={actions}
-            onRack={() => {}}
+            onRack={() => setScreen('rack')}
             onSettings={() => setScreen('settings')}
           />
         )}
