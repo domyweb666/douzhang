@@ -132,6 +132,7 @@ export default function App() {
   };
   const flow = (m) => { setFlowed(true); setEndAt(Date.now() + m * unit); setPhase('focus'); setSheet(null); };
   const saveFirst = () => { if (firstIn.trim()) { setClue(firstIn.trim()); setFirstIn(''); } };
+  const startFirst = () => { if (!firstIn.trim()) return; saveFirst(); start(); }; // 第一次：寫完直接開始（06 定案，一步）
   const addNote = () => { setNotes([...notes, { k: noteKind, v: noteText || '（沒寫）' }]); setNoteText(''); setSheet(null); };
   const left = endAt - now;
   const first = !clue;
@@ -178,7 +179,7 @@ export default function App() {
         {phase === 'idle' ? <Text style={styles.timeMid}>{type.len}:00</Text> : null}
         {phase === 'focus' ? pair() : null}
         <Jar {...w} beans={beans} style={{ flex: 1, marginTop: 12 }} />
-        {phase === 'idle' && first ? <Big {...w} label="記下來" onPress={saveFirst} /> : null}
+        {phase === 'idle' && first ? <Big {...w} label="開始這顆" onPress={startFirst} /> : null}
         {phase === 'idle' && !first ? <Big {...w} label="開始" onPress={start} /> : null}
         {phase === 'focus' ? <TextBtn {...w} label="結束" onPress={() => setSheet('end')} center /> : null}
         {phase === 'rest' ? <Big {...w} label="回來了，開始下一顆" onPress={() => setPhase('idle')} /> : null}
@@ -198,7 +199,7 @@ export default function App() {
               {phase === 'rest' ? restBlock(true) : null}
               {hint ? <Text style={styles.hint}>{hint}</Text> : null}
             </Pressable>
-            {phase === 'idle' && first ? <Big {...w} label="記下來" onPress={saveFirst} style={{ marginTop: 16 }} /> : null}
+            {phase === 'idle' && first ? <Big {...w} label="開始這顆" onPress={startFirst} style={{ marginTop: 16 }} /> : null}
           </View>
           {phase === 'focus' ? pair() : null}
           <Jar {...w} beans={beans} style={{ height: 230 }} />
@@ -206,7 +207,7 @@ export default function App() {
       );
     }
     // C
-    const tapCircle = phase === 'idle' && !first ? start : phase === 'idle' && first ? saveFirst : phase === 'focus' ? () => setSheet('end') : () => setPhase('idle');
+    const tapCircle = phase === 'idle' && !first ? start : phase === 'idle' && first ? startFirst : phase === 'focus' ? () => setSheet('end') : () => setPhase('idle');
     return (
       <View style={styles.fill}>
         <View style={{ minHeight: 150 }}>
@@ -217,7 +218,7 @@ export default function App() {
         </View>
         {phase === 'idle' ? typeChip({ alignSelf: 'center', marginVertical: 12 }) : <View style={{ height: 24 }} />}
         <Circle {...w} d={220} onPress={tapCircle} style={{ alignSelf: 'center' }}>
-          {phase === 'idle' && first ? <Text style={styles.circleTitle}>記下來</Text> : null}
+          {phase === 'idle' && first ? <Text style={styles.circleTitle}>開始這顆</Text> : null}
           {phase === 'idle' && !first ? (<><Text style={styles.circleTime}>{type.len}:00</Text><Text style={styles.circleSub}>開始</Text></>) : null}
           {phase === 'focus' ? (<><Text style={styles.circleTime}>{mmss(left)}</Text><Text style={styles.hint}>點一下：結束這顆</Text></>) : null}
           {phase === 'rest' ? (<><Text style={styles.circleTime}>{mmss(left)}</Text><Text style={styles.circleSub}>開始下一顆</Text></>) : null}

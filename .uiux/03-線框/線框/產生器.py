@@ -119,7 +119,7 @@ def A_idle(sent=SENT, typ=TYPE, n=5, first=False, kbd=False, label="主畫面・
         h += el("btn tap", pos(bottom=50, left=20, right=20), "開始")
     else:
         h += keyboard()
-        h += el("btn tap", pos(bottom=336, left=20, right=20), "記下來")
+        h += el("btn tap", pos(bottom=336, left=20, right=20), "開始這顆")
     return screen(label, h)
 
 def A_focus():
@@ -169,9 +169,9 @@ def B_idle(sent=SENT, typ=TYPE, n=5, first=False, kbd=False, label="主畫面・
                 '<div class="input tap" style="margin-top:10px;min-height:130px"><span class="ph">例：打開讀書筆記，把三個重點各寫一句</span></div>')
         if kbd:
             h += keyboard()
-            h += el("btn tap", pos(bottom=336, left=20, right=20), "記下來")
+            h += el("btn tap", pos(bottom=336, left=20, right=20), "開始這顆")
         else:
-            h += el("btn tap", pos(top=630, left=20, right=20), "記下來")
+            h += el("btn tap", pos(top=630, left=20, right=20), "開始這顆")
     else:
         h += B_card(f'<div class="lbl">昨天的你留了一句</div><div class="sent" style="margin-top:8px">{sent}</div>',
                     hint="點一下開始・" + typ.split("・")[1])
@@ -223,9 +223,9 @@ def C_idle(sent=SENT, typ=TYPE, n=5, first=False, kbd=False, label="主畫面・
                 '<div class="input tap" style="margin-top:10px;min-height:110px"><span class="ph">例：打開讀書筆記，把三個重點各寫一句</span></div>')
         if kbd:
             h += keyboard()
-            h += el("btn tap", pos(bottom=336, left=20, right=20), "記下來")
+            h += el("btn tap", pos(bottom=336, left=20, right=20), "開始這顆")
         else:
-            h += C_circle(400, 220, '<div class="time" style="font-size:2.1em">記下來</div>')
+            h += C_circle(400, 220, '<div class="time" style="font-size:2.1em">開始這顆</div>')
     else:
         h += C_title(sent)
         h += el("chip tap", pos(top=330, left=0, right=0, extra="width:max-content;margin:0 auto"), typ + " ›")
