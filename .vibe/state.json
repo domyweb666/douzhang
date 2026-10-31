@@ -1,6 +1,6 @@
 {
-  "station": "health-check",
-  "updated_at": "2026-11-01T13:00:00+08:00",
+  "station": "spec-standards",
+  "updated_at": "2026-11-01T13:20:00+08:00",
   "updated_by": "vibe-traffic-control",
   "pieces": {
     "todo": 19,
@@ -20,49 +20,49 @@
       "total": 2,
       "machine_done": 0,
       "human_verified": false,
-      "approved": false
+      "approved": true
     },
     {
       "name": "C 類型與估幾顆",
       "total": 2,
       "machine_done": 0,
       "human_verified": false,
-      "approved": false
+      "approved": true
     },
     {
       "name": "D 豆罐手感",
       "total": 2,
       "machine_done": 0,
       "human_verified": false,
-      "approved": false
+      "approved": true
     },
     {
       "name": "E 豆棚與收據",
       "total": 2,
       "machine_done": 0,
       "human_verified": false,
-      "approved": false
+      "approved": true
     },
     {
       "name": "F 收工與葉子",
       "total": 2,
       "machine_done": 0,
       "human_verified": false,
-      "approved": false
+      "approved": true
     },
     {
       "name": "G 設定與備份",
       "total": 4,
       "machine_done": 0,
       "human_verified": false,
-      "approved": false
+      "approved": true
     },
     {
       "name": "H 外觀、無障礙與正式殼",
       "total": 2,
       "machine_done": 0,
       "human_verified": false,
-      "approved": false
+      "approved": true
     }
   ],
   "pending_immediate_verify": [],
@@ -71,6 +71,11 @@
       "gate": "uiux 閘門 1／2／3",
       "reason": "多米 2026-11-01 決定閘門未過先開正式版；見 .uiux/閘門紀錄.md",
       "settled_by": "usertest 第一輪問題清單對正式版改"
+    },
+    {
+      "gate": "A4–H2 每片立即驗＋B–H 組塊核准",
+      "reason": "多米 2026-11-01：直接往下做到剩他實測",
+      "settled_by": "最後一次整 app 親手驗收清單；G3／G4 先測試資料"
     }
   ]
 }
