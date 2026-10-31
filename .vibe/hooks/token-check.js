@@ -7,7 +7,8 @@ const fs = require('fs');
 const path = require('path');
 
 const files = process.argv.slice(2).filter((f) => /^douzhang[\\/].*\.jsx?$/.test(f));
-const EXEMPT = /^douzhang[\\/](design[\\/]|node_modules[\\/]|\.expo[\\/])/;
+// 工具設定檔不是畫面：禁用套件名出現在 eslint 規則字串裡是正常的，不掃
+const EXEMPT = /^douzhang[\\/](design[\\/]|node_modules[\\/]|\.expo[\\/]|(eslint|babel|metro|jest)\.config\.js$)/;
 
 const HARDCODE = [
   [/#[0-9a-fA-F]{3,8}\b/, '色碼'],

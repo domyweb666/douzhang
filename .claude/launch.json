@@ -4,8 +4,28 @@
     {
       "name": "graybox-web",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["app/node_modules/expo/bin/cli", "start", "app", "--web", "--port", "8097"],
+      "runtimeArgs": [
+        "app/node_modules/expo/bin/cli",
+        "start",
+        "app",
+        "--web",
+        "--port",
+        "8097"
+      ],
       "port": 8097
+    },
+    {
+      "name": "douzhang-web",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "douzhang/node_modules/expo/bin/cli",
+        "start",
+        "douzhang",
+        "--web",
+        "--port",
+        "8098"
+      ],
+      "port": 8098
     }
   ]
 }
