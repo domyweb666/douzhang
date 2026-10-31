@@ -93,6 +93,8 @@ export function makeTokens(dark = false, hc = false) {
       rackDayCol: 90,  // 豆棚每列日期欄寬（2026-11-01 D+E 審查員）
       sheetScrollMax: 420, // 收據半頁可捲區最高（2026-11-01 D+E 審查員）
       leafTilt: '-30deg',  // 葉子斜放（原型 .leaf）
+      pageDot: 8,          // 頁碼小圓點（PWA；2026-11-01 左右滑三頁）
+      pageDotActive: 22,   // 目前那頁的長膠囊
     },
     // 動態：事件命名，數字只從參數表抄。每個都有減少動態版（替換，不是關掉）
     motion: {

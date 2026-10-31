@@ -31,35 +31,6 @@ function Body({ children }) {
   );
 }
 
-/** 左上豆棚、右上設定（導覽 A）。豆棚 E1 接。 */
-function Nav({ onRack, onSettings }) {
-  const T = useTokens();
-  const btn = { minWidth: T.shape.tapPrimary, height: T.shape.tapMin, justifyContent: 'center' };
-  const txt = { ...T.font.body, color: T.color.accentText };
-  return (
-    <View
-      style={{
-        height: T.shape.tapMin,
-        marginTop: T.space.s,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-      }}
-    >
-      <Pressable accessibilityRole="button" onPress={onRack} style={btn}>
-        <Text style={txt}>{words.rack}</Text>
-      </Pressable>
-      <Pressable
-        accessibilityRole="button"
-        onPress={onSettings}
-        style={[btn, { alignItems: 'flex-end' }]}
-      >
-        <Text style={txt}>{words.settings}</Text>
-      </Pressable>
-    </View>
-  );
-}
-
 function Card({ children }) {
   const T = useTokens();
   return (
@@ -268,7 +239,7 @@ function PrimaryButton({ phase, first, firstLine, onStart, onBackFromRest, onEnd
   return <BigButton label={words.start} onPress={() => onStart({})} onLongPress={devStart} />;
 }
 
-export function Home({ state, phase, now, greet, wiped, jarSeen, actions, onRack, onSettings }) {
+export function Home({ state, phase, now, greet, wiped, jarSeen, actions }) {
   const T = useTokens();
   const { onStart, onBackFromRest } = actions;
   const [firstLine, setFirstLine] = useState('');
@@ -286,7 +257,6 @@ export function Home({ state, phase, now, greet, wiped, jarSeen, actions, onRack
 
   return (
     <View style={{ flex: 1 }}>
-      <Nav onRack={onRack} onSettings={onSettings} />
       <Card>
         <CardBody
           phase={phase}

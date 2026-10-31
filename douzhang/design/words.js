@@ -58,6 +58,7 @@ export const words = {
   bellPlaceholder: '寫一行給下一顆的自己',
   devTypeName: '測試',
   settings: '設定',
+  home: '主畫面', // 頁碼圓點的讀屏名（左右滑三頁）
 
   // 通知（A4）：文案固定，不含那句（安全 P3）
   restDone: '休息完了',

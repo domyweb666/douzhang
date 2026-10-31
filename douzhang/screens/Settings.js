@@ -1,10 +1,11 @@
-// 設定（全頁模態）。五區依序：任務類型、節奏、提醒、手感、備份（PRD S18）。
+// 設定（左右滑三頁的右邊那頁）。五區依序：任務類型、節奏、提醒、手感、備份（PRD S18）。
 // 任務類型 C1；節奏、提醒、手感 G1；備份與清空 G2–G4。狀態機在 core/settings.js，改完立刻生效（下一拍就讀新設定）。
 import { Linking, ScrollView, Switch, Text, TextInput, View } from 'react-native';
 import { useTokens } from '../design/Tokens';
 import { words } from '../design/words';
 import { params } from '../design/params';
 import { TextButton } from '../ui/TextButton';
+import { PageTitle } from '../ui/PageTitle';
 import { Segmented } from '../ui/Segmented';
 import { hhmm } from '../ui/useNow';
 import { dayKey } from '../core/store';
@@ -276,23 +277,11 @@ function TypesSection({ settings, actions }) {
   );
 }
 
-export function Settings({ state, actions, notif, backup, onWipe, onBack }) {
+export function Settings({ state, actions, notif, backup, onWipe }) {
   const T = useTokens();
   return (
     <View style={{ flex: 1 }}>
-      <View
-        style={{
-          height: T.shape.tapMin,
-          marginTop: T.space.s,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        <TextButton flush label={words.back} onPress={onBack} />
-        <Text style={{ ...T.font.body, color: T.color.textPrimary }}>{words.settings}</Text>
-        <View style={{ minWidth: T.shape.tapPrimary }} />
-      </View>
+      <PageTitle>{words.settings}</PageTitle>
       <ScrollView
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ paddingBottom: T.space.xl }}

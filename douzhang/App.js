@@ -57,6 +57,7 @@ import { Home } from './screens/Home';
 import { Bell } from './screens/Bell';
 import { Settings } from './screens/Settings';
 import { Rack } from './screens/Rack';
+import { Pager } from './ui/Pager';
 
 function DangerLine({ children }) {
   const T = useTokens();
@@ -323,10 +324,13 @@ function makeActions(live, act, commit, { setNotif, setGreet }) {
   };
 }
 
+const PAGE = { rack: 0, home: 1, settings: 2 };
+const PAGE_LABELS = [words.rack, words.home, words.settings];
+
 export default function App() {
   const T = useTokens();
   const dz = useDouzhang();
-  const [screen, setScreen] = useState('home'); // 'home'｜'settings'｜'rack'
+  const [page, setPage] = useState(PAGE.home); // 左右滑三頁：番茄架｜主畫面｜設定
   const jarSeen = useRef(null); // 豆罐上次看到幾顆：鈴響時豆罐卸載，收下後重掛要知道哪顆是新的
   if (!dz) return <View style={{ flex: 1, backgroundColor: T.color.background }} />;
   const { live, now, phase, greet, saveFailed, unreadable, notif, actions, backup } = dz;
@@ -335,59 +339,60 @@ export default function App() {
     <SafeAreaView style={{ flex: 1, backgroundColor: T.color.background }}>
       <StatusBar style="auto" />
       <KeyboardAvoidingView
-        style={{ flex: 1, paddingHorizontal: T.space.l, paddingBottom: T.space.m }}
+        style={{ flex: 1, paddingBottom: T.space.m }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        {unreadable ? <DangerLine>{words.importUnreadable}</DangerLine> : null}
-        {saveFailed ? <DangerLine>{words.saveFailed}</DangerLine> : null}
-        {notif === 'denied' && phase === PHASE.focus ? (
-          <NotificationOffLine onOpen={() => Linking.openSettings()} />
-        ) : null}
+        <View style={{ paddingHorizontal: T.space.l }}>
+          {unreadable ? <DangerLine>{words.importUnreadable}</DangerLine> : null}
+          {saveFailed ? <DangerLine>{words.saveFailed}</DangerLine> : null}
+          {notif === 'denied' && phase === PHASE.focus ? (
+            <NotificationOffLine onOpen={() => Linking.openSettings()} />
+          ) : null}
+        </View>
         {phase === PHASE.bell ? (
-          <Bell
-            current={live.current}
-            now={now}
-            draft={live.current.draft || ''}
-            onDraft={actions.onDraft}
-            onKeep={(text) => {
-              setScreen('home'); // 停在設定或豆棚時響了：收下後回主畫面的休息，不是回原來那頁
-              actions.onKeep(text);
-            }}
-            onFlow={(minutes) => {
-              setScreen('home');
-              actions.onFlow(minutes);
-            }}
-          />
-        ) : screen === 'settings' ? (
-          <Settings
-            state={live}
-            actions={actions}
-            notif={notif}
-            backup={backup}
-            onWipe={() => backup.onWipe(() => setScreen('home'))}
-            onBack={() => setScreen('home')}
-          />
-        ) : screen === 'rack' ? (
-          <Rack
-            state={live}
-            now={now}
-            actions={actions}
-            wiped={backup.wiped}
-            onSettings={() => setScreen('settings')}
-            onBack={() => setScreen('home')}
-          />
+          <View style={{ flex: 1, paddingHorizontal: T.space.l }}>
+            <Bell
+              current={live.current}
+              now={now}
+              draft={live.current.draft || ''}
+              onDraft={actions.onDraft}
+              onKeep={(text) => {
+                setPage(PAGE.home); // 停在番茄架或設定時響了：收下後回主畫面的休息，不是回原來那頁
+                actions.onKeep(text);
+              }}
+              onFlow={(minutes) => {
+                setPage(PAGE.home);
+                actions.onFlow(minutes);
+              }}
+            />
+          </View>
         ) : (
-          <Home
-            state={live}
-            phase={phase}
-            now={now}
-            greet={greet}
-            wiped={backup.wiped}
-            jarSeen={jarSeen}
-            actions={actions}
-            onRack={() => setScreen('rack')}
-            onSettings={() => setScreen('settings')}
-          />
+          <Pager page={page} onPage={setPage} labels={PAGE_LABELS}>
+            <Rack
+              state={live}
+              now={now}
+              actions={actions}
+              wiped={backup.wiped}
+              onSettings={() => setPage(PAGE.settings)}
+              onBack={() => setPage(PAGE.home)}
+            />
+            <Home
+              state={live}
+              phase={phase}
+              now={now}
+              greet={greet}
+              wiped={backup.wiped}
+              jarSeen={jarSeen}
+              actions={actions}
+            />
+            <Settings
+              state={live}
+              actions={actions}
+              notif={notif}
+              backup={backup}
+              onWipe={() => backup.onWipe(() => setPage(PAGE.home))}
+            />
+          </Pager>
         )}
       </KeyboardAvoidingView>
     </SafeAreaView>

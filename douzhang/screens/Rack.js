@@ -6,29 +6,11 @@ import { useTokens } from '../design/Tokens';
 import { words } from '../design/words';
 import { podItems, rackWeeks, weekStart } from '../core/receipt';
 import { TextButton } from '../ui/TextButton';
+import { PageTitle } from '../ui/PageTitle';
 import { CloseSheet } from '../ui/CloseSheet';
 import { canHangLeaf, rackTopRow } from '../core/machine';
 import { Leaf, Pod } from '../ui/Pod';
 import { DaySheet, WeekSheet } from '../ui/ReceiptSheets';
-
-function NavBar({ onBack }) {
-  const T = useTokens();
-  return (
-    <View
-      style={{
-        height: T.shape.tapMin,
-        marginTop: T.space.s,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-      }}
-    >
-      <TextButton flush label={words.back} onPress={onBack} />
-      <Text style={{ ...T.font.body, color: T.color.textPrimary }}>{words.rack}</Text>
-      <View style={{ minWidth: T.shape.tapPrimary }} />
-    </View>
-  );
-}
 
 function Group({ children }) {
   const T = useTokens();
@@ -141,7 +123,7 @@ export function Rack({ state, now, actions, wiped, onSettings, onBack }) {
   const thisWeek = weekStart(state.todayKey); // 今天還沒紀錄，這週的標題也叫「這週」
   return (
     <View style={{ flex: 1 }}>
-      <NavBar onBack={onBack} />
+      <PageTitle>{words.rack}</PageTitle>
       <ScrollView contentContainerStyle={{ paddingBottom: T.space.xl }}>
         {top ? <TopRow kind={top} onPress={() => setCloseOpen(true)} /> : null}
         {weeks.length ? null : <Empty wiped={wiped} onBack={onBack} onSettings={onSettings} />}
