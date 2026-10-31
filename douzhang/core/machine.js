@@ -2,7 +2,7 @@
 // 只存 endAt（幾點結束），不存剩幾秒：背景、鎖屏、殺掉再開都靠時間差重算（A3 驗邊界）。
 // 資料格式照 PWA：current、clue、days 的欄位名與 index.html 相同。
 import { blankDay, dayKey, restMinutes } from './store';
-import { MS_PER_MINUTE } from '../design/params';
+import { MS_PER_MINUTE, params } from '../design/params';
 import { words } from '../design/words';
 
 export const PHASE = { idle: 'idle', focus: 'focus', bell: 'bell', rest: 'rest' };
@@ -111,6 +111,47 @@ export function keep(state, now, text) {
       rang: false,
       msg: picked.text,
     },
+  };
+}
+
+/** 計時中記一筆：kind 是 'notes'（冒出念頭）或 'pings'（有人找）。倒數不停，只是往這顆裡推一行。 */
+export function jot(state, kind, text) {
+  const c = state.current;
+  const line = (text || '').trim();
+  if (!c || c.phase !== PHASE.focus || !line) return state;
+  return { ...state, current: { ...c, [kind]: [...(c[kind] || []), line] } };
+}
+
+/** 提早做完了：剩下的時間繼續倒數，鈴響再停；卡片多一行提醒（PWA done 同名欄位）。 */
+export function markDone(state) {
+  const c = state.current;
+  if (!c || c.phase !== PHASE.focus) return state;
+  return { ...state, current: { ...c, done: true } };
+}
+
+/**
+ * 作廢這顆：只在開始那天記一筆 { t, typeId, minute, reason, text, taskId }，豆子不扣、什麼都不扣（S10）；回待機。
+ * 開始不到 stopNoRecordMinutes 分就停：什麼都不記（06「停下來不會留下紀錄」）。
+ */
+export function voidBean(state, now, { reason = '', text = '' } = {}) {
+  const c = state.current;
+  if (!c || c.phase !== PHASE.focus) return state;
+  const minute = Math.floor((now - c.startedAt) / MS_PER_MINUTE);
+  if (minute < params.stopNoRecordMinutes) return { ...state, current: null };
+  const key = dayKey(c.startedAt);
+  const prev = state.days[key] || blankDay();
+  const entry = {
+    t: now,
+    typeId: c.typeId,
+    minute,
+    reason,
+    text: (text || '').trim(),
+    taskId: c.taskId,
+  };
+  return {
+    ...state,
+    days: { ...state.days, [key]: { ...prev, voids: [...prev.voids, entry] } },
+    current: null,
   };
 }
 

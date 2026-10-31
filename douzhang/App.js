@@ -13,7 +13,19 @@ import { StatusBar } from 'expo-status-bar';
 import { useTokens } from './design/Tokens';
 import { words } from './design/words';
 import { load, save } from './core/store';
-import { PHASE, backFromRest, flow, keep, phaseOf, setDraft, settle, start } from './core/machine';
+import {
+  PHASE,
+  backFromRest,
+  flow,
+  jot,
+  keep,
+  markDone,
+  phaseOf,
+  setDraft,
+  settle,
+  start,
+  voidBean,
+} from './core/machine';
 import { askPermissionOnce, isGranted, planned, sync } from './core/notify';
 import { useNow } from './ui/useNow';
 import { TextButton } from './ui/TextButton';
@@ -135,6 +147,9 @@ function useDouzhang() {
     onBackFromRest: () => commit(backFromRest(live)),
     onFlow: (minutes) => act((t) => flow(live, t, minutes)),
     onDraft: (text) => commit(setDraft(live, text)), // 每個字都存：殺掉再開草稿才在
+    onJot: (kind, text) => commit(jot(live, kind, text)),
+    onDoneEarly: () => commit(markDone(live)),
+    onVoid: (v) => act((t) => voidBean(live, t, v)),
   };
   return { live, now, phase: phaseOf(live, now), saveFailed, unreadable, notifDenied, actions };
 }
@@ -173,6 +188,9 @@ export default function App() {
             now={now}
             onStart={actions.onStart}
             onBackFromRest={actions.onBackFromRest}
+            onJot={actions.onJot}
+            onDoneEarly={actions.onDoneEarly}
+            onVoid={actions.onVoid}
           />
         )}
       </KeyboardAvoidingView>

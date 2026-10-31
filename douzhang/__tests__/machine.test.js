@@ -6,11 +6,14 @@ import {
   PHASE,
   backFromRest,
   flow,
+  jot,
   keep,
+  markDone,
   phaseOf,
   setDraft,
   settle,
   start,
+  voidBean,
 } from '../core/machine';
 
 const MIN = 60 * 1000;
@@ -245,5 +248,69 @@ describe('休息（A6）', () => {
     expect(second.lastLine).toBe(13);
     expect(second.current.msg).not.toBe(first.current.msg);
     spy.mockRestore();
+  });
+});
+
+describe('記一筆（B1）', () => {
+  test('計時中記一個念頭，推進這顆的 notes，倒數的結束時刻不變', () => {
+    const s0 = start(withClue(), T0);
+    const s = jot(s0, 'notes', '要回信給出版社');
+    expect(s.current.notes).toEqual(['要回信給出版社']);
+    expect(s.current.endAt).toBe(s0.current.endAt);
+  });
+
+  test('有人找記進 pings，跟念頭分開', () => {
+    const s = jot(jot(start(withClue(), T0), 'pings', '小美：下午的會'), 'notes', 'x');
+    expect(s.current.pings).toEqual(['小美：下午的會']);
+    expect(s.current.notes).toEqual(['x']);
+  });
+
+  test('空白不記；不在計時中不記', () => {
+    const s = start(withClue(), T0);
+    expect(jot(s, 'notes', '   ')).toBe(s);
+    const idle = withClue();
+    expect(jot(idle, 'notes', 'x')).toBe(idle);
+  });
+
+  test('記的念頭跟著豆子進帳', () => {
+    const s = keep(jot(start(withClue(), T0), 'notes', 'a'), T0 + 25 * MIN, 'x');
+    expect(s.days['2026-11-01'].beans[0].notes).toEqual(['a']);
+  });
+});
+
+describe('結束這顆（B2）', () => {
+  test('提早做完了：標記 done，倒數照常到點才響', () => {
+    const s = markDone(start(withClue(), T0));
+    expect(s.current.done).toBe(true);
+    expect(phaseOf(s, T0 + 10 * MIN)).toBe(PHASE.focus);
+    expect(phaseOf(s, T0 + 25 * MIN)).toBe(PHASE.bell);
+  });
+
+  test('作廢這顆：開始那天記一筆作廢（第幾分鐘、原因、選填那行），豆子不加，回待機', () => {
+    const s = voidBean(start(withClue(), T0), T0 + 7 * MIN + 30 * 1000, {
+      reason: '訊息',
+      text: '去看留言',
+    });
+    expect(s.current).toBeNull();
+    const d = s.days['2026-11-01'];
+    expect(d.beans).toHaveLength(0);
+    expect(d.voids).toHaveLength(1);
+    expect(d.voids[0]).toMatchObject({ typeId: 't1', minute: 7, reason: '訊息', text: '去看留言' });
+  });
+
+  test('開始不到五分鐘就停下來：什麼都不記，回待機', () => {
+    const s = voidBean(start(withClue(), T0), T0 + 4 * MIN);
+    expect(s.current).toBeNull();
+    expect(s.days['2026-11-01']).toBeUndefined();
+  });
+
+  test('剛好五分鐘算作廢，會記一筆', () => {
+    const s = voidBean(start(withClue(), T0), T0 + 5 * MIN);
+    expect(s.days['2026-11-01'].voids).toHaveLength(1);
+  });
+
+  test('作廢後那句不變', () => {
+    const s = voidBean(start(withClue(), T0), T0 + 10 * MIN, { reason: '卡住' });
+    expect(s.clue.text).toBe('把第二節標題改成問句');
   });
 });

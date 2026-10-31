@@ -10,6 +10,7 @@ import { DEV_TYPE, PHASE, typeOf } from '../core/machine';
 import { BigButton } from '../ui/BigButton';
 import { Clock } from '../ui/Clock';
 import { mmss } from '../ui/useNow';
+import { EndSheet, NoteSheet, VoidSheet } from '../ui/FocusSheets';
 
 function Label({ children }) {
   const T = useTokens();
@@ -101,23 +102,54 @@ function ClueCard({ text }) {
   );
 }
 
+function Chip({ label, onPress, style }) {
+  const T = useTokens();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [
+        {
+          height: T.shape.tapMin,
+          paddingHorizontal: T.space.l,
+          borderRadius: T.shape.radiusPill,
+          backgroundColor: T.color.fillButton,
+          justifyContent: 'center',
+          opacity: pressed ? T.opacity.pressed : 1,
+        },
+        style,
+      ]}
+    >
+      <Text style={{ ...T.font.chip, color: T.color.textPrimary }}>{label}</Text>
+    </Pressable>
+  );
+}
+
 function TypeChip({ type }) {
   const T = useTokens();
   return (
+    <Chip
+      label={typeChipLabel(type.name, type.len)}
+      style={{ alignSelf: 'center', marginTop: T.space.m }}
+    />
+  );
+}
+
+/** 計時中的兩個入口：冒出念頭、有人找；記過幾筆就在名字後面帶數字（B1）。 */
+function JotChips({ current, onOpen }) {
+  const T = useTokens();
+  const label = (name, list) => (list?.length ? `${name} ${list.length}` : name);
+  return (
     <View
       style={{
-        alignSelf: 'center',
-        marginTop: T.space.m,
-        height: T.shape.tapMin,
-        paddingHorizontal: T.space.l,
-        borderRadius: T.shape.radiusPill,
-        backgroundColor: T.color.fillButton,
+        flexDirection: 'row',
         justifyContent: 'center',
+        gap: T.space.m,
+        marginTop: T.space.m,
       }}
     >
-      <Text style={{ ...T.font.chip, color: T.color.textPrimary }}>
-        {typeChipLabel(type.name, type.len)}
-      </Text>
+      <Chip label={label(words.noteThought, current.notes)} onPress={() => onOpen('notes')} />
+      <Chip label={label(words.notePing, current.pings)} onPress={() => onOpen('pings')} />
     </View>
   );
 }
@@ -139,13 +171,14 @@ function RestLine({ text }) {
   );
 }
 
-/** 計時中與休息共用：大時間＋小標＋一句。 */
-function Countdown({ left, label, body }) {
+/** 計時中與休息共用：大時間＋小標＋一句；提早做完後多一行（B2）。 */
+function Countdown({ left, label, body, extra }) {
   return (
     <View>
       <Clock focus text={mmss(left)} />
       <Label>{label}</Label>
       <Body>{body}</Body>
+      {extra ? <Label>{extra}</Label> : null}
     </View>
   );
 }
@@ -153,7 +186,14 @@ function Countdown({ left, label, body }) {
 function CardBody({ phase, state, now, firstLine, onFirstLine }) {
   const left = state.current ? state.current.endAt - now : 0;
   if (phase === PHASE.focus)
-    return <Countdown left={left} label={words.doing} body={state.current.clue} />;
+    return (
+      <Countdown
+        left={left}
+        label={words.doing}
+        body={state.current.clue}
+        extra={state.current.done ? words.doneEarlyLine : null}
+      />
+    );
   if (phase === PHASE.rest) {
     // 「我自己決定」的休息沒有結束時刻：大時間數正數（休息了多久），只有按回來才結束
     const self = state.current.endAt == null; // 看資料不看設定：休息中改設定也不會卡住
@@ -164,11 +204,12 @@ function CardBody({ phase, state, now, firstLine, onFirstLine }) {
   return <ClueCard text={state.clue.text} />;
 }
 
-function PrimaryButton({ phase, first, firstLine, onStart, onBackFromRest }) {
+function PrimaryButton({ phase, first, firstLine, onStart, onBackFromRest, onEnd }) {
   // 開發期快轉：長按開始＝一分鐘測試顆。正式 build 沒有這個手勢。
   const devStart = __DEV__ ? () => onStart({ typeId: DEV_TYPE.id, firstLine }) : undefined;
   if (phase === PHASE.rest)
     return <BigButton label={words.backFromRest} onPress={onBackFromRest} />;
+  if (phase === PHASE.focus) return <BigButton second label={words.end} onPress={onEnd} />;
   if (phase !== PHASE.idle) return null;
   if (first) {
     return (
@@ -183,12 +224,14 @@ function PrimaryButton({ phase, first, firstLine, onStart, onBackFromRest }) {
   return <BigButton label={words.start} onPress={() => onStart({})} onLongPress={devStart} />;
 }
 
-export function Home({ state, phase, now, onStart, onBackFromRest }) {
+export function Home({ state, phase, now, onStart, onBackFromRest, onJot, onDoneEarly, onVoid }) {
   const T = useTokens();
   const [firstLine, setFirstLine] = useState('');
+  const [sheet, setSheet] = useState(null); // null｜'notes'｜'pings'｜'end'｜'void'
   const first = !state.clue;
   const type = typeOf(state, state.settings.typeId);
   const idle = phase === PHASE.idle;
+  const focus = phase === PHASE.focus;
 
   return (
     <View style={{ flex: 1 }}>
@@ -204,6 +247,7 @@ export function Home({ state, phase, now, onStart, onBackFromRest }) {
       </Card>
       {idle ? <TypeChip type={type} /> : null}
       {idle ? <Clock text={`${type.len}:00`} style={{ marginTop: T.space.s }} /> : null}
+      {focus ? <JotChips current={state.current} onOpen={setSheet} /> : null}
       {phase === PHASE.rest && state.current.msg ? <RestLine text={state.current.msg} /> : null}
       <View style={{ flex: 1 }} />
       <PrimaryButton
@@ -212,7 +256,56 @@ export function Home({ state, phase, now, onStart, onBackFromRest }) {
         firstLine={firstLine}
         onStart={onStart}
         onBackFromRest={onBackFromRest}
+        onEnd={() => setSheet('end')}
       />
+      {focus ? (
+        <FocusSheetHost
+          sheet={sheet}
+          setSheet={setSheet}
+          current={state.current}
+          now={now}
+          onJot={onJot}
+          onDoneEarly={onDoneEarly}
+          onVoid={onVoid}
+        />
+      ) : null}
     </View>
+  );
+}
+
+/** 計時中的三個半頁掛在這裡；key 讓每次打開都是乾淨的輸入框。 */
+function FocusSheetHost({ sheet, setSheet, current, now, onJot, onDoneEarly, onVoid }) {
+  const close = () => setSheet(null);
+  return (
+    <>
+      <NoteSheet
+        key={sheet}
+        kind={sheet === 'notes' || sheet === 'pings' ? sheet : null}
+        onClose={close}
+        onJot={onJot}
+      />
+      <EndSheet
+        visible={sheet === 'end'}
+        current={current}
+        now={now}
+        onClose={close}
+        onDoneEarly={onDoneEarly}
+        onVoid={(early) => {
+          if (early) {
+            close();
+            onVoid({});
+          } else setSheet('void');
+        }}
+      />
+      <VoidSheet
+        key={`void-${sheet}`}
+        visible={sheet === 'void'}
+        onClose={close}
+        onVoid={(v) => {
+          close();
+          onVoid(v);
+        }}
+      />
+    </>
   );
 }

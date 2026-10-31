@@ -68,6 +68,22 @@ export const words = {
   flowSub: '先定一個上限，到點會再響一次，那時再寫下一步。',
   rangAgo: (minutes) => `響了 ${minutes} 分鐘前。收下後直接回待機。`,
 
+  // 中途保護（B1、B2）：06 狀態表「記一筆」「結束這顆」「作廢原因」三個半頁
+  end: '結束', // 計時中底部的鈕
+  endTitle: '結束這顆？',
+  endSubEarly: '開始不到五分鐘，停下來不會留下紀錄。',
+  endSub: '作廢只記一筆，不扣任何東西。',
+  doneEarlySub: '剩下的時間小修，鈴響再停',
+  doneEarlyLine: '剩下的時間，唸一遍、檢查、小修。鈴響再停。', // 標記提早做完後卡片多的一行
+  stopNow: '停下來', // 不到五分鐘的作廢叫法
+  noteTitleThought: '冒出什麼念頭？',
+  noteTitlePing: '誰找你、什麼事？',
+  noteSub: '寫一行就好，休息時再處理。',
+  jotDown: '記下',
+  voidSub: '原因寫事實就好。',
+  voidReasons: ['念頭', '訊息', '卡住', '其他'],
+  voidTextPlaceholder: '例：去看留言（分鐘數會自動記）',
+
   // 休息（A6）：收下後那 24 句，輪替、不連續重複（原型 LINES 原文）。可愛的話只准由這裡說。
   restLines: [
     '收下了，這顆是完整的。',
