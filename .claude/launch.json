@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "graybox-web",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["app/node_modules/expo/bin/cli", "start", "app", "--web", "--port", "8097"],
+      "port": 8097
+    }
+  ]
+}

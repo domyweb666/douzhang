@@ -115,6 +115,7 @@ export function makeTokens(dark = false, hc = false) {
       chime: { hz: [784, 1175], sec: 1.6 }, // 鈴聲，原生版改本地通知音檔
     },
     _palette: palette, // 只給對比腳本與測試讀，畫面不准用
+    _dark: dark, _hc: hc, // 目前解析到的模式，除錯頁顯示用
   };
 }
 
