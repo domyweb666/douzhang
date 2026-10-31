@@ -92,7 +92,8 @@ export function keep(state, now, text) {
   };
   const key = dayKey(c.startedAt);
   const prev = state.days[key] || blankDay();
-  const days = { ...state.days, [key]: { ...prev, beans: [...prev.beans, bean] } };
+  // 收工後又做了一顆：那天回到沒收工，收工入口會再出現（PWA finish 同做法）
+  const days = { ...state.days, [key]: { ...prev, beans: [...prev.beans, bean], closed: false } };
   const clue = line ? { text: line, at: now } : state.clue;
   // 響了沒理、拖到超過這顆的休息長度才回來收：休息早過了，直接待機（PRD S8）
   const restMs = restMinutes(c.len) * MS_PER_MINUTE;
@@ -187,4 +188,68 @@ export function setDraft(state, text) {
   const c = state.current;
   if (!c || c.phase !== PHASE.focus) return state;
   return { ...state, current: { ...c, draft: text } };
+}
+
+const hasBeansOrVoids = (d) => !!d && (d.beans.length > 0 || d.voids.length > 0);
+
+/** 現在幾點幾分（本地）→ "HH:MM"，跟設定的收工時間同格式，字串比大小就是比時刻。 */
+function clockOf(now) {
+  const d = new Date(now);
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+/**
+ * 待機卡片下那一行（PWA renderHome 的 hint，順序照抄）：
+ * 'closed' 今天收工了｜'due' 有豆子、過了收工時間、還沒收工｜'leaf' 今天掛了葉子｜null 什麼都不顯示。
+ */
+export function closeHint(state, now) {
+  const d = state.days[dayKey(now)];
+  if (d?.closed) return 'closed';
+  if (hasBeansOrVoids(d) && clockOf(now) >= state.settings.closeTime) return 'due';
+  if (d?.leaf) return 'leaf';
+  return null;
+}
+
+/**
+ * 豆棚頂端那一列（PWA renderRack，不看收工時間）：
+ * 'close' 今天有豆子或作廢、還沒收工｜'leaf' 今天什麼都沒有｜null 收工了或掛了葉子。
+ */
+export function rackTopRow(state, now) {
+  const d = state.days[dayKey(now)];
+  if (hasBeansOrVoids(d)) return d.closed ? null : 'close';
+  return d?.leaf ? null : 'leaf';
+}
+
+/** 今天能不能掛葉子：沒有豆子也沒有作廢（S15）。 */
+export const canHangLeaf = (state, now) => !hasBeansOrVoids(state.days[dayKey(now)]);
+
+/**
+ * 收工：明天的第一句有改才換那句；今天標成收工；把那句「種下去」，明天第一次打開時小標換成「昨天的你留了一句」。
+ */
+export function closeDay(state, now, text) {
+  const line = (text || '').trim();
+  const clue = line && line !== state.clue?.text ? { text: line, at: now } : state.clue;
+  const key = dayKey(now);
+  const prev = state.days[key] || blankDay();
+  return {
+    ...state,
+    clue,
+    days: { ...state.days, [key]: { ...prev, closed: true } },
+    planted: { text: clue ? clue.text : '', day: key, shown: false },
+  };
+}
+
+/** 掛一片葉子：今天沒豆子也沒作廢才掛得上；掛了就算收工（S15，不算缺）。 */
+export function hangLeaf(state, now) {
+  if (!canHangLeaf(state, now)) return state;
+  const key = dayKey(now);
+  const prev = state.days[key] || blankDay();
+  return { ...state, days: { ...state.days, [key]: { ...prev, leaf: true, closed: true } } };
+}
+
+/** 昨天以前種下、還沒看過的那句：標成看過，回新狀態；不是就原樣回。回的不是同一個物件＝這次要打招呼。 */
+export function seePlanted(state, now) {
+  const p = state.planted;
+  if (!p || p.shown || p.day === dayKey(now)) return state;
+  return { ...state, planted: { ...p, shown: true } };
 }

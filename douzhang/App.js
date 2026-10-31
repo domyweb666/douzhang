@@ -16,11 +16,14 @@ import { dayKey, load, save } from './core/store';
 import {
   PHASE,
   backFromRest,
+  closeDay,
   flow,
+  hangLeaf,
   jot,
   keep,
   markDone,
   phaseOf,
+  seePlanted,
   setDraft,
   settle,
   start,
@@ -98,6 +101,26 @@ function useArm() {
   }, []);
 }
 
+/**
+ * 昨天收工種下的那句：今天第一次看到時小標打招呼一次（F1）。開機那一次由讀檔處理；
+ * iOS 的「明天打開」多半是從背景叫回來、不是重開，所以回前景也看一次。
+ */
+function useGreeting(stateRef, commit) {
+  const [greet, setGreet] = useState(false);
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (next) => {
+      const s = stateRef.current;
+      if (next !== 'active' || !s) return;
+      const seen = seePlanted(s, Date.now());
+      if (seen === s) return;
+      setGreet(true);
+      commit(seen);
+    });
+    return () => sub.remove();
+  }, [stateRef, commit]);
+  return [greet, setGreet];
+}
+
 /** 狀態與動作全在這裡：殼只負責排版。每個動作先算新狀態（純函式），再 commit（存檔＋對齊通知）。 */
 function useDouzhang() {
   const now = useNow();
@@ -114,20 +137,6 @@ function useDouzhang() {
   }, [arm]);
   const [notifDenied, setNotifDenied] = useNotificationDenied(rearm);
 
-  useEffect(() => {
-    let alive = true;
-    load().then(({ state: loaded, unreadable: broken }) => {
-      if (!alive) return;
-      setUnreadable(broken);
-      const settled = settle(loaded, Date.now());
-      setState(settled);
-      arm(settled, true); // 開機對齊：系統裡排的要跟現在的狀態一致
-    });
-    return () => {
-      alive = false;
-    };
-  }, [arm]);
-
   const commit = useCallback(
     (next) => {
       setState(next);
@@ -138,6 +147,26 @@ function useDouzhang() {
   );
   // 動作都在「按下那一刻」看時鐘：recipe 拿到現在的毫秒，回新狀態
   const act = useCallback((recipe) => commit(recipe(Date.now())), [commit]);
+  const [greet, setGreet] = useGreeting(stateRef, commit);
+
+  useEffect(() => {
+    let alive = true;
+    load().then(({ state: loaded, unreadable: broken }) => {
+      if (!alive) return;
+      setUnreadable(broken);
+      const settled = settle(loaded, Date.now());
+      const seen = seePlanted(settled, Date.now());
+      setState(seen);
+      if (seen !== settled) {
+        setGreet(true);
+        save(seen).then((ok) => setSaveFailed(!ok)); // 標成看過要存下來，不然每次開都打招呼
+      }
+      arm(seen, true); // 開機對齊：系統裡排的要跟現在的狀態一致
+    });
+    return () => {
+      alive = false;
+    };
+  }, [arm, setGreet]);
 
   if (!state) return null;
   // 休息到點沒按也回待機：每一拍在 render 時把過期的休息收掉，下一次動作才存回去
@@ -152,8 +181,27 @@ function useDouzhang() {
         ok = false;
       }
       setNotifDenied(!ok);
+      setGreet(false); // 招呼只到開始第一顆為止
       act((t) => start(live, t, opts));
     },
+    ...makeActions(live, act, commit),
+  };
+  const view = { ...live, todayKey: dayKey(now) }; // 畫面要知道「今天」是哪一天（估過的事只看今天）
+  return {
+    live: view,
+    now,
+    phase: phaseOf(live, now),
+    greet,
+    saveFailed,
+    unreadable,
+    notifDenied,
+    actions,
+  };
+}
+
+/** 開始以外的動作：純函式算新狀態，act 會先看按下那一刻的時鐘，commit 不需要時鐘。 */
+function makeActions(live, act, commit) {
+  return {
     onKeep: (text) => act((t) => keep(live, t, text)),
     onBackFromRest: () => commit(backFromRest(live)),
     onFlow: (minutes) => act((t) => flow(live, t, minutes)),
@@ -169,16 +217,9 @@ function useDouzhang() {
     onRemoveType: (id) => commit(removeType(live, id)),
     onEstimate: (v) => act((t) => estimate(live, t, v)),
     onPickTask: (id) => act((t) => pickTask(live, t, id)),
-  };
-  const view = { ...live, todayKey: dayKey(now) }; // 畫面要知道「今天」是哪一天（估過的事只看今天）
-  return {
-    live: view,
-    now,
-    phase: phaseOf(live, now),
-    saveFailed,
-    unreadable,
-    notifDenied,
-    actions,
+    // 收工與葉子（F）
+    onCloseDay: (text) => act((t) => closeDay(live, t, text)),
+    onHangLeaf: () => act((t) => hangLeaf(live, t)),
   };
 }
 
@@ -187,7 +228,7 @@ export default function App() {
   const dz = useDouzhang();
   const [screen, setScreen] = useState('home'); // 'home'｜'settings'｜'rack'
   if (!dz) return <View style={{ flex: 1, backgroundColor: T.color.background }} />;
-  const { live, now, phase, saveFailed, unreadable, notifDenied, actions } = dz;
+  const { live, now, phase, greet, saveFailed, unreadable, notifDenied, actions } = dz;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: T.color.background }}>
@@ -219,12 +260,13 @@ export default function App() {
         ) : screen === 'settings' ? (
           <Settings state={live} actions={actions} onBack={() => setScreen('home')} />
         ) : screen === 'rack' ? (
-          <Rack state={live} onBack={() => setScreen('home')} />
+          <Rack state={live} now={now} actions={actions} onBack={() => setScreen('home')} />
         ) : (
           <Home
             state={live}
             phase={phase}
             now={now}
+            greet={greet}
             actions={actions}
             onRack={() => setScreen('rack')}
             onSettings={() => setScreen('settings')}

@@ -6,13 +6,15 @@ import { Pressable, Text, TextInput, View } from 'react-native';
 import { useTokens } from '../design/Tokens';
 import { words, typeChipLabel } from '../design/words';
 import { params } from '../design/params';
-import { DEV_TYPE, PHASE, stoppedEarly, typeOf } from '../core/machine';
+import { DEV_TYPE, PHASE, canHangLeaf, closeHint, stoppedEarly, typeOf } from '../core/machine';
 import { BigButton } from '../ui/BigButton';
 import { Clock } from '../ui/Clock';
 import { mmss } from '../ui/useNow';
 import { EndSheet, NoteSheet, VoidSheet } from '../ui/FocusSheets';
 import { EstimateSheet, TypeSheet } from '../ui/TypeSheets';
 import { Jar } from '../ui/Jar';
+import { CloseSheet } from '../ui/CloseSheet';
+import { TextButton } from '../ui/TextButton';
 import { units } from '../core/store';
 
 function Label({ children }) {
@@ -97,11 +99,12 @@ function FirstInput({ value, onChange }) {
   );
 }
 
-function ClueCard({ text }) {
+/** greet：昨天收工種下的那句，今天第一次打開時小標換成「昨天的你留了一句」（F1）。 */
+function ClueCard({ text, greet }) {
   const T = useTokens();
   return (
     <View>
-      <Label>{words.clueLabel}</Label>
+      <Label>{greet ? words.clueLabel : words.nextStep}</Label>
       <Text style={{ ...T.font.sentence, color: T.color.textPrimary, marginTop: T.space.s }}>
         {text}
       </Text>
@@ -196,7 +199,7 @@ function Countdown({ left, label, body, extra }) {
   );
 }
 
-function CardBody({ phase, state, now, firstLine, onFirstLine }) {
+function CardBody({ phase, state, now, greet, firstLine, onFirstLine }) {
   const left = state.current ? state.current.endAt - now : 0;
   if (phase === PHASE.focus)
     return (
@@ -214,7 +217,34 @@ function CardBody({ phase, state, now, firstLine, onFirstLine }) {
     return <Countdown left={shown} label={words.rest} body={words.restBody} />;
   }
   if (!state.clue) return <FirstInput value={firstLine} onChange={onFirstLine} />;
-  return <ClueCard text={state.clue.text} />;
+  return <ClueCard text={state.clue.text} greet={greet} />;
+}
+
+/** 待機卡片下那一行：過了收工時間是收工入口，收工了或掛了葉子是一句話（F1、F2）。 */
+function CloseHint({ hint, onOpen }) {
+  const T = useTokens();
+  if (!hint) return null;
+  if (hint === 'due')
+    return (
+      <TextButton
+        label={words.closeDueHint}
+        onPress={onOpen}
+        style={{ alignSelf: 'center', marginTop: T.space.s }}
+      />
+    );
+  const text = hint === 'closed' ? words.closedHint : words.leafHint;
+  return (
+    <Text
+      style={{
+        ...T.font.sub,
+        color: T.color.textSecondary,
+        textAlign: 'center',
+        marginTop: T.space.s,
+      }}
+    >
+      {text}
+    </Text>
+  );
 }
 
 function PrimaryButton({ phase, first, firstLine, onStart, onBackFromRest, onEnd }) {
@@ -237,11 +267,11 @@ function PrimaryButton({ phase, first, firstLine, onStart, onBackFromRest, onEnd
   return <BigButton label={words.start} onPress={() => onStart({})} onLongPress={devStart} />;
 }
 
-export function Home({ state, phase, now, actions, onRack, onSettings }) {
+export function Home({ state, phase, now, greet, actions, onRack, onSettings }) {
   const T = useTokens();
   const { onStart, onBackFromRest } = actions;
   const [firstLine, setFirstLine] = useState('');
-  const [sheet, setSheet] = useState(null); // null｜'notes'｜'pings'｜'end'｜'void'｜'type'｜'estimate'
+  const [sheet, setSheet] = useState(null); // null｜'notes'｜'pings'｜'end'｜'void'｜'type'｜'estimate'｜'close'
   const [endEarly, setEndEarly] = useState(false); // 打開「結束這顆」那一刻固定：不到五分鐘嗎
   const first = !state.clue;
   const type = typeOf(state, state.settings.typeId);
@@ -261,12 +291,16 @@ export function Home({ state, phase, now, actions, onRack, onSettings }) {
           phase={phase}
           state={state}
           now={now}
+          greet={greet}
           firstLine={firstLine}
           onFirstLine={setFirstLine}
         />
       </Card>
       {idle ? <TypeChip type={type} onPress={() => setSheet('type')} /> : null}
       {idle ? <Clock text={`${type.len}:00`} style={{ marginTop: T.space.s }} /> : null}
+      {idle && !first ? (
+        <CloseHint hint={closeHint(state, now)} onOpen={() => setSheet('close')} />
+      ) : null}
       {focus ? <JotChips current={state.current} onOpen={setSheet} /> : null}
       {phase === PHASE.rest && state.current.msg ? <RestLine text={state.current.msg} /> : null}
       <Jar
@@ -298,25 +332,48 @@ export function Home({ state, phase, now, actions, onRack, onSettings }) {
         />
       ) : null}
       {idle ? (
-        <TypeSheet
-          visible={sheet === 'type'}
+        <IdleSheetHost
+          sheet={sheet}
+          setSheet={setSheet}
           state={state}
-          onClose={() => setSheet(null)}
-          onPickType={actions.onPickType}
-          onOpenEstimate={() => setSheet('estimate')}
-        />
-      ) : null}
-      {idle ? (
-        <EstimateSheet
-          key={`est-${sheet}`}
-          visible={sheet === 'estimate'}
-          state={state}
-          onClose={() => setSheet(null)}
-          onEstimate={actions.onEstimate}
-          onPickTask={actions.onPickTask}
+          now={now}
+          actions={actions}
         />
       ) : null}
     </View>
+  );
+}
+
+/** 待機的三個半頁：類型、估幾顆、收工。key 讓每次打開都是乾淨的輸入框。 */
+function IdleSheetHost({ sheet, setSheet, state, now, actions }) {
+  const close = () => setSheet(null);
+  return (
+    <>
+      <TypeSheet
+        visible={sheet === 'type'}
+        state={state}
+        onClose={close}
+        onPickType={actions.onPickType}
+        onOpenEstimate={() => setSheet('estimate')}
+      />
+      <EstimateSheet
+        key={`est-${sheet}`}
+        visible={sheet === 'estimate'}
+        state={state}
+        onClose={close}
+        onEstimate={actions.onEstimate}
+        onPickTask={actions.onPickTask}
+      />
+      <CloseSheet
+        key={`close-${sheet}`}
+        visible={sheet === 'close'}
+        clueText={state.clue?.text}
+        leafOk={canHangLeaf(state, now)}
+        onClose={close}
+        onCloseDay={actions.onCloseDay}
+        onHangLeaf={actions.onHangLeaf}
+      />
+    </>
   );
 }
 

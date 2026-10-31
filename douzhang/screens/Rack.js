@@ -1,11 +1,13 @@
 // 豆棚（推進頁）：這週每天一列，右邊一串豆莢；點一天看收據；「翻到背面」看這週的收據。
-// 沒豆子的日子不出現、不出現 0、沒有連續數字（S12、S15）。收工入口 F1 接。
+// 沒豆子的日子不出現、不出現 0、沒有連續數字（S12、S15）。頂端列：今天沒收工→收工；今天什麼都沒有→掛葉子（F1、F2）。
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useTokens } from '../design/Tokens';
 import { words } from '../design/words';
 import { podItems, rackWeeks } from '../core/receipt';
 import { TextButton } from '../ui/TextButton';
+import { CloseSheet } from '../ui/CloseSheet';
+import { canHangLeaf, rackTopRow } from '../core/machine';
 import { Leaf, Pod } from '../ui/Pod';
 import { DaySheet, WeekSheet } from '../ui/ReceiptSheets';
 
@@ -82,6 +84,27 @@ function DayRow({ dayKey, day, onPress }) {
   );
 }
 
+/** 豆棚頂端那一列：'close' 收工（強調色）、'leaf' 今天不適合（主色），點了都開收工半頁。 */
+function TopRow({ kind, onPress }) {
+  const T = useTokens();
+  const close = kind === 'close';
+  return (
+    <Group>
+      <Row last onPress={onPress}>
+        <View style={{ flex: 1 }}>
+          <Text style={{ ...T.font.body, color: close ? T.color.accentText : T.color.textPrimary }}>
+            {close ? words.close : words.rackLeafTitle}
+          </Text>
+          <Text style={{ ...T.font.caption, color: T.color.textSecondary, marginTop: T.space.xs }}>
+            {close ? words.rackCloseSub : words.rackLeafSub}
+          </Text>
+        </View>
+        <Text style={{ ...T.font.body, color: T.color.textSecondary }}>›</Text>
+      </Row>
+    </Group>
+  );
+}
+
 function Empty({ onBack }) {
   const T = useTokens();
   return (
@@ -105,9 +128,11 @@ function Empty({ onBack }) {
   );
 }
 
-export function Rack({ state, onBack }) {
+export function Rack({ state, now, actions, onBack }) {
   const T = useTokens();
   const [dayOpen, setDayOpen] = useState(null);
+  const [closeOpen, setCloseOpen] = useState(false);
+  const top = rackTopRow(state, now);
   const [weekOpen, setWeekOpen] = useState(null);
   const weeks = rackWeeks(state);
   const thisWeek = weeks.find((w) => w.days.includes(state.todayKey))?.weekStart;
@@ -115,6 +140,7 @@ export function Rack({ state, onBack }) {
     <View style={{ flex: 1 }}>
       <NavBar onBack={onBack} />
       <ScrollView contentContainerStyle={{ paddingBottom: T.space.xl }}>
+        {top ? <TopRow kind={top} onPress={() => setCloseOpen(true)} /> : null}
         {weeks.length ? null : <Empty onBack={onBack} />}
         {weeks.map((w) => (
           <View key={w.weekStart}>
@@ -141,6 +167,15 @@ export function Rack({ state, onBack }) {
         onClose={() => setDayOpen(null)}
       />
       <WeekSheet weekStart={weekOpen} state={state} onClose={() => setWeekOpen(null)} />
+      <CloseSheet
+        key={`close-${closeOpen}`}
+        visible={closeOpen}
+        clueText={state.clue?.text}
+        leafOk={canHangLeaf(state, now)}
+        onClose={() => setCloseOpen(false)}
+        onCloseDay={actions.onCloseDay}
+        onHangLeaf={actions.onHangLeaf}
+      />
     </View>
   );
 }

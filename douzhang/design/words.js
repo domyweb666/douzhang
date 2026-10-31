@@ -106,6 +106,19 @@ export const words = {
   unnamedType: '未命名',
   back: '回去',
 
+  // 收工與葉子（F1、F2）：06 收工半頁、豆棚頂端列；待機那一行照原型 renderHome
+  close: '收工', // 半頁標題與按鈕同字
+  closeSub: '今天的豆莢掛上架，最後那句種進土裡，明天打開就在。',
+  closeTomorrowCap: '明天的第一句',
+  notYet: '還沒',
+  leafLine: '今天沒有番茄？整天在回訊息、開會，掛一片葉子，不算缺。', // 鈕用上面的 hangLeaf
+  closeDueHint: '到收工時間了・收工 ›',
+  closedHint: '今天收工了，要再做一顆也行',
+  leafHint: '今天掛了一片葉子',
+  rackCloseSub: '把今天的豆莢掛上架，留明天的第一句',
+  rackLeafTitle: '今天不適合番茄？',
+  rackLeafSub: '整天在回訊息、開會，掛一片葉子',
+
   // 豆棚與收據（E1、E2）：原型 renderRack／openReceipt／openWeek 的字
   ok: '好', // 06 狀態表：收據半頁的關閉鈕叫「好」（詞彙表「不用好」是對動作鈕說的，這裡沒有動作）
   thisWeek: '這週',

@@ -5,11 +5,17 @@ import {
   DEV_TYPE,
   PHASE,
   backFromRest,
+  canHangLeaf,
+  closeDay,
+  closeHint,
   flow,
+  hangLeaf,
   jot,
   keep,
   markDone,
   phaseOf,
+  rackTopRow,
+  seePlanted,
   setDraft,
   settle,
   start,
@@ -325,5 +331,73 @@ describe('結束這顆（B2）', () => {
   test('作廢後那句不變', () => {
     const s = voidBean(start(withClue(), T0), T0 + 10 * MIN, { reason: '卡住' });
     expect(s.clue.text).toBe('把第二節標題改成問句');
+  });
+});
+
+describe('收工與葉子（F1、F2）', () => {
+  const at = (h, m = 0) => new Date(2026, 10, 1, h, m, 0).getTime();
+  const NEXT_DAY = at(9) + 24 * 60 * MIN;
+  const withBean = () => keep(start(withClue(), at(18)), at(18, 25), '明天寫結尾');
+
+  test('有豆子、過了收工時間（預設 19:00）：待機那行是收工入口；還沒到就沒有', () => {
+    expect(closeHint(withBean(), at(19))).toBe('due');
+    expect(closeHint(withBean(), at(18, 59))).toBeNull();
+  });
+
+  test('今天沒豆子：到了收工時間也不出現收工入口', () => {
+    expect(closeHint(withClue(), at(21))).toBeNull();
+  });
+
+  test('收工：今天標成收工、那句種下去、待機那行變「收工了」', () => {
+    const s = closeDay(withBean(), at(19, 5), '明天寫結尾');
+    expect(s.days['2026-11-01'].closed).toBe(true);
+    expect(s.planted).toEqual({ text: '明天寫結尾', day: '2026-11-01', shown: false });
+    expect(closeHint(s, at(19, 6))).toBe('closed');
+  });
+
+  test('收工時改了明天的第一句：那句換掉；沒改就不換（時間不動）', () => {
+    const b = withBean();
+    expect(closeDay(b, at(19, 5), '  先列三個重點  ').clue).toEqual({
+      text: '先列三個重點',
+      at: at(19, 5),
+    });
+    expect(closeDay(b, at(19, 5), '明天寫結尾').clue).toBe(b.clue);
+    expect(closeDay(b, at(19, 5), '').clue).toBe(b.clue);
+  });
+
+  test('收工後又收下一顆：那天回到沒收工', () => {
+    const closed = closeDay(withBean(), at(19, 5), '');
+    const s = keep(start(closed, at(19, 10)), at(19, 35), '再一句');
+    expect(s.days['2026-11-01'].closed).toBe(false);
+    expect(closeHint(s, at(19, 40))).toBe('due');
+  });
+
+  test('隔天第一次打開：種下的那句標成看過，只打一次招呼；當天打開不算', () => {
+    const closed = closeDay(withBean(), at(19, 5), '');
+    expect(seePlanted(closed, at(22))).toBe(closed);
+    const seen = seePlanted(closed, NEXT_DAY);
+    expect(seen.planted.shown).toBe(true);
+    expect(seePlanted(seen, NEXT_DAY)).toBe(seen);
+  });
+
+  test('今天沒豆子沒作廢：可以掛葉子，掛了算收工', () => {
+    const s = hangLeaf(withClue(), at(15));
+    expect(s.days['2026-11-01']).toMatchObject({ leaf: true, closed: true, beans: [] });
+    expect(closeHint(s, at(15))).toBe('closed');
+  });
+
+  test('今天有豆子或作廢：掛不上葉子', () => {
+    const b = withBean();
+    expect(canHangLeaf(b, at(19))).toBe(false);
+    expect(hangLeaf(b, at(19))).toBe(b);
+    const v = voidBean(start(withClue(), at(10)), at(10, 10));
+    expect(hangLeaf(v, at(11))).toBe(v);
+  });
+
+  test('豆棚頂端：有豆子沒收工→收工列；什麼都沒有→葉子列；收工或掛了葉子→沒有', () => {
+    expect(rackTopRow(withBean(), at(12))).toBe('close');
+    expect(rackTopRow(withClue(), at(12))).toBe('leaf');
+    expect(rackTopRow(closeDay(withBean(), at(19), ''), at(19))).toBeNull();
+    expect(rackTopRow(hangLeaf(withClue(), at(12)), at(12))).toBeNull();
   });
 });
