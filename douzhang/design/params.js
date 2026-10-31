@@ -12,7 +12,13 @@ export const params = {
   estimateMax: 7, // 估幾顆的上限（原型 1–7）
   stopNoRecordMinutes: 5, // 開始不到這麼久就停，不留紀錄（06 結束這顆半頁）
   // 豆罐（參數表 B）：雙豆連結。其餘物理數字在 Tokens.motion.jarPhysics
-  jar: { link: 32, linkMix: 0.3 },
+  jar: {
+    link: 32,
+    linkMix: 0.3,
+    sensorIntervalMs: 16, // 加速度計更新間隔（灰盒子同值）
+    lowFpsThreshold: 40, // 連續幾秒低於這個 fps 就退成靜止版（PRD S19 低電量退路）
+    lowFpsSeconds: 3,
+  },
 };
 
 /** 豆罐物理吃的一包數字：從 Tokens（motion.jarPhysics、beanTap、shape.beanRadius）與上面的 jar 合成。 */

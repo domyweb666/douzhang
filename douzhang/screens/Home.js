@@ -12,6 +12,8 @@ import { Clock } from '../ui/Clock';
 import { mmss } from '../ui/useNow';
 import { EndSheet, NoteSheet, VoidSheet } from '../ui/FocusSheets';
 import { EstimateSheet, TypeSheet } from '../ui/TypeSheets';
+import { Jar } from '../ui/Jar';
+import { units } from '../core/store';
 
 function Label({ children }) {
   const T = useTokens();
@@ -239,6 +241,11 @@ export function Home({ state, phase, now, actions, onRack, onSettings }) {
   const type = typeOf(state, state.settings.typeId);
   const idle = phase === PHASE.idle;
   const focus = phase === PHASE.focus;
+  // 今天的豆子依時間排，給豆罐；50 分那顆是雙豆
+  const todayBeans = (state.days[state.todayKey]?.beans || [])
+    .slice()
+    .sort((a, b) => a.t - b.t)
+    .map((b) => ({ double: units(b.len) > 1 }));
 
   return (
     <View style={{ flex: 1 }}>
@@ -256,7 +263,12 @@ export function Home({ state, phase, now, actions, onRack, onSettings }) {
       {idle ? <Clock text={`${type.len}:00`} style={{ marginTop: T.space.s }} /> : null}
       {focus ? <JotChips current={state.current} onOpen={setSheet} /> : null}
       {phase === PHASE.rest && state.current.msg ? <RestLine text={state.current.msg} /> : null}
-      <View style={{ flex: 1 }} />
+      <Jar
+        beans={todayBeans}
+        sound={state.settings.sound}
+        tilt={state.settings.tilt}
+        style={{ marginVertical: T.space.m }}
+      />
       <PrimaryButton
         phase={phase}
         first={first}

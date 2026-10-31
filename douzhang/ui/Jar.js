@@ -1,23 +1,37 @@
 // 豆罐（畫的那一半）：今天的豆子躺在罐底；收下一顆就從罐口掉進來，落地那一幀「啵」＋短觸覺（參數表 A）。
-// 物理在 core/jarPhysics.js；數字全從 Tokens 與 params 來。減少動態時豆子直接出現在罐底、不掉（參數表減少動態版）。
-// 世界物件 W 用 useState 拿一次就一直用同一個（每幀被 loop 改，改完 bump tick 重畫）。
-// D1 只有掉豆；傾斜、點彈、碰撞聲是 D2。
-import { useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, Image, View } from 'react-native';
+// D2：傾斜手機豆子跟著滾（expo-sensors，設定可關）、點一下彈、碰撞聲與觸覺（門檻＋最短間隔）、掉幀退成靜止版。
+// 物理在 core/jarPhysics.js；數字全從 Tokens 與 params 來。
+// 世界物件放 ref（lazy init），只在事件、effect、loop 裡碰；畫面只讀每幀抄出來的快照 state。
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { AccessibilityInfo, Image, Pressable } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { DeviceMotion } from 'expo-sensors';
 import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
 import { Token, useTokens } from '../design/Tokens';
-import { jarParams } from '../design/params';
-import { addBody, makeWorld, seed, step } from '../core/jarPhysics';
+import { jarParams, params } from '../design/params';
+import { words } from '../design/words';
+import { addBody, makeWorld, seed, step, tapAt } from '../core/jarPhysics';
 
-const SFX = { pop: require('../assets/sfx/pop.wav') };
+const SFX = {
+  pop: require('../assets/sfx/pop.wav'),
+  hits: [
+    require('../assets/sfx/hit260.wav'),
+    require('../assets/sfx/hit290.wav'),
+    require('../assets/sfx/hit320.wav'),
+    require('../assets/sfx/hit350.wav'),
+  ],
+};
 const IMG = {
   single: require('../assets/img/pea.webp'),
   double: require('../assets/img/pea2.webp'),
 };
-const HAPTIC = { 'impact.rigid': Haptics.ImpactFeedbackStyle.Rigid };
+const HAPTIC = {
+  'impact.rigid': Haptics.ImpactFeedbackStyle.Rigid,
+  'impact.light': Haptics.ImpactFeedbackStyle.Light,
+};
 const DROP = Token.motion.beanDrop; // 數字不隨深淺色變，拿靜態那份
 const DROP_REDUCED = Token.motion.beanDropReduced;
+const SOUND = Token.sound;
 
 function useReduceMotion() {
   const [reduce, setReduce] = useState(false);
@@ -31,52 +45,95 @@ function useReduceMotion() {
   return reduce;
 }
 
-/** 入罐音。靜音開關撥到靜音就不響（playsInSilentMode: false）。回的是 ref，只在事件裡讀。 */
+/** 入罐音與碰撞音。靜音開關撥到靜音就不響（playsInSilentMode: false）。回的是 ref，只在事件裡讀。 */
 function useAudio() {
-  const player = useRef(null);
+  const players = useRef(null);
   useEffect(() => {
     try {
       setAudioModeAsync({ playsInSilentMode: false }).catch(() => {});
-      player.current = createAudioPlayer(SFX.pop);
+      players.current = { pop: createAudioPlayer(SFX.pop), hits: SFX.hits.map(createAudioPlayer) };
     } catch {
-      player.current = null;
+      players.current = null;
     }
     return () => {
       try {
-        player.current?.remove();
+        players.current?.pop.remove();
+        players.current?.hits.forEach((p) => p.remove());
       } catch {
         // 已經釋放過
       }
     };
   }, []);
-  return player;
+  return players;
+}
+
+function play(player, volume) {
+  try {
+    if (volume != null) player.volume = volume;
+    player.seekTo(0);
+    player.play();
+  } catch {
+    // 音效失敗不影響收下
+  }
 }
 
 /** 落地那一刻的視聽觸：同一事件同一幀（參數表 A 入罐音、入罐觸覺）。 */
-function land(player, sound) {
-  if (sound) {
-    try {
-      player.current?.seekTo(0);
-      player.current?.play();
-    } catch {
-      // 音效失敗不影響收下
-    }
-  }
+function land(players, sound) {
+  if (sound && players.current) play(players.current.pop);
   Haptics.impactAsync(HAPTIC[Token.haptic.beanLand]).catch(() => {});
 }
 
-function dropOne(W, two, reduce) {
+/** 碰撞：超過門檻、間隔夠久才一次「嗒」＋輕觸覺；音量隨衝擊（參數表 B）。 */
+function hit(players, sound, impact) {
+  if (sound && players.current) {
+    const hits = players.current.hits;
+    const volume = Math.min(SOUND.hitVolMax, impact / SOUND.hitVolDiv);
+    play(hits[Math.floor(Math.random() * hits.length)], volume);
+  }
+  Haptics.impactAsync(HAPTIC[Token.haptic.beanHit]).catch(() => {});
+}
+
+function dropOne(W, two, still) {
   if (W.bodies.length >= W.P.maxBeans) return;
   const go = () => {
     const x = W.w / 2 + (Math.random() - 0.5) * W.P.link * 2;
-    if (reduce) {
+    if (still) {
       addBody(W, two, x, W.h - W.P.radius);
       W.onLand?.();
     } else {
       addBody(W, two, x, -W.P.radius * 2, (Math.random() - 0.5) * 2 * DROP.vxSpread, DROP.vy, true);
     }
   };
-  setTimeout(go, reduce ? DROP_REDUCED.delayMs : DROP.delayMs);
+  setTimeout(go, still ? DROP_REDUCED.delayMs : DROP.delayMs);
+}
+
+/** 傾斜：加速度計換成重力向量的目標值；關掉時回到靜置重力。 */
+function useTilt(worldRef, on) {
+  useEffect(() => {
+    const W = worldRef.current;
+    if (!on) {
+      W.tgx = 0;
+      W.tgy = W.P.gravity;
+      return undefined;
+    }
+    let sub = null;
+    DeviceMotion.isAvailableAsync()
+      .then((ok) => {
+        if (!ok) return;
+        DeviceMotion.setUpdateInterval(params.jar.sensorIntervalMs);
+        sub = DeviceMotion.addListener(({ accelerationIncludingGravity: a }) => {
+          if (!a || a.x == null) return;
+          W.tgx = a.x * W.P.tiltScale;
+          W.tgy = -a.y * W.P.tiltScale;
+        });
+      })
+      .catch(() => {});
+    return () => {
+      sub?.remove();
+      W.tgx = 0;
+      W.tgy = W.P.gravity;
+    };
+  }, [worldRef, on]);
 }
 
 /** 畫面要的快照：每幀從世界抄一份出來（render 只讀這份，不碰可變的世界）。 */
@@ -92,14 +149,16 @@ function snapshot(W) {
   };
 }
 
-/** 每幀走物理、落地事件交給 W.onLand、把快照放進 state 重畫。 */
-function useLoop(worldRef) {
+/** 每幀走物理、落地與碰撞事件交給 W.onLand／W.onHit、把快照放進 state 重畫；連續掉幀就回報（退成靜止版）。 */
+function useLoop(worldRef, onLowFps) {
   const [frame, setFrame] = useState({ singles: [], doubles: [] });
   useEffect(() => {
     const W = worldRef.current;
     let raf;
     let last = 0;
     let run = true;
+    let lastHit = 0;
+    const fps = { n: 0, t: 0, lowSeconds: 0 };
     const loop = (t) => {
       if (!run) return;
       const dt = last ? Math.min(W.P.dtMax, (t - last) / 1000) : W.P.dtMax / 2;
@@ -110,6 +169,17 @@ function useLoop(worldRef) {
       W.landed = [];
       for (let i = 0; i < W.P.substeps; i++) step(W, dt / W.P.substeps);
       if (W.landed.length) W.onLand?.();
+      if (W.impact > SOUND.hitThreshold && t - lastHit > SOUND.hitGapMs) {
+        lastHit = t;
+        W.onHit?.(W.impact);
+      }
+      fps.n++;
+      if (t - fps.t > 1000) {
+        fps.lowSeconds = fps.n < params.jar.lowFpsThreshold ? fps.lowSeconds + 1 : 0;
+        fps.n = 0;
+        fps.t = t;
+        if (fps.lowSeconds >= params.jar.lowFpsSeconds) onLowFps();
+      }
       setFrame(snapshot(W));
       raf = requestAnimationFrame(loop);
     };
@@ -118,7 +188,7 @@ function useLoop(worldRef) {
       run = false;
       cancelAnimationFrame(raf);
     };
-  }, [worldRef]);
+  }, [worldRef, onLowFps]);
   return frame;
 }
 
@@ -156,22 +226,26 @@ function DoubleBean({ cx, cy, ang, R, width }) {
 
 /**
  * beans：今天的豆子（依時間排），每個 { double }。多一顆就掉一顆；數目對不上（換日、匯入、清空）就重新安置。
- * sound：設定的聲音開關。
+ * sound：設定的聲音開關。tilt：設定的傾斜開關。
+ * 靜止版（減少動態、或連續掉幀）：不傾斜、不彈、新豆直接出現在罐底，啵與觸覺照樣。
  */
-export function Jar({ beans, sound, style }) {
+export function Jar({ beans, sound, tilt, style }) {
   const T = useTokens();
   const reduce = useReduceMotion();
-  const player = useAudio();
+  const [lowFps, setLowFps] = useState(false);
+  const still = reduce || lowFps;
+  const players = useAudio();
   const worldRef = useRef(null);
   if (worldRef.current === null) {
-    // 只建一次（lazy init）；之後只在事件、effect、loop 裡碰它
     worldRef.current = { ...makeWorld(jarParams(Token)), known: null }; // known＝上次看到的顆數
   }
   const P = jarParams(Token);
 
   useEffect(() => {
-    worldRef.current.onLand = () => land(player, sound);
-  }, [player, sound]);
+    const W = worldRef.current;
+    W.onLand = () => land(players, sound);
+    W.onHit = (impact) => hit(players, sound, impact);
+  }, [players, sound]);
 
   const onLayout = (e) => {
     const W = worldRef.current;
@@ -188,19 +262,26 @@ export function Jar({ beans, sound, style }) {
   useEffect(() => {
     const W = worldRef.current;
     if (W.known === null || !W.w) return;
-    if (beans.length === W.known + 1) dropOne(W, !!beans[beans.length - 1].double, reduce);
+    if (beans.length === W.known + 1) dropOne(W, !!beans[beans.length - 1].double, still);
     else if (beans.length !== W.known) seed(W, beans.length, (i) => !!beans[i]?.double);
     W.known = beans.length;
-  }, [beans, reduce]);
+  }, [beans, still]);
 
-  const frame = useLoop(worldRef);
+  useTilt(worldRef, !!tilt && !still);
+  const onLowFps = useCallback(() => setLowFps(true), []);
+  const frame = useLoop(worldRef, onLowFps);
   const R = P.radius;
+  const n = frame.singles.length + frame.doubles.length;
 
   return (
-    <View
+    <Pressable
       onLayout={onLayout}
+      onPress={(e) => {
+        if (still) return;
+        tapAt(worldRef.current, e.nativeEvent.locationX, e.nativeEvent.locationY);
+      }}
+      accessibilityLabel={n ? `${words.todayBeans} ${n}` : words.todayBeans}
       style={[{ flex: 1, overflow: 'hidden', borderRadius: T.shape.radiusCard }, style]}
-      accessibilityLabel={`${frame.singles.length + frame.doubles.length}`}
     >
       {frame.singles.map((b) => (
         <Bean key={b.id} x={b.x} y={b.y} R={R} />
@@ -208,6 +289,6 @@ export function Jar({ beans, sound, style }) {
       {frame.doubles.map((L) => (
         <DoubleBean key={L.id} cx={L.cx} cy={L.cy} ang={L.ang} R={R} width={P.link + R * 2} />
       ))}
-    </View>
+    </Pressable>
   );
 }
