@@ -39,46 +39,51 @@ const isObject = (x) => x !== null && typeof x === 'object' && !Array.isArray(x)
 const arrayOf = (x) => (Array.isArray(x) ? x : []);
 const pick = (value, fallback, type) => (typeof value === type ? value : fallback);
 
+/** settings 這一層：每欄驗型別、不對就用預設；選到的類型不存在就退回第一個。 */
+function normalizeSettings(s) {
+  const base = blank().settings;
+  const types = arrayOf(s.types)
+    .filter((t) => isObject(t) && typeof t.id === 'string' && typeof t.name === 'string')
+    .map((t) => ({ id: t.id, name: t.name, len: pick(t.len, DEFAULT_TYPE.len, 'number') }));
+  const settings = {
+    types: types.length ? types : base.types,
+    typeId: pick(s.typeId, base.typeId, 'string'),
+    restMode: s.restMode === 'self' ? 'self' : 'auto',
+    sound: pick(s.sound, base.sound, 'boolean'),
+    demo: false, // 正式版沒有試玩速度，不管舊檔寫什麼
+    closeTime: pick(s.closeTime, base.closeTime, 'string'),
+    tilt: pick(s.tilt, base.tilt, 'boolean'),
+  };
+  if (!settings.types.some((t) => t.id === settings.typeId)) settings.typeId = settings.types[0].id;
+  return settings;
+}
+
+/** 一天這一層：六欄補齊；每一顆的 len 之後要進 units()，不是數字會算成 NaN，所以在這裡就補成預設（I2）。 */
+function normalizeDay(d) {
+  const day = blankDay();
+  day.beans = arrayOf(d.beans)
+    .filter(isObject)
+    .map((b) => ({ ...b, len: pick(b.len, DEFAULT_TYPE.len, 'number') }));
+  day.voids = arrayOf(d.voids).filter(isObject);
+  day.tasks = arrayOf(d.tasks).filter(isObject);
+  day.closed = pick(d.closed, false, 'boolean');
+  day.leaf = pick(d.leaf, false, 'boolean');
+  day.restOver = pick(d.restOver, 0, 'number');
+  return day;
+}
+
 /** 把外部讀進來的物件補成完整格式。來源不可信（舊版 PWA、手改過的檔），缺什麼補什麼，型別不對就用預設。 */
 export function normalize(raw) {
   if (!isObject(raw) || !isObject(raw.settings) || !isObject(raw.days)) {
     throw new Error('not a douzhang state');
   }
-  const base = blank();
-  const s = raw.settings;
-  const types = arrayOf(s.types)
-    .filter((t) => isObject(t) && typeof t.id === 'string' && typeof t.name === 'string')
-    .map((t) => ({ id: t.id, name: t.name, len: pick(t.len, DEFAULT_TYPE.len, 'number') }));
-  const settings = {
-    types: types.length ? types : base.settings.types,
-    typeId: pick(s.typeId, base.settings.typeId, 'string'),
-    restMode: s.restMode === 'self' ? 'self' : 'auto',
-    sound: pick(s.sound, base.settings.sound, 'boolean'),
-    demo: false, // 正式版沒有試玩速度，不管舊檔寫什麼
-    closeTime: pick(s.closeTime, base.settings.closeTime, 'string'),
-    tilt: pick(s.tilt, base.settings.tilt, 'boolean'),
-  };
-  if (!settings.types.some((t) => t.id === settings.typeId)) settings.typeId = settings.types[0].id;
-
   const days = {};
   for (const [key, d] of Object.entries(raw.days)) {
-    if (!isObject(d)) continue;
-    const day = blankDay();
-    // 每一顆的 len 之後要進 units()，不是數字會算成 NaN，所以在這裡就補成預設（I2：每一顆都不信任外部型別）
-    day.beans = arrayOf(d.beans)
-      .filter(isObject)
-      .map((b) => ({ ...b, len: pick(b.len, DEFAULT_TYPE.len, 'number') }));
-    day.voids = arrayOf(d.voids).filter(isObject);
-    day.tasks = arrayOf(d.tasks).filter(isObject);
-    day.closed = pick(d.closed, false, 'boolean');
-    day.leaf = pick(d.leaf, false, 'boolean');
-    day.restOver = pick(d.restOver, 0, 'number');
-    days[key] = day;
+    if (isObject(d)) days[key] = normalizeDay(d);
   }
-
   return {
     v: FORMAT_VERSION,
-    settings,
+    settings: normalizeSettings(raw.settings),
     current: isObject(raw.current) ? raw.current : null,
     clue: isObject(raw.clue) && typeof raw.clue.text === 'string' ? raw.clue : null,
     days,
