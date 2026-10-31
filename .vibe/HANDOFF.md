@@ -10,12 +10,19 @@
 「直接往下做，把該做的功能都做完，做到剩我實測為止。」→ F、G、H 一路做完，不停下來等他；審查員每組塊一次；最後給他整個 app 的親手驗收清單（`.vibe/操作清單-待驗.md` 最上面新開一節「整 app 批次驗收」，依組塊 A→H 排；G3 匯入、G4 清空 🔴 要先用測試資料）。
 
 ## 新會話第一件事（照順序）
-1. 讀這份、`.vibe/切片帳本.md`「進行中」那節（每片的覆誦與偏離都在）、規矩檔。向多米摘要一句：「上次機器層做到 E2，剩 F、G、H 八片；我先補派 D＋E 的審查員，再做 F1。」等他點頭。
-2. **審查員欠兩筆**：
-   - B＋C 的乾淨審查員上個會話派了，結果沒等到就交接。重派一次（diff 範圍 `git diff 3006ded 189ed94 -- douzhang`，排除 jarPhysics／receipt／Jar／assets 那幾個先行檔；餵 `.vibe/標準清單.md` 的 B、C 兩節、黃金 23–33、規矩檔、06 狀態表、PRD S5 S6 S9 S10）。
-   - D＋E 還沒派（diff `git diff 189ed94 HEAD -- douzhang`；餵標準清單 D、E 兩節、黃金 34–44、規矩檔、參數表、PRD S12 S13 S19）。
-   - 審查員的 prompt 樣板在切片帳本「組塊 A 乾淨審查員」那節上面有寫怎麼餵；退回點修完 commit `[機器存檔點] 組塊 X 審查員修正`，記錯誤日誌。
-3. 從 F1 開始，每片照機器層流程走。
+1. 讀這份、`.vibe/切片帳本.md`「進行中」那節（每片的覆誦與偏離都在）、規矩檔。向多米摘要一句：「上次機器層做到 E2，剩 F、G、H 八片；我先修 B＋C 審查員退回的六點、派 D＋E 的審查員，再做 F1。」等他點頭。
+2. **審查員**：
+   - **B＋C 的乾淨審查員結果回來了：❌ 退回**（在 189ed94 快照上審，測試 99 過、lint 0 錯、token-check 放行；退回的是這些）。新會話第一片先修這些、commit `[機器存檔點] 組塊 B+C 審查員修正`、錯誤日誌各記一條：
+     1. 高：`core/settings.js` 的 `setRestMode／setCloseTime／setSound／setTilt` 是 G1 才用的，現在沒呼叫端（違反「不為未來加」）。處置二選一：G1 緊接著做就把它們接上；否則先刪連測試一起刪，G1 再加回來。
+     2. 中：帳本寫「settings.test.js 14 條」實際 13 條（扣掉 G1 那 2 條，C 只有 11 條）。改帳本數字。
+     3. 中：昨天估的 `taskId` 會一直掛到隔天，隔天沒新任務時類型半頁顯示「選填」但豆子仍掛昨天那件事，而且「不掛任務」列只在今天有任務時才出現、點不到。修法：`start` 只在 `taskId` 屬於今天 `tasks` 時才掛（或換日時清 taskId）；`pickTask` 檢查存在；寫測試「隔天開始的顆不掛昨天的任務」。
+     4. 低：`SheetRow` 的 `tint` 參數沒人用 → 刪；`borderBottomWidth: 1` 已三處 → Tokens.shape 加 `hairline: 1`（兩份複本），三處改用；`TypeSheets.SheetRow` 與 `FocusSheets.Row` 幾乎一樣 → 合成一個放 `ui/SheetRow.js`。
+     5. 低：`TypeSheets.js` 的 `✓` 與 `Home.js` chip 的「名字 數字」不是從 words 來 → 進 words（`words.check`、`words.countLabel(name, n)`）。
+     6. 低：結束半頁的「不到五分鐘」在 render 時算、`voidBean` 在按下時再算，4:59 看到「停下來」按下去可能已滿 5 分而記一筆空原因的作廢 → 打開半頁那一刻就把 `early` 固定（PWA openEnd 同做法），`onVoid` 帶 `early` 給 machine 決定不記。
+     - 審查員另外指出、要在真機驗或 G1 順手處理的：計時中可進設定刪掉正在計時那顆的類型（typeOf 退回一般，可接受；但停在設定頁時鈴響、收下後畫面回設定頁不是休息，`App` 的 `screen` 在 phase 變 bell 時要重設 home）；半頁接半頁（類型→估幾顆、結束→作廢）同一拍關一個 Modal 開另一個，iOS 可能第二個出不來，黃金 27、32、33 真機驗，出問題就改成同一個 Sheet 換內容；設定頁改名用 `defaultValue` 不受控，清空後存「未命名」框裡卻空白；`estimate` 的 est 不檢查整數。測試誠實：三條測試名比斷言大（settings.test.js「待機的長度」「七個刻度」、machine.test.js「開始那天」），名字改小或補斷言。
+   - D＋E 還沒派（diff `git diff 189ed94 b91b3f3 -- douzhang`；餵標準清單 D、E 兩節、黃金 34–44、規矩檔、參數表、PRD S12 S13 S19）。
+   - 審查員的 prompt 樣板在切片帳本「組塊 A 乾淨審查員」那節上面有寫怎麼餵。
+3. 修完 B＋C 退回點、派完 D＋E，從 F1 開始，每片照機器層流程走。
 
 ## 這個會話踩到、下一個會話要知道的
 - **`--legacy-peer-deps` 會把 peer 拔掉**：上上個會話裝 expo-notifications 時 jest-preset 與 typescript 被拔，測試與 eslint 都起不來。已把 `@react-native/jest-preset@0.88.1`、`typescript@6.0.3`、`@types/react@19.3.0` 明寫進 devDependencies。之後裝套件（G 要裝 expo-sharing、expo-document-picker、expo-file-system）照樣 `npm install --legacy-peer-deps <pkg>@<版本>`，裝完**一定**重跑 `npm test` 與 `npx eslint .`。
