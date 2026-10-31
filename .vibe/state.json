@@ -1,10 +1,10 @@
 {
-  "station": "chunk-approval",
-  "updated_at": "2026-11-01T04:10:00+08:00",
+  "station": "voice-lock",
+  "updated_at": "2026-11-01T04:20:00+08:00",
   "updated_by": "vibe-traffic-control",
   "pieces": { "todo": 22, "machine_verified": 0, "human_verified": 0 },
   "chunks": [
-    { "name": "A 核心迴圈「接」", "total": 6, "machine_done": 0, "human_verified": false, "approved": false },
+    { "name": "A 核心迴圈「接」", "total": 6, "machine_done": 0, "human_verified": false, "approved": true },
     { "name": "B 中途保護", "total": 2, "machine_done": 0, "human_verified": false, "approved": false },
     { "name": "C 類型與估幾顆", "total": 2, "machine_done": 0, "human_verified": false, "approved": false },
     { "name": "D 豆罐手感", "total": 2, "machine_done": 0, "human_verified": false, "approved": false },
