@@ -1,9 +1,11 @@
 // 狀態機測試。名稱是多米讀得懂的中文句子（標準清單 A2）。
 import { blank, normalize } from '../core/store';
+import { words } from '../design/words';
 import {
   DEV_TYPE,
   PHASE,
   backFromRest,
+  flow,
   keep,
   phaseOf,
   setDraft,
@@ -163,5 +165,80 @@ describe('打一半被打斷（A3）', () => {
   test('不在計時中（例如休息）存草稿，什麼都不變', () => {
     const resting = keep(start(withClue(), T0), T0 + 25 * MIN, 'x');
     expect(setDraft(resting, 'y')).toBe(resting);
+  });
+});
+
+describe('再做一下（A5）', () => {
+  test('鈴響後再做 15 分：結束時刻變成現在加 15 分，這顆標記已延長', () => {
+    const rang = T0 + 25 * MIN;
+    const s = flow(start(withClue(), T0), rang + MIN, 15);
+    expect(s.current.endAt).toBe(rang + MIN + 15 * MIN);
+    expect(s.current.flowed).toBe(true);
+    expect(s.current.flowMin).toBe(15);
+    expect(phaseOf(s, rang + 2 * MIN)).toBe(PHASE.focus);
+  });
+
+  test('一顆只能再做一次：第二次按什麼都不變', () => {
+    const rang = T0 + 25 * MIN;
+    const once = flow(start(withClue(), T0), rang, 15);
+    const again = flow(once, rang + 15 * MIN, 30);
+    expect(again).toBe(once);
+  });
+
+  test('還沒響就不能再做', () => {
+    const s = start(withClue(), T0);
+    expect(flow(s, T0 + 10 * MIN, 15)).toBe(s);
+  });
+
+  test('再做過的顆收下時，豆子記 flow 等於延長的分鐘，長度仍是原本的 25', () => {
+    const rang = T0 + 25 * MIN;
+    const s = keep(flow(start(withClue(), T0), rang, 30), rang + 30 * MIN, '下一句');
+    const bean = s.days['2026-11-01'].beans[0];
+    expect(bean.flow).toBe(30);
+    expect(bean.len).toBe(25);
+  });
+
+  test('沒再做過的顆收下時 flow 是 0', () => {
+    const s = keep(start(withClue(), T0), T0 + 25 * MIN, 'x');
+    expect(s.days['2026-11-01'].beans[0].flow).toBe(0);
+  });
+});
+
+describe('休息（A6）', () => {
+  const selfMode = () => {
+    const s = withClue();
+    s.settings = { ...s.settings, restMode: 'self' };
+    return s;
+  };
+
+  test('到點提醒模式：休息有結束時刻，到點自己回待機（A2 不變）', () => {
+    const s = keep(start(withClue(), T0), T0 + 25 * MIN, 'x');
+    expect(s.current.endAt).toBe(T0 + 30 * MIN);
+    expect(phaseOf(s, T0 + 31 * MIN)).toBe(PHASE.idle);
+  });
+
+  test('我自己決定模式：休息沒有結束時刻，放一小時還是休息，只有按回來才結束', () => {
+    const s = keep(start(selfMode(), T0), T0 + 25 * MIN, 'x');
+    expect(s.current.endAt).toBeNull();
+    expect(phaseOf(s, T0 + 85 * MIN)).toBe(PHASE.rest);
+    expect(settle(s, T0 + 85 * MIN)).toBe(s);
+    expect(backFromRest(s).current).toBeNull();
+  });
+
+  test('我自己決定模式重開經 normalize 讀回來，還是休息', () => {
+    const s = keep(start(selfMode(), T0), T0 + 25 * MIN, 'x');
+    const saved = normalize(JSON.parse(JSON.stringify(s)));
+    expect(phaseOf(saved, T0 + 85 * MIN)).toBe(PHASE.rest);
+  });
+
+  test('收下後那句從 24 句裡抽，記進 lastLine，連續兩次不同句', () => {
+    let s = keep(start(withClue(), T0), T0 + 25 * MIN, 'x');
+    expect(words.restLines).toContain(s.current.msg);
+    expect(words.restLines[s.lastLine]).toBe(s.current.msg);
+    for (let i = 0; i < 30; i++) {
+      const prev = s.lastLine;
+      s = keep(start(backFromRest(s), T0), T0 + 25 * MIN, 'x');
+      expect(s.lastLine).not.toBe(prev);
+    }
   });
 });

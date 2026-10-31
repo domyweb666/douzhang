@@ -13,7 +13,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useTokens } from './design/Tokens';
 import { words } from './design/words';
 import { load, save } from './core/store';
-import { PHASE, backFromRest, keep, phaseOf, setDraft, settle, start } from './core/machine';
+import { PHASE, backFromRest, flow, keep, phaseOf, setDraft, settle, start } from './core/machine';
 import { askPermissionOnce, isGranted, planned, sync } from './core/notify';
 import { useNow } from './ui/useNow';
 import { TextButton } from './ui/TextButton';
@@ -101,6 +101,7 @@ export default function App() {
   };
   const onKeep = (text) => commit(keep(live, Date.now(), text));
   const onBackFromRest = () => commit(backFromRest(live));
+  const onFlow = (minutes) => commit(flow(live, Date.now(), minutes));
   const onDraft = (text) => commit(setDraft(live, text)); // 每個字都存：殺掉再開草稿才在
 
   return (
@@ -116,7 +117,14 @@ export default function App() {
           <NotificationOffLine onOpen={() => Linking.openSettings()} />
         ) : null}
         {phase === PHASE.bell ? (
-          <Bell draft={live.current.draft || ''} onDraft={onDraft} onKeep={onKeep} />
+          <Bell
+            current={live.current}
+            now={now}
+            draft={live.current.draft || ''}
+            onDraft={onDraft}
+            onKeep={onKeep}
+            onFlow={onFlow}
+          />
         ) : (
           <Home
             state={live}

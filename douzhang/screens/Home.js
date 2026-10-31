@@ -122,6 +122,23 @@ function TypeChip({ type }) {
   );
 }
 
+/** 收下後那句（24 句輪替）：休息時放在卡片下面，位置同待機的 chip。 */
+function RestLine({ text }) {
+  const T = useTokens();
+  return (
+    <Text
+      style={{
+        ...T.font.sub,
+        color: T.color.textSecondary,
+        textAlign: 'center',
+        marginTop: T.space.m,
+      }}
+    >
+      {text}
+    </Text>
+  );
+}
+
 /** 計時中與休息共用：大時間＋小標＋一句。 */
 function Countdown({ left, label, body }) {
   return (
@@ -137,8 +154,12 @@ function CardBody({ phase, state, now, firstLine, onFirstLine }) {
   const left = state.current ? state.current.endAt - now : 0;
   if (phase === PHASE.focus)
     return <Countdown left={left} label={words.doing} body={state.current.clue} />;
-  if (phase === PHASE.rest)
-    return <Countdown left={left} label={words.rest} body={words.restBody} />;
+  if (phase === PHASE.rest) {
+    // 「我自己決定」的休息沒有結束時刻：大時間數正數（休息了多久），只有按回來才結束
+    const self = state.settings.restMode === 'self';
+    const shown = self ? now - state.current.restStart : left;
+    return <Countdown left={shown} label={words.rest} body={words.restBody} />;
+  }
   if (!state.clue) return <FirstInput value={firstLine} onChange={onFirstLine} />;
   return <ClueCard text={state.clue.text} />;
 }
@@ -183,6 +204,7 @@ export function Home({ state, phase, now, onStart, onBackFromRest }) {
       </Card>
       {idle ? <TypeChip type={type} /> : null}
       {idle ? <Clock text={`${type.len}:00`} style={{ marginTop: T.space.s }} /> : null}
+      {phase === PHASE.rest && state.current.msg ? <RestLine text={state.current.msg} /> : null}
       <View style={{ flex: 1 }} />
       <PrimaryButton
         phase={phase}

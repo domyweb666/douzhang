@@ -15,19 +15,22 @@ export function typeOf(state, typeId) {
   return state.settings.types.find((t) => t.id === typeId) || state.settings.types[0];
 }
 
+/** 休息有沒有到點。「我自己決定」的休息沒有 endAt，永遠不自己結束。 */
+const restOver = (c, now) => c.endAt != null && now >= c.endAt;
+
 /** 現在該顯示哪一態：由 current 與時鐘算出來，不另外存。 */
 export function phaseOf(state, now) {
   const c = state.current;
   if (!c) return PHASE.idle;
   if (c.phase === PHASE.focus) return now >= c.endAt ? PHASE.bell : PHASE.focus;
-  if (c.phase === PHASE.rest) return now >= c.endAt ? PHASE.idle : PHASE.rest;
+  if (c.phase === PHASE.rest) return restOver(c, now) ? PHASE.idle : PHASE.rest;
   return PHASE.idle;
 }
 
 /** 休息到點就算回待機了：把過期的 rest 收掉。每次 tick 與開機讀檔後呼叫。 */
 export function settle(state, now) {
   const c = state.current;
-  if (c && c.phase === PHASE.rest && now >= c.endAt) return { ...state, current: null };
+  if (c && c.phase === PHASE.rest && restOver(c, now)) return { ...state, current: null };
   return state;
 }
 
@@ -58,6 +61,14 @@ export function start(state, now, { typeId = state.settings.typeId, firstLine } 
   };
 }
 
+/** 收下後那句：24 句輪替，不跟上一次同一句（PWA pickLine，lastLine 同名欄位）。 */
+function pickLine(state) {
+  const n = words.restLines.length;
+  let i = Math.floor(Math.random() * n);
+  if (i === state.lastLine) i = (i + 1) % n;
+  return { index: i, text: words.restLines[i] };
+}
+
 /**
  * 收下這顆：豆子進「開始那天」的帳、有字就換那句、進休息。
  * 空白也收（A2）；要多按一下「這顆不留話」的守門在畫面層（A5）。
@@ -73,7 +84,7 @@ export function keep(state, now, text) {
     clue: line,
     notes: c.notes,
     pings: c.pings,
-    flow: 0,
+    flow: c.flowMin || 0,
     taskId: c.taskId,
     start: c.startedAt,
   };
@@ -84,17 +95,36 @@ export function keep(state, now, text) {
   // 響了沒理、拖到超過這顆的休息長度才回來收：休息早過了，直接待機（PRD S8）
   const restMs = restMinutes(c.len) * MS_PER_MINUTE;
   if (now - c.endAt >= restMs) return { ...state, days, clue, current: null };
+  const picked = pickLine(state);
   return {
     ...state,
     days,
     clue,
+    lastLine: picked.index,
     current: {
       phase: PHASE.rest,
       typeId: c.typeId,
       len: c.len,
       restStart: now,
-      endAt: now + restMs,
+      // 「我自己決定」：沒有結束時刻，畫面數正數，只有按回來才結束
+      endAt: state.settings.restMode === 'self' ? null : now + restMs,
       rang: false,
+      msg: picked.text,
+    },
+  };
+}
+
+/** 鈴響後再做 15／30 分：一顆只能一次（S11）。到點再響，收下時 flow 記總延長分鐘。 */
+export function flow(state, now, minutes) {
+  const c = state.current;
+  if (!c || c.phase !== PHASE.focus || now < c.endAt || c.flowed) return state;
+  return {
+    ...state,
+    current: {
+      ...c,
+      endAt: now + minutes * MS_PER_MINUTE,
+      flowed: true,
+      flowMin: (c.flowMin || 0) + minutes,
     },
   };
 }
