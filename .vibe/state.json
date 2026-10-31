@@ -1,6 +1,6 @@
 {
-  "station": "simplify",
-  "updated_at": "2026-11-01T10:00:00+08:00",
+  "station": "regression",
+  "updated_at": "2026-11-01T10:20:00+08:00",
   "updated_by": "vibe-traffic-control",
   "pieces": {
     "todo": 21,
