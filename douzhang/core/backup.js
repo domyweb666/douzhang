@@ -6,13 +6,14 @@ import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
 import { dayKey, parseBackup } from './store';
 import { params } from '../design/params';
+import { words } from '../design/words';
 
 const AUTO_PREFIX = 'auto-backup-';
 const AUTO_SUFFIX = '.json';
 const JSON_MIME = 'application/json';
 
-/** 匯出檔名：豆帳備份-YYYY-MM-DD.json（跟 PWA 同名，I5 不接受自訂）。 */
-export const backupName = (now) => `豆帳備份-${dayKey(now)}.json`;
+/** 匯出檔名：番茄帳備份-YYYY-MM-DD.json（app 名＋日期，I5 不接受自訂；PWA 那時叫「豆帳備份」，匯入不看檔名）。 */
+export const backupName = (now) => `${words.appName}備份-${dayKey(now)}.json`;
 
 /** 匯出：寫到暫存 → 系統分享選單 → 刪掉暫存（S7）。被取消不算錯。回 true／false。 */
 export async function exportBackup(text, now) {

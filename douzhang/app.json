@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "豆帳",
+    "name": "番茄帳",
     "slug": "douzhang",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -24,7 +24,7 @@
       [
         "expo-sensors",
         {
-          "motionPermission": "傾斜手機時，罐子裡的豆子跟著滾。"
+          "motionPermission": "傾斜手機時，罐子裡的番茄跟著滾。"
         }
       ]
     ]

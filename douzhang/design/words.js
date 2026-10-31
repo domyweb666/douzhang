@@ -1,7 +1,7 @@
-// 豆帳 介面用詞。翻自 .uiux/05-設計代號/詞彙表-暫定.md（v0.1 暫定）。
+// 番茄帳（原豆帳）介面用詞。翻自 .uiux/05-設計代號/詞彙表-暫定.md（v0.1 暫定）。
 // 畫面上每一個字只准從這裡拿；要新詞先加進詞彙表再加這裡。按鈕名一律動詞帶對象。
 export const words = {
-  appName: '豆帳',
+  appName: '番茄帳', // 2026-11-01 多米：豌豆全面換番茄（原「豆帳」）
 
   // 核心
   bean: '一顆', // 一段 25 分鐘的專注
@@ -24,19 +24,19 @@ export const words = {
   doneEarly: '提早做完了',
   keepGoing: '繼續做',
 
-  // 豆子與回看
-  todayBeans: '今天的豆子',
-  pea: '豆子',
-  doublePea: '雙豆',
-  pod: '豆莢',
-  rack: '豆棚',
+  // 番茄與回看（2026-11-01 多米：豆子→番茄、雙豆→雙番茄、豆莢→番茄串、豆棚→番茄架）
+  todayBeans: '今天的番茄',
+  pea: '番茄',
+  doublePea: '雙番茄',
+  pod: '番茄串',
+  rack: '番茄架',
   dayReceipt: '這天的收據',
   weekReceipt: '這週的收據',
   flipToBack: '翻到背面',
   estimate: '估幾顆',
   estimateVsActual: '估算對帳',
   hangLeaf: '掛一片葉子',
-  closeDay: '收工', // 收工半頁標題與按鈕同字、豆棚頂端列
+  closeDay: '收工', // 收工半頁標題與按鈕同字、番茄架頂端列
 
   // 設定與狀態
   taskType: '任務類型',
@@ -61,7 +61,7 @@ export const words = {
 
   // 通知（A4）：文案固定，不含那句（安全 P3）
   restDone: '休息完了',
-  notificationOffLine: '到點通知沒開。鈴只在豆帳打開時響。',
+  notificationOffLine: '到點通知沒開。鈴只在番茄帳打開時響。',
   openNotifications: '打開通知',
 
   // 鈴響細節（A5）
@@ -120,39 +120,39 @@ export const words = {
   notifOpen: '打開',
   soundRow: '聲音',
   feel: '手感',
-  tiltRow: '傾斜手機，豆子跟著滾',
+  tiltRow: '傾斜手機，番茄跟著滾',
 
   // 備份與清空（G2–G4；06 設定狀態表、安全標準 S3–S5）。系統訊息第一句先講有沒有損失
   backup: '備份',
   exportBackup: '匯出備份',
   importBackup: '從備份匯入',
-  backupNote: '豆帳的資料只在這支 iPhone 上。每週匯出一次備份。',
+  backupNote: '番茄帳的資料只在這支 iPhone 上。每週匯出一次備份。',
   lastAutoBackup: (when) => `上次自動備份：${when}`,
-  importTooBig: '這個檔案太大，不像豆帳的備份，原本的資料沒動',
+  importTooBig: '這個檔案太大，不像番茄帳的備份，原本的資料沒動',
   autoBackupFailed: '沒辦法先把現在的資料備份起來，這次不匯入，原本的資料沒動',
   exportFailed: '這次沒匯出成功，原本的資料沒動',
   backupsLeft: '資料清掉了，但自動備份檔沒刪乾淨，再按一次清空試試',
   importConfirm: '用備份覆蓋現在的資料？',
   importConfirmOk: '覆蓋現在的資料',
   cancel: '取消',
-  wipeTitle: '清空所有豆子、豆莢和設定後就找不回來了',
+  wipeTitle: '清空所有番茄、番茄串和設定後就找不回來了',
   wipeBody: '要留的話先匯出備份。',
   wipedLine: '全部清掉了。清掉的拿不回來，有匯出過的備份可以在設定匯入。',
   wipedAction: '去設定匯入',
 
-  // 收工與葉子（F1、F2）：06 收工半頁、豆棚頂端列；待機那一行照原型 renderHome
-  closeSub: '今天的豆莢掛上架，最後那句種進土裡，明天打開就在。',
+  // 收工與葉子（F1、F2）：06 收工半頁、番茄架頂端列；待機那一行照原型 renderHome
+  closeSub: '今天的番茄串掛上架，最後那句種進土裡，明天打開就在。',
   closeTomorrowCap: '明天的第一句',
   notYet: '還沒',
   leafLine: '今天沒有番茄？整天在回訊息、開會，掛一片葉子，不算缺。', // 鈕用上面的 hangLeaf
   closeDueHint: '到收工時間了・收工 ›',
   closedHint: '今天收工了，要再做一顆也行',
   leafHint: '今天掛了一片葉子',
-  rackCloseSub: '把今天的豆莢掛上架，留明天的第一句',
+  rackCloseSub: '把今天的番茄串掛上架，留明天的第一句',
   rackLeafTitle: '今天不適合番茄？',
   rackLeafSub: '整天在回訊息、開會，掛一片葉子',
 
-  // 豆棚與收據（E1、E2）：原型 renderRack／openReceipt／openWeek 的字
+  // 番茄架與收據（E1、E2）：原型 renderRack／openReceipt／openWeek 的字
   ok: '好', // 06 狀態表：收據半頁的關閉鈕叫「好」（詞彙表「不用好」是對動作鈕說的，這裡沒有動作）
   thisWeek: '這週',
   weekOf: (key) => `${words.monthDay(key)} 那週`,
@@ -162,11 +162,11 @@ export const words = {
   },
   weekday: (key) =>
     `星期${['日', '一', '二', '三', '四', '五', '六'][new Date(`${key}T00:00`).getDay()]}`,
-  rackEmpty: '第一顆響完，這裡就會掛上今天的豆莢。',
+  rackEmpty: '第一顆響完，這裡就會掛上今天的番茄串。',
   rackEmptyAction: '回去開始一顆',
   flipToBackRow: '翻到背面：這週的收據',
   chevron: '›', // 列尾「還有下一層」的記號
-  voidA11y: '作廢', // 豆莢上空心圈的讀屏名
+  voidA11y: '作廢', // 番茄串上空心圈的讀屏名
   leafA11y: '一片葉子', // 葉子的讀屏名
   dayReceiptTitle: (key) => `${words.monthDay(key)}的收據`,
   leafDay: '這天掛的是一片葉子。',
@@ -180,7 +180,7 @@ export const words = {
   estActual: (est, actual) => `估 ${est}・實 ${actual}`,
   weekSub: (key) => `${words.monthDay(key)}起的一週。只看方向，不看分數。`,
   unitsLabel: (units) => `${units} 格`,
-  weekEmpty: '這週還沒有豆子。',
+  weekEmpty: '這週還沒有番茄。',
   underLabel: '估少了',
   overLabel: '估多了',
   evenLabel: '剛好',
@@ -196,7 +196,7 @@ export const words = {
   // 休息（A6）：收下後那 24 句，輪替、不連續重複（原型 LINES 原文）。可愛的話只准由這裡說。
   restLines: [
     '收下了，這顆是完整的。',
-    '豆莢裡多一顆。',
+    '番茄串上多一顆。',
     '響完了，起來喝口水。',
     '那句會在下一顆等你。',
     '寫下來了，腦袋可以先放掉它。',
@@ -206,7 +206,7 @@ export const words = {
     '收據開好了。',
     '去窗邊看一下遠的地方。',
     '這一句留給五分鐘後的你。',
-    '豆莢又長一點了。',
+    '番茄串又長一點了。',
     '站起來伸個懶腰吧。',
     '手機先別拿，走兩步。',
     '剛那段辛苦了。',
@@ -215,7 +215,7 @@ export const words = {
     '記好了，休息去。',
     '一段沒被打斷的，收進來。',
     '好，喝水時間。',
-    '豆子入莢。',
+    '番茄上串了。',
     '先閉眼坐一下也行。',
     '這顆算數。',
     '去倒杯水，鈴響再回來。',
