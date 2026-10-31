@@ -1,5 +1,5 @@
 // 狀態機測試。名稱是多米讀得懂的中文句子（標準清單 A2）。
-import { blank, normalize } from '../core/store';
+import { blank, blankDay, normalize } from '../core/store';
 import { words } from '../design/words';
 import {
   DEV_TYPE,
@@ -344,6 +344,16 @@ describe('收工與葉子（F1、F2）', () => {
     expect(closeHint(withBean(), at(18, 59))).toBeNull();
   });
 
+  test('今天只有作廢、沒有豆子：過了收工時間也是收工入口', () => {
+    const v = voidBean(start(withClue(), at(18)), at(18, 10));
+    expect(closeHint(v, at(19))).toBe('due');
+  });
+
+  test('今天掛了葉子但還沒收工：那行是「今天掛了一片葉子」', () => {
+    const leafOnly = { ...withClue(), days: { '2026-11-01': { ...blankDay(), leaf: true } } };
+    expect(closeHint(leafOnly, at(15))).toBe('leaf');
+  });
+
   test('今天沒豆子：到了收工時間也不出現收工入口', () => {
     expect(closeHint(withClue(), at(21))).toBeNull();
   });
@@ -372,12 +382,25 @@ describe('收工與葉子（F1、F2）', () => {
     expect(closeHint(s, at(19, 40))).toBe('due');
   });
 
-  test('隔天第一次打開：種下的那句標成看過，只打一次招呼；當天打開不算', () => {
+  test('隔天第一次在待機看到：種下的那句標成看過並打招呼，第二次不打；當天打開不算', () => {
+    const closed = closeDay(backFromRest(withBean()), at(19, 5), '');
+    expect(seePlanted(closed, at(22))).toEqual({ state: closed, greet: false });
+    const first = seePlanted(closed, NEXT_DAY);
+    expect(first.greet).toBe(true);
+    expect(first.state.planted.shown).toBe(true);
+    expect(seePlanted(first.state, NEXT_DAY)).toEqual({ state: first.state, greet: false });
+  });
+
+  test('跨午夜時正在計時：先不標看過；收下新的一句後才標，但不打招呼', () => {
     const closed = closeDay(withBean(), at(19, 5), '');
-    expect(seePlanted(closed, at(22))).toBe(closed);
-    const seen = seePlanted(closed, NEXT_DAY);
-    expect(seen.planted.shown).toBe(true);
-    expect(seePlanted(seen, NEXT_DAY)).toBe(seen);
+    const late = new Date(2026, 10, 1, 23, 50, 0).getTime();
+    const focusing = start(closed, late);
+    expect(seePlanted(focusing, late + 15 * MIN).greet).toBe(false);
+    expect(seePlanted(focusing, late + 15 * MIN).state).toBe(focusing);
+    const kept = backFromRest(keep(focusing, late + 25 * MIN, '新的一句'));
+    const seen = seePlanted(kept, late + 40 * MIN);
+    expect(seen.greet).toBe(false);
+    expect(seen.state.planted.shown).toBe(true);
   });
 
   test('今天沒豆子沒作廢：可以掛葉子，掛了算收工', () => {

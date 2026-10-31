@@ -115,10 +115,10 @@ function useGreeting(stateRef, commit) {
     const sub = AppState.addEventListener('change', (next) => {
       const s = stateRef.current;
       if (next !== 'active' || !s) return;
-      const seen = seePlanted(s, Date.now());
-      if (seen === s) return;
-      setGreet(true);
-      commit(seen);
+      const t = Date.now();
+      const seen = seePlanted(settle(s, t), t); // 過期的休息先收掉，才算回到待機
+      setGreet(seen.greet); // 每次叫回來重新判斷：打過招呼後再打開一次就回到「下一步」
+      if (seen.state.planted !== s.planted) commit(seen.state);
     });
     return () => sub.remove();
   }, [stateRef, commit]);
@@ -160,12 +160,11 @@ function useDouzhang() {
       setUnreadable(broken);
       const settled = settle(loaded, Date.now());
       const seen = seePlanted(settled, Date.now());
-      setState(seen);
-      if (seen !== settled) {
-        setGreet(true);
-        save(seen).then((ok) => setSaveFailed(!ok)); // 標成看過要存下來，不然每次開都打招呼
-      }
-      arm(seen, true); // 開機對齊：系統裡排的要跟現在的狀態一致
+      setState(seen.state);
+      setGreet(seen.greet);
+      // 標成看過要存下來，不然每次開都打招呼；壞檔不蓋（I1，跟 commit 同一條規則）
+      if (seen.state !== settled && !broken) save(seen.state).then((ok) => setSaveFailed(!ok));
+      arm(seen.state, true); // 開機對齊：系統裡排的要跟現在的狀態一致
     });
     return () => {
       alive = false;
@@ -189,6 +188,10 @@ function useDouzhang() {
       act((t) => start(live, t, opts));
     },
     ...makeActions(live, act, commit),
+    onKeep: (text) => {
+      setGreet(false); // 收下了新的一句，卡片上已經不是昨天那句
+      act((t) => keep(live, t, text));
+    },
   };
   const view = { ...live, todayKey: dayKey(now) }; // 畫面要知道「今天」是哪一天（估過的事只看今天）
   return {
@@ -206,7 +209,6 @@ function useDouzhang() {
 /** 開始以外的動作：純函式算新狀態，act 會先看按下那一刻的時鐘，commit 不需要時鐘。 */
 function makeActions(live, act, commit) {
   return {
-    onKeep: (text) => act((t) => keep(live, t, text)),
     onBackFromRest: () => commit(backFromRest(live)),
     onFlow: (minutes) => act((t) => flow(live, t, minutes)),
     onDraft: (text) => commit(setDraft(live, text)), // 每個字都存：殺掉再開草稿才在

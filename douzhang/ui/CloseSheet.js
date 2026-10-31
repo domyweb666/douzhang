@@ -14,7 +14,7 @@ export function CloseSheet({ visible, clueText, leafOk, onClose, onCloseDay, onH
   const T = useTokens();
   const [text, setText] = useState(clueText || '');
   return (
-    <Sheet visible={visible} title={words.close} sub={words.closeSub} onClose={onClose}>
+    <Sheet visible={visible} title={words.closeDay} sub={words.closeSub} onClose={onClose}>
       <Text style={{ ...T.font.caption, color: T.color.textSecondary }}>
         {words.closeTomorrowCap}
       </Text>
@@ -28,7 +28,7 @@ export function CloseSheet({ visible, clueText, leafOk, onClose, onCloseDay, onH
       <View style={{ flexDirection: 'row', gap: T.space.m, marginTop: T.space.m }}>
         <BigButton second label={words.notYet} onPress={onClose} style={{ flex: 1 }} />
         <BigButton
-          label={words.close}
+          label={words.closeDay}
           onPress={() => {
             onClose();
             onCloseDay(text);

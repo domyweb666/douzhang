@@ -247,9 +247,16 @@ export function hangLeaf(state, now) {
   return { ...state, days: { ...state.days, [key]: { ...prev, leaf: true, closed: true } } };
 }
 
-/** 昨天以前種下、還沒看過的那句：標成看過，回新狀態；不是就原樣回。回的不是同一個物件＝這次要打招呼。 */
+/**
+ * 昨天以前種下、還沒看過的那句：待機時第一次看到就標成看過。
+ * 回 { state, greet }：greet＝這次小標要打招呼——卡片上那句還是種下的那句才打（跨午夜收下了新的一句，就只標看過、不打招呼）。
+ * 計時中、休息中不看（畫面上沒有那句），等回到待機再說。
+ */
 export function seePlanted(state, now) {
   const p = state.planted;
-  if (!p || p.shown || p.day === dayKey(now)) return state;
-  return { ...state, planted: { ...p, shown: true } };
+  if (!p || p.shown || p.day === dayKey(now) || state.current) return { state, greet: false };
+  return {
+    state: { ...state, planted: { ...p, shown: true } },
+    greet: state.clue?.text === p.text,
+  };
 }

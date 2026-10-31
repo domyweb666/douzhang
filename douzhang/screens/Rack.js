@@ -84,7 +84,7 @@ function DayRow({ dayKey, day, onPress }) {
   );
 }
 
-/** 豆棚頂端那一列：'close' 收工（強調色）、'leaf' 今天不適合（主色），點了都開收工半頁。 */
+/** 豆棚頂端那一列：'close' 收工（強調色）、'leaf' 今天不適合（次要色，06 狀態表），點了都開收工半頁。 */
 function TopRow({ kind, onPress }) {
   const T = useTokens();
   const close = kind === 'close';
@@ -92,8 +92,10 @@ function TopRow({ kind, onPress }) {
     <Group>
       <Row last onPress={onPress}>
         <View style={{ flex: 1 }}>
-          <Text style={{ ...T.font.body, color: close ? T.color.accentText : T.color.textPrimary }}>
-            {close ? words.close : words.rackLeafTitle}
+          <Text
+            style={{ ...T.font.body, color: close ? T.color.accentText : T.color.textSecondary }}
+          >
+            {close ? words.closeDay : words.rackLeafTitle}
           </Text>
           <Text style={{ ...T.font.caption, color: T.color.textSecondary, marginTop: T.space.xs }}>
             {close ? words.rackCloseSub : words.rackLeafSub}
