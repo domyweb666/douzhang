@@ -107,7 +107,8 @@ function TopRow({ kind, onPress }) {
   );
 }
 
-function Empty({ onBack }) {
+/** 空狀態：第一次是「第一顆響完…」＋回去開始一顆；剛清空是「全部清掉了…」＋去設定匯入（06 豆棚）。 */
+function Empty({ wiped, onBack, onSettings }) {
   const T = useTokens();
   return (
     <Group>
@@ -119,18 +120,18 @@ function Empty({ onBack }) {
           marginTop: T.space.l,
         }}
       >
-        {words.rackEmpty}
+        {wiped ? words.wipedLine : words.rackEmpty}
       </Text>
       <TextButton
-        label={words.rackEmptyAction}
-        onPress={onBack}
+        label={wiped ? words.wipedAction : words.rackEmptyAction}
+        onPress={wiped ? onSettings : onBack}
         style={{ alignSelf: 'center', marginVertical: T.space.m }}
       />
     </Group>
   );
 }
 
-export function Rack({ state, now, actions, onBack }) {
+export function Rack({ state, now, actions, wiped, onSettings, onBack }) {
   const T = useTokens();
   const [dayOpen, setDayOpen] = useState(null);
   const [closeOpen, setCloseOpen] = useState(false);
@@ -143,7 +144,7 @@ export function Rack({ state, now, actions, onBack }) {
       <NavBar onBack={onBack} />
       <ScrollView contentContainerStyle={{ paddingBottom: T.space.xl }}>
         {top ? <TopRow kind={top} onPress={() => setCloseOpen(true)} /> : null}
-        {weeks.length ? null : <Empty onBack={onBack} />}
+        {weeks.length ? null : <Empty wiped={wiped} onBack={onBack} onSettings={onSettings} />}
         {weeks.map((w) => (
           <View key={w.weekStart}>
             <Text style={{ ...T.font.section, color: T.color.textPrimary, marginTop: T.space.xl }}>

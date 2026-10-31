@@ -6,6 +6,7 @@ import {
   STORAGE_KEY,
   blank,
   normalize,
+  parseBackup,
   load,
   save,
   day,
@@ -169,3 +170,56 @@ if (fs.existsSync(fixturePath)) {
 } else {
   test.skip('多米的 PWA 備份讀得進來（還沒放 fixtures/pwa-export.json，跳過）', () => {});
 }
+
+describe('匯入備份（G3）', () => {
+  const pwa = (current, extra = {}) =>
+    JSON.stringify({
+      v: 1,
+      settings: { types: [{ id: 't1', name: '一般', len: 25 }], typeId: 't1', restMode: 'auto' },
+      days: {},
+      clue: { text: '那句', at: 1 },
+      current,
+      ...extra,
+    });
+
+  test('讀不懂的字、不是物件、缺 settings／days、v 不是數字：都丟例外（資料不動由呼叫端負責）', () => {
+    expect(() => parseBackup('{壞')).toThrow();
+    expect(() => parseBackup('[]')).toThrow();
+    expect(() => parseBackup(JSON.stringify({ v: 1, days: {} }))).toThrow();
+    expect(() => parseBackup(JSON.stringify({ settings: {}, days: {} }))).toThrow();
+  });
+
+  test('PWA 延長中（phase flow）轉成計時中＋已延長', () => {
+    const c = { phase: 'flow', typeId: 't1', len: 25, startedAt: 1, endAt: 2, flowMin: 15 };
+    const s = parseBackup(pwa(c));
+    expect(s.current).toMatchObject({
+      phase: 'focus',
+      flowed: true,
+      flowMin: 15,
+      notes: [],
+      pings: [],
+    });
+  });
+
+  test('PWA 的響了（phase bell）存成計時中，由結束時刻算出鈴響', () => {
+    const c = { phase: 'bell', typeId: 't1', len: 25, startedAt: 1, endAt: 2, notes: ['x'] };
+    const s = parseBackup(pwa(c));
+    expect(s.current).toMatchObject({ phase: 'focus', flowed: false, notes: ['x'], pings: [] });
+  });
+
+  test('「我自己決定」的休息：PWA 有結束時刻，轉成沒有（不自己結束）', () => {
+    const c = { phase: 'rest', typeId: 't1', restStart: 1, endAt: 2 };
+    const raw = JSON.parse(pwa(c));
+    raw.settings.restMode = 'self';
+    expect(parseBackup(JSON.stringify(raw)).current.endAt).toBeNull();
+    expect(parseBackup(pwa(c)).current.endAt).toBe(2);
+  });
+
+  test('進行中那顆的時刻不是數字、或不認得的 phase：整顆不要，回待機', () => {
+    expect(
+      parseBackup(pwa({ phase: 'focus', len: 25, startedAt: 'x', endAt: 2 })).current,
+    ).toBeNull();
+    expect(parseBackup(pwa({ phase: 'dance' })).current).toBeNull();
+    expect(parseBackup(pwa({ phase: 'rest', restStart: 1, endAt: 'x' })).current).toBeNull();
+  });
+});

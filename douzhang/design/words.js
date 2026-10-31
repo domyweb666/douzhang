@@ -122,6 +122,23 @@ export const words = {
   feel: '手感',
   tiltRow: '傾斜手機，豆子跟著滾',
 
+  // 備份與清空（G2–G4；06 設定狀態表、安全標準 S3–S5）。系統訊息第一句先講有沒有損失
+  backup: '備份',
+  exportBackup: '匯出備份',
+  importBackup: '從備份匯入',
+  backupNote: '豆帳的資料只在這支 iPhone 上。每週匯出一次備份。',
+  lastAutoBackup: (when) => `上次自動備份：${when}`,
+  importTooBig: '這個檔案太大，不像豆帳的備份，原本的資料沒動',
+  autoBackupFailed: '沒辦法先把現在的資料備份起來，這次不匯入，原本的資料沒動',
+  exportFailed: '這次沒匯出成功，原本的資料沒動',
+  importConfirm: '用備份覆蓋現在的資料？',
+  importConfirmOk: '覆蓋現在的資料',
+  cancel: '取消',
+  wipeTitle: '清空所有豆子、豆莢和設定後就找不回來了',
+  wipeBody: '要留的話先匯出備份。',
+  wipedLine: '全部清掉了。清掉的拿不回來，有匯出過的備份可以在設定匯入。',
+  wipedAction: '去設定匯入',
+
   // 收工與葉子（F1、F2）：06 收工半頁、豆棚頂端列；待機那一行照原型 renderHome
   closeSub: '今天的豆莢掛上架，最後那句種進土裡，明天打開就在。',
   closeTomorrowCap: '明天的第一句',

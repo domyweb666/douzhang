@@ -73,6 +73,38 @@ function normalizeDay(d) {
   return day;
 }
 
+const isNumber = (x) => typeof x === 'number' && Number.isFinite(x);
+
+/**
+ * 進行中那顆：PWA 跟正式版的寫法不一樣，匯入 PWA 檔時要轉（A 組審查員記下、G3 處理）：
+ * PWA 延長中是 phase 'flow' → 正式版是 focus＋flowed；PWA 有 'bell' 這一態 → 正式版由 endAt 算，存成 focus；
+ * 「我自己決定」的休息 PWA 也有 endAt → 正式版是 null（不自己結束）；notes／pings 缺就補空。
+ * 會進算術的欄位（開始、結束時刻、長度）不是數字就整顆不要，回待機（I2）。
+ */
+function normalizeCurrent(c, settings) {
+  if (!isObject(c)) return null;
+  if (c.phase === 'focus' || c.phase === 'flow' || c.phase === 'bell') return focusCurrent(c);
+  if (c.phase === 'rest') return restCurrent(c, settings);
+  return null;
+}
+
+function focusCurrent(c) {
+  if (!isNumber(c.startedAt) || !isNumber(c.endAt) || !isNumber(c.len)) return null;
+  return {
+    ...c,
+    phase: 'focus',
+    flowed: c.phase === 'flow' || c.flowed === true,
+    notes: arrayOf(c.notes),
+    pings: arrayOf(c.pings),
+  };
+}
+
+function restCurrent(c, settings) {
+  if (!isNumber(c.restStart)) return null;
+  if (settings.restMode === 'self') return { ...c, endAt: null };
+  return isNumber(c.endAt) ? c : null;
+}
+
 /** 把外部讀進來的物件補成完整格式。來源不可信（舊版 PWA、手改過的檔），缺什麼補什麼，型別不對就用預設。 */
 export function normalize(raw) {
   if (!isObject(raw) || !isObject(raw.settings) || !isObject(raw.days)) {
@@ -82,10 +114,11 @@ export function normalize(raw) {
   for (const [key, d] of Object.entries(raw.days)) {
     if (isObject(d)) days[key] = normalizeDay(d);
   }
+  const settings = normalizeSettings(raw.settings);
   return {
     v: FORMAT_VERSION,
-    settings: normalizeSettings(raw.settings),
-    current: isObject(raw.current) ? raw.current : null,
+    settings,
+    current: normalizeCurrent(raw.current, settings),
     clue: isObject(raw.clue) && typeof raw.clue.text === 'string' ? raw.clue : null,
     days,
     planted: isObject(raw.planted) ? raw.planted : null,
@@ -112,6 +145,26 @@ export async function load() {
     return { state: normalize(JSON.parse(text)), unreadable: false };
   } catch {
     return { state: blank(), unreadable: true };
+  }
+}
+
+/**
+ * 讀備份檔的字（匯入）：只 JSON.parse（I4），要有 settings、days、數字的 v（I1），再補欄位（I2）。
+ * 讀不懂就丟例外，呼叫端顯示「這個檔案讀不懂」，資料不動。
+ */
+export function parseBackup(text) {
+  const raw = JSON.parse(text);
+  if (!isObject(raw) || typeof raw.v !== 'number') throw new Error('not a douzhang backup');
+  return normalize(raw);
+}
+
+/** 原封不動讀出存著的字（自動備份用：本機檔讀不懂時，備份的是那份讀不懂的原文，不是空白）。讀不到回 null。 */
+export async function readRaw() {
+  try {
+    const text = await AsyncStorage.getItem(STORAGE_KEY);
+    return text || null;
+  } catch {
+    return null;
   }
 }
 

@@ -6,6 +6,8 @@ import { words } from '../design/words';
 import { params } from '../design/params';
 import { TextButton } from '../ui/TextButton';
 import { Segmented } from '../ui/Segmented';
+import { hhmm } from '../ui/useNow';
+import { dayKey } from '../core/store';
 
 const LENGTHS = params.typeLengths.map((len) => ({ value: len, label: words.typeLen(len) }));
 const REST_MODES = [
@@ -192,6 +194,55 @@ function FeelSection({ settings, actions }) {
   );
 }
 
+const PROBLEM_WORDS = {
+  unreadable: words.importUnreadable,
+  tooBig: words.importTooBig,
+  backupFailed: words.autoBackupFailed,
+  exportFailed: words.exportFailed,
+};
+
+/** 備份：匯出、匯入兩列，下面一行出錯原因（有才出）、一句說明、上次自動備份時間（S3）。 */
+function BackupSection({ backup }) {
+  const T = useTokens();
+  const note = { ...T.font.caption, color: T.color.textSecondary, marginTop: T.space.s };
+  return (
+    <View>
+      <Cap>{words.backup}</Cap>
+      <Group>
+        <TextButton
+          flush
+          label={words.exportBackup}
+          onPress={backup.onExport}
+          style={{
+            minHeight: T.shape.tapPrimary,
+            borderBottomWidth: T.shape.hairline,
+            borderBottomColor: T.color.separator,
+          }}
+        />
+        <TextButton
+          flush
+          label={words.importBackup}
+          onPress={backup.onImport}
+          style={{ minHeight: T.shape.tapPrimary }}
+        />
+      </Group>
+      {backup.problem ? (
+        <Text style={{ ...T.font.sub, color: T.color.danger, marginTop: T.space.s }}>
+          {PROBLEM_WORDS[backup.problem]}
+        </Text>
+      ) : null}
+      <Text style={note}>{words.backupNote}</Text>
+      {backup.lastBackup ? (
+        <Text style={note}>
+          {words.lastAutoBackup(
+            `${words.monthDay(dayKey(backup.lastBackup))} ${hhmm(backup.lastBackup)}`,
+          )}
+        </Text>
+      ) : null}
+    </View>
+  );
+}
+
 function TypesSection({ settings, actions }) {
   const T = useTokens();
   return (
@@ -219,7 +270,7 @@ function TypesSection({ settings, actions }) {
   );
 }
 
-export function Settings({ state, actions, notifDenied, onBack }) {
+export function Settings({ state, actions, notifDenied, backup, onWipe, onBack }) {
   const T = useTokens();
   return (
     <View style={{ flex: 1 }}>
@@ -244,6 +295,10 @@ export function Settings({ state, actions, notifDenied, onBack }) {
         <RhythmSection settings={state.settings} actions={actions} />
         <ReminderSection settings={state.settings} actions={actions} notifDenied={notifDenied} />
         <FeelSection settings={state.settings} actions={actions} />
+        <BackupSection backup={backup} />
+        <Group>
+          <TextButton danger flush label={words.wipeAll} onPress={onWipe} />
+        </Group>
       </ScrollView>
     </View>
   );

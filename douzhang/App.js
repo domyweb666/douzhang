@@ -1,6 +1,7 @@
 // 殼：開機讀檔、每一拍看時鐘、到點換畫面、每次改動就存、狀態變了就重排通知。狀態機在 core/machine.js，畫面在 screens/。
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  Alert,
   AppState,
   KeyboardAvoidingView,
   Linking,
@@ -12,7 +13,7 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { useTokens } from './design/Tokens';
 import { words } from './design/words';
-import { dayKey, load, save } from './core/store';
+import { blank, dayKey, load, readRaw, save } from './core/store';
 import {
   PHASE,
   backFromRest,
@@ -30,6 +31,13 @@ import {
   voidBean,
 } from './core/machine';
 import { askPermissionOnce, isGranted, planned, sync } from './core/notify';
+import {
+  autoBackup,
+  exportBackup,
+  lastAutoBackupAt,
+  pickImport,
+  removeAutoBackups,
+} from './core/backup';
 import {
   addType,
   estimate,
@@ -125,12 +133,67 @@ function useGreeting(stateRef, commit) {
   return [greet, setGreet];
 }
 
+/**
+ * 備份三件事（G2–G4）。確認框用系統 Alert（S4、S5），不自己畫。
+ * 自動備份存的是「現在存著的原文」：本機檔讀不懂時，備份的是那份讀不懂的字，不是空白（S3）。
+ * problem：設定頁備份區下面那一行（'unreadable'｜'tooBig'｜'backupFailed'｜'exportFailed'）。
+ */
+function useBackup(stateRef, unreadable, replaceAll) {
+  const [lastBackup, setLastBackup] = useState(() => lastAutoBackupAt());
+  const [problem, setProblem] = useState(null);
+  const [wiped, setWiped] = useState(false);
+  const savedText = async () => (unreadable ? readRaw() : JSON.stringify(stateRef.current));
+
+  const onExport = async () => {
+    setProblem(null);
+    const text = await savedText();
+    if (!text || !(await exportBackup(text, Date.now()))) setProblem('exportFailed');
+  };
+  const onImport = async () => {
+    setProblem(null);
+    const picked = await pickImport();
+    if (picked.canceled) return;
+    if (picked.error) return setProblem(picked.error);
+    const raw = await readRaw(); // 什麼都還沒存過（剛裝好）就沒有東西要備份
+    const t = Date.now();
+    if (raw && !(await autoBackup(raw, t))) return setProblem('backupFailed');
+    if (raw) setLastBackup(t);
+    Alert.alert(words.importConfirm, undefined, [
+      { text: words.cancel, style: 'cancel' },
+      {
+        text: words.importConfirmOk,
+        onPress: () => {
+          setWiped(false);
+          replaceAll(settle(picked.state, Date.now()));
+        },
+      },
+    ]);
+  };
+  const onWipe = (done) =>
+    Alert.alert(words.wipeTitle, words.wipeBody, [
+      { text: words.cancel, style: 'cancel' },
+      {
+        text: words.wipeAll,
+        style: 'destructive',
+        onPress: () => {
+          removeAutoBackups(); // P5：清乾淨，含自動備份
+          setLastBackup(lastAutoBackupAt());
+          setProblem(null);
+          setWiped(true);
+          replaceAll(blank());
+          done();
+        },
+      },
+    ]);
+  return { lastBackup, problem, wiped, onExport, onImport, onWipe };
+}
+
 /** 狀態與動作全在這裡：殼只負責排版。每個動作先算新狀態（純函式），再 commit（存檔＋對齊通知）。 */
 function useDouzhang() {
   const now = useNow();
   const [state, setState] = useState(null); // null＝還在讀檔
   const [saveFailed, setSaveFailed] = useState(false);
-  const [unreadable, setUnreadable] = useState(false); // 本機檔讀不懂：先不覆蓋（I1），清空要等 G4
+  const [unreadable, setUnreadable] = useState(false); // 本機檔讀不懂：先不覆蓋（I1），只有匯入或清空能換掉
   const arm = useArm();
   const stateRef = useRef(null);
   useEffect(() => {
@@ -152,6 +215,18 @@ function useDouzhang() {
   // 動作都在「按下那一刻」看時鐘：recipe 拿到現在的毫秒，回新狀態
   const act = useCallback((recipe) => commit(recipe(Date.now())), [commit]);
   const [greet, setGreet] = useGreeting(stateRef, commit);
+  // 匯入、清空：整份換掉。這是唯一准蓋掉「讀不懂的本機檔」的路（I1），所以不經 commit 的 unreadable 檢查
+  const replaceAll = useCallback(
+    (next) => {
+      setUnreadable(false);
+      setGreet(false);
+      setState(next);
+      save(next).then((ok) => setSaveFailed(!ok));
+      arm(next, true);
+    },
+    [arm, setGreet],
+  );
+  const backup = useBackup(stateRef, unreadable, replaceAll);
 
   useEffect(() => {
     let alive = true;
@@ -174,7 +249,24 @@ function useDouzhang() {
   if (!state) return null;
   // 休息到點沒按也回待機：每一拍在 render 時把過期的休息收掉，下一次動作才存回去
   const live = settle(state, now);
-  const actions = {
+  const actions = makeActions(live, act, commit, { setNotifDenied, setGreet });
+  const view = { ...live, todayKey: dayKey(now) }; // 畫面要知道「今天」是哪一天（估過的事只看今天）
+  return {
+    live: view,
+    now,
+    phase: phaseOf(live, now),
+    greet,
+    saveFailed,
+    unreadable,
+    notifDenied,
+    actions,
+    backup,
+  };
+}
+
+/** 畫面拿到的動作：純函式算新狀態，act 會先看按下那一刻的時鐘，commit 不需要時鐘。 */
+function makeActions(live, act, commit, { setNotifDenied, setGreet }) {
+  return {
     onStart: async (opts) => {
       // 只有第一次（還沒問過）才會真的跳框；問不到也照樣開始（核心不靠通知）
       let ok = false;
@@ -187,28 +279,10 @@ function useDouzhang() {
       setGreet(false); // 招呼只到開始第一顆為止
       act((t) => start(live, t, opts));
     },
-    ...makeActions(live, act, commit),
     onKeep: (text) => {
       setGreet(false); // 收下了新的一句，卡片上已經不是昨天那句
       act((t) => keep(live, t, text));
     },
-  };
-  const view = { ...live, todayKey: dayKey(now) }; // 畫面要知道「今天」是哪一天（估過的事只看今天）
-  return {
-    live: view,
-    now,
-    phase: phaseOf(live, now),
-    greet,
-    saveFailed,
-    unreadable,
-    notifDenied,
-    actions,
-  };
-}
-
-/** 開始以外的動作：純函式算新狀態，act 會先看按下那一刻的時鐘，commit 不需要時鐘。 */
-function makeActions(live, act, commit) {
-  return {
     onBackFromRest: () => commit(backFromRest(live)),
     onFlow: (minutes) => act((t) => flow(live, t, minutes)),
     onDraft: (text) => commit(setDraft(live, text)), // 每個字都存：殺掉再開草稿才在
@@ -240,7 +314,7 @@ export default function App() {
   const [screen, setScreen] = useState('home'); // 'home'｜'settings'｜'rack'
   const jarSeen = useRef(null); // 豆罐上次看到幾顆：鈴響時豆罐卸載，收下後重掛要知道哪顆是新的
   if (!dz) return <View style={{ flex: 1, backgroundColor: T.color.background }} />;
-  const { live, now, phase, greet, saveFailed, unreadable, notifDenied, actions } = dz;
+  const { live, now, phase, greet, saveFailed, unreadable, notifDenied, actions, backup } = dz;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: T.color.background }}>
@@ -274,10 +348,19 @@ export default function App() {
             state={live}
             actions={actions}
             notifDenied={notifDenied}
+            backup={backup}
+            onWipe={() => backup.onWipe(() => setScreen('home'))}
             onBack={() => setScreen('home')}
           />
         ) : screen === 'rack' ? (
-          <Rack state={live} now={now} actions={actions} onBack={() => setScreen('home')} />
+          <Rack
+            state={live}
+            now={now}
+            actions={actions}
+            wiped={backup.wiped}
+            onSettings={() => setScreen('settings')}
+            onBack={() => setScreen('home')}
+          />
         ) : (
           <Home
             state={live}
