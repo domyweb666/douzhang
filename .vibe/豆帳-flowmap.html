@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>豆帳 flowmap（待掛點）</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0d1117;--node:#161b22;--line:#30363d;--fg:#c9d1d9;--dim:#8b949e;--ok:#3fb950;--bad:#f85149;--retry:#d29922;--cond:#58a6ff;--warn:#f0883e;--deep:#bc8cff}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:'JetBrains Mono','Fira Code',monospace;font-size:12px}
+  header{position:sticky;top:0;z-index:5;display:flex;gap:16px;align-items:center;padding:10px 16px;background:#0d1117e6;border-bottom:1px solid var(--line);backdrop-filter:blur(6px)}
+  header h1{font-size:14px;margin:0;font-weight:600}
+  header .legend{display:flex;gap:12px;color:var(--dim);flex-wrap:wrap}
+  header .legend i{display:inline-block;width:18px;height:2px;vertical-align:middle;margin-right:4px}
+  header button{margin-left:auto;background:#21262d;border:1px solid var(--line);color:var(--fg);padding:6px 10px;border-radius:6px;cursor:pointer;font:inherit}
+  #wrap{position:relative;overflow:auto;height:calc(100vh - 44px)}
+  svg{display:block}
+  .node rect{fill:var(--node);stroke:var(--line);stroke-width:1.2;rx:8}
+  .node.pending rect{stroke-dasharray:5 4}
+  .node.decision rect{stroke:var(--cond)}
+  .node.start rect,.node.end rect{stroke:var(--ok)}
+  .node.sub rect.outer{fill:none;stroke:var(--line);stroke-dasharray:none}
+  .node.warn rect{stroke:var(--warn)}
+  .node.deep rect{stroke:var(--deep)}
+  .node text{fill:var(--fg);font-size:12px;pointer-events:none}
+  .node text.sub{fill:var(--dim);font-size:10px}
+  .node{cursor:pointer}
+  .node.hi rect{stroke:#fff;stroke-width:2}
+  .edge path{fill:none;stroke-width:1.6}
+  .edge.success path{stroke:var(--ok)} .edge.failure path{stroke:var(--bad)} .edge.retry path{stroke:var(--retry);stroke-dasharray:6 4} .edge.conditional path{stroke:var(--cond)} .edge.data path{stroke:var(--dim);stroke-dasharray:2 4}
+  .edge text{font-size:10px;fill:var(--dim)}
+  .edge.success text{fill:var(--ok)} .edge.failure text{fill:var(--bad)} .edge.retry text{fill:var(--retry)} .edge.conditional text{fill:var(--cond)}
+  #panel{position:fixed;top:44px;right:-420px;width:400px;height:calc(100vh - 44px);background:#161b22;border-left:1px solid var(--line);padding:16px;overflow:auto;transition:right .2s}
+  #panel.open{right:0}
+  #panel h2{font-size:14px;margin:0 0 6px}
+  #panel .k{color:var(--dim);margin-top:12px;font-size:11px}
+  #panel .v{white-space:pre-wrap;line-height:1.5}
+  #panel .f{display:block;color:var(--cond);cursor:pointer;margin:2px 0}
+  #panel .tag{display:inline-block;border:1px solid var(--line);border-radius:4px;padding:1px 6px;margin-right:4px;color:var(--dim)}
+  #panel .tag.warn{color:var(--warn);border-color:var(--warn)} #panel .tag.deep{color:var(--deep);border-color:var(--deep)}
+  details{margin:16px;color:var(--dim);border-top:1px solid var(--line);padding-top:12px}
+  details pre{white-space:pre-wrap}
+</style>
+</head>
+<body>
+<header>
+  <h1>豆帳 flowmap · 待掛點版（2026-11-01）</h1>
+  <div class="legend">
+    <span><i style="background:var(--ok)"></i>正常路徑</span>
+    <span><i style="background:var(--bad)"></i>失敗／退路</span>
+    <span><i style="background:var(--retry)"></i>回頭（再做一下）</span>
+    <span><i style="background:var(--cond)"></i>條件分支</span>
+    <span><i style="background:var(--dim)"></i>寫資料／排通知</span>
+    <span style="color:var(--deep)">紫框＝🧠深模組</span>
+    <span style="color:var(--warn)">橘框＝⚠️危險方塊</span>
+    <span>虛線框＝尚未對應檔案</span>
+  </div>
+  <button id="copy">複製 JSON</button>
+</header>
+<div id="wrap"><svg id="svg" width="1480" height="1360"></svg></div>
+<aside id="panel"></aside>
+
+<details>
+<summary>🤖 給 Claude Code 的讀圖說明</summary>
+<pre>
+這份 HTML 包含一個 &lt;script id="flowmap-data" type="application/json"&gt; 區塊。
+讀取方式：document.getElementById('flowmap-data').textContent，然後 JSON.parse()。
+
+重要欄位：
+- nodes[].trigger_condition：這個狀態的觸發條件
+- nodes[].file_responsibilities：每個檔案在此節點的具體職責（待掛點版全部為空；health-check／integrate 重跑掛點模式時補）
+- nodes[].planned_module：藍圖階段預計由哪個模組負責（給 decompose 切片用，不是真實檔名）
+- nodes[].flags：deep（深模組）、warn（危險方塊）
+- file_index：反查表，給你一個檔名，告訴你它出現在哪些節點
+- edges[].type：success / failure / retry / conditional / data，代表分支語意
+
+當你修改一個檔案時，先查 file_index 找到它涉及的所有節點，
+再看每個節點的 edges 確認你的修改是否影響到下游分支。
+</pre>
+</details>
+
+<script id="flowmap-data" type="application/json">
+{
+  "project": "豆帳正式版（Expo／React Native，iPhone）",
+  "generated_at": "2026-11-01T03:10:00+08:00",
+  "mode": "pending-hookpoints",
+  "nodes": [
+    {"id":"start","label":"打開 app","type":"start","x":60,"y":40,"w":200,"h":44,
+     "description":"冷啟動或從背景回來。讀本機 JSON 狀態檔；依 current 與 clue 決定停在哪一態。被切走、鎖屏、殺掉再開都從這裡重算，不靠畫面活著。",
+     "trigger_condition":"點圖示、點通知、從背景切回","files":[],"planned_module":"狀態機（restore）","flags":["deep"]},
+    {"id":"d-clue","label":"有上一顆留的那句？","type":"decision","x":60,"y":130,"w":200,"h":52,
+     "description":"clue 為空 ＝ 第一次（或剛清空）。有 current 進行中則直接跳到對應態（focus／bell／rest）。",
+     "trigger_condition":"狀態檔讀完","files":[],"planned_module":"狀態機","flags":[]},
+    {"id":"first","label":"第一次：寫第一件事","type":"process","x":380,"y":130,"w":240,"h":52,
+     "description":"主畫面卡片位置是輸入框＋例句，沒有歡迎頁、不問名字。寫完按「開始這顆」一步進第一顆；那句同時成為這顆的 clue。輸入 10 秒沒打字淡出一行提示，打過字永不再出。",
+     "trigger_condition":"clue 為空","files":[],"planned_module":"畫面：主畫面（first 變體）","flags":[]},
+    {"id":"perm","label":"系統通知權限對話框","type":"process","x":380,"y":230,"w":240,"h":52,
+     "description":"第一次按「開始這顆」那一刻才由 iOS 跳框。不做說明頁、不用暫時授權。允許→之後能排本地通知；拒絕→不再勸，只在計時中顯示一行「到點通知沒開」＋「打開通知」去系統設定。Expo Go 上對話框寫 Expo Go 的名字。",
+     "trigger_condition":"第一次按「開始這顆」且權限狀態為未決定","files":[],"planned_module":"通知（permission）","flags":[]},
+    {"id":"idle","label":"待機：那句在正中央","type":"process","x":60,"y":300,"w":200,"h":60,
+     "description":"主畫面 A：卡片（小標「昨天的你留了一句」＋那句）、類型 chip「一般・25 分 ›」、大時間、豆罐、滿版「開始」。左上豆棚、右上設定。過收工時間出現收工入口。通知被拒時這裡只顯示一次那一行。",
+     "trigger_condition":"clue 非空且沒有進行中的 current","files":[],"planned_module":"畫面：主畫面（idle）","flags":[]},
+    {"id":"type","label":"類型與估幾顆（半頁）","type":"process","x":380,"y":330,"w":240,"h":52,
+     "description":"選類型（一般 25／寫作 50／短的 15，長度綁類型不可單顆改）；「這件事估幾顆」填名字與顆數，之後收下的豆子掛在它下面。",
+     "trigger_condition":"待機點類型 chip","files":[],"planned_module":"畫面：半頁 type；資料層 tasks","flags":[]},
+    {"id":"focus","label":"計時中","type":"process","x":60,"y":470,"w":200,"h":60,
+     "description":"endAt ＝ 開始時刻＋類型長度。畫面只給剩餘時間與那句；兩個 44pt 次要動作「冒出念頭」「有人找」；底部「結束」只開半頁。背景、鎖屏靠 endAt 與本地通知；回前景重算。",
+     "trigger_condition":"按開始／開始這顆，或再做一下回來","files":[],"planned_module":"狀態機（focus）＋畫面：主畫面（focus）","flags":["deep"]},
+    {"id":"note","label":"記一行：念頭／有人找","type":"process","x":380,"y":450,"w":240,"h":52,
+     "description":"半頁一行輸入，按記下回計時中，倒數不停。存進 current.notes 或 current.pings，鈴響時列在輸入框下方。",
+     "trigger_condition":"計時中點「冒出念頭」或「有人找」","files":[],"planned_module":"畫面：半頁 note","flags":[]},
+    {"id":"end-sheet","label":"結束這顆？（半頁）","type":"decision","x":380,"y":540,"w":240,"h":52,
+     "description":"三選一：提早做完了（剩餘時間繼續倒數、鈴響再停）／作廢這顆／繼續做（關半頁）。",
+     "trigger_condition":"計時中點「結束」","files":[],"planned_module":"畫面：半頁 end","flags":[]},
+    {"id":"void","label":"作廢：只記一筆","type":"process","x":700,"y":540,"w":220,"h":52,
+     "description":"選原因（可空）→ 寫進 days[今天].voids（第 N 分鐘、原因、typeId、taskId）。不扣豆、不扣任何東西。取消已排的通知，回待機。",
+     "trigger_condition":"結束半頁選「作廢這顆」並確認","files":[],"planned_module":"狀態機（void）＋資料層","flags":[]},
+    {"id":"bell","label":"鈴響：寫一句給下一顆","type":"process","x":60,"y":660,"w":200,"h":60,
+     "description":"到點自動切（前景）或點通知進來（背景）。畫面 A：標題「響了。」、輸入框（autoFocus）、念頭與有人找列在下方、右上「再做 15 分・30 分」（一顆只一次）、底部滿版「收下這顆」貼鍵盤上緣。回來時草稿還在。",
+     "trigger_condition":"now ≥ endAt 且 phase 為 focus","files":[],"planned_module":"畫面：鈴響；狀態機（bell）","flags":[]},
+    {"id":"flow","label":"再做 15／30 分（一次）","type":"process","x":380,"y":660,"w":240,"h":52,
+     "description":"endAt ＝ 現在＋15 或 30 分，flowed ＝ true，重排通知，回計時中。到點再響時右上角沒有這個鈕。收下時這顆記 len＋flow。",
+     "trigger_condition":"鈴響頁點右上，且 current.flowed 為 false","files":[],"planned_module":"狀態機（flow）","flags":[]},
+    {"id":"d-blank","label":"輸入框空白？","type":"decision","x":60,"y":780,"w":200,"h":52,
+     "description":"空白時「收下這顆」不直接收；要另按小字鈕「這顆不留話」。打了字之後那顆鈕消失。沒留話的顆在收據標記。",
+     "trigger_condition":"按「收下這顆」或「這顆不留話」","files":[],"planned_module":"畫面：鈴響","flags":[]},
+    {"id":"keep","label":"收下這顆","type":"process","x":60,"y":890,"w":200,"h":60,
+     "description":"寫 days[開始那天].beans（t、typeId、len、clue、notes、pings、flow、taskId、start）；有字則 clue ＝ 那句；取消到點通知；觸發豆罐入罐（0.18 秒後掉一顆，50 分是雙豆，啵＋短觸覺）；算休息長度並排休息通知。",
+     "trigger_condition":"輸入框有字按收下，或空白按「這顆不留話」","files":[],"planned_module":"狀態機（keep）＋資料層＋豆罐物理＋通知","flags":["deep"]},
+    {"id":"jar","label":"豆罐物理（入罐、傾斜、點彈）","type":"process","x":380,"y":890,"w":240,"h":60,
+     "description":"候選 1：JS 迴圈＋View。參數全從 .uiux/04-手感/參數表。傾斜走 expo-sensors；減少動態時豆子直接出現在罐底、不滾不彈；掉幀退靜止版，不換框架。只畫，不碰資料。",
+     "trigger_condition":"收下成功；待機時傾斜或點罐子","files":[],"planned_module":"豆罐物理（搬自 app/Jar.js）","flags":["deep"]},
+    {"id":"rest","label":"休息倒數","type":"process","x":60,"y":1010,"w":200,"h":60,
+     "description":"畫面只有剩餘時間與「離開螢幕」。到點本地通知一次。滿版「回來了，開始下一顆」回待機；休息到點也自動回待機。",
+     "trigger_condition":"收下時休息尚未過期（鈴響後沒拖太久）","files":[],"planned_module":"狀態機（rest）＋畫面：主畫面（rest）","flags":[]},
+    {"id":"rack","label":"豆棚：這週／一天收據／一週收據","type":"sub","x":1000,"y":300,"w":300,"h":60,
+     "description":"這週每天一列，右邊一串豆（50 分的顆長一倍）；點一天進一天的收據（時間、那句、作廢行、沒留話標記）；「翻到背面」進一週的收據（每件事估 N／做 M、估少估多剛好、再做一下次數、作廢分佈，作廢達 3 次多一行不是意志力）。沒豆子的日子不出現紅字或 0。",
+     "trigger_condition":"主畫面左上「豆棚」","files":[],"planned_module":"畫面：豆棚三頁＋收據計算","flags":["deep"]},
+    {"id":"close","label":"收工：留明天第一句／掛葉子","type":"sub","x":1000,"y":400,"w":300,"h":60,
+     "description":"過收工時間（預設 19:00）主畫面與豆棚出現入口。半頁預填最後一顆寫的那句，可改；按收工 → days[今天].closed ＝ true、planted ＝ {text, day}。今天沒豆子 → 「掛一片葉子」leaf ＝ true，不算缺。",
+     "trigger_condition":"now ≥ settings.closeTime 且今天未 closed","files":[],"planned_module":"畫面：半頁 close；資料層","flags":[]},
+    {"id":"settings","label":"設定：類型／節奏／提醒／手感","type":"sub","x":1000,"y":500,"w":300,"h":60,
+     "description":"五區：任務類型（加一種、改名與長度）、節奏（休息怎麼算、收工時間）、提醒（到點通知：被拒時顯示「沒開・打開」、聲音）、手感（傾斜開關）、備份。每項改完立刻生效，重開還在。",
+     "trigger_condition":"主畫面右上「設定」","files":[],"planned_module":"畫面：設定","flags":[]},
+    {"id":"backup","label":"備份：匯出 JSON／匯入 PWA 相容檔","type":"sub","x":1000,"y":600,"w":300,"h":60,
+     "description":"匯出：整個狀態 JSON，檔名「豆帳備份-YYYY-MM-DD.json」，系統分享選單。匯入：系統檔案選取器 → 驗 settings 與 days 存在 → 先自動把現有資料備份一份 → 問「用備份覆蓋現在的資料？」→ 覆蓋。讀不懂只顯示「這個檔案讀不懂」，資料不動。",
+     "trigger_condition":"設定 → 備份 → 匯出／從備份匯入","files":[],"planned_module":"備份（expo-sharing、expo-document-picker、expo-file-system）＋資料層遷移","flags":["warn","deep"]},
+    {"id":"wipe","label":"清空所有資料","type":"sub","x":1000,"y":700,"w":300,"h":52,
+     "description":"設定最底下紅字 → 系統確認框 → 確認後狀態檔重設為 blank()，回第一次畫面。",
+     "trigger_condition":"設定 → 清空所有資料 → 確認","files":[],"planned_module":"資料層（reset）","flags":["warn"]},
+    {"id":"notif","label":"本地通知排程","type":"process","x":700,"y":780,"w":220,"h":60,
+     "description":"對外三個動作：排到點（開始、再做一下）、排休息到點（收下）、全部取消（收下、作廢、清空）。點通知進 app 直接到鈴響。只有「到點」一種通知，沒有「你今天還沒開始」。",
+     "trigger_condition":"狀態機轉態時呼叫","files":[],"planned_module":"通知（expo-notifications）","flags":[]},
+    {"id":"store","label":"資料層：單一 JSON（AsyncStorage）","type":"process","x":1000,"y":890,"w":300,"h":60,
+     "description":"格式同 PWA 原型：{v, settings{types,typeId,restMode,sound,closeTime,tilt}, current, clue, days{YYYY-MM-DD:{beans,voids,tasks,closed,leaf,restOver}}, planted}。每次改動就寫；讀時缺欄位補預設；壞檔不准蓋掉現有資料。收據計算（units、估 vs 做、作廢分佈）住在這一層。",
+     "trigger_condition":"任何寫入／啟動讀取","files":[],"planned_module":"資料層＋收據計算（翻自 index.html 的 blank/day/units/renderWeek）","flags":["deep"]}
+  ],
+  "edges": [
+    {"from":"start","to":"d-clue","label":"狀態檔讀完","type":"success"},
+    {"from":"d-clue","to":"first","label":"clue 為空","type":"conditional"},
+    {"from":"d-clue","to":"idle","label":"clue 非空、無進行中","type":"conditional"},
+    {"from":"start","to":"focus","label":"current.phase=focus 且 now<endAt","type":"conditional"},
+    {"from":"start","to":"bell","label":"current.phase=focus 且 now≥endAt","type":"conditional"},
+    {"from":"first","to":"perm","label":"按「開始這顆」且輸入非空","type":"success"},
+    {"from":"perm","to":"focus","label":"允許或拒絕都進（核心不依賴權限）","type":"success"},
+    {"from":"idle","to":"type","label":"點類型 chip","type":"conditional"},
+    {"from":"type","to":"idle","label":"選完關半頁","type":"success"},
+    {"from":"idle","to":"focus","label":"按「開始」","type":"success"},
+    {"from":"focus","to":"note","label":"點念頭／有人找","type":"conditional"},
+    {"from":"note","to":"focus","label":"記下，倒數未停","type":"success"},
+    {"from":"focus","to":"end-sheet","label":"點「結束」","type":"conditional"},
+    {"from":"end-sheet","to":"focus","label":"提早做完／繼續做","type":"success"},
+    {"from":"end-sheet","to":"void","label":"作廢這顆","type":"failure"},
+    {"from":"void","to":"idle","label":"記一筆後回待機","type":"failure"},
+    {"from":"focus","to":"bell","label":"now ≥ endAt","type":"success"},
+    {"from":"bell","to":"flow","label":"點再做 15／30，flowed=false","type":"conditional"},
+    {"from":"flow","to":"focus","label":"endAt 重設，flowed=true","type":"retry"},
+    {"from":"bell","to":"d-blank","label":"按收下／這顆不留話","type":"success"},
+    {"from":"d-blank","to":"keep","label":"有字，或空白且按了「這顆不留話」","type":"success"},
+    {"from":"d-blank","to":"bell","label":"空白且只按了「收下」→ 不收","type":"failure"},
+    {"from":"keep","to":"jar","label":"入罐動畫","type":"success"},
+    {"from":"keep","to":"rest","label":"休息未過期","type":"success"},
+    {"from":"keep","to":"idle","label":"休息已過期 → 直接待機","type":"conditional"},
+    {"from":"rest","to":"idle","label":"按回來了／休息到點","type":"success"},
+    {"from":"idle","to":"rack","label":"左上「豆棚」","type":"conditional"},
+    {"from":"idle","to":"close","label":"過收工時間，點收工","type":"conditional"},
+    {"from":"idle","to":"settings","label":"右上「設定」","type":"conditional"},
+    {"from":"settings","to":"backup","label":"備份區","type":"conditional"},
+    {"from":"settings","to":"wipe","label":"最底下紅字","type":"failure"},
+    {"from":"wipe","to":"first","label":"確認清空 → 回第一次","type":"failure"},
+    {"from":"focus","to":"notif","label":"排到點通知","type":"data"},
+    {"from":"flow","to":"notif","label":"重排","type":"data"},
+    {"from":"keep","to":"notif","label":"取消到點、排休息","type":"data"},
+    {"from":"void","to":"notif","label":"取消","type":"data"},
+    {"from":"notif","to":"bell","label":"點通知進來","type":"data"},
+    {"from":"keep","to":"store","label":"寫 bean、clue","type":"data"},
+    {"from":"void","to":"store","label":"寫 void","type":"data"},
+    {"from":"close","to":"store","label":"寫 closed、leaf、planted","type":"data"},
+    {"from":"type","to":"store","label":"寫 tasks、typeId","type":"data"},
+    {"from":"settings","to":"store","label":"寫 settings","type":"data"},
+    {"from":"backup","to":"store","label":"整檔讀／覆蓋（先自動備份）","type":"data"},
+    {"from":"wipe","to":"store","label":"重設 blank()","type":"data"},
+    {"from":"rack","to":"store","label":"讀 days，算收據","type":"data"},
+    {"from":"store","to":"start","label":"啟動讀取","type":"data"}
+  ],
+  "file_index": {}
+}
+</script>
+
+<script>
+const data = JSON.parse(document.getElementById('flowmap-data').textContent);
+const svg = document.getElementById('svg');
+const NS = 'http://www.w3.org/2000/svg';
+const byId = Object.fromEntries(data.nodes.map(n => [n.id, n]));
+const el = (t, a = {}, parent = svg) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); parent.appendChild(e); return e; };
+
+// arrowheads
+const defs = el('defs');
+for (const [k, c] of [['success', '#3fb950'], ['failure', '#f85149'], ['retry', '#d29922'], ['conditional', '#58a6ff'], ['data', '#8b949e']]) {
+  const m = el('marker', { id: 'arr-' + k, viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto-start-reverse' }, defs);
+  el('path', { d: 'M0 0L10 5L0 10z', fill: c }, m);
+}
+
+const anchor = (n, toward) => {
+  const cx = n.x + n.w / 2, cy = n.y + n.h / 2;
+  const tx = toward.x + toward.w / 2, ty = toward.y + toward.h / 2;
+  const dx = tx - cx, dy = ty - cy;
+  if (Math.abs(dx) > Math.abs(dy) * 1.2) return dx > 0 ? [n.x + n.w, cy] : [n.x, cy];
+  return dy > 0 ? [cx, n.y + n.h] : [cx, n.y];
+};
+
+// edges
+const gE = el('g');
+data.edges.forEach((e, i) => {
+  const a = byId[e.from], b = byId[e.to];
+  const [x1, y1] = anchor(a, b), [x2, y2] = anchor(b, a);
+  const g = el('g', { class: 'edge ' + e.type }, gE);
+  let d;
+  const self = a.x === b.x && Math.abs(a.y - b.y) > 300; // long vertical loop → bow left
+  if (self) {
+    const bow = Math.min(a.x, b.x) - 40 - (i % 3) * 10;
+    d = `M${x1 - a.w / 2 + 0} ${y1 - a.h / 2} L${bow} ${y1 - a.h / 2} L${bow} ${y2 + b.h / 2} L${x2 - b.w / 2} ${y2 + b.h / 2}`;
+    d = `M${a.x} ${a.y + a.h / 2} L${bow} ${a.y + a.h / 2} L${bow} ${b.y + b.h / 2} L${b.x} ${b.y + b.h / 2}`;
+  } else {
+    const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+    d = Math.abs(x1 - x2) < 1 || Math.abs(y1 - y2) < 1 ? `M${x1} ${y1}L${x2} ${y2}` : `M${x1} ${y1}C${x1} ${my},${x2} ${my},${x2} ${y2}`;
+  }
+  el('path', { d, 'marker-end': `url(#arr-${e.type})` }, g);
+  const lx = self ? Math.min(a.x, b.x) - 44 - (i % 3) * 10 : (x1 + x2) / 2 + 6, ly = self ? (a.y + b.y) / 2 : (y1 + y2) / 2 - 4;
+  const t = el('text', { x: lx, y: ly, 'text-anchor': self ? 'end' : 'start' }, g); t.textContent = e.label;
+});
+
+// nodes
+const gN = el('g');
+const panel = document.getElementById('panel');
+data.nodes.forEach(n => {
+  const cls = ['node', n.type, n.files.length ? '' : 'pending', ...(n.flags || [])].join(' ');
+  const g = el('g', { class: cls, transform: `translate(${n.x},${n.y})`, 'data-id': n.id }, gN);
+  if (n.type === 'sub') el('rect', { class: 'outer', x: -4, y: -4, width: n.w + 8, height: n.h + 8, rx: 10 }, g);
+  el('rect', { width: n.w, height: n.h }, g);
+  const t = el('text', { x: 12, y: 22 }, g); t.textContent = (n.flags?.includes('deep') ? '🧠 ' : '') + (n.flags?.includes('warn') ? '⚠️ ' : '') + n.label;
+  const s = el('text', { x: 12, y: n.h - 10, class: 'sub' }, g); s.textContent = n.files.length ? n.files.join(', ') : '[尚未對應] ' + (n.planned_module || '');
+  g.addEventListener('click', () => show(n));
+});
+
+function show(n) {
+  document.querySelectorAll('.node').forEach(x => x.classList.toggle('hi', x.dataset.id === n.id));
+  const outs = data.edges.filter(e => e.from === n.id), ins = data.edges.filter(e => e.to === n.id);
+  panel.innerHTML = `<h2>${n.label}</h2>
+  <div>${(n.flags || []).map(f => `<span class="tag ${f}">${f === 'deep' ? '🧠 深模組' : '⚠️ 危險方塊'}</span>`).join('')}<span class="tag">${n.type}</span></div>
+  <div class="k">做什麼</div><div class="v">${n.description}</div>
+  <div class="k">觸發條件</div><div class="v">${n.trigger_condition}</div>
+  <div class="k">預計模組（藍圖階段）</div><div class="v">${n.planned_module || '—'}</div>
+  <div class="k">掛點檔案</div><div class="v">${n.files.length ? n.files.map(f => `<span class="f" data-f="${f}">${f}</span>`).join('') : '[尚未對應]'}</div>
+  <div class="k">進來的邊</div><div class="v">${ins.map(e => `← ${byId[e.from].label}：${e.label}（${e.type}）`).join('\n') || '—'}</div>
+  <div class="k">出去的邊</div><div class="v">${outs.map(e => `→ ${byId[e.to].label}：${e.label}（${e.type}）`).join('\n') || '—'}</div>`;
+  panel.classList.add('open');
+  panel.querySelectorAll('.f').forEach(f => f.addEventListener('click', () => {
+    const ids = data.file_index[f.dataset.f] || [];
+    document.querySelectorAll('.node').forEach(x => x.classList.toggle('hi', ids.includes(x.dataset.id)));
+  }));
+}
+document.getElementById('copy').addEventListener('click', async () => {
+  await navigator.clipboard.writeText(document.getElementById('flowmap-data').textContent.trim());
+  document.getElementById('copy').textContent = '已複製';
+  setTimeout(() => document.getElementById('copy').textContent = '複製 JSON', 1200);
+});
+document.getElementById('wrap').addEventListener('click', e => { if (e.target === svg) { panel.classList.remove('open'); document.querySelectorAll('.node').forEach(x => x.classList.remove('hi')); } });
+</script>
+</body>
+</html>
