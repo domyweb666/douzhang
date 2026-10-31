@@ -37,9 +37,14 @@ export async function askPermissionOnce() {
   return after.granted;
 }
 
-export async function isGranted() {
+/**
+ * 通知權限三態：'granted' 允許、'denied' 被拒且系統不讓再問、'undetermined' 還沒問過。
+ * 只有 denied 才顯示「沒開・打開」：還沒問過時，iOS 系統設定裡根本還沒有豆帳的通知那一列（G 審查員）。
+ */
+export async function notifStatus() {
   const p = await Notifications.getPermissionsAsync();
-  return p.granted;
+  if (p.granted) return 'granted';
+  return p.canAskAgain ? 'undetermined' : 'denied';
 }
 
 let queue = Promise.resolve(); // 連續兩次轉態時，後一次要等前一次「取消＋排」做完，不然會排出兩則

@@ -131,6 +131,7 @@ export const words = {
   importTooBig: '這個檔案太大，不像豆帳的備份，原本的資料沒動',
   autoBackupFailed: '沒辦法先把現在的資料備份起來，這次不匯入，原本的資料沒動',
   exportFailed: '這次沒匯出成功，原本的資料沒動',
+  backupsLeft: '資料清掉了，但自動備份檔沒刪乾淨，再按一次清空試試',
   importConfirm: '用備份覆蓋現在的資料？',
   importConfirmOk: '覆蓋現在的資料',
   cancel: '取消',

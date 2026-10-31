@@ -74,6 +74,8 @@ function normalizeDay(d) {
 }
 
 const isNumber = (x) => typeof x === 'number' && Number.isFinite(x);
+const strings = (x) => arrayOf(x).filter((s) => typeof s === 'string');
+const stringOr = (x, fallback) => (typeof x === 'string' ? x : fallback);
 
 /**
  * 進行中那顆：PWA 跟正式版的寫法不一樣，匯入 PWA 檔時要轉（A 組審查員記下、G3 處理）：
@@ -94,15 +96,18 @@ function focusCurrent(c) {
     ...c,
     phase: 'focus',
     flowed: c.phase === 'flow' || c.flowed === true,
-    notes: arrayOf(c.notes),
-    pings: arrayOf(c.pings),
+    notes: strings(c.notes), // 會直接畫在鈴響頁：手改過的檔塞物件進來會讓 Text 當掉
+    pings: strings(c.pings),
+    clue: stringOr(c.clue, ''),
+    draft: stringOr(c.draft, ''),
   };
 }
 
 function restCurrent(c, settings) {
   if (!isNumber(c.restStart)) return null;
-  if (settings.restMode === 'self') return { ...c, endAt: null };
-  return isNumber(c.endAt) ? c : null;
+  const rest = { ...c, msg: stringOr(c.msg, '') };
+  if (settings.restMode === 'self') return { ...rest, endAt: null };
+  return isNumber(c.endAt) ? rest : null;
 }
 
 /** 把外部讀進來的物件補成完整格式。來源不可信（舊版 PWA、手改過的檔），缺什麼補什麼，型別不對就用預設。 */
@@ -158,14 +163,13 @@ export function parseBackup(text) {
   return normalize(raw);
 }
 
-/** 原封不動讀出存著的字（自動備份用：本機檔讀不懂時，備份的是那份讀不懂的原文，不是空白）。讀不到回 null。 */
+/**
+ * 原封不動讀出存著的字（自動備份用：本機檔讀不懂時，備份的是那份讀不懂的原文，不是空白）。
+ * 沒存過回 null；讀取失敗丟例外——「讀不到」不能當成「沒東西要備份」，不然會沒備份就覆蓋（S3，G 審查員）。
+ */
 export async function readRaw() {
-  try {
-    const text = await AsyncStorage.getItem(STORAGE_KEY);
-    return text || null;
-  } catch {
-    return null;
-  }
+  const text = await AsyncStorage.getItem(STORAGE_KEY);
+  return text || null;
 }
 
 /** 寫狀態。回 true／false，不丟例外；false 時畫面要顯示 words.saveFailed（S6）。 */

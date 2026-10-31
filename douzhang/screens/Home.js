@@ -76,11 +76,12 @@ function Card({ children }) {
   );
 }
 
-function FirstInput({ value, onChange }) {
+/** wiped：剛清空所有資料，標籤換成 06「空-自己清掉」那句，輸入框照第一次。 */
+function FirstInput({ value, onChange, wiped }) {
   const T = useTokens();
   return (
     <View>
-      <Label>{words.firstPrompt}</Label>
+      <Label>{wiped ? words.wipedLine : words.firstPrompt}</Label>
       <TextInput
         multiline
         maxLength={params.firstLineMaxChars}
@@ -199,7 +200,7 @@ function Countdown({ left, label, body, extra }) {
   );
 }
 
-function CardBody({ phase, state, now, greet, firstLine, onFirstLine }) {
+function CardBody({ phase, state, now, greet, wiped, firstLine, onFirstLine }) {
   const left = state.current ? state.current.endAt - now : 0;
   if (phase === PHASE.focus)
     return (
@@ -216,7 +217,7 @@ function CardBody({ phase, state, now, greet, firstLine, onFirstLine }) {
     const shown = self ? now - state.current.restStart : left;
     return <Countdown left={shown} label={words.rest} body={words.restBody} />;
   }
-  if (!state.clue) return <FirstInput value={firstLine} onChange={onFirstLine} />;
+  if (!state.clue) return <FirstInput value={firstLine} onChange={onFirstLine} wiped={wiped} />;
   return <ClueCard text={state.clue.text} greet={greet} />;
 }
 
@@ -267,7 +268,7 @@ function PrimaryButton({ phase, first, firstLine, onStart, onBackFromRest, onEnd
   return <BigButton label={words.start} onPress={() => onStart({})} onLongPress={devStart} />;
 }
 
-export function Home({ state, phase, now, greet, jarSeen, actions, onRack, onSettings }) {
+export function Home({ state, phase, now, greet, wiped, jarSeen, actions, onRack, onSettings }) {
   const T = useTokens();
   const { onStart, onBackFromRest } = actions;
   const [firstLine, setFirstLine] = useState('');
@@ -292,6 +293,7 @@ export function Home({ state, phase, now, greet, jarSeen, actions, onRack, onSet
           state={state}
           now={now}
           greet={greet}
+          wiped={wiped}
           firstLine={firstLine}
           onFirstLine={setFirstLine}
         />

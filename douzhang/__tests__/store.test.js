@@ -223,3 +223,32 @@ describe('匯入備份（G3）', () => {
     expect(parseBackup(pwa({ phase: 'rest', restStart: 1, endAt: 'x' })).current).toBeNull();
   });
 });
+
+describe('匯入備份：會畫上畫面的字', () => {
+  test('念頭、有人找只留字串；那句、草稿、休息那句不是字串就變空字串', () => {
+    const base = { v: 1, settings: { types: [] }, days: {} };
+    const focus = parseBackup(
+      JSON.stringify({
+        ...base,
+        current: {
+          phase: 'focus',
+          len: 25,
+          startedAt: 1,
+          endAt: 2,
+          notes: ['a', { x: 1 }],
+          pings: [3],
+          clue: {},
+          draft: 5,
+        },
+      }),
+    ).current;
+    expect(focus).toMatchObject({ notes: ['a'], pings: [], clue: '', draft: '' });
+    const rest = parseBackup(
+      JSON.stringify({
+        ...base,
+        current: { phase: 'rest', restStart: 1, endAt: 2, msg: { y: 1 } },
+      }),
+    ).current;
+    expect(rest.msg).toBe('');
+  });
+});

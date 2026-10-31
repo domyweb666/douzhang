@@ -2,7 +2,7 @@
 import * as Notifications from 'expo-notifications';
 import { blank } from '../core/store';
 import { keep, start } from '../core/machine';
-import { askPermissionOnce, planned, sync } from '../core/notify';
+import { askPermissionOnce, notifStatus, planned, sync } from '../core/notify';
 
 // jest 會把 mock 提到最前面，寫在 import 後面只是給 lint 看
 jest.mock('expo-notifications', () => ({
@@ -126,5 +126,16 @@ describe('問權限只問一次', () => {
     Notifications.requestPermissionsAsync.mockResolvedValue({ granted: true, canAskAgain: true });
     expect(await askPermissionOnce()).toBe(true);
     expect(Notifications.requestPermissionsAsync).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('權限三態', () => {
+  test('允許是 granted；被拒且不能再問是 denied；還沒問過是 undetermined', async () => {
+    Notifications.getPermissionsAsync.mockResolvedValue({ granted: true, canAskAgain: true });
+    expect(await notifStatus()).toBe('granted');
+    Notifications.getPermissionsAsync.mockResolvedValue({ granted: false, canAskAgain: false });
+    expect(await notifStatus()).toBe('denied');
+    Notifications.getPermissionsAsync.mockResolvedValue({ granted: false, canAskAgain: true });
+    expect(await notifStatus()).toBe('undetermined');
   });
 });

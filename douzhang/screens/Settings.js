@@ -144,9 +144,14 @@ function RhythmSection({ settings, actions }) {
   );
 }
 
-/** 到點通知：允許就「開著」；沒開就「沒開」＋「打開」去系統設定（06 設定狀態表）。 */
-function NotifStatus({ denied }) {
+/**
+ * 到點通知：允許「開著」；被拒「沒開」＋「打開」去系統設定（06 設定狀態表）；
+ * 還沒問過什麼都不寫（第一次按開始才問，那時系統設定裡也還沒有這一列）。
+ */
+function NotifStatus({ status }) {
   const T = useTokens();
+  if (status === 'undetermined') return null;
+  const denied = status === 'denied';
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
       <Text style={{ ...T.font.sub, color: T.color.textSecondary }}>
@@ -159,12 +164,12 @@ function NotifStatus({ denied }) {
   );
 }
 
-function ReminderSection({ settings, actions, notifDenied }) {
+function ReminderSection({ settings, actions, notif }) {
   return (
     <View>
       <Cap>{words.reminders}</Cap>
       <Group>
-        <SettingRow title={words.notifRow} right={<NotifStatus denied={notifDenied} />} />
+        <SettingRow title={words.notifRow} right={<NotifStatus status={notif} />} />
         <SettingRow
           last
           title={words.soundRow}
@@ -199,6 +204,7 @@ const PROBLEM_WORDS = {
   tooBig: words.importTooBig,
   backupFailed: words.autoBackupFailed,
   exportFailed: words.exportFailed,
+  backupsLeft: words.backupsLeft,
 };
 
 /** 備份：匯出、匯入兩列，下面一行出錯原因（有才出）、一句說明、上次自動備份時間（S3）。 */
@@ -270,7 +276,7 @@ function TypesSection({ settings, actions }) {
   );
 }
 
-export function Settings({ state, actions, notifDenied, backup, onWipe, onBack }) {
+export function Settings({ state, actions, notif, backup, onWipe, onBack }) {
   const T = useTokens();
   return (
     <View style={{ flex: 1 }}>
@@ -293,7 +299,7 @@ export function Settings({ state, actions, notifDenied, backup, onWipe, onBack }
       >
         <TypesSection settings={state.settings} actions={actions} />
         <RhythmSection settings={state.settings} actions={actions} />
-        <ReminderSection settings={state.settings} actions={actions} notifDenied={notifDenied} />
+        <ReminderSection settings={state.settings} actions={actions} notif={notif} />
         <FeelSection settings={state.settings} actions={actions} />
         <BackupSection backup={backup} />
         <Group>

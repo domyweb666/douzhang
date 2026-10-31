@@ -30,7 +30,7 @@ import {
   start,
   voidBean,
 } from './core/machine';
-import { askPermissionOnce, isGranted, planned, sync } from './core/notify';
+import { askPermissionOnce, notifStatus, planned, sync } from './core/notify';
 import {
   autoBackup,
   exportBackup,
@@ -80,17 +80,21 @@ function NotificationOffLine({ onOpen }) {
   );
 }
 
-/** 權限狀態：開機與回前景各看一次（使用者可能剛從系統設定改回來）。剛打開時要重排一次通知，所以回報「翻成允許」。 */
-function useNotificationDenied(onGranted) {
-  const [denied, setDenied] = useState(false);
-  const wasDenied = useRef(false);
+/**
+ * 權限狀態（notifStatus 三態）：開機與回前景各看一次（使用者可能剛從系統設定改回來）。
+ * 從沒允許翻成允許時要重排一次通知，所以回報 onGranted。
+ */
+function useNotificationStatus(onGranted) {
+  const [status, setStatus] = useState('undetermined');
+  const wasOff = useRef(false);
   useEffect(() => {
     const refresh = () =>
-      isGranted()
-        .then((ok) => {
-          setDenied(!ok);
-          if (ok && wasDenied.current) onGranted();
-          wasDenied.current = !ok;
+      notifStatus()
+        .then((next) => {
+          setStatus(next);
+          const ok = next === 'granted';
+          if (ok && wasOff.current) onGranted();
+          wasOff.current = !ok;
         })
         .catch(() => {});
     refresh();
@@ -99,7 +103,7 @@ function useNotificationDenied(onGranted) {
     });
     return () => sub.remove();
   }, [onGranted]);
-  return [denied, setDenied];
+  return [status, setStatus];
 }
 
 /** 狀態與通知對齊：內容沒變就不重排（存草稿每個字都 commit，不該每個字都取消再排）。 */
@@ -142,7 +146,13 @@ function useBackup(stateRef, unreadable, replaceAll) {
   const [lastBackup, setLastBackup] = useState(() => lastAutoBackupAt());
   const [problem, setProblem] = useState(null);
   const [wiped, setWiped] = useState(false);
-  const savedText = async () => (unreadable ? readRaw() : JSON.stringify(stateRef.current));
+  const savedText = async () => {
+    try {
+      return unreadable ? await readRaw() : JSON.stringify(stateRef.current);
+    } catch {
+      return null;
+    }
+  };
 
   const onExport = async () => {
     setProblem(null);
@@ -154,7 +164,12 @@ function useBackup(stateRef, unreadable, replaceAll) {
     const picked = await pickImport();
     if (picked.canceled) return;
     if (picked.error) return setProblem(picked.error);
-    const raw = await readRaw(); // 什麼都還沒存過（剛裝好）就沒有東西要備份
+    let raw;
+    try {
+      raw = await readRaw(); // null＝什麼都還沒存過（剛裝好），沒有東西要備份
+    } catch {
+      return setProblem('backupFailed'); // 讀不到現在的資料就不知道要備份什麼：不匯（S3）
+    }
     const t = Date.now();
     if (raw && !(await autoBackup(raw, t))) return setProblem('backupFailed');
     if (raw) setLastBackup(t);
@@ -176,9 +191,9 @@ function useBackup(stateRef, unreadable, replaceAll) {
         text: words.wipeAll,
         style: 'destructive',
         onPress: () => {
-          removeAutoBackups(); // P5：清乾淨，含自動備份
+          const removed = removeAutoBackups(); // P5：清乾淨，含自動備份
           setLastBackup(lastAutoBackupAt());
-          setProblem(null);
+          setProblem(removed ? null : 'backupsLeft');
           setWiped(true);
           replaceAll(blank());
           done();
@@ -202,7 +217,7 @@ function useDouzhang() {
   const rearm = useCallback(() => {
     if (stateRef.current) arm(stateRef.current, true);
   }, [arm]);
-  const [notifDenied, setNotifDenied] = useNotificationDenied(rearm);
+  const [notif, setNotif] = useNotificationStatus(rearm);
 
   const commit = useCallback(
     (next) => {
@@ -249,7 +264,7 @@ function useDouzhang() {
   if (!state) return null;
   // 休息到點沒按也回待機：每一拍在 render 時把過期的休息收掉，下一次動作才存回去
   const live = settle(state, now);
-  const actions = makeActions(live, act, commit, { setNotifDenied, setGreet });
+  const actions = makeActions(live, act, commit, { setNotif, setGreet });
   const view = { ...live, todayKey: dayKey(now) }; // 畫面要知道「今天」是哪一天（估過的事只看今天）
   return {
     live: view,
@@ -258,14 +273,14 @@ function useDouzhang() {
     greet,
     saveFailed,
     unreadable,
-    notifDenied,
+    notif,
     actions,
     backup,
   };
 }
 
 /** 畫面拿到的動作：純函式算新狀態，act 會先看按下那一刻的時鐘，commit 不需要時鐘。 */
-function makeActions(live, act, commit, { setNotifDenied, setGreet }) {
+function makeActions(live, act, commit, { setNotif, setGreet }) {
   return {
     onStart: async (opts) => {
       // 只有第一次（還沒問過）才會真的跳框；問不到也照樣開始（核心不靠通知）
@@ -275,7 +290,7 @@ function makeActions(live, act, commit, { setNotifDenied, setGreet }) {
       } catch {
         ok = false;
       }
-      setNotifDenied(!ok);
+      setNotif(ok ? 'granted' : 'denied');
       setGreet(false); // 招呼只到開始第一顆為止
       act((t) => start(live, t, opts));
     },
@@ -314,7 +329,7 @@ export default function App() {
   const [screen, setScreen] = useState('home'); // 'home'｜'settings'｜'rack'
   const jarSeen = useRef(null); // 豆罐上次看到幾顆：鈴響時豆罐卸載，收下後重掛要知道哪顆是新的
   if (!dz) return <View style={{ flex: 1, backgroundColor: T.color.background }} />;
-  const { live, now, phase, greet, saveFailed, unreadable, notifDenied, actions, backup } = dz;
+  const { live, now, phase, greet, saveFailed, unreadable, notif, actions, backup } = dz;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: T.color.background }}>
@@ -325,7 +340,7 @@ export default function App() {
       >
         {unreadable ? <DangerLine>{words.importUnreadable}</DangerLine> : null}
         {saveFailed ? <DangerLine>{words.saveFailed}</DangerLine> : null}
-        {notifDenied && phase === PHASE.focus ? (
+        {notif === 'denied' && phase === PHASE.focus ? (
           <NotificationOffLine onOpen={() => Linking.openSettings()} />
         ) : null}
         {phase === PHASE.bell ? (
@@ -347,7 +362,7 @@ export default function App() {
           <Settings
             state={live}
             actions={actions}
-            notifDenied={notifDenied}
+            notif={notif}
             backup={backup}
             onWipe={() => backup.onWipe(() => setScreen('home'))}
             onBack={() => setScreen('home')}
@@ -367,6 +382,7 @@ export default function App() {
             phase={phase}
             now={now}
             greet={greet}
+            wiped={backup.wiped}
             jarSeen={jarSeen}
             actions={actions}
             onRack={() => setScreen('rack')}
