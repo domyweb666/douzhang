@@ -10,7 +10,7 @@ module.exports = [
   },
   {
     // 測試檔：jest 全域（test、expect、jest、__dirname）
-    files: ['__tests__/**/*.js', '**/*.test.js'],
+    files: ['__tests__/**/*.js', '**/*.test.js', 'jest.setup.js'],
     languageOptions: { globals: { ...globals.jest, ...globals.node } },
   },
   {
@@ -39,9 +39,21 @@ module.exports = [
               ],
               message: '安全標準 P4：不裝第三方分析／崩潰回報',
             },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ['screens/**/*.js', 'core/**/*.js', 'ui/**/*.js'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
             {
-              group: ['../screens/*', './screens/*'],
-              message: '憲法 1：screens 之間與 core 不准 import screens',
+              group: ['../screens/*', './screens/*', '**/screens/*'],
+              message: '憲法 1：screens 之間、core、ui 不准 import screens；只有殼 App.js 可以',
             },
           ],
         },

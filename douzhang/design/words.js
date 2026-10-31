@@ -47,3 +47,19 @@ export const words = {
   saveFailed: '這台裝置沒辦法存，記得匯出備份',
   importUnreadable: '這個檔案讀不懂，原本的資料沒動',
 };
+
+// 系統文案（詞彙表「系統文案」節）
+Object.assign(words, {
+  firstPrompt: '寫下接下來要做的第一件事，寫到具體的動作',
+  firstPlaceholder: '例：打開讀書筆記，把三個重點各寫一句',
+  clueLabel: '昨天的你留了一句',
+  doing: '正在做',
+  restBody: '離開螢幕。喝水、看遠處、伸展、閉眼都好。',
+  backFromRest: '回來了，開始下一顆',
+  bellSub: '寫一行給下一顆的自己。',
+  bellPlaceholder: '寫一行給下一顆的自己',
+  devTypeName: '測試',
+  settings: '設定',
+});
+/** 類型 chip 的字：「一般・25 分」 */
+export const typeChipLabel = (name, len) => `${name}・${len} 分`;

@@ -81,6 +81,8 @@ export function makeTokens(dark = false, hc = false) {
     space: { xs: 4, s: 8, m: 12, l: 20, xl: 32 },
     /** 靠近文字的間距乘這個，最大字級時才不會擠（ScaledMetric 的對應） */
     fontScale: () => PixelRatio.getFontScale(),
+    // 按鈕狀態的不透明度：停用與按下。數字只在這裡
+    opacity: { disabled: 0.4, pressed: 0.85 },
     shape: {
       radiusCard: 16, radiusButton: 14, radiusPill: 999, radiusSheet: 20,
       tapMin: 44, tapPrimary: 60,
