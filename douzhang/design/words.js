@@ -132,6 +132,9 @@ export const words = {
   rackEmpty: '第一顆響完，這裡就會掛上今天的豆莢。',
   rackEmptyAction: '回去開始一顆',
   flipToBackRow: '翻到背面：這週的收據',
+  chevron: '›', // 列尾「還有下一層」的記號
+  voidA11y: '作廢', // 豆莢上空心圈的讀屏名
+  leafA11y: '一片葉子', // 葉子的讀屏名
   dayReceiptTitle: (key) => `${words.monthDay(key)}的收據`,
   leafDay: '這天掛的是一片葉子。',
   noNoteMark: '沒留話',

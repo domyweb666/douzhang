@@ -76,7 +76,7 @@ export function DaySheet({ dayKey, day, onClose }) {
   const tasks = day ? taskRows(day) : [];
   return (
     <Sheet visible={!!dayKey} title={dayKey ? words.dayReceiptTitle(dayKey) : ''} onClose={onClose}>
-      <ScrollView style={{ maxHeight: T.shape.tapPrimary * 7 }}>
+      <ScrollView style={{ maxHeight: T.shape.sheetScrollMax }}>
         {day ? <Pod items={podItems(day)} /> : null}
         <View style={{ marginTop: T.space.m }}>
           {rows.length ? (
@@ -129,7 +129,7 @@ export function WeekSheet({ weekStart, state, onClose }) {
       onClose={onClose}
     >
       {w ? (
-        <ScrollView style={{ maxHeight: T.shape.tapPrimary * 7 }}>
+        <ScrollView style={{ maxHeight: T.shape.sheetScrollMax }}>
           {w.byType.length ? (
             w.byType.map((t) => <KV key={t.name} k={t.name} v={words.unitsLabel(t.units)} />)
           ) : (

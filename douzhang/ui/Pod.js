@@ -2,6 +2,7 @@
 // 作廢是空心圈＋收據裡有字，不靠顏色（使用規則 3）。
 import { View } from 'react-native';
 import { CharacterColors, useTokens } from '../design/Tokens';
+import { words } from '../design/words';
 
 export function Pod({ items }) {
   const T = useTokens();
@@ -14,12 +15,12 @@ export function Pod({ items }) {
         it.kind === 'void' ? (
           <View
             key={i}
-            accessibilityLabel="void"
+            accessibilityLabel={words.voidA11y}
             style={{
               width: dot,
               height: dot,
               borderRadius: dot,
-              borderWidth: 1, // token-ok: 空心圈 1pt 髮線（lessons 已記）
+              borderWidth: T.shape.hairline,
               borderColor: shade,
             }}
           />
@@ -46,14 +47,14 @@ export function Leaf() {
   const fill = T._dark ? CharacterColors.pod.dark : CharacterColors.pod.light;
   return (
     <View
-      accessibilityLabel="leaf"
+      accessibilityLabel={words.leafA11y}
       style={{
         width: dot * 2,
         height: dot,
         backgroundColor: fill,
         borderTopLeftRadius: dot,
         borderBottomRightRadius: dot,
-        transform: [{ rotate: '-30deg' }],
+        transform: [{ rotate: T.shape.leafTilt }],
       }}
     />
   );

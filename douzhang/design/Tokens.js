@@ -120,6 +120,9 @@ export function makeTokens(dark = false, hc = false) {
       beanRadius: 18, // 參數表 B
       podDot: 12, // 豆棚上的小豆（原型 .p 13px，取 space 刻度附近的整數；2026-11-01 E1 加）
       hairline: 1, // 列與列的分隔線（系統慣例 1pt；第四處用到時收進來，B+C 審查員）
+      rackDayCol: 90, // 豆棚每列左邊「N月D日／星期X」那欄寬（原來寫成 tapPrimary×1.5，D+E 審查員）
+      sheetScrollMax: 420, // 收據半頁可捲區最高（原來寫成 tapPrimary×7）
+      leafTilt: '-30deg', // 葉子斜放的角度（原型 .leaf）
     },
     // 動態：事件命名，數字只從參數表抄。每個都有減少動態版（替換，不是關掉）
     motion: {

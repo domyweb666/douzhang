@@ -17,7 +17,7 @@ const run = (W, seconds) => {
   }
 };
 
-test('參數全部來自 Tokens：重力、半徑、豆數上限與參數表同值', () => {
+test('參數從 Tokens 與 params 合成：重力、半徑、豆數上限、連桿與參數表同值', () => {
   const P = jarParams(Token);
   expect(P.gravity).toBe(1100);
   expect(P.radius).toBe(18);
@@ -41,7 +41,7 @@ test('從罐口掉一顆，兩秒後落在罐底，而且落地那一幀有回�
   expect(b.fresh).toBe(false);
 });
 
-test('撒 40 顆預跑安置後，沒有一顆在牆外', () => {
+test('撒 40 顆預跑安置後，沒有一顆在牆外（左、右、下、上）', () => {
   const W = world();
   seed(W, 40, (i) => i % 4 === 3);
   expect(count(W)).toBe(40);
@@ -49,6 +49,7 @@ test('撒 40 顆預跑安置後，沒有一顆在牆外', () => {
     expect(b.x).toBeGreaterThanOrEqual(18 - 0.01);
     expect(b.x).toBeLessThanOrEqual(300 - 18 + 0.01);
     expect(b.y).toBeLessThanOrEqual(400 - 18 + 0.01);
+    expect(b.y).toBeGreaterThanOrEqual(18 - 0.01);
   }
 });
 

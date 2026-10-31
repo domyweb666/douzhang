@@ -8,7 +8,7 @@ import * as Haptics from 'expo-haptics';
 import { DeviceMotion } from 'expo-sensors';
 import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
 import { Token, useTokens } from '../design/Tokens';
-import { jarParams, params } from '../design/params';
+import { MS_PER_SECOND, jarParams, params } from '../design/params';
 import { words } from '../design/words';
 import { addBody, makeWorld, seed, step, tapAt } from '../core/jarPhysics';
 
@@ -104,7 +104,14 @@ function dropOne(W, two, still) {
       addBody(W, two, x, -W.P.radius * 2, (Math.random() - 0.5) * 2 * DROP.vxSpread, DROP.vy, true);
     }
   };
-  setTimeout(go, still ? DROP_REDUCED.delayMs : DROP.delayMs);
+  W.timers.push(setTimeout(go, still ? DROP_REDUCED.delayMs : DROP.delayMs)); // 卸載時要清掉
+}
+
+/** 跟上今天的豆子：多一顆就掉一顆；數目對不上（換日、匯入、清空）就重新安置。 */
+function follow(W, beans, still) {
+  if (beans.length === W.known + 1) dropOne(W, !!beans[beans.length - 1].double, still);
+  else if (beans.length !== W.known) seed(W, beans.length, (i) => !!beans[i]?.double);
+  W.known = beans.length;
 }
 
 /** 傾斜：加速度計換成重力向量的目標值；關掉時回到靜置重力。 */
@@ -149,7 +156,30 @@ function snapshot(W) {
   };
 }
 
-/** 每幀走物理、落地與碰撞事件交給 W.onLand／W.onHit、把快照放進 state 重畫；連續掉幀就回報（退成靜止版）。 */
+/** 每秒結算一次幀數：連續 lowFpsSeconds 秒低於門檻就回報。 */
+function countFrame(fps, t, onLowFps) {
+  fps.n++;
+  if (t - fps.t <= MS_PER_SECOND) return;
+  fps.lowSeconds = fps.n < params.jar.lowFpsThreshold ? fps.lowSeconds + 1 : 0;
+  fps.n = 0;
+  fps.t = t;
+  if (fps.lowSeconds >= params.jar.lowFpsSeconds) onLowFps();
+}
+
+/** 兩份快照差不到門檻就算沒動：豆子都躺好時不重畫（退成靜止版要真的省下來）。 */
+function samePlace(a, b) {
+  const { redrawEpsilonPx: px, redrawEpsilonRad: rad } = params.jar;
+  if (a.singles.length !== b.singles.length || a.doubles.length !== b.doubles.length) return false;
+  const near = (p, q, eps) => Math.abs(p - q) < eps;
+  const single = (s, i) => near(s.x, b.singles[i].x, px) && near(s.y, b.singles[i].y, px);
+  const double = (d, i) => {
+    const o = b.doubles[i];
+    return near(d.cx, o.cx, px) && near(d.cy, o.cy, px) && near(d.ang, o.ang, rad);
+  };
+  return a.singles.every(single) && a.doubles.every(double);
+}
+
+/** 每幀走物理、落地與碰撞事件交給 W.onLand／W.onHit、有動才把快照放進 state 重畫；連續掉幀就回報（退成靜止版）。 */
 function useLoop(worldRef, onLowFps) {
   const [frame, setFrame] = useState({ singles: [], doubles: [] });
   useEffect(() => {
@@ -158,10 +188,11 @@ function useLoop(worldRef, onLowFps) {
     let last = 0;
     let run = true;
     let lastHit = 0;
+    let shown = { singles: [], doubles: [] };
     const fps = { n: 0, t: 0, lowSeconds: 0 };
     const loop = (t) => {
       if (!run) return;
-      const dt = last ? Math.min(W.P.dtMax, (t - last) / 1000) : W.P.dtMax / 2;
+      const dt = last ? Math.min(W.P.dtMax, (t - last) / MS_PER_SECOND) : W.P.dtMax / 2;
       last = t;
       W.gx += (W.tgx - W.gx) * W.P.tiltSmooth;
       W.gy += (W.tgy - W.gy) * W.P.tiltSmooth;
@@ -173,14 +204,12 @@ function useLoop(worldRef, onLowFps) {
         lastHit = t;
         W.onHit?.(W.impact);
       }
-      fps.n++;
-      if (t - fps.t > 1000) {
-        fps.lowSeconds = fps.n < params.jar.lowFpsThreshold ? fps.lowSeconds + 1 : 0;
-        fps.n = 0;
-        fps.t = t;
-        if (fps.lowSeconds >= params.jar.lowFpsSeconds) onLowFps();
+      countFrame(fps, t, onLowFps);
+      const next = snapshot(W);
+      if (!samePlace(shown, next)) {
+        shown = next;
+        setFrame(next);
       }
-      setFrame(snapshot(W));
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
@@ -226,10 +255,12 @@ function DoubleBean({ cx, cy, ang, R, width }) {
 
 /**
  * beans：今天的豆子（依時間排），每個 { double }。多一顆就掉一顆；數目對不上（換日、匯入、清空）就重新安置。
+ * seenRef：殼保管的「豆罐上次看到幾顆」。鈴響時主畫面（連豆罐）整個換成鈴響頁，收下後豆罐重掛；
+ *   沒有這個數，重掛就把剛收的那顆直接擺在罐底，不掉、不啵（D+E 審查員）。
  * sound：設定的聲音開關。tilt：設定的傾斜開關。
  * 靜止版（減少動態、或連續掉幀）：不傾斜、不彈、新豆直接出現在罐底，啵與觸覺照樣。
  */
-export function Jar({ beans, sound, tilt, style }) {
+export function Jar({ beans, seenRef, sound, tilt, style }) {
   const T = useTokens();
   const reduce = useReduceMotion();
   const [lowFps, setLowFps] = useState(false);
@@ -237,7 +268,7 @@ export function Jar({ beans, sound, tilt, style }) {
   const players = useAudio();
   const worldRef = useRef(null);
   if (worldRef.current === null) {
-    worldRef.current = { ...makeWorld(jarParams(Token)), known: null }; // known＝上次看到的顆數
+    worldRef.current = { ...makeWorld(jarParams(Token)), known: null, timers: [] }; // known＝上次看到的顆數
   }
   const P = jarParams(Token);
 
@@ -253,19 +284,26 @@ export function Jar({ beans, sound, tilt, style }) {
     const first = !W.w;
     W.w = width;
     W.h = height;
-    if (first) {
-      seed(W, beans.length, (i) => !!beans[i]?.double);
-      W.known = beans.length;
-    }
+    if (!first) return;
+    // 先擺上次看到的那些，多出來的（鈴響時收下的）再照常掉進來
+    const before = seenRef.current;
+    W.known = before != null && before <= beans.length ? before : beans.length;
+    seed(W, W.known, (i) => !!beans[i]?.double);
+    follow(W, beans, still);
+    seenRef.current = W.known;
   };
 
   useEffect(() => {
     const W = worldRef.current;
     if (W.known === null || !W.w) return;
-    if (beans.length === W.known + 1) dropOne(W, !!beans[beans.length - 1].double, still);
-    else if (beans.length !== W.known) seed(W, beans.length, (i) => !!beans[i]?.double);
-    W.known = beans.length;
-  }, [beans, still]);
+    follow(W, beans, still);
+    seenRef.current = W.known;
+  }, [beans, still, seenRef]);
+
+  useEffect(() => {
+    const W = worldRef.current;
+    return () => W.timers.forEach(clearTimeout);
+  }, []);
 
   useTilt(worldRef, !!tilt && !still);
   const onLowFps = useCallback(() => setLowFps(true), []);

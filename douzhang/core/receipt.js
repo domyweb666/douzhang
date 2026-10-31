@@ -3,11 +3,9 @@
 // 數字要跟 PWA 同一份資料對得上（E2 立即驗）。這裡只算，不帶任何畫面上的字；字在畫面層從 words.js 拿。
 import { dayKey, units } from './store';
 import { typeOf } from './machine';
+import { params } from '../design/params';
 
 export const VERDICT = { fewData: 'fewData', under: 'under', over: 'over', even: 'even' };
-const MIN_TASKS_FOR_VERDICT = 3; // PWA：對帳不到 3 次先不下結論
-const VOIDS_FOR_HINT = 3; // PWA：作廢達 3 次才多那一行
-const FLOW_HINT_MIN_BEANS = 4; // PWA：至少 4 顆且一半以上延長才提示
 
 /** 這一天所屬的週（週一起算）的日期鍵。 */
 export function weekStart(key) {
@@ -112,7 +110,7 @@ function tallyVoids(state, days) {
 }
 
 function verdictOf({ under, over, even }) {
-  if (under + over + even < MIN_TASKS_FOR_VERDICT) return VERDICT.fewData;
+  if (under + over + even < params.receipt.minTasksForVerdict) return VERDICT.fewData;
   if (under > over * 2) return VERDICT.under;
   if (over > under * 2) return VERDICT.over;
   return VERDICT.even;
@@ -133,7 +131,7 @@ export function weekReceipt(state, ws) {
     verdict: verdictOf(tasks),
     voids,
     totalVoids,
-    voidHint: totalVoids >= VOIDS_FOR_HINT,
-    flowHint: beanN >= FLOW_HINT_MIN_BEANS && flowN * 2 > beanN,
+    voidHint: totalVoids >= params.receipt.voidsForHint,
+    flowHint: beanN >= params.receipt.flowHintMinBeans && flowN * 2 > beanN,
   };
 }

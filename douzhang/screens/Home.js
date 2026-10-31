@@ -267,7 +267,7 @@ function PrimaryButton({ phase, first, firstLine, onStart, onBackFromRest, onEnd
   return <BigButton label={words.start} onPress={() => onStart({})} onLongPress={devStart} />;
 }
 
-export function Home({ state, phase, now, greet, actions, onRack, onSettings }) {
+export function Home({ state, phase, now, greet, jarSeen, actions, onRack, onSettings }) {
   const T = useTokens();
   const { onStart, onBackFromRest } = actions;
   const [firstLine, setFirstLine] = useState('');
@@ -305,6 +305,7 @@ export function Home({ state, phase, now, greet, actions, onRack, onSettings }) 
       {phase === PHASE.rest && state.current.msg ? <RestLine text={state.current.msg} /> : null}
       <Jar
         beans={todayBeans}
+        seenRef={jarSeen}
         sound={state.settings.sound}
         tilt={state.settings.tilt}
         style={{ marginVertical: T.space.m }}

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useTokens } from '../design/Tokens';
 import { words } from '../design/words';
-import { podItems, rackWeeks } from '../core/receipt';
+import { podItems, rackWeeks, weekStart } from '../core/receipt';
 import { TextButton } from '../ui/TextButton';
 import { CloseSheet } from '../ui/CloseSheet';
 import { canHangLeaf, rackTopRow } from '../core/machine';
@@ -72,14 +72,14 @@ function DayRow({ dayKey, day, onPress }) {
   const leafOnly = day.leaf && !day.beans.length;
   return (
     <Row onPress={onPress}>
-      <View style={{ width: T.shape.tapPrimary * 1.5 }}>
+      <View style={{ width: T.shape.rackDayCol }}>
         <Text style={{ ...T.font.body, color: T.color.textPrimary }}>{words.monthDay(dayKey)}</Text>
         <Text style={{ ...T.font.caption, color: T.color.textSecondary }}>
           {words.weekday(dayKey)}
         </Text>
       </View>
       <View style={{ flex: 1 }}>{leafOnly ? <Leaf /> : <Pod items={podItems(day)} />}</View>
-      <Text style={{ ...T.font.body, color: T.color.textSecondary }}>›</Text>
+      <Text style={{ ...T.font.body, color: T.color.textSecondary }}>{words.chevron}</Text>
     </Row>
   );
 }
@@ -99,7 +99,7 @@ function TopRow({ kind, onPress }) {
             {close ? words.rackCloseSub : words.rackLeafSub}
           </Text>
         </View>
-        <Text style={{ ...T.font.body, color: T.color.textSecondary }}>›</Text>
+        <Text style={{ ...T.font.body, color: T.color.textSecondary }}>{words.chevron}</Text>
       </Row>
     </Group>
   );
@@ -135,7 +135,7 @@ export function Rack({ state, now, actions, onBack }) {
   const top = rackTopRow(state, now);
   const [weekOpen, setWeekOpen] = useState(null);
   const weeks = rackWeeks(state);
-  const thisWeek = weeks.find((w) => w.days.includes(state.todayKey))?.weekStart;
+  const thisWeek = weekStart(state.todayKey); // 今天還沒紀錄，這週的標題也叫「這週」
   return (
     <View style={{ flex: 1 }}>
       <NavBar onBack={onBack} />
@@ -155,7 +155,9 @@ export function Rack({ state, now, actions, onBack }) {
                 <Text style={{ ...T.font.body, color: T.color.accentText, flex: 1 }}>
                   {words.flipToBackRow}
                 </Text>
-                <Text style={{ ...T.font.body, color: T.color.textSecondary }}>›</Text>
+                <Text style={{ ...T.font.body, color: T.color.textSecondary }}>
+                  {words.chevron}
+                </Text>
               </Row>
             </Group>
           </View>

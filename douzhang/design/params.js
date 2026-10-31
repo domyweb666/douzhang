@@ -18,6 +18,14 @@ export const params = {
     sensorIntervalMs: 16, // 加速度計更新間隔（灰盒子同值）
     lowFpsThreshold: 40, // 連續幾秒低於這個 fps 就退成靜止版（PRD S19 低電量退路）
     lowFpsSeconds: 3,
+    redrawEpsilonPx: 0.5, // 每顆移動都小於這個就不重畫（靜止時省下重畫，D+E 審查員）
+    redrawEpsilonRad: 0.01, // 雙豆角度同理
+  },
+  // 收據（PWA openWeek 的三個門檻）
+  receipt: {
+    minTasksForVerdict: 3, // 對帳不到 3 次先不下結論
+    voidsForHint: 3, // 作廢達 3 次才多那一行
+    flowHintMinBeans: 4, // 至少 4 顆且一半以上延長才提示
   },
 };
 
@@ -31,4 +39,5 @@ export const jarParams = (T) => ({
   tapUp: T.motion.beanTap.up,
   tapSide: T.motion.beanTap.side,
 });
-export const MS_PER_MINUTE = 60 * 1000;
+export const MS_PER_SECOND = 1000;
+export const MS_PER_MINUTE = 60 * MS_PER_SECOND;

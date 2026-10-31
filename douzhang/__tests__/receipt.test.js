@@ -135,6 +135,18 @@ describe('一週的收據（照 PWA openWeek）', () => {
     expect(weekReceipt(sample(), '2026-10-26').flowHint).toBe(false);
   });
 
+  test('延長提示：4 顆有 3 顆延長就提示；3 顆全延長不到 4 顆不提示', () => {
+    const s = blank();
+    const bean = (i, flow) => ({ t: i, typeId: 't1', len: 25, flow });
+    s.days['2026-10-27'] = {
+      ...blankDay(),
+      beans: [bean(1, 15), bean(2, 15), bean(3, 30), bean(4, 0)],
+    };
+    expect(weekReceipt(s, '2026-10-26').flowHint).toBe(true);
+    s.days['2026-10-27'] = { ...blankDay(), beans: [bean(1, 15), bean(2, 15), bean(3, 30)] };
+    expect(weekReceipt(s, '2026-10-26').flowHint).toBe(false);
+  });
+
   test('11/2 那週：估 3 做 3 剛好 1 次，沒有作廢', () => {
     const w = weekReceipt(sample(), '2026-11-02');
     expect([w.under, w.over, w.even]).toEqual([0, 0, 1]);

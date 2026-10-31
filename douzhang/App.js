@@ -227,6 +227,7 @@ export default function App() {
   const T = useTokens();
   const dz = useDouzhang();
   const [screen, setScreen] = useState('home'); // 'home'｜'settings'｜'rack'
+  const jarSeen = useRef(null); // 豆罐上次看到幾顆：鈴響時豆罐卸載，收下後重掛要知道哪顆是新的
   if (!dz) return <View style={{ flex: 1, backgroundColor: T.color.background }} />;
   const { live, now, phase, greet, saveFailed, unreadable, notifDenied, actions } = dz;
 
@@ -267,6 +268,7 @@ export default function App() {
             phase={phase}
             now={now}
             greet={greet}
+            jarSeen={jarSeen}
             actions={actions}
             onRack={() => setScreen('rack')}
             onSettings={() => setScreen('settings')}

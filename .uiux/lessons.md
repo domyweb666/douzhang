@@ -7,7 +7,7 @@
 | 2026-10-31 | domi-uiux-wireframe（灰盒子） | 子元件寫在 App 函式裡，計時器每 250ms re-render 就讓它們重掛：輸入框吃不到字、半頁一直重播動畫。在 web 驗證時才發現。 | 灰盒子也要守「元件在模組層級」；有計時器的畫面一律先在 web 或真機走一遍打字與半頁，不要只看靜態截圖。 |
 | 2026-10-31 | domi-uiux-tokens | 原型直接沿用 Apple 系統色：systemGreen 上白字 2.2:1、secondaryLabel 在白底 3.4:1、tertiaryLabel 1.9:1、systemRed 3.6:1，淺色模式全部不過 4.5／3。「照 Apple 預設就安全」在對比上不成立。 | 代號檔一開始就算對比，系統色也要算；placeholder 不用 tertiary。「回補書」：2-6 可補一句「系統 secondaryLabel／tertiaryLabel 與 systemGreen 白字在淺色模式不過 WCAG」。 |
 
-| 2026-11-01 | VibeRails B2 | `ui/FocusSheets.js` 列與列之間的分隔線 `borderBottomWidth: 1` 用 token-ok 放行：1pt 髮線是系統慣例，Tokens 沒有「線寬」刻度 | 之後若第二處要用，Tokens.shape 加 `hairline` → **已做**（B+C 審查員修正：`shape.hairline: 1`，四處改用、token-ok 拿掉） |
+| 2026-11-01 | VibeRails B2 | `ui/FocusSheets.js` 列與列之間的分隔線 `borderBottomWidth: 1` 用 token-ok 放行：1pt 髮線是系統慣例，Tokens 沒有「線寬」刻度 | 之後若第二處要用，Tokens.shape 加 `hairline` → **已做**（Pod 空心圈的 `borderWidth: 1` 也在 D+E 修正改用 hairline）（B+C 審查員修正：`shape.hairline: 1`，四處改用、token-ok 拿掉） |
 
 ## 2026-11-01 usertest
 - 書 3-7 進場檢查假設「能裝到測試者手機」＝TestFlight。Expo Go 也能裝到測試者自己的 iPhone（掃 tunnel QR），但圖示、啟動畫面、通知對話框名字三處失真，秒表要從 app 畫面出現起算。**回補書**：進場檢查加一列「Expo Go 版：可測任務與手感，首次體驗秒數與權限那一刻要在 TestFlight 版重測」。
