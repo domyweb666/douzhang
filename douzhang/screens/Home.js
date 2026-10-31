@@ -6,7 +6,7 @@ import { Pressable, Text, TextInput, View } from 'react-native';
 import { useTokens } from '../design/Tokens';
 import { words, typeChipLabel } from '../design/words';
 import { params } from '../design/params';
-import { DEV_TYPE, PHASE, typeOf } from '../core/machine';
+import { DEV_TYPE, PHASE, stoppedEarly, typeOf } from '../core/machine';
 import { BigButton } from '../ui/BigButton';
 import { Clock } from '../ui/Clock';
 import { mmss } from '../ui/useNow';
@@ -146,7 +146,6 @@ function TypeChip({ type, onPress }) {
 /** 計時中的兩個入口：冒出念頭、有人找；記過幾筆就在名字後面帶數字（B1）。 */
 function JotChips({ current, onOpen }) {
   const T = useTokens();
-  const label = (name, list) => (list?.length ? `${name} ${list.length}` : name);
   return (
     <View
       style={{
@@ -156,8 +155,14 @@ function JotChips({ current, onOpen }) {
         marginTop: T.space.m,
       }}
     >
-      <Chip label={label(words.noteThought, current.notes)} onPress={() => onOpen('notes')} />
-      <Chip label={label(words.notePing, current.pings)} onPress={() => onOpen('pings')} />
+      <Chip
+        label={words.countLabel(words.noteThought, current.notes?.length)}
+        onPress={() => onOpen('notes')}
+      />
+      <Chip
+        label={words.countLabel(words.notePing, current.pings?.length)}
+        onPress={() => onOpen('pings')}
+      />
     </View>
   );
 }
@@ -237,6 +242,7 @@ export function Home({ state, phase, now, actions, onRack, onSettings }) {
   const { onStart, onBackFromRest } = actions;
   const [firstLine, setFirstLine] = useState('');
   const [sheet, setSheet] = useState(null); // null｜'notes'｜'pings'｜'end'｜'void'｜'type'｜'estimate'
+  const [endEarly, setEndEarly] = useState(false); // 打開「結束這顆」那一刻固定：不到五分鐘嗎
   const first = !state.clue;
   const type = typeOf(state, state.settings.typeId);
   const idle = phase === PHASE.idle;
@@ -275,14 +281,17 @@ export function Home({ state, phase, now, actions, onRack, onSettings }) {
         firstLine={firstLine}
         onStart={onStart}
         onBackFromRest={onBackFromRest}
-        onEnd={() => setSheet('end')}
+        onEnd={() => {
+          setEndEarly(stoppedEarly(state.current, now));
+          setSheet('end');
+        }}
       />
       {focus ? (
         <FocusSheetHost
           sheet={sheet}
           setSheet={setSheet}
           current={state.current}
-          now={now}
+          early={endEarly}
           onJot={actions.onJot}
           onDoneEarly={actions.onDoneEarly}
           onVoid={actions.onVoid}
@@ -312,7 +321,7 @@ export function Home({ state, phase, now, actions, onRack, onSettings }) {
 }
 
 /** 計時中的三個半頁掛在這裡；key 讓每次打開都是乾淨的輸入框。 */
-function FocusSheetHost({ sheet, setSheet, current, now, onJot, onDoneEarly, onVoid }) {
+function FocusSheetHost({ sheet, setSheet, current, early, onJot, onDoneEarly, onVoid }) {
   const close = () => setSheet(null);
   return (
     <>
@@ -325,13 +334,13 @@ function FocusSheetHost({ sheet, setSheet, current, now, onJot, onDoneEarly, onV
       <EndSheet
         visible={sheet === 'end'}
         current={current}
-        now={now}
+        early={early}
         onClose={close}
         onDoneEarly={onDoneEarly}
         onVoid={(early) => {
           if (early) {
             close();
-            onVoid({});
+            onVoid({ early: true });
           } else setSheet('void');
         }}
       />

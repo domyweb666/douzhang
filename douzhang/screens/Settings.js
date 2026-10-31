@@ -41,12 +41,13 @@ function TypeRow({ type, canDelete, onRename, onSetLen, onRemove }) {
     <View
       style={{
         paddingVertical: T.space.m,
-        borderBottomWidth: 1, // token-ok: 分隔線 1pt 是系統慣例（lessons 已記）
+        borderBottomWidth: T.shape.hairline,
         borderBottomColor: T.color.separator,
       }}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <TextInput
+          key={type.name} // 不受控：清空存成「未命名」時要重掛，框裡才會顯示新名字
           defaultValue={type.name}
           maxLength={params.typeNameMaxChars}
           onEndEditing={(e) => onRename(e.nativeEvent.text)}

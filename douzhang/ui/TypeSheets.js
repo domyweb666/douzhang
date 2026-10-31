@@ -1,7 +1,7 @@
 // 待機的類型半頁（選類型＋「這件事估幾顆」入口）與估幾顆半頁（06 狀態表「類型與估算」）。
 // 只收選擇與字，狀態機在 core/settings.js。
 import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useTokens } from '../design/Tokens';
 import { words } from '../design/words';
 import { params } from '../design/params';
@@ -9,42 +9,7 @@ import { BigButton } from './BigButton';
 import { Sheet } from './Sheet';
 import { Segmented } from './Segmented';
 import { LineInput } from './LineInput';
-
-/** 半頁裡的一列：左邊主字（可帶小副標）、右邊值、選中打勾。 */
-export function SheetRow({ title, sub, value, selected, onPress, tint }) {
-  const T = useTokens();
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityState={{ selected: !!selected }}
-      onPress={onPress}
-      style={({ pressed }) => ({
-        minHeight: T.shape.tapPrimary,
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: T.space.s,
-        borderBottomWidth: 1, // token-ok: 分隔線 1pt 是系統慣例（lessons 已記）
-        borderBottomColor: T.color.separator,
-        opacity: pressed ? T.opacity.pressed : 1,
-      })}
-    >
-      <View style={{ flex: 1 }}>
-        <Text style={{ ...T.font.body, color: tint ? T.color.accentText : T.color.textPrimary }}>
-          {title}
-        </Text>
-        {sub ? (
-          <Text style={{ ...T.font.caption, color: T.color.textSecondary, marginTop: T.space.xs }}>
-            {sub}
-          </Text>
-        ) : null}
-      </View>
-      {value ? <Text style={{ ...T.font.sub, color: T.color.textSecondary }}>{value}</Text> : null}
-      {selected ? (
-        <Text style={{ ...T.font.body, color: T.color.accentText, marginLeft: T.space.s }}>✓</Text>
-      ) : null}
-    </Pressable>
-  );
-}
+import { SheetRow } from './SheetRow';
 
 /** 點列即選；最下面一列是估幾顆的入口。 */
 export function TypeSheet({ visible, state, onClose, onPickType, onOpenEstimate }) {

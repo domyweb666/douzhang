@@ -4,6 +4,7 @@
 import { blankDay, dayKey, restMinutes } from './store';
 import { MS_PER_MINUTE, params } from '../design/params';
 import { words } from '../design/words';
+import { isTodayTask } from './settings';
 
 export const PHASE = { idle: 'idle', focus: 'focus', bell: 'bell', rest: 'rest' };
 
@@ -55,7 +56,8 @@ export function start(state, now, { typeId = state.settings.typeId, firstLine } 
       notes: [],
       pings: [],
       flowed: false,
-      taskId: state.taskId || null,
+      // 只掛今天估過的那件事：昨天估的不跟著過夜（B+C 審查員）
+      taskId: isTodayTask(state, now, state.taskId) ? state.taskId : null,
       clue: clue ? clue.text : '',
     },
   };
@@ -129,15 +131,19 @@ export function markDone(state) {
   return { ...state, current: { ...c, done: true } };
 }
 
+/** 開始不到 stopNoRecordMinutes 分：這時結束叫「停下來」，不留紀錄（06 結束這顆半頁）。 */
+export const stoppedEarly = (current, now) =>
+  now - current.startedAt < params.stopNoRecordMinutes * MS_PER_MINUTE;
+
 /**
  * 作廢這顆：只在開始那天記一筆 { t, typeId, minute, reason, text, taskId }，豆子不扣、什麼都不扣（S10）；回待機。
- * 開始不到 stopNoRecordMinutes 分就停：什麼都不記（06「停下來不會留下紀錄」）。
+ * 停下來（不到五分鐘）什麼都不記。early 是畫面在打開半頁那一刻固定的判斷，有給就照它，沒給才看現在。
  */
-export function voidBean(state, now, { reason = '', text = '' } = {}) {
+export function voidBean(state, now, { reason = '', text = '', early } = {}) {
   const c = state.current;
   if (!c || c.phase !== PHASE.focus) return state;
+  if (early ?? stoppedEarly(c, now)) return { ...state, current: null };
   const minute = Math.floor((now - c.startedAt) / MS_PER_MINUTE);
-  if (minute < params.stopNoRecordMinutes) return { ...state, current: null };
   const key = dayKey(c.startedAt);
   const prev = state.days[key] || blankDay();
   const entry = {

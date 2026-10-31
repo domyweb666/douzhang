@@ -34,13 +34,13 @@ describe('任務類型（C1）', () => {
     expect(renameType(blank(), 't1', '一'.repeat(30)).settings.types[0].name).toHaveLength(20);
   });
 
-  test('長度只能選刻度上的值（15、20、25、30、45、50、60）；其他值不改', () => {
+  test('長度選刻度上的值會改；刻度外的值不改', () => {
     expect(setTypeLen(blank(), 't1', 50).settings.types[0].len).toBe(50);
     const s = blank();
     expect(setTypeLen(s, 't1', 37)).toBe(s);
   });
 
-  test('選類型後，待機的長度與下一顆跟著變', () => {
+  test('選類型後，下一顆的長度跟著變', () => {
     const s = pickType(setTypeLen(addType(withClue(), T0), `t${T0}`, 50), `t${T0}`);
     expect(s.settings.typeId).toBe(`t${T0}`);
     expect(start(s, T0).current.len).toBe(50);
@@ -93,11 +93,26 @@ describe('估幾顆（C2）', () => {
     expect(estimate(s, T0, { name: '', est: 2 })).toBe(s);
     expect(estimate(s, T0, { name: 'x', est: 0 })).toBe(s);
     expect(estimate(s, T0, { name: 'x', est: 8 })).toBe(s);
+    expect(estimate(s, T0, { name: 'x', est: 2.5 })).toBe(s);
+  });
+
+  test('隔天開始的顆不掛昨天的任務', () => {
+    const s = estimate(withClue(), T0, { name: 'x', est: 2 });
+    const tomorrow = T0 + 24 * 60 * MIN;
+    expect(start(s, tomorrow).current.taskId).toBeNull();
+  });
+
+  test('只能換成今天估過的事；昨天的或不存在的不換', () => {
+    const s = estimate(withClue(), T0, { name: 'x', est: 2 });
+    const off = pickTask(s, T0, null);
+    expect(pickTask(off, T0, 'nope')).toBe(off);
+    expect(pickTask(off, T0 + 24 * 60 * MIN, `k${T0}`)).toBe(off);
+    expect(pickTask(off, T0, `k${T0}`).taskId).toBe(`k${T0}`);
   });
 
   test('換成不掛任務後，收下的豆 taskId 是空的', () => {
     const s = keep(
-      start(pickTask(estimate(withClue(), T0, { name: 'x', est: 2 }), null), T0),
+      start(pickTask(estimate(withClue(), T0, { name: 'x', est: 2 }), T0, null), T0),
       T0 + 25 * MIN,
       'y',
     );

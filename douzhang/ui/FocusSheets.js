@@ -1,14 +1,15 @@
 // 計時中的三個半頁（06 狀態表）：記一筆（念頭／有人找共用）、結束這顆、作廢原因。
 // 只收字與按鈕，不碰狀態：呼叫端給 onJot／onDoneEarly／onVoid，狀態機在 core/machine.js。
 import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { View } from 'react-native';
 import { useTokens } from '../design/Tokens';
 import { words } from '../design/words';
-import { MS_PER_MINUTE, params } from '../design/params';
+import { params } from '../design/params';
 import { BigButton } from './BigButton';
 import { Sheet } from './Sheet';
 import { Segmented } from './Segmented';
 import { LineInput } from './LineInput';
+import { SheetRow } from './SheetRow';
 
 /** kind：'notes'（冒出念頭）或 'pings'（有人找）。寫一行按記下（或鍵盤 return），倒數不停。 */
 export function NoteSheet({ kind, onClose, onJot }) {
@@ -41,36 +42,12 @@ export function NoteSheet({ kind, onClose, onJot }) {
   );
 }
 
-/** 半頁裡的一列選項：主字＋小副標。 */
-function Row({ title, sub, onPress }) {
+/**
+ * 結束這顆？三選一：提早做完（還沒標過才有）、作廢（不到五分鐘叫停下來）、繼續做。
+ * early 由打開半頁那一刻決定（呼叫端固定住）：4:59 看到「停下來」，按下去就照停下來辦，不會變成記一筆作廢。
+ */
+export function EndSheet({ visible, current, early, onClose, onDoneEarly, onVoid }) {
   const T = useTokens();
-  return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={onPress}
-      style={({ pressed }) => ({
-        minHeight: T.shape.tapPrimary,
-        justifyContent: 'center',
-        paddingVertical: T.space.s,
-        borderBottomWidth: 1, // token-ok: 分隔線 1pt 是系統慣例，不是設計數字
-        borderBottomColor: T.color.separator,
-        opacity: pressed ? T.opacity.pressed : 1,
-      })}
-    >
-      <Text style={{ ...T.font.body, color: T.color.textPrimary }}>{title}</Text>
-      {sub ? (
-        <Text style={{ ...T.font.caption, color: T.color.textSecondary, marginTop: T.space.xs }}>
-          {sub}
-        </Text>
-      ) : null}
-    </Pressable>
-  );
-}
-
-/** 結束這顆？三選一：提早做完（還沒標過才有）、作廢（不到五分鐘叫停下來）、繼續做。 */
-export function EndSheet({ visible, current, now, onClose, onDoneEarly, onVoid }) {
-  const T = useTokens();
-  const early = (now - current.startedAt) / MS_PER_MINUTE < params.stopNoRecordMinutes;
   return (
     <Sheet
       visible={visible}
@@ -79,7 +56,7 @@ export function EndSheet({ visible, current, now, onClose, onDoneEarly, onVoid }
       onClose={onClose}
     >
       {current.done ? null : (
-        <Row
+        <SheetRow
           title={words.doneEarly}
           sub={words.doneEarlySub}
           onPress={() => {
@@ -88,7 +65,7 @@ export function EndSheet({ visible, current, now, onClose, onDoneEarly, onVoid }
           }}
         />
       )}
-      <Row title={early ? words.stopNow : words.voidThis} onPress={() => onVoid(early)} />
+      <SheetRow title={early ? words.stopNow : words.voidThis} onPress={() => onVoid(early)} />
       <BigButton
         second
         label={words.keepGoing}

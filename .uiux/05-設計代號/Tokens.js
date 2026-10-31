@@ -89,6 +89,7 @@ export function makeTokens(dark = false, hc = false) {
       tapMin: 44, tapPrimary: 60,
       beanRadius: 18,  // 參數表 B
       podDot: 12,      // 豆棚上的小豆（原型 .p 13px；2026-11-01 E1 加）
+      hairline: 1,     // 列與列的分隔線（系統慣例 1pt；2026-11-01 B+C 審查員）
     },
     // 動態：事件命名，數字只從參數表抄。每個都有減少動態版（替換，不是關掉）
     motion: {

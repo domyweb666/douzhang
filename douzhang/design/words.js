@@ -19,6 +19,7 @@ export const words = {
   quickNote: '記一筆',
   noteThought: '冒出念頭', // 記一筆的兩種入口，多米待定要不要合成一個
   notePing: '有人找',
+  countLabel: (name, n) => (n ? `${name} ${n}` : name), // 記過幾筆就在名字後面帶數字（計時中 chip）
   voidThis: '作廢這顆',
   doneEarly: '提早做完了',
   keepGoing: '繼續做',
@@ -98,6 +99,7 @@ export const words = {
   estShort: (n) => `估 ${n}`,
   estListCap: '今天估過的',
   noTask: '不掛任務',
+  check: '✓', // 半頁列選中的記號
   addType: '加一種',
   deleteType: '刪除',
   newTypeName: '新類型',

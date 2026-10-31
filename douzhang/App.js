@@ -168,7 +168,7 @@ function useDouzhang() {
     onSetTypeLen: (id, len) => commit(setTypeLen(live, id, len)),
     onRemoveType: (id) => commit(removeType(live, id)),
     onEstimate: (v) => act((t) => estimate(live, t, v)),
-    onPickTask: (id) => commit(pickTask(live, id)),
+    onPickTask: (id) => act((t) => pickTask(live, t, id)),
   };
   const view = { ...live, todayKey: dayKey(now) }; // 畫面要知道「今天」是哪一天（估過的事只看今天）
   return {
@@ -207,8 +207,14 @@ export default function App() {
             now={now}
             draft={live.current.draft || ''}
             onDraft={actions.onDraft}
-            onKeep={actions.onKeep}
-            onFlow={actions.onFlow}
+            onKeep={(text) => {
+              setScreen('home'); // 停在設定或豆棚時響了：收下後回主畫面的休息，不是回原來那頁
+              actions.onKeep(text);
+            }}
+            onFlow={(minutes) => {
+              setScreen('home');
+              actions.onFlow(minutes);
+            }}
           />
         ) : screen === 'settings' ? (
           <Settings state={live} actions={actions} onBack={() => setScreen('home')} />

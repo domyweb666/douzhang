@@ -46,7 +46,7 @@ export const setTilt = (state, tilt) => withSettings(state, { tilt: !!tilt });
 /** 估這件事幾顆：寫進今天的 tasks，並把它設成目前那件事（之後收下的豆掛它）。 */
 export function estimate(state, now, { name, est }) {
   const clean = (name || '').trim().slice(0, params.taskNameMaxChars);
-  if (!clean || !(est >= 1 && est <= params.estimateMax)) return state;
+  if (!clean || !Number.isInteger(est) || est < 1 || est > params.estimateMax) return state;
   const key = dayKey(now);
   const prev = state.days[key] || blankDay();
   const task = { id: `k${now}`, name: clean, est, typeId: state.settings.typeId };
@@ -57,7 +57,12 @@ export function estimate(state, now, { name, est }) {
   };
 }
 
-/** 換目前那件事（今天估過的其中一件），或不掛任務（null）。 */
-export function pickTask(state, taskId) {
+/** 這件事是不是今天估過的：豆子只掛今天的事。 */
+export const isTodayTask = (state, now, taskId) =>
+  !!taskId && (state.days[dayKey(now)]?.tasks || []).some((t) => t.id === taskId);
+
+/** 換目前那件事（今天估過的其中一件），或不掛任務（null）。不是今天的事就不換。 */
+export function pickTask(state, now, taskId) {
+  if (taskId && !isTodayTask(state, now, taskId)) return state;
   return { ...state, taskId: taskId || null };
 }

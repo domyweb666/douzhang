@@ -286,7 +286,7 @@ describe('結束這顆（B2）', () => {
     expect(phaseOf(s, T0 + 25 * MIN)).toBe(PHASE.bell);
   });
 
-  test('作廢這顆：開始那天記一筆作廢（第幾分鐘、原因、選填那行），豆子不加，回待機', () => {
+  test('作廢這顆：記一筆作廢（第幾分鐘、原因、選填那行），豆子不加，回待機', () => {
     const s = voidBean(start(withClue(), T0), T0 + 7 * MIN + 30 * 1000, {
       reason: '訊息',
       text: '去看留言',
@@ -307,6 +307,19 @@ describe('結束這顆（B2）', () => {
   test('剛好五分鐘算作廢，會記一筆', () => {
     const s = voidBean(start(withClue(), T0), T0 + 5 * MIN);
     expect(s.days['2026-11-01'].voids).toHaveLength(1);
+  });
+
+  test('過了午夜才作廢：記在開始那天', () => {
+    const late = new Date(2026, 10, 1, 23, 55, 0).getTime();
+    const s = voidBean(start(withClue(), late), late + 8 * MIN);
+    expect(s.days['2026-11-01'].voids).toHaveLength(1);
+    expect(s.days['2026-11-02']).toBeUndefined();
+  });
+
+  test('打開半頁時是「停下來」：過了五分鐘才按也不記', () => {
+    const s = voidBean(start(withClue(), T0), T0 + 5 * MIN + 2000, { early: true });
+    expect(s.current).toBeNull();
+    expect(s.days['2026-11-01']).toBeUndefined();
   });
 
   test('作廢後那句不變', () => {

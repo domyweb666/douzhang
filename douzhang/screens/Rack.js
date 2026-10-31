@@ -55,7 +55,7 @@ function Row({ children, onPress, last }) {
         flexDirection: 'row',
         alignItems: 'center',
         paddingVertical: T.space.s,
-        borderBottomWidth: last ? 0 : 1, // token-ok: 分隔線 1pt 是系統慣例（lessons 已記）
+        borderBottomWidth: last ? 0 : T.shape.hairline,
         borderBottomColor: T.color.separator,
         opacity: pressed ? T.opacity.pressed : 1,
       })}
