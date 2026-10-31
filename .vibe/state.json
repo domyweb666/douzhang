@@ -1,20 +1,78 @@
 {
-  "station": "regression",
-  "updated_at": "2026-11-01T06:50:00+08:00",
+  "station": "audit-immediate",
+  "updated_at": "2026-11-01T07:10:00+08:00",
   "updated_by": "vibe-traffic-control",
-  "pieces": { "todo": 22, "machine_verified": 0, "human_verified": 0 },
+  "pieces": {
+    "todo": 21,
+    "machine_verified": 1,
+    "human_verified": 0
+  },
   "chunks": [
-    { "name": "A 核心迴圈「接」", "total": 6, "machine_done": 0, "human_verified": false, "approved": true },
-    { "name": "B 中途保護", "total": 2, "machine_done": 0, "human_verified": false, "approved": false },
-    { "name": "C 類型與估幾顆", "total": 2, "machine_done": 0, "human_verified": false, "approved": false },
-    { "name": "D 豆罐手感", "total": 2, "machine_done": 0, "human_verified": false, "approved": false },
-    { "name": "E 豆棚與收據", "total": 2, "machine_done": 0, "human_verified": false, "approved": false },
-    { "name": "F 收工與葉子", "total": 2, "machine_done": 0, "human_verified": false, "approved": false },
-    { "name": "G 設定與備份", "total": 4, "machine_done": 0, "human_verified": false, "approved": false },
-    { "name": "H 外觀、無障礙與正式殼", "total": 2, "machine_done": 0, "human_verified": false, "approved": false }
+    {
+      "name": "A 核心迴圈「接」",
+      "total": 6,
+      "machine_done": 1,
+      "human_verified": false,
+      "approved": true
+    },
+    {
+      "name": "B 中途保護",
+      "total": 2,
+      "machine_done": 0,
+      "human_verified": false,
+      "approved": false
+    },
+    {
+      "name": "C 類型與估幾顆",
+      "total": 2,
+      "machine_done": 0,
+      "human_verified": false,
+      "approved": false
+    },
+    {
+      "name": "D 豆罐手感",
+      "total": 2,
+      "machine_done": 0,
+      "human_verified": false,
+      "approved": false
+    },
+    {
+      "name": "E 豆棚與收據",
+      "total": 2,
+      "machine_done": 0,
+      "human_verified": false,
+      "approved": false
+    },
+    {
+      "name": "F 收工與葉子",
+      "total": 2,
+      "machine_done": 0,
+      "human_verified": false,
+      "approved": false
+    },
+    {
+      "name": "G 設定與備份",
+      "total": 4,
+      "machine_done": 0,
+      "human_verified": false,
+      "approved": false
+    },
+    {
+      "name": "H 外觀、無障礙與正式殼",
+      "total": 2,
+      "machine_done": 0,
+      "human_verified": false,
+      "approved": false
+    }
   ],
-  "pending_immediate_verify": [],
+  "pending_immediate_verify": [
+    "A1 專案殼＋代號＋資料層"
+  ],
   "skipped_gates": [
-    { "gate": "uiux 閘門 1／2／3", "reason": "多米 2026-11-01 決定閘門未過先開正式版；見 .uiux/閘門紀錄.md", "settled_by": "usertest 第一輪問題清單對正式版改" }
+    {
+      "gate": "uiux 閘門 1／2／3",
+      "reason": "多米 2026-11-01 決定閘門未過先開正式版；見 .uiux/閘門紀錄.md",
+      "settled_by": "usertest 第一輪問題清單對正式版改"
+    }
   ]
 }
