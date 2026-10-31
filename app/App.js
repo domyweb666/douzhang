@@ -1,5 +1,6 @@
 // 豆帳 灰盒子＋上色（3-3 線框；2026-11-01 加 Skin：套 Tokens.js 給多米比對三方向）。
 // 上色只是把灰換成代號裡的值，結構不動。除錯頁「上色」關掉就是原本的灰盒子，給新人測方向時用。
+// 2026-11-01 多米自比定案：待機 A、鈴響 A（偏好，非閘門 2）。預設 A·A；B、C 留在除錯頁給新人測試用，正式版不帶。
 // 右上角小字（例 A·B）是除錯入口：切方向、試玩速度、看字級倍率與螢幕尺寸。
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import {
@@ -487,10 +488,7 @@ export default function App() {
     ),
     settings: () => (
       <Full title="設定" onClose={close}>
-        <Text style={S.lbl}>版面（比對用，選定後正式版拿掉）</Text>
-        <SegRow label="待機畫面" sub="待機、計時中、休息" value={dirIdle} onChange={setDirIdle} />
-        <SegRow label="鈴響畫面" sub="寫一句、收下" value={dirBell} onChange={setDirBell} />
-        <Text style={[S.lbl, { marginTop: 20 }]}>任務類型</Text>
+        <Text style={S.lbl}>任務類型</Text>
         {TYPES.map((t) => <Row key={t.id} label={t.name} sub={`${t.len} 分`} onPress={() => {}} />)}
         <Row label="加一種" onPress={() => {}} />
         <Text style={[S.lbl, { marginTop: 20 }]}>節奏</Text>
