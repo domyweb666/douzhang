@@ -18,9 +18,15 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       }
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    },
-    "plugins": ["expo-sharing"]
+    "plugins": [
+      "expo-notifications",
+      "expo-sharing",
+      [
+        "expo-sensors",
+        {
+          "motionPermission": "傾斜手機時，罐子裡的豆子跟著滾。"
+        }
+      ]
+    ]
   }
 }
