@@ -1,5 +1,5 @@
 // 狀態機測試。名稱是多米讀得懂的中文句子（標準清單 A2）。
-import { blank } from '../core/store';
+import { blank, normalize } from '../core/store';
 import {
   DEV_TYPE,
   PHASE,
@@ -140,7 +140,7 @@ describe('響了沒理（A3）', () => {
     expect(s.current.endAt).toBe(rang + 4 * MIN + 5 * MIN);
   });
 
-  test('測試顆拖超過 3 分才收下，也是直接待機', () => {
+  test('測試顆拖到剛好 3 分（等於休息長度）才收下，也是直接待機', () => {
     const rang = T0 + MIN;
     const s = keep(start(withClue(), T0, { typeId: DEV_TYPE.id }), rang + 3 * MIN, 'x');
     expect(s.current).toBeNull();
@@ -148,9 +148,9 @@ describe('響了沒理（A3）', () => {
 });
 
 describe('打一半被打斷（A3）', () => {
-  test('草稿存進 current，重開讀回來還在', () => {
+  test('草稿存進 current，重開經 normalize 讀回來還在', () => {
     const s = setDraft(start(withClue(), T0), '把第三節');
-    const saved = JSON.parse(JSON.stringify(s));
+    const saved = normalize(JSON.parse(JSON.stringify(s)));
     expect(saved.current.draft).toBe('把第三節');
     expect(phaseOf(saved, T0 + 30 * MIN)).toBe(PHASE.bell);
   });
