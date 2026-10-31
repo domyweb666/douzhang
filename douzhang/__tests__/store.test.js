@@ -111,6 +111,15 @@ describe('PWA 舊檔', () => {
     expect(s.settings.typeId).toBe('tX');
   });
 
+  test('顆的 len 不是數字時補成 25，算單位不會變 NaN', () => {
+    const s = normalize({
+      settings: {},
+      days: { '2026-10-30': { beans: [{ t: 1, len: 'abc' }, { t: 2 }, { t: 3, len: 50 }] } },
+    });
+    const lens = s.days['2026-10-30'].beans.map((b) => units(b.len));
+    expect(lens).toEqual([1, 1, 2]);
+  });
+
   test('欄位型別不對（字串放到數字欄）時用預設，不信任外部型別', () => {
     const s = normalize({
       settings: { types: [{ id: 't1', name: '一般', len: '25' }], closeTime: 1900 },

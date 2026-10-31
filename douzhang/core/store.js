@@ -64,7 +64,10 @@ export function normalize(raw) {
   for (const [key, d] of Object.entries(raw.days)) {
     if (!isObject(d)) continue;
     const day = blankDay();
-    day.beans = arrayOf(d.beans).filter(isObject);
+    // 每一顆的 len 之後要進 units()，不是數字會算成 NaN，所以在這裡就補成預設（I2：每一顆都不信任外部型別）
+    day.beans = arrayOf(d.beans)
+      .filter(isObject)
+      .map((b) => ({ ...b, len: pick(b.len, DEFAULT_TYPE.len, 'number') }));
     day.voids = arrayOf(d.voids).filter(isObject);
     day.tasks = arrayOf(d.tasks).filter(isObject);
     day.closed = pick(d.closed, false, 'boolean');
