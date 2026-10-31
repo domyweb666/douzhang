@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>番茄帳 重新設計對照</title>
+<style>
+  :root {
+    --bg: #F2F2F7; --card: #FFFFFF; --ink: #000; --sub: #66666B; --fill: #E3E3E8; --sep: #C6C6C8;
+    --green: #34C759; --onGreen: #0B2A14; --inkBtn: #1C1C1E; --onInk: #FFFFFF; --tomato: #E5553C;
+    --page: #DADAE0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #000; --card: #1C1C1E; --ink: #FFF; --sub: #98989F; --fill: #2C2C2E; --sep: #545458;
+      --green: #30D158; --inkBtn: #F2F2F7; --onInk: #000; --tomato: #D94C34; --page: #111;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); font-family: -apple-system, "PingFang TC", "Noto Sans TC", sans-serif; color: var(--ink); padding: 24px 16px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  p.lead { color: var(--sub); margin: 0 0 24px; font-size: 15px; }
+  .row { display: flex; flex-wrap: wrap; gap: 24px; margin-bottom: 40px; }
+  .col { display: flex; flex-direction: column; gap: 8px; }
+  .tag { font-size: 13px; font-weight: 600; color: var(--sub); }
+  .tag b { color: var(--ink); }
+  .phone { width: 300px; height: 620px; background: var(--bg); border-radius: 36px; padding: 44px 16px 20px; display: flex; flex-direction: column; position: relative; overflow: hidden; box-shadow: 0 0 0 8px #111; }
+  .dots { display: flex; justify-content: center; gap: 6px; height: 28px; align-items: center; }
+  .dots i { width: 6px; height: 6px; border-radius: 9px; background: var(--sep); }
+  .dots i.on { width: 18px; background: var(--sub); }
+  .tabs { display: flex; justify-content: center; gap: 18px; height: 28px; align-items: center; font-size: 14px; color: var(--sub); }
+  .tabs span.on { color: var(--ink); font-weight: 700; }
+  .card { background: var(--card); border-radius: 14px; padding: 16px; margin-top: 12px; }
+  .cap { font-size: 11px; color: var(--sub); }
+  .sent { font-size: 18px; font-weight: 500; line-height: 1.45; margin-top: 6px; }
+  .sent.big { font-size: 23px; line-height: 1.4; }
+  .chip { align-self: center; background: var(--fill); border-radius: 99px; padding: 8px 16px; font-size: 13px; font-weight: 600; margin-top: 10px; }
+  .clock { text-align: center; font-size: 74px; font-weight: 700; font-variant-numeric: tabular-nums; margin-top: 4px; letter-spacing: -1px; }
+  .jar { flex: 1; margin: 10px 0; border-radius: 14px; border: 1px dashed var(--sep); position: relative; }
+  .jar .t { position: absolute; width: 26px; height: 24px; border-radius: 50%; background: var(--tomato); }
+  .btn { height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; }
+  .btn.green { background: var(--green); color: var(--onGreen); }
+  .btn.ink { background: var(--inkBtn); color: var(--onInk); }
+  .btn.grey { background: var(--fill); color: var(--ink); font-weight: 600; }
+  .btn.off { opacity: .4; }
+  .meta { text-align: center; font-size: 13px; color: var(--sub); margin-bottom: 8px; }
+  .meta u { text-decoration: none; color: var(--ink); font-weight: 600; }
+  .title { font-size: 24px; font-weight: 800; margin-top: 8px; display: flex; justify-content: space-between; align-items: baseline; }
+  .title small { font-size: 13px; font-weight: 600; color: var(--sub); }
+  .input { background: var(--card); border-radius: 12px; padding: 12px; min-height: 96px; font-size: 18px; color: var(--sub); margin-top: 10px; }
+  .prev { background: transparent; border: 1px solid var(--sep); border-radius: 12px; padding: 10px 12px; margin-top: 12px; }
+  .prev .sent { font-size: 15px; margin-top: 2px; }
+  .q { font-size: 15px; font-weight: 600; margin-top: 14px; }
+  .kbd { height: 170px; margin: 10px -16px -20px; background: var(--fill); display: flex; align-items: center; justify-content: center; color: var(--sub); font-size: 13px; }
+  .textbtn { text-align: center; font-size: 14px; color: var(--sub); margin: 6px 0; }
+  .note { max-width: 300px; font-size: 13px; color: var(--sub); line-height: 1.5; }
+  .note b { color: var(--ink); }
+  @media (max-width: 680px) { .row { justify-content: center; } }
+</style>
+</head>
+<body>
+<h1>番茄帳｜現況 vs 提案</h1>
+<p class="lead">示意，不是真實尺寸。對應 <code>.uiux/重新設計提案-暫定.md</code> 的 R1–R5。</p>
+
+<div class="row">
+  <div class="col">
+    <div class="tag">待機・<b>現況</b></div>
+    <div class="phone">
+      <div class="dots"><i></i><i class="on"></i><i></i></div>
+      <div class="card"><div class="cap">昨天的你留了一句</div><div class="sent">把第三章的三個例子各寫一句，先不修</div></div>
+      <div class="chip">一般・25 分</div>
+      <div class="clock">25:00</div>
+      <div class="jar"><span class="t" style="left:30px;bottom:6px"></span><span class="t" style="left:58px;bottom:6px"></span><span class="t" style="left:44px;bottom:28px"></span></div>
+      <div class="btn green">開始</div>
+    </div>
+    <div class="note">最大的是不會動的 <b>25:00</b>（92pt），那句只有 22pt。綠按鈕＋紅番茄兩種彩色。</div>
+  </div>
+  <div class="col">
+    <div class="tag">待機・<b>提案</b>（R2、R4、R5）</div>
+    <div class="phone">
+      <div class="tabs"><span>番茄架</span><span class="on">今天</span><span>設定</span></div>
+      <div class="card" style="padding:20px 16px"><div class="cap">昨天的你留了一句</div><div class="sent big">把第三章的三個例子各寫一句，先不修</div></div>
+      <div class="jar"><span class="t" style="left:30px;bottom:6px"></span><span class="t" style="left:58px;bottom:6px"></span><span class="t" style="left:44px;bottom:28px"></span></div>
+      <div class="meta"><u>一般 ›</u>　估 3 顆</div>
+      <div class="btn ink">開始・25 分</div>
+    </div>
+    <div class="note">那句變全頁最大的字。長度進按鈕，類型縮成按鈕上方一行。圓點換成字。<b>畫面只有番茄有顏色。</b></div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col">
+    <div class="tag">鈴響・<b>現況</b></div>
+    <div class="phone">
+      <div class="title">響了。<small>再做 15 分・30 分</small></div>
+      <div class="cap" style="margin-top:4px">寫一行給下一顆的自己。</div>
+      <div class="input">寫一行給下一顆的自己</div>
+      <div style="flex:1"></div>
+      <div class="textbtn">這顆不留話</div>
+      <div class="btn green off">收下這顆</div>
+      <div class="kbd">鍵盤</div>
+    </div>
+    <div class="note">要寫下一步，卻<b>看不到這顆本來在做什麼</b>。接只剩一半。</div>
+  </div>
+  <div class="col">
+    <div class="tag">鈴響・<b>提案</b>（R1）</div>
+    <div class="phone">
+      <div class="title">響了。<small>再做 15 分・30 分</small></div>
+      <div class="prev"><div class="cap">這顆在做</div><div class="sent">把第三章的三個例子各寫一句，先不修</div></div>
+      <div class="q">下一顆接著做什麼？</div>
+      <div class="input" style="margin-top:6px">寫到具體的動作</div>
+      <div style="flex:1"></div>
+      <div class="textbtn">這顆不留話</div>
+      <div class="btn ink off">收下這顆</div>
+      <div class="kbd">鍵盤</div>
+    </div>
+    <div class="note">上一句和下一句同框，「接」的兩半都在。小卡用框線不用底色，不搶輸入框。</div>
+  </div>
+</div>
+</body>
+</html>
