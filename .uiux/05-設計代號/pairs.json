@@ -1,0 +1,29 @@
+{
+  "colors": {
+    "背景":        {"light": "#F2F2F7", "dark": "#000000", "hc_light": "#F2F2F7", "hc_dark": "#000000"},
+    "卡片底":      {"light": "#FFFFFF", "dark": "#1C1C1E", "hc_light": "#FFFFFF", "hc_dark": "#1C1C1E"},
+    "填充底":      {"light": "#E3E3E8", "dark": "#2C2C2E", "hc_light": "#DADAE0", "hc_dark": "#3A3A3C"},
+    "textPrimary": {"light": "#000000", "dark": "#FFFFFF", "hc_light": "#000000", "hc_dark": "#FFFFFF"},
+    "textSecondary": {"light": "#66666B", "dark": "#98989F", "hc_light": "#5C5C62", "hc_dark": "#BABAC0"},
+    "accent":      {"light": "#34C759", "dark": "#30D158", "hc_light": "#248A3D", "hc_dark": "#30DB5B"},
+    "onAccent(A 深字)": {"light": "#0B2A14", "dark": "#0B2A14", "hc_light": "#06180B", "hc_dark": "#06180B"},
+    "onAccent(B 白字)": {"light": "#FFFFFF", "dark": "#FFFFFF", "hc_light": "#FFFFFF", "hc_dark": "#FFFFFF"},
+    "accent(B 深綠)": {"light": "#1F7A3A", "dark": "#30D158", "hc_light": "#165A2A", "hc_dark": "#30DB5B"},
+    "accentText":  {"light": "#1F7A3A", "dark": "#30D158", "hc_light": "#165A2A", "hc_dark": "#5EE37C"},
+    "danger":      {"light": "#C8102E", "dark": "#FF453A", "hc_light": "#A3000F", "hc_dark": "#FF6961"},
+    "角色色 pod":  {"light": "#BFE0A3", "dark": "#7FA86A", "hc_light": "#BFE0A3", "hc_dark": "#7FA86A"}
+  },
+  "pairs": [
+    {"fg": "textPrimary", "bg": "背景", "large": false, "where": "標題、內文、大時間"},
+    {"fg": "textPrimary", "bg": "卡片底", "large": false, "where": "卡片那句、清單列、輸入框文字"},
+    {"fg": "textPrimary", "bg": "填充底", "large": false, "where": "chip、第二顆按鈕、分段"},
+    {"fg": "textSecondary", "bg": "背景", "large": false, "where": "小標、foot-note、hint、鈴響副標"},
+    {"fg": "textSecondary", "bg": "卡片底", "large": false, "where": "卡片標籤、列副標、收據時間、placeholder"},
+    {"fg": "onAccent(A 深字)", "bg": "accent", "large": true, "where": "主要按鈕文字（19pt 粗＝大字）— Agent 推薦"},
+    {"fg": "onAccent(B 白字)", "bg": "accent(B 深綠)", "large": true, "where": "改法 B：白字＋深綠按鈕（深色模式不過，列出供比較）"},
+    {"fg": "accentText", "bg": "卡片底", "large": false, "where": "「加一種」「收工」「翻到背面」等可點文字"},
+    {"fg": "accentText", "bg": "背景", "large": false, "where": "hint 裡的連結"},
+    {"fg": "danger", "bg": "卡片底", "large": false, "where": "清空所有資料、錯誤字"},
+    {"fg": "textPrimary", "bg": "角色色 pod", "large": false, "where": "禁止組合：角色色當文字底（證明用）"}
+  ]
+}
