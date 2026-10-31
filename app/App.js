@@ -6,6 +6,7 @@ import {
   StyleSheet, Switch, Text, TextInput, useWindowDimensions, View,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import JarProto from './Jar';
 
 const SENT = '打開讀書筆記，把三個重點各寫一句';
 const SENT_LONG = '先把《原子習慣》第三章的筆記打開，找出昨天標了星號的三段，各寫一句話說明它跟我自己的早晨流程有什麼關係，寫完貼到課程大綱第二節的開頭，再順手把第二節的標題改成問句，最後檢查字數有沒有超過一百二十個字';
@@ -94,6 +95,7 @@ export default function App() {
   const [wire, setWire] = useState(true);       // 虛線＝點擊範圍
   const [demo, setDemo] = useState(true);       // 1 分鐘＝1 秒
   const [debug, setDebug] = useState(false);
+  const [jar, setJar] = useState(false);   // 豆罐手感原型（.uiux/04-手感）
 
   const [typeId, setTypeId] = useState('t1');
   const [clue, setClue] = useState(SENT);       // 空字串＝第一次
@@ -339,6 +341,7 @@ export default function App() {
         <View style={styles.content}>{phase === 'bell' ? bell() : home()}</View>
       </KeyboardAvoidingView>
       {sheet ? sheets[sheet]() : null}
+      {jar ? <Modal visible animationType="slide" onRequestClose={() => setJar(false)}><JarProto beans={beans} onClose={() => setJar(false)} /></Modal> : null}
       {debug ? (
         <Sheet title="除錯（測試者看不到這頁）" onClose={() => setDebug(false)}>
           <View style={styles.pair}>{['A', 'B', 'C'].map((d) => <Big key={d} label={`方向 ${d}`} onPress={() => { setDir(d); setDebug(false); }} style={{ flex: 1, backgroundColor: d === dir ? '#333' : '#bbb' }} />)}</View>
@@ -350,6 +353,7 @@ export default function App() {
             <Big label="重設為第一次" onPress={() => { setClue(''); setBeans(0); setPhase('idle'); setDebug(false); }} style={{ flex: 1, backgroundColor: '#bbb' }} />
           </View>
           <Big label="塞 120 字那句" onPress={() => { setClue(SENT_LONG); setDebug(false); }} style={{ backgroundColor: '#bbb', marginTop: 8 }} />
+          <Big label="豆罐手感原型" onPress={() => { setDebug(false); setJar(true); }} style={{ marginTop: 8 }} />
           <Text style={[styles.lbl, { marginTop: 12 }]}>
             螢幕 {Math.round(dims.width)}×{Math.round(dims.height)} pt　字級倍率 {PixelRatio.getFontScale().toFixed(2)}　{Platform.OS} {Platform.Version}
           </Text>
