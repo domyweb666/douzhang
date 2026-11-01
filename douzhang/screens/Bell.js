@@ -1,7 +1,7 @@
 // 鈴響・寫一句（方向 A：底部收下，貼鍵盤上緣）。
 // A5：空白守門（「收下這顆」停用、多一顆「這顆不留話」）、右上「再做 15 分・30 分」一顆一次、念頭與有人找列在框下、很久才回來的副標。
 // R1（2026-11-01 重新設計）：框上放「這顆在做」那句，接的兩半同框。
-import { useState } from 'react';
+// U7（2026-11-02）：「再做 N 分」從右上角搬到收下鈕正上方，兩顆直接按，不再開半頁。
 import { Text, TextInput, View } from 'react-native';
 import { useTokens } from '../design/Tokens';
 import { words } from '../design/words';
@@ -9,18 +9,14 @@ import { params, MS_PER_MINUTE } from '../design/params';
 import { restMinutes } from '../core/store';
 import { BigButton } from '../ui/BigButton';
 import { TextButton } from '../ui/TextButton';
-import { Sheet } from '../ui/Sheet';
 
-function Header({ current, now, onOpenFlow }) {
+function Header({ current, now }) {
   const T = useTokens();
   const agoMs = now - current.endAt;
   const lateSub = agoMs >= restMinutes(current.len) * MS_PER_MINUTE;
   return (
     <View style={{ marginTop: T.space.l }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Text style={{ ...T.font.title, color: T.color.textPrimary }}>{words.rang}</Text>
-        {current.flowed ? null : <TextButton label={words.flowMenu} onPress={onOpenFlow} />}
-      </View>
+      <Text style={{ ...T.font.title, color: T.color.textPrimary }}>{words.rang}</Text>
       {lateSub ? (
         <Text style={{ ...T.font.caption, color: T.color.textSecondary, marginTop: T.space.xs }}>
           {words.rangAgo(Math.floor(agoMs / MS_PER_MINUTE))}
@@ -73,30 +69,31 @@ function Jotted({ current }) {
   );
 }
 
-function FlowSheet({ visible, onClose, onFlow }) {
+/** 「再做 15 分」「再做 30 分」並排；一顆只准延一次，延過就不畫（A5）。 */
+function FlowRow({ current, onFlow }) {
   const T = useTokens();
+  if (current.flowed) return null;
   return (
-    <Sheet visible={visible} title={words.flowTitle} sub={words.flowSub} onClose={onClose}>
-      {params.flowMinutes.map((minutes, i) => (
+    <View style={{ flexDirection: 'row', gap: T.space.m, marginBottom: T.space.m }}>
+      {params.flowMinutes.map((minutes) => (
         <BigButton
           key={minutes}
           second
           label={words.flowMore(minutes)}
           onPress={() => onFlow(minutes)}
-          style={i ? { marginTop: T.space.m } : null}
+          style={{ flex: 1 }}
         />
       ))}
-    </Sheet>
+    </View>
   );
 }
 
 export function Bell({ current, now, draft, onDraft, onKeep, onFlow }) {
   const T = useTokens();
-  const [flowOpen, setFlowOpen] = useState(false);
   const empty = !draft.trim();
   return (
     <View style={{ flex: 1 }}>
-      <Header current={current} now={now} onOpenFlow={() => setFlowOpen(true)} />
+      <Header current={current} now={now} />
       <PrevLine text={current.clue} />
       <Text style={{ ...T.font.bodyStrong, color: T.color.textPrimary, marginTop: T.space.l }}>
         {words.bellAsk}
@@ -121,23 +118,16 @@ export function Bell({ current, now, draft, onDraft, onKeep, onFlow }) {
       />
       <Jotted current={current} />
       <View style={{ flex: 1 }} />
+      <FlowRow current={current} onFlow={onFlow} />
+      <BigButton label={words.keepThis} disabled={empty} onPress={() => onKeep(draft)} />
       {empty ? (
         <TextButton
           secondary
           label={words.keepWithoutNote}
           onPress={() => onKeep('')}
-          style={{ alignSelf: 'center', marginBottom: T.space.s }}
+          style={{ alignSelf: 'center', marginTop: T.space.xs }}
         />
       ) : null}
-      <BigButton label={words.keepThis} disabled={empty} onPress={() => onKeep(draft)} />
-      <FlowSheet
-        visible={flowOpen}
-        onClose={() => setFlowOpen(false)}
-        onFlow={(minutes) => {
-          setFlowOpen(false);
-          onFlow(minutes);
-        }}
-      />
     </View>
   );
 }

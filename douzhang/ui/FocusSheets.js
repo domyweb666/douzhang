@@ -11,26 +11,30 @@ import { Segmented } from './Segmented';
 import { LineInput } from './LineInput';
 import { SheetRow } from './SheetRow';
 
-/** kind：'notes'（冒出念頭）或 'pings'（有人找）。寫一行按記下（或鍵盤 return），倒數不停。 */
-export function NoteSheet({ kind, onClose, onJot }) {
+const NOTE_KINDS = [
+  { value: 'notes', label: words.noteThought },
+  { value: 'pings', label: words.notePing },
+];
+
+/** 記一筆（U6 合成一顆）：上面分段選念頭或有人找（預設念頭），寫一行按記下（或鍵盤 return），倒數不停。 */
+export function NoteSheet({ visible, onClose, onJot }) {
   const T = useTokens();
+  const [kind, setKind] = useState('notes');
   const [text, setText] = useState('');
   const submit = () => {
     if (text.trim()) onJot(kind, text);
     onClose();
   };
   return (
-    <Sheet
-      visible={!!kind}
-      title={kind === 'pings' ? words.noteTitlePing : words.noteTitleThought}
-      sub={words.noteSub}
-      onClose={onClose}
-    >
+    <Sheet visible={visible} title={words.quickNote} sub={words.noteSub} onClose={onClose}>
+      <Segmented options={NOTE_KINDS} value={kind} onChange={setKind} />
       <LineInput
         value={text}
         onChange={setText}
+        placeholder={kind === 'pings' ? words.noteTitlePing : words.noteTitleThought}
         maxLength={params.noteMaxChars}
         onSubmit={submit}
+        style={{ marginTop: T.space.m }}
       />
       <BigButton
         label={words.jotDown}

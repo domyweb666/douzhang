@@ -5,14 +5,14 @@
 import { useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { useTokens } from '../design/Tokens';
-import { words, startLabel, typeChipLabel } from '../design/words';
+import { words, startLabel, thisRowLabel } from '../design/words';
 import { params } from '../design/params';
 import { DEV_TYPE, PHASE, canHangLeaf, closeHint, stoppedEarly, typeOf } from '../core/machine';
 import { BigButton } from '../ui/BigButton';
 import { Clock } from '../ui/Clock';
 import { mmss } from '../ui/useNow';
 import { EndSheet, NoteSheet, VoidSheet } from '../ui/FocusSheets';
-import { EstimateSheet, TypeSheet } from '../ui/TypeSheets';
+import { ThisSheet } from '../ui/TypeSheets';
 import { Jar } from '../ui/Jar';
 import { CloseSheet } from '../ui/CloseSheet';
 import { TextButton } from '../ui/TextButton';
@@ -108,38 +108,56 @@ function Chip({ label, onPress, style }) {
   );
 }
 
-/** 開始鈕上方那一行：類型名字，點了開類型半頁（分鐘在開始鈕上）。 */
-function TypeChip({ type, onPress }) {
+/** 開始鈕上方那一行（U4）：類型＋今天在做的事，點了開「這顆」半頁（分鐘在開始鈕上）。 */
+function ThisRow({ state, type, onPress }) {
+  const task = (state.days[state.todayKey]?.tasks || []).find((t) => t.id === state.taskId);
   return (
     <TextButton
-      label={typeChipLabel(type.name)}
+      label={thisRowLabel(type.name, task)}
       onPress={onPress}
       style={{ alignSelf: 'center' }}
     />
   );
 }
 
-/** 計時中的兩個入口：冒出念頭、有人找；記過幾筆就在名字後面帶數字（B1）。 */
-function JotChips({ current, onOpen }) {
-  const T = useTokens();
+/** 卡片下面那一塊，依狀態不同：待機是收工那行、計時中是記一筆、休息是那句輪替＋下一顆。 */
+function UnderCard({ phase, state, now, first, setSheet }) {
+  if (phase === PHASE.idle)
+    return first ? null : (
+      <CloseHint hint={closeHint(state, now)} onOpen={() => setSheet('close')} />
+    );
+  if (phase === PHASE.focus)
+    return <JotChip current={state.current} onOpen={() => setSheet('note')} />;
+  if (phase !== PHASE.rest) return null;
   return (
-    <View
-      style={{
-        flexDirection: 'row',
-        justifyContent: 'center',
-        gap: T.space.m,
-        marginTop: T.space.m,
-      }}
-    >
-      <Chip
-        label={words.countLabel(words.noteThought, current.notes?.length)}
-        onPress={() => onOpen('notes')}
-      />
-      <Chip
-        label={words.countLabel(words.notePing, current.pings?.length)}
-        onPress={() => onOpen('pings')}
-      />
-    </View>
+    <>
+      {state.current.msg ? <RestLine text={state.current.msg} /> : null}
+      <NextCard text={state.clue?.text} />
+    </>
+  );
+}
+
+/** 計時中的「記一筆」（U6：念頭與有人找合成一顆，半頁裡再選）；記過幾筆就在後面帶數字。 */
+function JotChip({ current, onOpen }) {
+  const T = useTokens();
+  const count = (current.notes?.length || 0) + (current.pings?.length || 0);
+  return (
+    <Chip
+      label={words.countLabel(words.quickNote, count)}
+      onPress={onOpen}
+      style={{ alignSelf: 'center', marginTop: T.space.m }}
+    />
+  );
+}
+
+/** 休息時剛寫的那句（U8）：喝水時就讓腦袋先接上下一顆。 */
+function NextCard({ text }) {
+  if (!text) return null;
+  return (
+    <Card>
+      <Label>{words.nextBean}</Label>
+      <Body>{text}</Body>
+    </Card>
   );
 }
 
@@ -225,7 +243,11 @@ function PrimaryButton({ phase, first, firstLine, len, onStart, onBackFromRest, 
   const devStart = __DEV__ ? () => onStart({ typeId: DEV_TYPE.id, firstLine }) : undefined;
   if (phase === PHASE.rest)
     return <BigButton label={words.backFromRest} onPress={onBackFromRest} />;
-  if (phase === PHASE.focus) return <BigButton second label={words.end} onPress={onEnd} />;
+  // U6：計時中不放大按鈕，結束降成底部文字鈕（不誘人按、也少誤觸）
+  if (phase === PHASE.focus)
+    return (
+      <TextButton secondary label={words.endThis} onPress={onEnd} style={{ alignSelf: 'center' }} />
+    );
   if (phase !== PHASE.idle) return null;
   if (first) {
     return (
@@ -250,7 +272,7 @@ export function Home({ state, phase, now, greet, wiped, jarSeen, actions }) {
   const T = useTokens();
   const { onStart, onBackFromRest } = actions;
   const [firstLine, setFirstLine] = useState('');
-  const [sheet, setSheet] = useState(null); // null｜'notes'｜'pings'｜'end'｜'void'｜'type'｜'estimate'｜'close'
+  const [sheet, setSheet] = useState(null); // null｜'note'｜'end'｜'void'｜'this'｜'close'
   const [endEarly, setEndEarly] = useState(false); // 打開「結束這顆」那一刻固定：不到五分鐘嗎
   const first = !state.clue;
   const type = typeOf(state, state.settings.typeId);
@@ -275,11 +297,7 @@ export function Home({ state, phase, now, greet, wiped, jarSeen, actions }) {
           onFirstLine={setFirstLine}
         />
       </Card>
-      {idle && !first ? (
-        <CloseHint hint={closeHint(state, now)} onOpen={() => setSheet('close')} />
-      ) : null}
-      {focus ? <JotChips current={state.current} onOpen={setSheet} /> : null}
-      {phase === PHASE.rest && state.current.msg ? <RestLine text={state.current.msg} /> : null}
+      <UnderCard phase={phase} state={state} now={now} first={first} setSheet={setSheet} />
       <Jar
         beans={todayBeans}
         seenRef={jarSeen}
@@ -287,7 +305,7 @@ export function Home({ state, phase, now, greet, wiped, jarSeen, actions }) {
         tilt={state.settings.tilt}
         style={{ marginVertical: T.space.m }}
       />
-      {idle ? <TypeChip type={type} onPress={() => setSheet('type')} /> : null}
+      {idle ? <ThisRow state={state} type={type} onPress={() => setSheet('this')} /> : null}
       <PrimaryButton
         phase={phase}
         first={first}
@@ -324,23 +342,17 @@ export function Home({ state, phase, now, greet, wiped, jarSeen, actions }) {
   );
 }
 
-/** 待機的三個半頁：類型、估幾顆、收工。key 讓每次打開都是乾淨的輸入框。 */
+/** 待機的兩個半頁：這顆、收工。key 讓每次打開都是乾淨的輸入框。 */
 function IdleSheetHost({ sheet, setSheet, state, now, actions }) {
   const close = () => setSheet(null);
   return (
     <>
-      <TypeSheet
-        visible={sheet === 'type'}
+      <ThisSheet
+        key={`this-${sheet}`}
+        visible={sheet === 'this'}
         state={state}
         onClose={close}
         onPickType={actions.onPickType}
-        onOpenEstimate={() => setSheet('estimate')}
-      />
-      <EstimateSheet
-        key={`est-${sheet}`}
-        visible={sheet === 'estimate'}
-        state={state}
-        onClose={close}
         onEstimate={actions.onEstimate}
         onPickTask={actions.onPickTask}
       />
@@ -362,12 +374,7 @@ function FocusSheetHost({ sheet, setSheet, current, early, onJot, onDoneEarly, o
   const close = () => setSheet(null);
   return (
     <>
-      <NoteSheet
-        key={sheet}
-        kind={sheet === 'notes' || sheet === 'pings' ? sheet : null}
-        onClose={close}
-        onJot={onJot}
-      />
+      <NoteSheet key={`note-${sheet}`} visible={sheet === 'note'} onClose={close} onJot={onJot} />
       <EndSheet
         visible={sheet === 'end'}
         current={current}

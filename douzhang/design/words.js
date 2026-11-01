@@ -12,12 +12,12 @@ export const words = {
   keepThis: '收下這顆',
   keepWithoutNote: '這顆不留話',
   flowMore: (minutes) => `再做 ${minutes} 分`, // 分鐘數從 params.flowMinutes 來
-  flowTitle: '在狀態裡，再做一下', // 只當說明句
   rest: '休息',
+  nextBean: '下一顆', // 休息時那張卡的小標（U8）
 
   // 中途
   quickNote: '記一筆',
-  noteThought: '冒出念頭', // 記一筆的兩種入口，多米待定要不要合成一個
+  noteThought: '冒出念頭', // 記一筆半頁裡的兩種（2026-11-02 U6 合成一顆「記一筆」）
   notePing: '有人找',
   countLabel: (name, n) => (n ? `${name} ${n}` : name), // 記過幾筆就在名字後面帶數字（計時中 chip）
   voidThis: '作廢這顆',
@@ -68,12 +68,10 @@ export const words = {
   openNotifications: '打開通知',
 
   // 鈴響細節（A5）
-  flowMenu: '再做 15 分・30 分', // 鈴響頁右上，一顆只出現一次
-  flowSub: '先定一個上限，到點會再響一次，那時再寫下一步。',
   rangAgo: (minutes) => `響了 ${minutes} 分鐘前。收下後直接回待機。`,
 
   // 中途保護（B1、B2）：06 狀態表「記一筆」「結束這顆」「作廢原因」三個半頁
-  end: '結束', // 計時中底部的鈕
+  endThis: '結束這顆', // 計時中底部的文字鈕（U6）
   endTitle: '結束這顆？',
   endSubEarly: '開始不到五分鐘，停下來不會留下紀錄。',
   endSub: '作廢只記一筆，不扣任何東西。',
@@ -88,20 +86,21 @@ export const words = {
   voidReasons: ['念頭', '訊息', '卡住', '其他'],
   voidTextPlaceholder: '例：去看留言（分鐘數會自動記）',
 
-  // 類型與估幾顆（C1、C2）
-  typeTitle: '現在做哪一類？',
-  typeSub: '每一類一個固定長度，到設定裡改。',
+  // 類型與估幾顆（C1、C2；2026-11-02 U5 併成一張「這顆」半頁）
+  thisBean: '這顆', // 半頁標題
   typeLen: (len) => `${len} 分`,
-  estTitle: '這件事估幾顆？',
-  estSub: '估是預測，不是目標。收工時對帳用。',
-  estRowSub: '選填，對帳用',
-  estOptional: '選填',
+  typeOption: (name, len) => `${name}・${len} 分`, // 「這顆」半頁的類型分段
+  taskCap: '在做哪件事（選填，收工對帳用）',
+  newTask: '＋ 新的一件事',
   estNamePlaceholder: '這件事叫什麼（例：腳本第 12 集）',
   estSave: '記下來',
-  estValue: (name, n) => `${name}・${n} 顆`,
   estShort: (n) => `估 ${n}`,
-  estListCap: '今天估過的',
-  noTask: '不掛任務',
+  minus: '−',
+  plus: '＋',
+  estLess: '少一顆',
+  estMore: '多一顆',
+  estValueA11y: (n) => `估 ${n} 顆`,
+  noTask: '不掛任何事',
   check: '✓', // 半頁列選中的記號
   addType: '加一種',
   deleteType: '刪除',
@@ -224,7 +223,10 @@ export const words = {
     '去倒杯水，鈴響再回來。',
   ],
 };
-/** 待機類型入口的字：「一般 ›」。分鐘在開始鈕上（2026-11-01 重新設計 R2） */
-export const typeChipLabel = (name) => `${name} ${words.chevron}`;
+/** 待機開始鈕上方那一行（U4）：「一般 ›」或「一般・寫腳本第 12 集　估 3 顆 ›」。分鐘在開始鈕上 */
+export const thisRowLabel = (typeName, task) =>
+  task
+    ? `${typeName}・${task.name}　估 ${task.est} 顆 ${words.chevron}`
+    : `${typeName} ${words.chevron}`;
 /** 待機開始鈕的字：「開始・25 分」「開始這顆・25 分」 */
 export const startLabel = (label, len) => `${label}・${len} 分`;
