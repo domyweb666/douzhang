@@ -1,10 +1,11 @@
 // 主畫面（方向 A：卡片＋滿版按鈕）。四態：第一次、待機、計時中、休息。
+// R2（2026-11-01 重新設計）：待機不放大時間，那句是全頁最大的字；長度在開始鈕上，類型入口在鈕上方。
 // 豆罐在 D1 才進來，這裡先留一塊空位；豆棚、設定兩個字在，內容是 E1、G1 的事。
 // 子元件全放模組層級（規矩檔：元件不准定義在元件函式裡）。
 import { useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { useTokens } from '../design/Tokens';
-import { words, typeChipLabel } from '../design/words';
+import { words, startLabel, typeChipLabel } from '../design/words';
 import { params } from '../design/params';
 import { DEV_TYPE, PHASE, canHangLeaf, closeHint, stoppedEarly, typeOf } from '../core/machine';
 import { BigButton } from '../ui/BigButton';
@@ -77,7 +78,7 @@ function ClueCard({ text, greet }) {
   return (
     <View>
       <Label>{greet ? words.clueLabel : words.nextStep}</Label>
-      <Text style={{ ...T.font.sentence, color: T.color.textPrimary, marginTop: T.space.s }}>
+      <Text style={{ ...T.font.hero, color: T.color.textPrimary, marginTop: T.space.s }}>
         {text}
       </Text>
     </View>
@@ -107,13 +108,13 @@ function Chip({ label, onPress, style }) {
   );
 }
 
+/** 開始鈕上方那一行：類型名字，點了開類型半頁（分鐘在開始鈕上）。 */
 function TypeChip({ type, onPress }) {
-  const T = useTokens();
   return (
-    <Chip
-      label={typeChipLabel(type.name, type.len)}
+    <TextButton
+      label={typeChipLabel(type.name)}
       onPress={onPress}
-      style={{ alignSelf: 'center', marginTop: T.space.m }}
+      style={{ alignSelf: 'center' }}
     />
   );
 }
@@ -219,7 +220,7 @@ function CloseHint({ hint, onOpen }) {
   );
 }
 
-function PrimaryButton({ phase, first, firstLine, onStart, onBackFromRest, onEnd }) {
+function PrimaryButton({ phase, first, firstLine, len, onStart, onBackFromRest, onEnd }) {
   // 開發期快轉：長按開始＝一分鐘測試顆。正式 build 沒有這個手勢。
   const devStart = __DEV__ ? () => onStart({ typeId: DEV_TYPE.id, firstLine }) : undefined;
   if (phase === PHASE.rest)
@@ -229,14 +230,20 @@ function PrimaryButton({ phase, first, firstLine, onStart, onBackFromRest, onEnd
   if (first) {
     return (
       <BigButton
-        label={words.startFirst}
+        label={startLabel(words.startFirst, len)}
         disabled={!firstLine.trim()}
         onPress={() => onStart({ firstLine })}
         onLongPress={devStart}
       />
     );
   }
-  return <BigButton label={words.start} onPress={() => onStart({})} onLongPress={devStart} />;
+  return (
+    <BigButton
+      label={startLabel(words.start, len)}
+      onPress={() => onStart({})}
+      onLongPress={devStart}
+    />
+  );
 }
 
 export function Home({ state, phase, now, greet, wiped, jarSeen, actions }) {
@@ -268,8 +275,6 @@ export function Home({ state, phase, now, greet, wiped, jarSeen, actions }) {
           onFirstLine={setFirstLine}
         />
       </Card>
-      {idle ? <TypeChip type={type} onPress={() => setSheet('type')} /> : null}
-      {idle ? <Clock text={`${type.len}:00`} style={{ marginTop: T.space.s }} /> : null}
       {idle && !first ? (
         <CloseHint hint={closeHint(state, now)} onOpen={() => setSheet('close')} />
       ) : null}
@@ -282,10 +287,12 @@ export function Home({ state, phase, now, greet, wiped, jarSeen, actions }) {
         tilt={state.settings.tilt}
         style={{ marginVertical: T.space.m }}
       />
+      {idle ? <TypeChip type={type} onPress={() => setSheet('type')} /> : null}
       <PrimaryButton
         phase={phase}
         first={first}
         firstLine={firstLine}
+        len={type.len}
         onStart={onStart}
         onBackFromRest={onBackFromRest}
         onEnd={() => {

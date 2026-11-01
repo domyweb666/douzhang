@@ -1,4 +1,4 @@
-// 文字鈕：44pt 高。預設強調色（「打開通知」這種可點的連結）；secondary＝次要色（「這顆不留話」這種退讓的動作）；
+// 文字鈕：44pt 高。預設強調色＋粗一級（「打開通知」這種可點的連結；R5 後強調色沒有色相，靠字重）；secondary＝次要色（「這顆不留話」這種退讓的動作）；
 // danger＝紅字（只有「清空所有資料」，S5）。
 import { Pressable, Text } from 'react-native';
 import { useTokens } from '../design/Tokens';
@@ -23,7 +23,14 @@ export function TextButton({ label, onPress, secondary, danger, flush, style }) 
         style,
       ]}
     >
-      <Text style={{ ...T.font.body, color: textColor(T, { secondary, danger }) }}>{label}</Text>
+      <Text
+        style={{
+          ...(secondary || danger ? T.font.body : T.font.bodyStrong),
+          color: textColor(T, { secondary, danger }),
+        }}
+      >
+        {label}
+      </Text>
     </Pressable>
   );
 }

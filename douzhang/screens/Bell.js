@@ -1,5 +1,6 @@
 // 鈴響・寫一句（方向 A：底部收下，貼鍵盤上緣）。
 // A5：空白守門（「收下這顆」停用、多一顆「這顆不留話」）、右上「再做 15 分・30 分」一顆一次、念頭與有人找列在框下、很久才回來的副標。
+// R1（2026-11-01 重新設計）：框上放「這顆在做」那句，接的兩半同框。
 import { useState } from 'react';
 import { Text, TextInput, View } from 'react-native';
 import { useTokens } from '../design/Tokens';
@@ -20,8 +21,32 @@ function Header({ current, now, onOpenFlow }) {
         <Text style={{ ...T.font.title, color: T.color.textPrimary }}>{words.rang}</Text>
         {current.flowed ? null : <TextButton label={words.flowMenu} onPress={onOpenFlow} />}
       </View>
-      <Text style={{ ...T.font.caption, color: T.color.textSecondary, marginTop: T.space.xs }}>
-        {lateSub ? words.rangAgo(Math.floor(agoMs / MS_PER_MINUTE)) : words.bellSub}
+      {lateSub ? (
+        <Text style={{ ...T.font.caption, color: T.color.textSecondary, marginTop: T.space.xs }}>
+          {words.rangAgo(Math.floor(agoMs / MS_PER_MINUTE))}
+        </Text>
+      ) : null}
+    </View>
+  );
+}
+
+/** 這顆開始時那句。用框線不用底色，不跟下面的輸入框搶；上一顆不留話就不畫。 */
+function PrevLine({ text }) {
+  const T = useTokens();
+  if (!text) return null;
+  return (
+    <View
+      style={{
+        borderWidth: T.shape.hairline,
+        borderColor: T.color.separator,
+        borderRadius: T.shape.radiusButton,
+        padding: T.space.m,
+        marginTop: T.space.m,
+      }}
+    >
+      <Text style={{ ...T.font.caption, color: T.color.textSecondary }}>{words.bellPrevCap}</Text>
+      <Text style={{ ...T.font.callout, color: T.color.textPrimary, marginTop: T.space.xs }}>
+        {text}
       </Text>
     </View>
   );
@@ -72,6 +97,10 @@ export function Bell({ current, now, draft, onDraft, onKeep, onFlow }) {
   return (
     <View style={{ flex: 1 }}>
       <Header current={current} now={now} onOpenFlow={() => setFlowOpen(true)} />
+      <PrevLine text={current.clue} />
+      <Text style={{ ...T.font.bodyStrong, color: T.color.textPrimary, marginTop: T.space.l }}>
+        {words.bellAsk}
+      </Text>
       <TextInput
         autoFocus
         multiline
@@ -86,7 +115,7 @@ export function Bell({ current, now, draft, onDraft, onKeep, onFlow }) {
           backgroundColor: T.color.card,
           borderRadius: T.shape.radiusButton,
           padding: T.space.m,
-          marginTop: T.space.m,
+          marginTop: T.space.s,
           minHeight: T.shape.tapPrimary * 2,
         }}
       />

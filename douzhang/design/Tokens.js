@@ -14,11 +14,11 @@ import { useEffect, useState } from 'react';
 // ---------- 原始值層（只在此處）。每色四組：淺／深／增加對比淺／增加對比深 ----------
 const palette = {
   // 自訂的只有四個用途；其餘走系統色
-  green: { light: '#34C759', dark: '#30D158', hcLight: '#248A3D', hcDark: '#30DB5B' }, // 原型綠（Apple systemGreen 同值）
-  greenText: { light: '#1F7A3A', dark: '#30D158', hcLight: '#165A2A', hcDark: '#5EE37C' }, // 當文字用的綠，淺色模式要深
+  // 2026-11-01 重新設計 R5：主要按鈕與強調文字從豌豆時代的綠改成墨色，畫面上只有番茄有顏色（綠只剩葉子）
+  ink: { light: '#1C1C1E', dark: '#F2F2F7', hcLight: '#000000', hcDark: '#FFFFFF' }, // 主要按鈕底、強調文字
   red: { light: '#C8102E', dark: '#FF453A', hcLight: '#A3000F', hcDark: '#FF6961' }, // 危險文字，淺色模式比原型 #FF3B30 深
   grey2: { light: '#66666B', dark: '#98989F', hcLight: '#5C5C62', hcDark: '#BABAC0' }, // 次要文字（系統 secondaryLabel 淺色不過 4.5）
-  inkOnGreen: { light: '#0B2A14', dark: '#0B2A14', hcLight: '#06180B', hcDark: '#06180B' }, // 綠按鈕上的字（多米 2026-10-31 定案 A：深字配品牌綠；白字 2.2:1 不過）
+  onInk: { light: '#FFFFFF', dark: '#000000', hcLight: '#FFFFFF', hcDark: '#000000' }, // 墨色按鈕上的字
   // 固定值（對比表用，畫面不直接拿）
   bgLight: '#F2F2F7',
   bgDark: '#000000',
@@ -74,9 +74,9 @@ export function makeTokens(dark = false, hc = false) {
       fillButton: sys('systemFill', dark ? '#2C2C2E' : '#E3E3E8'), // 第二顆按鈕、chip、分段
       // 自訂（有對比表）
       textSecondary: p(palette.grey2), // 小標、副標、收據時間、placeholder 也用這個（tertiary 不過對比）
-      accent: p(palette.green), // 主要按鈕底：每個畫面只出現一次
-      onAccent: p(palette.inkOnGreen), // 主要按鈕上的字（定案 A 深字）
-      accentText: p(palette.greenText), // 可點的強調文字（「加一種」「收工」「連結」）
+      accent: p(palette.ink), // 主要按鈕底：每個畫面只出現一次
+      onAccent: p(palette.onInk), // 主要按鈕上的字
+      accentText: p(palette.ink), // 可點的強調文字（「加一種」「收工」「連結」）；沒有色相，靠 bodyStrong 的字重分出可點
       danger: p(palette.red), // 清空所有資料、錯誤字
     },
     // 文字：基準字級對應 iOS 系統文字樣式（largeTitle 34／title1 28／title2 22／body 17／callout 16／subheadline 15／footnote 13）
@@ -84,9 +84,11 @@ export function makeTokens(dark = false, hc = false) {
     font: {
       largeTitle: { fontSize: 34, fontWeight: '700' }, // 頁面大標（原型 h1）
       title: { fontSize: 28, fontWeight: '800' }, // 鈴響「響了。」
-      sentence: { fontSize: 22, fontWeight: '500', lineHeight: 32 }, // 卡片裡那句（原型 .card .txt 22；線框用 26，待方向定案後對齊）
+      hero: { fontSize: 28, fontWeight: '600', lineHeight: 38 }, // 待機卡片裡那句：全頁最大的字（2026-11-01 重新設計 R2）
+      sentence: { fontSize: 22, fontWeight: '500', lineHeight: 32 }, // 鈴響與收工的輸入框（原型 .card .txt 22）
       section: { fontSize: 22, fontWeight: '700' }, // 豆棚週標題、半頁標題
       body: { fontSize: 17 },
+      bodyStrong: { fontSize: 17, fontWeight: '600' }, // 文字鈕（強調色沒有色相後靠字重）、鈴響問句
       callout: { fontSize: 16 },
       sub: { fontSize: 15 }, // 列副標、chip、hint 連結
       chip: { fontSize: 15, fontWeight: '600' }, // 類型 chip（原型 .chip 15/600）

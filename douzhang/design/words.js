@@ -54,8 +54,10 @@ export const words = {
   doing: '正在做',
   restBody: '離開螢幕。喝水、看遠處、伸展、閉眼都好。',
   backFromRest: '回來了，開始下一顆',
-  bellSub: '寫一行給下一顆的自己。',
+  bellSub: '寫一行給下一顆的自己。', // R1 後只當到點通知內文
   bellPlaceholder: '寫一行給下一顆的自己',
+  bellPrevCap: '這顆在做', // 鈴響頁上一句小卡（2026-11-01 重新設計 R1）
+  bellAsk: '下一顆接著做什麼？',
   devTypeName: '測試',
   settings: '設定',
   home: '主畫面', // 頁碼圓點的讀屏名（左右滑三頁）
@@ -222,5 +224,7 @@ export const words = {
     '去倒杯水，鈴響再回來。',
   ],
 };
-/** 類型 chip 的字：「一般・25 分」 */
-export const typeChipLabel = (name, len) => `${name}・${len} 分`;
+/** 待機類型入口的字：「一般 ›」。分鐘在開始鈕上（2026-11-01 重新設計 R2） */
+export const typeChipLabel = (name) => `${name} ${words.chevron}`;
+/** 待機開始鈕的字：「開始・25 分」「開始這顆・25 分」 */
+export const startLabel = (label, len) => `${label}・${len} 分`;
