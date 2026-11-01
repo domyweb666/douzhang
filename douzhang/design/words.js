@@ -103,7 +103,8 @@ export const words = {
   noTask: '不掛任何事',
   check: '✓', // 半頁列選中的記號
   addType: '加一種',
-  deleteType: '刪除',
+  deleteThisType: '刪除這一類', // 類型半頁最下面（U10）
+  typeNameA11y: '類型名字',
   newTypeName: '新類型',
   unnamedType: '未命名',
   back: '回去',
