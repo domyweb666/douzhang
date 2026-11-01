@@ -12,6 +12,7 @@ import {
   setRestMode,
   setSound,
   setTilt,
+  setTestMode,
   setTypeLen,
 } from '../core/settings';
 
@@ -128,5 +129,15 @@ describe('估幾顆（C2）', () => {
   test('目前那件事重開經 normalize 還在', () => {
     const s = estimate(withClue(), T0, { name: 'x', est: 2 });
     expect(normalize(JSON.parse(JSON.stringify(s))).taskId).toBe(`k${T0}`);
+  });
+});
+
+describe('測試模式（開發期開關）', () => {
+  test('預設關；開了存進設定；舊檔沒有這欄讀成關', () => {
+    expect(blank().settings.demo).toBe(false);
+    expect(setTestMode(blank(), true).settings.demo).toBe(true); // 存在 PWA 的 demo 欄，不多開欄位
+    const old = blank();
+    delete old.settings.demo;
+    expect(normalize(JSON.parse(JSON.stringify(old))).settings.demo).toBe(false);
   });
 });

@@ -95,9 +95,9 @@ describe('PWA 舊檔', () => {
     expect(s.clue).toBeNull();
   });
 
-  test('舊檔的試玩速度 demo 不帶進正式版', () => {
-    const s = normalize({ settings: { demo: true }, days: {} });
-    expect(s.settings.demo).toBe(false);
+  test('demo 欄（開發期測試模式）：開發版照存檔讀，不是布林就關；正式 build 由 __DEV__ 擋成關（C4）', () => {
+    expect(normalize({ settings: { demo: true }, days: {} }).settings.demo).toBe(__DEV__);
+    expect(normalize({ settings: { demo: 'yes' }, days: {} }).settings.demo).toBe(false);
   });
 
   test('舊檔選的類型已經不存在時，退回第一個類型', () => {

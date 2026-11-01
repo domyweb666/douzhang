@@ -239,6 +239,30 @@ function ReminderSection({ settings, actions, notif }) {
   );
 }
 
+/** 開發期才有的測試模式開關（正式 build 整區不畫）。 */
+function DevSection({ settings, actions }) {
+  if (!__DEV__) return null;
+  return (
+    <View>
+      <Cap>{words.devSection}</Cap>
+      <Group>
+        <SettingRow
+          last
+          title={words.testModeRow}
+          sub={words.testModeSub}
+          right={
+            <Toggle
+              value={settings.demo}
+              onChange={actions.onSetTestMode}
+              label={words.testModeRow}
+            />
+          }
+        />
+      </Group>
+    </View>
+  );
+}
+
 function FeelSection({ settings, actions }) {
   return (
     <View>
@@ -354,6 +378,7 @@ export function Settings({ state, actions, notif, backup, onWipe }) {
         <RhythmSection settings={state.settings} actions={actions} />
         <ReminderSection settings={state.settings} actions={actions} notif={notif} />
         <FeelSection settings={state.settings} actions={actions} />
+        <DevSection settings={state.settings} actions={actions} />
         <BackupSection backup={backup} />
         <Group>
           <TextButton danger flush label={words.wipeAll} onPress={onWipe} />

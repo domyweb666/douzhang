@@ -60,6 +60,10 @@ export const words = {
   bellPrevCap: '這顆在做', // 鈴響頁上一句小卡（2026-11-01 重新設計 R1）
   bellAsk: '下一顆接著做什麼？',
   devTypeName: '測試',
+  devSection: '開發', // 設定最下面，只有開發版有
+  testModeRow: '測試模式',
+  testModeSub: '開了之後，主畫面的開始鈕直接開一顆 5 秒的測試番茄，休息也 5 秒。會記進今天的紀錄。',
+  startTest: (len) => `開始測試・${words.typeLen(len)}`,
   settings: '設定',
   home: '主畫面', // 頁碼圓點的讀屏名（左右滑三頁）
 

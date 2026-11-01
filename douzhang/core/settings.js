@@ -44,6 +44,7 @@ export const setCloseTime = (state, closeTime) =>
   params.closeTimes.includes(closeTime) ? withSettings(state, { closeTime }) : state;
 export const setSound = (state, sound) => withSettings(state, { sound: !!sound });
 export const setTilt = (state, tilt) => withSettings(state, { tilt: !!tilt });
+export const setTestMode = (state, on) => withSettings(state, { demo: !!on }); // 存在 PWA 的 demo 欄
 
 /** 估這件事幾顆：寫進今天的 tasks，並把它設成目前那件事（之後收下的豆掛它）。 */
 export function estimate(state, now, { name, est }) {

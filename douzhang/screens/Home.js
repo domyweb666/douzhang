@@ -258,8 +258,8 @@ function CloseHint({ hint, onOpen }) {
   );
 }
 
-function PrimaryButton({ phase, first, firstLine, len, onStart, onBackFromRest, onEnd }) {
-  // 開發期快轉：長按開始＝一分鐘測試顆。正式 build 沒有這個手勢。
+function PrimaryButton({ phase, first, firstLine, len, testMode, onStart, onBackFromRest, onEnd }) {
+  // 開發期快轉：長按開始＝5 秒測試顆；設定開了「測試模式」就直接是測試鈕。正式 build 兩個都沒有。
   const devStart = __DEV__ ? () => onStart({ typeId: DEV_TYPE.id, firstLine }) : undefined;
   if (phase === PHASE.rest)
     return <BigButton label={words.backFromRest} onPress={onBackFromRest} />;
@@ -269,6 +269,15 @@ function PrimaryButton({ phase, first, firstLine, len, onStart, onBackFromRest, 
       <TextButton secondary label={words.endThis} onPress={onEnd} style={{ alignSelf: 'center' }} />
     );
   if (phase !== PHASE.idle) return null;
+  if (__DEV__ && testMode) {
+    return (
+      <BigButton
+        label={words.startTest(DEV_TYPE.len)}
+        disabled={first && !firstLine.trim()}
+        onPress={devStart}
+      />
+    );
+  }
   if (first) {
     return (
       <BigButton
@@ -332,6 +341,7 @@ export function Home({ state, phase, now, greet, wiped, jarSeen, actions }) {
         first={first}
         firstLine={firstLine}
         len={type.len}
+        testMode={state.settings.demo}
         onStart={onStart}
         onBackFromRest={onBackFromRest}
         onEnd={() => {

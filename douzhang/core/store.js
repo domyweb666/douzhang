@@ -19,7 +19,7 @@ export function blank() {
       typeId: DEFAULT_TYPE.id,
       restMode: 'auto',
       sound: true,
-      demo: false,
+      demo: false, // PWA 的「試玩速度」；這裡當開發期「測試模式」開關（2026-11-02），不另開欄位，格式維持 PWA 七欄
       closeTime: '19:00',
       tilt: true,
     },
@@ -51,7 +51,8 @@ function normalizeSettings(s) {
     typeId: pick(s.typeId, base.typeId, 'string'),
     restMode: s.restMode === 'self' ? 'self' : 'auto',
     sound: pick(s.sound, base.sound, 'boolean'),
-    demo: false, // 正式版沒有試玩速度，不管舊檔寫什麼
+    // 測試模式：開發版照存檔讀；正式 build 一律關（安全標準 C4：正式版不帶試玩速度）
+    demo: __DEV__ ? pick(s.demo, base.demo, 'boolean') : false,
     closeTime: pick(s.closeTime, base.closeTime, 'string'),
     tilt: pick(s.tilt, base.tilt, 'boolean'),
   };
