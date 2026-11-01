@@ -2,28 +2,22 @@
 // 兩層：palette＝原始值，只在這裡；Token＝語意層，依用途命名。
 // 來源：.uiux/03-線框（版面尺寸）、.uiux/04-手感/參數表-暫定.md（動態與觸覺）、index.html 原型（色票）。
 // 對比：見 對比檢查表-暫定.md；改任何顏色後整表重跑。
-import {
-  AccessibilityInfo,
-  PixelRatio,
-  Platform,
-  PlatformColor,
-  useColorScheme,
-} from 'react-native';
+import { AccessibilityInfo, PixelRatio, useColorScheme } from 'react-native';
 import { useEffect, useState } from 'react';
 
 // ---------- 原始值層（只在此處）。每色四組：淺／深／增加對比淺／增加對比深 ----------
+// 2026-11-02 第二輪 U1（多米選「夜紫＋番茄」）：從新 icon 抽色。背景、卡片、文字、分隔、填充不再走 iOS 系統色，
+// 改成帶一點紫的自訂值（系統灰配不上 icon）；代價是深色與增加對比要自己給，四組都在對比表算過。
 const palette = {
-  // 自訂的只有四個用途；其餘走系統色
-  // 2026-11-01 重新設計 R5：主要按鈕與強調文字從豌豆時代的綠改成墨色，畫面上只有番茄有顏色（綠只剩葉子）
-  ink: { light: '#1C1C1E', dark: '#F2F2F7', hcLight: '#000000', hcDark: '#FFFFFF' }, // 主要按鈕底、強調文字
+  bg: { light: '#F6F2EE', dark: '#17111C', hcLight: '#F6F2EE', hcDark: '#0E0A11' }, // 微暖米白／紫黑
+  card: { light: '#FFFFFF', dark: '#241B2B', hcLight: '#FFFFFF', hcDark: '#2A2031' },
+  text: { light: '#1E1724', dark: '#F4EEF7', hcLight: '#000000', hcDark: '#FFFFFF' },
+  grey2: { light: '#6A6170', dark: '#ABA1B2', hcLight: '#554C5A', hcDark: '#D2C9D8' }, // 次要文字（填充底上也要過 4.5）
+  line: { light: '#DDD5E0', dark: '#3E3346', hcLight: '#B9AFBE', hcDark: '#5F5367' }, // 分隔線
+  fill: { light: '#ECE6EF', dark: '#33283B', hcLight: '#DCD3E1', hcDark: '#43374C' }, // 第二顆按鈕、chip、分段
+  plum: { light: '#3B2547', dark: '#E9DDF2', hcLight: '#2A1834', hcDark: '#F7F0FB' }, // 主要按鈕底、強調文字（icon 背景的茄紫）
+  onPlum: { light: '#FFFFFF', dark: '#2A1A33', hcLight: '#FFFFFF', hcDark: '#1A0F21' }, // 茄紫按鈕上的字
   red: { light: '#C8102E', dark: '#FF453A', hcLight: '#A3000F', hcDark: '#FF6961' }, // 危險文字，淺色模式比原型 #FF3B30 深
-  grey2: { light: '#66666B', dark: '#98989F', hcLight: '#5C5C62', hcDark: '#BABAC0' }, // 次要文字（系統 secondaryLabel 淺色不過 4.5）
-  onInk: { light: '#FFFFFF', dark: '#000000', hcLight: '#FFFFFF', hcDark: '#000000' }, // 墨色按鈕上的字
-  // 固定值（對比表用，畫面不直接拿）
-  bgLight: '#F2F2F7',
-  bgDark: '#000000',
-  cardLight: '#FFFFFF',
-  cardDark: '#1C1C1E',
 };
 
 // 角色色：另外放，不進介面語意層。只准畫番茄、番茄串、葉子；不當文字色、不當按鈕色。
@@ -32,11 +26,9 @@ export const CharacterColors = {
   pod: { light: '#E5553C', dark: '#D94C34' }, // 白卡 3.69:1、深卡 4.08:1
   podShade: { light: '#B83A26', dark: '#F07A62' }, // 作廢空心圈的框：白卡 5.72:1、深卡 6.21:1
   leaf: { light: '#BFE0A3', dark: '#7FA86A' }, // 原本的豆綠，留給葉子
+  podSoft: { light: '#FBE3DE', dark: '#4A2620' }, // 番茄架時間軸上一顆番茄的底（U9）；上面的主要文字淺 14.25、深 11.59，次要文字 4.82／5.33
   // 番茄本身用插圖 img/tomato.webp、tomato2.webp（2026-11-01 多米給，原本是豌豆 pea.webp），不是純色
 };
-
-// ---------- 系統語意色（iOS 由 UIKit 處理深色與增加對比） ----------
-const sys = (ios, fallback) => (Platform.OS === 'ios' ? PlatformColor(ios) : fallback);
 
 // ---------- 模式解析 ----------
 const pick = (c, dark, hc) => (hc ? (dark ? c.hcDark : c.hcLight) : dark ? c.dark : c.light);
@@ -66,17 +58,15 @@ export function makeTokens(dark = false, hc = false) {
   const p = (c) => pick(c, dark, hc);
   return {
     color: {
-      // 系統色（iOS 原生語意色，Android／web 退回固定值）
-      background: sys('systemGroupedBackground', dark ? palette.bgDark : palette.bgLight),
-      card: sys('secondarySystemGroupedBackground', dark ? palette.cardDark : palette.cardLight),
-      textPrimary: sys('label', dark ? '#FFFFFF' : '#000000'),
-      separator: sys('separator', dark ? '#545458' : '#C6C6C8'),
-      fillButton: sys('systemFill', dark ? '#2C2C2E' : '#E3E3E8'), // 第二顆按鈕、chip、分段
-      // 自訂（有對比表）
-      textSecondary: p(palette.grey2), // 小標、副標、收據時間、placeholder 也用這個（tertiary 不過對比）
-      accent: p(palette.ink), // 主要按鈕底：每個畫面只出現一次
-      onAccent: p(palette.onInk), // 主要按鈕上的字
-      accentText: p(palette.ink), // 可點的強調文字（「加一種」「收工」「連結」）；沒有色相，靠 bodyStrong 的字重分出可點
+      background: p(palette.bg),
+      card: p(palette.card),
+      textPrimary: p(palette.text),
+      separator: p(palette.line),
+      fillButton: p(palette.fill), // 第二顆按鈕、chip、分段
+      textSecondary: p(palette.grey2), // 小標、副標、收據時間、placeholder 也用這個
+      accent: p(palette.plum), // 主要按鈕底：每個畫面只出現一次
+      onAccent: p(palette.onPlum), // 主要按鈕上的字
+      accentText: p(palette.plum), // 可點的強調文字（「加一種」「收工」「連結」）；配 bodyStrong 字重
       danger: p(palette.red), // 清空所有資料、錯誤字
     },
     // 文字：基準字級對應 iOS 系統文字樣式（largeTitle 34／title1 28／title2 22／body 17／callout 16／subheadline 15／footnote 13）
