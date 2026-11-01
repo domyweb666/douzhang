@@ -119,6 +119,14 @@ export function makeTokens(dark = false, hc = false) {
       leafTilt: '-30deg', // 葉子斜放的角度（原型 .leaf）
       pageDot: 8, // 頁碼小圓點（PWA .dots 8px；2026-11-01 左右滑三頁）
       pageDotActive: 22, // 目前那頁的長膠囊（PWA .dots .on 22px）
+      // 番茄架時間軸（2026-11-02 U9，示意圖量的）
+      timelineHour: 64, // 一小時多高
+      timelineGutter: 52, // 左邊時刻那欄寬
+      timelineBlockMin: 28, // 一顆再短也至少這麼高，字才放得下
+      timelineEdge: 4, // 每顆左邊那條番茄色的邊
+      weekDayWidth: 40, // 上面那排一天的寬
+      dayDot: 6, // 有紀錄那天下面的小點
+      blockIcon: 16, // 時間軸裡的小番茄圖
     },
     // 動態：事件命名，數字只從參數表抄。每個都有減少動態版（替換，不是關掉）
     motion: {

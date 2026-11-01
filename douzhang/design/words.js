@@ -155,6 +155,26 @@ export const words = {
   rackLeafTitle: '今天不適合番茄？',
   rackLeafSub: '整天在回訊息、開會，掛一片葉子',
 
+  // 番茄架時間軸（U9）
+  prevWeek: '‹',
+  nextWeek: '›',
+  prevWeekA11y: '上一週',
+  nextWeekA11y: '下一週',
+  weekReceiptLink: '這週的收據 ›',
+  daySumLine: (beans, minutes) => `${beans} 顆・${minutes} 分`,
+  blockTitle: (typeName, len, flow) => `${typeName}・${len} 分${flow ? `＋${flow}` : ''}`,
+  hourLabel: (h) =>
+    h === 0
+      ? '半夜 12'
+      : h < 12
+        ? `上午 ${h}`
+        : h === 12
+          ? '中午 12'
+          : h < 18
+            ? `下午 ${h - 12}`
+            : `晚上 ${h - 12}`,
+  dayA11y: (key, has) => `${words.monthDay(key)} ${words.weekday(key)}${has ? '，有紀錄' : ''}`,
+
   // 番茄架與收據（E1、E2）：原型 renderRack／openReceipt／openWeek 的字
   ok: '好', // 06 狀態表：收據半頁的關閉鈕叫「好」（詞彙表「不用好」是對動作鈕說的，這裡沒有動作）
   thisWeek: '這週',
@@ -167,7 +187,6 @@ export const words = {
     `星期${['日', '一', '二', '三', '四', '五', '六'][new Date(`${key}T00:00`).getDay()]}`,
   rackEmpty: '第一顆響完，這裡就會掛上今天的番茄串。',
   rackEmptyAction: '回去開始一顆',
-  flipToBackRow: '翻到背面：這週的收據',
   chevron: '›', // 列尾「還有下一層」的記號
   voidA11y: '作廢', // 番茄串上空心圈的讀屏名
   leafA11y: '一片葉子', // 葉子的讀屏名

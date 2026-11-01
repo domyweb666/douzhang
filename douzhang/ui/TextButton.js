@@ -7,11 +7,13 @@ const textColor = (T, { secondary, danger }) =>
   danger ? T.color.danger : secondary ? T.color.textSecondary : T.color.accentText;
 
 /** flush＝貼齊左邊（導覽列、群組裡的那一列），不加左右內距。 */
-export function TextButton({ label, onPress, secondary, danger, flush, style }) {
+/** a11yLabel：字本身讀不出意思時（例如「‹」）給讀屏的名字。 */
+export function TextButton({ label, onPress, secondary, danger, flush, style, a11yLabel }) {
   const T = useTokens();
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={a11yLabel}
       onPress={onPress}
       style={({ pressed }) => [
         {

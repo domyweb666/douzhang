@@ -3,6 +3,10 @@ import { blank, blankDay } from '../core/store';
 import {
   VERDICT,
   dayReceipt,
+  daySum,
+  dayTimeline,
+  shiftWeek,
+  weekDays,
   hasRecord,
   podItems,
   rackWeeks,
@@ -174,5 +178,49 @@ describe('一週的收據（照 PWA openWeek）', () => {
     s.days['2026-10-31'] = mk(3, 1);
     s.days['2026-11-01'] = mk(3, 1);
     expect(weekReceipt(s, '2026-10-26').verdict).toBe(VERDICT.even);
+  });
+});
+
+describe('番茄架時間軸（U9）', () => {
+  test('這週七天從週一排到週日，換週往前往後各七天', () => {
+    expect(weekDays('2026-10-26')).toEqual([
+      '2026-10-26',
+      '2026-10-27',
+      '2026-10-28',
+      '2026-10-29',
+      '2026-10-30',
+      '2026-10-31',
+      '2026-11-01',
+    ]);
+    expect(shiftWeek('2026-10-26', 1)).toBe('2026-11-02');
+    expect(shiftWeek('2026-10-26', -1)).toBe('2026-10-19');
+  });
+
+  test('番茄照開始時刻排，長度含延長；作廢從作廢時刻倒推；範圍前後各多一小時取整點', () => {
+    const s = sample();
+    const tl = dayTimeline(s.days['2026-10-26']);
+    expect(tl.items.map((i) => i.kind)).toEqual(['bean', 'bean', 'bean', 'void']);
+    const first = tl.items[0];
+    expect(first.start).toBe(at(2026, 10, 26, 9) - 25 * 60000); // 舊資料沒有 start，用收下時刻倒推
+    expect(first.end - first.start).toBe((25 + 15) * 60000);
+    expect(tl.items[3].start).toBe(at(2026, 10, 26, 12) - 7 * 60000);
+    expect(tl.from).toBe(at(2026, 10, 26, 7)); // 第一顆 8:35 開始 → 8 點再往前一小時
+    expect(tl.to).toBe(at(2026, 10, 26, 13)); // 最後 12:00 → 12 點整再往後一小時
+  });
+
+  test('有 start 的用 start；空的日子、只有葉子的日子沒有時間軸', () => {
+    const d = {
+      ...blankDay(),
+      beans: [{ t: at(2026, 11, 2, 15), start: at(2026, 11, 2, 10), typeId: 't1', len: 25 }],
+    };
+    expect(dayTimeline(d).items[0].start).toBe(at(2026, 11, 2, 10));
+    expect(dayTimeline({ ...blankDay(), leaf: true }).items).toEqual([]);
+    expect(dayTimeline(undefined).items).toEqual([]);
+  });
+
+  test('一天的小計算番茄顆數與分鐘（含延長）；沒番茄回 null，不寫 0', () => {
+    const s = sample();
+    expect(daySum(s.days['2026-10-26'])).toEqual({ beans: 3, minutes: 90 });
+    expect(daySum(s.days['2026-10-30'])).toBeNull();
   });
 });

@@ -3,7 +3,7 @@
 // 數字要跟 PWA 同一份資料對得上（E2 立即驗）。這裡只算，不帶任何畫面上的字；字在畫面層從 words.js 拿。
 import { dayKey, units } from './store';
 import { typeOf } from './machine';
-import { params } from '../design/params';
+import { params, MS_PER_MINUTE } from '../design/params';
 
 export const VERDICT = { fewData: 'fewData', under: 'under', over: 'over', even: 'even' };
 
@@ -133,5 +133,71 @@ export function weekReceipt(state, ws) {
     totalVoids,
     voidHint: totalVoids >= params.receipt.voidsForHint,
     flowHint: beanN >= params.receipt.flowHintMinBeans && flowN * 2 > beanN,
+  };
+}
+
+const MS_PER_HOUR = 60 * MS_PER_MINUTE;
+
+/** 這週七天的日期鍵（週一到週日），給番茄架上面那排（U9）。 */
+export function weekDays(ws) {
+  const d = new Date(`${ws}T00:00`);
+  return Array.from({ length: 7 }, (_, i) => {
+    const day = new Date(d.getFullYear(), d.getMonth(), d.getDate() + i);
+    return dayKey(day.getTime());
+  });
+}
+
+/** 往前或往後幾週的週一。 */
+export function shiftWeek(ws, weeks) {
+  const d = new Date(`${ws}T00:00`);
+  return dayKey(new Date(d.getFullYear(), d.getMonth(), d.getDate() + weeks * 7).getTime());
+}
+
+/**
+ * 一天的時間軸（U9）：每顆番茄與作廢在哪個時刻、多長。
+ * 番茄的開始取 start（PWA 匯入的舊資料沒有，用收下時刻倒推長度）；結束＝開始＋長度＋延長，不用收下時刻（鈴響後可能很久才收）。
+ * 作廢：開始＝作廢時刻倒推第幾分鐘。範圍只畫第一顆前、最後一顆後各一小時，取整點（多米選的範圍，不然大半是空白）。
+ */
+export function dayTimeline(d) {
+  if (!d) return { items: [], from: 0, to: 0 };
+  const beans = d.beans.map((b) => {
+    const start = b.start || b.t - b.len * MS_PER_MINUTE;
+    return {
+      kind: 'bean',
+      start,
+      end: start + (b.len + (b.flow || 0)) * MS_PER_MINUTE,
+      typeId: b.typeId,
+      len: b.len,
+      flow: b.flow || 0,
+      clue: b.clue || '',
+      double: units(b.len) > 1,
+    };
+  });
+  const voids = d.voids.map((v) => ({
+    kind: 'void',
+    start: v.t - (v.minute || 0) * MS_PER_MINUTE,
+    end: v.t,
+    minute: v.minute,
+    reason: v.reason || '',
+    text: v.text || '',
+  }));
+  const items = [...beans, ...voids].sort((a, b) => a.start - b.start);
+  if (!items.length) return { items, from: 0, to: 0 };
+  const first = Math.min(...items.map((i) => i.start));
+  const last = Math.max(...items.map((i) => i.end));
+  const from = new Date(first);
+  from.setMinutes(0, 0, 0);
+  const to = new Date(last);
+  if (to.getMinutes() || to.getSeconds() || to.getMilliseconds()) to.setHours(to.getHours() + 1);
+  to.setMinutes(0, 0, 0);
+  return { items, from: from.getTime() - MS_PER_HOUR, to: to.getTime() + MS_PER_HOUR };
+}
+
+/** 一天的小計：幾顆、幾分鐘（含延長）。沒番茄回 null，畫面就不寫（不出現 0）。 */
+export function daySum(d) {
+  if (!d || !d.beans.length) return null;
+  return {
+    beans: d.beans.length,
+    minutes: d.beans.reduce((s, b) => s + b.len + (b.flow || 0), 0),
   };
 }
