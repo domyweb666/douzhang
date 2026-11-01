@@ -10,7 +10,7 @@ import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
 import { Token, useTokens } from '../design/Tokens';
 import { MS_PER_SECOND, jarParams, params } from '../design/params';
 import { words } from '../design/words';
-import { addBody, makeWorld, seed, step, tapAt } from '../core/jarPhysics';
+import { addBody, makeWorld, radiusFor, seed, step, tapAt } from '../core/jarPhysics';
 
 const SFX = {
   pop: require('../assets/sfx/pop.wav'),
@@ -21,17 +21,12 @@ const SFX = {
     require('../assets/sfx/hit350.wav'),
   ],
 };
-// 番茄圖（2026-11-01 多米給的黏土番茄）：圖的寬＝本體寬、本體中心＝圖中心，蒂與藤往上露出物理圓圈外；
-// 圖的下方補了等高的透明，雙番茄才會繞本體中心轉。高度照圖的比例算，不寫死。
-const IMG = {
-  single: require('../assets/img/tomato.webp'),
-  double: require('../assets/img/tomato2.webp'),
-};
-const aspectOf = (src) => {
-  const { width, height } = Image.resolveAssetSource(src);
+// 番茄圖（2026-11-02 多米給的透明番茄）：圖的寬＝本體寬、本體中心＝圖中心，蒂往上露出物理圓圈外。高度照圖的比例算，不寫死。
+const TOMATO = require('../assets/img/tomato.webp');
+const ASPECT = (() => {
+  const { width, height } = Image.resolveAssetSource(TOMATO);
   return height / width;
-};
-const ASPECT = { single: aspectOf(IMG.single), double: aspectOf(IMG.double) };
+})();
 const HAPTIC = {
   'impact.rigid': Haptics.ImpactFeedbackStyle.Rigid,
   'impact.light': Haptics.ImpactFeedbackStyle.Light,
@@ -100,24 +95,26 @@ function hit(players, sound, impact) {
   Haptics.impactAsync(HAPTIC[Token.haptic.beanHit]).catch(() => {});
 }
 
-function dropOne(W, two, still) {
+function dropOne(W, r, still) {
   if (W.bodies.length >= W.P.maxBeans) return;
   const go = () => {
-    const x = W.w / 2 + (Math.random() - 0.5) * W.P.link * 2;
+    const x = W.w / 2 + (Math.random() - 0.5) * r * 2;
     if (still) {
-      addBody(W, two, x, W.h - W.P.radius);
+      addBody(W, r, x, W.h - r);
       W.onLand?.();
     } else {
-      addBody(W, two, x, -W.P.radius * 2, (Math.random() - 0.5) * 2 * DROP.vxSpread, DROP.vy, true);
+      addBody(W, r, x, -r * 2, (Math.random() - 0.5) * 2 * DROP.vxSpread, DROP.vy, true);
     }
   };
   W.timers.push(setTimeout(go, still ? DROP_REDUCED.delayMs : DROP.delayMs)); // 卸載時要清掉
 }
 
-/** 跟上今天的豆子：多一顆就掉一顆；數目對不上（換日、匯入、清空）就重新安置。 */
+const radiiOf = (W, beans) => beans.map((b) => radiusFor(W.P, b.len));
+
+/** 跟上今天的番茄：多一顆就掉一顆；數目對不上（換日、匯入、清空）就重新安置。 */
 function follow(W, beans, still) {
-  if (beans.length === W.known + 1) dropOne(W, !!beans[beans.length - 1].double, still);
-  else if (beans.length !== W.known) seed(W, beans.length, (i) => !!beans[i]?.double);
+  if (beans.length === W.known + 1) dropOne(W, radiusFor(W.P, beans[beans.length - 1].len), still);
+  else if (beans.length !== W.known) seed(W, radiiOf(W, beans));
   W.known = beans.length;
 }
 
@@ -152,15 +149,7 @@ function useTilt(worldRef, on) {
 
 /** 畫面要的快照：每幀從世界抄一份出來（render 只讀這份，不碰可變的世界）。 */
 function snapshot(W) {
-  return {
-    singles: W.bodies.filter((b) => b.single).map((b) => ({ id: b.id, x: b.x, y: b.y })),
-    doubles: W.links.map((L) => ({
-      id: L.id,
-      cx: (L.a.x + L.b.x) / 2,
-      cy: (L.a.y + L.b.y) / 2,
-      ang: Math.atan2(L.b.y - L.a.y, L.b.x - L.a.x),
-    })),
-  };
+  return W.bodies.map((b) => ({ id: b.id, x: b.x, y: b.y, r: b.r }));
 }
 
 /** 每秒結算一次幀數：連續 lowFpsSeconds 秒低於門檻就回報。 */
@@ -173,29 +162,24 @@ function countFrame(fps, t, onLowFps) {
   if (fps.lowSeconds >= params.jar.lowFpsSeconds) onLowFps();
 }
 
-/** 兩份快照差不到門檻就算沒動：豆子都躺好時不重畫（退成靜止版要真的省下來）。 */
+/** 兩份快照差不到門檻就算沒動：番茄都躺好時不重畫（退成靜止版要真的省下來）。 */
 function samePlace(a, b) {
-  const { redrawEpsilonPx: px, redrawEpsilonRad: rad } = params.jar;
-  if (a.singles.length !== b.singles.length || a.doubles.length !== b.doubles.length) return false;
-  const near = (p, q, eps) => Math.abs(p - q) < eps;
-  const single = (s, i) => near(s.x, b.singles[i].x, px) && near(s.y, b.singles[i].y, px);
-  const double = (d, i) => {
-    const o = b.doubles[i];
-    return near(d.cx, o.cx, px) && near(d.cy, o.cy, px) && near(d.ang, o.ang, rad);
-  };
-  return a.singles.every(single) && a.doubles.every(double);
+  const px = params.jar.redrawEpsilonPx;
+  if (a.length !== b.length) return false;
+  const near = (p, q) => Math.abs(p - q) < px;
+  return a.every((s, i) => near(s.x, b[i].x) && near(s.y, b[i].y));
 }
 
 /** 每幀走物理、落地與碰撞事件交給 W.onLand／W.onHit、有動才把快照放進 state 重畫；連續掉幀就回報（退成靜止版）。 */
 function useLoop(worldRef, onLowFps) {
-  const [frame, setFrame] = useState({ singles: [], doubles: [] });
+  const [frame, setFrame] = useState([]);
   useEffect(() => {
     const W = worldRef.current;
     let raf;
     let last = 0;
     let run = true;
     let lastHit = 0;
-    let shown = { singles: [], doubles: [] };
+    let shown = [];
     const fps = { n: 0, t: 0, lowSeconds: 0 };
     const loop = (t) => {
       if (!run) return;
@@ -228,41 +212,23 @@ function useLoop(worldRef, onLowFps) {
   return frame;
 }
 
-function Bean({ x, y, R }) {
-  const height = R * 2 * ASPECT.single;
+function Bean({ x, y, r }) {
+  const height = r * 2 * ASPECT;
   return (
     <Image
-      source={IMG.single}
+      source={TOMATO}
       style={{
         position: 'absolute',
-        width: R * 2,
+        width: r * 2,
         height,
-        transform: [{ translateX: x - R }, { translateY: y - height / 2 }],
-      }}
-    />
-  );
-}
-
-function DoubleBean({ cx, cy, ang, width }) {
-  return (
-    <Image
-      source={IMG.double}
-      style={{
-        position: 'absolute',
-        width,
-        height: width * ASPECT.double,
-        transform: [
-          { translateX: cx - width / 2 },
-          { translateY: cy - (width * ASPECT.double) / 2 },
-          { rotate: `${ang}rad` },
-        ],
+        transform: [{ translateX: x - r }, { translateY: y - height / 2 }],
       }}
     />
   );
 }
 
 /**
- * beans：今天的豆子（依時間排），每個 { double }。多一顆就掉一顆；數目對不上（換日、匯入、清空）就重新安置。
+ * beans：今天的番茄（依時間排），每個 { len }（分鐘，決定大小）。多一顆就掉一顆；數目對不上（換日、匯入、清空）就重新安置。
  * seenRef：殼保管的「豆罐上次看到幾顆」。鈴響時主畫面（連豆罐）整個換成鈴響頁，收下後豆罐重掛；
  *   沒有這個數，重掛就把剛收的那顆直接擺在罐底，不掉、不啵（D+E 審查員）。
  * sound：設定的聲音開關。tilt：設定的傾斜開關。
@@ -278,7 +244,6 @@ export function Jar({ beans, seenRef, sound, tilt, style }) {
   if (worldRef.current === null) {
     worldRef.current = { ...makeWorld(jarParams(Token)), known: null, timers: [] }; // known＝上次看到的顆數
   }
-  const P = jarParams(Token);
 
   useEffect(() => {
     const W = worldRef.current;
@@ -296,7 +261,7 @@ export function Jar({ beans, seenRef, sound, tilt, style }) {
     // 先擺上次看到的那些，多出來的（鈴響時收下的）再照常掉進來
     const before = seenRef.current;
     W.known = before != null && before <= beans.length ? before : beans.length;
-    seed(W, W.known, (i) => !!beans[i]?.double);
+    seed(W, radiiOf(W, beans.slice(0, W.known)));
     follow(W, beans, still);
     seenRef.current = W.known;
   };
@@ -316,8 +281,7 @@ export function Jar({ beans, seenRef, sound, tilt, style }) {
   useTilt(worldRef, !!tilt && !still);
   const onLowFps = useCallback(() => setLowFps(true), []);
   const frame = useLoop(worldRef, onLowFps);
-  const R = P.radius;
-  const n = frame.singles.length + frame.doubles.length;
+  const n = frame.length;
 
   return (
     <Pressable
@@ -327,13 +291,18 @@ export function Jar({ beans, seenRef, sound, tilt, style }) {
         tapAt(worldRef.current, e.nativeEvent.locationX, e.nativeEvent.locationY);
       }}
       accessibilityLabel={n ? `${words.todayBeans} ${n}` : words.todayBeans}
-      style={[{ flex: 1, overflow: 'hidden', borderRadius: T.shape.radiusCard }, style]}
+      style={[
+        {
+          flex: 1,
+          overflow: 'hidden',
+          borderRadius: T.shape.radiusCard,
+          backgroundColor: T.color.card, // V5：罐子畫成卡片，空的時候也看得出這裡是罐子
+        },
+        style,
+      ]}
     >
-      {frame.singles.map((b) => (
-        <Bean key={b.id} x={b.x} y={b.y} R={R} />
-      ))}
-      {frame.doubles.map((L) => (
-        <DoubleBean key={L.id} cx={L.cx} cy={L.cy} ang={L.ang} width={P.link + R * 2} />
+      {frame.map((b) => (
+        <Bean key={b.id} x={b.x} y={b.y} r={b.r} />
       ))}
     </Pressable>
   );

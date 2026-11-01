@@ -5,7 +5,8 @@ export const words = {
 
   // 核心
   bean: '一顆', // 一段 25 分鐘的專注
-  nextStep: '下一步', // 做完一顆留下的那句話
+  nextStep: '下一步', // 做完一顆留下的那句話（詞彙表的名詞；待機卡片小標 V2 改用 thisToDo）
+  thisToDo: '這顆要做', // 待機卡片小標（2026-11-02 V2，多米看不懂「下一步」）
   start: '開始',
   startFirst: '開始這顆',
   rang: '響了。', // 鈴響頁標題
@@ -88,7 +89,7 @@ export const words = {
 
   // 類型與估幾顆（C1、C2；2026-11-02 U5 併成一張「這顆」半頁）
   thisBean: '這顆', // 半頁標題
-  typeLen: (len) => `${len} 分`,
+  typeLen: (len) => (len < 1 ? `${Math.round(len * 60)} 秒` : `${len} 分`), // 不到一分鐘的只有開發期測試顆
   typeOption: (name, len) => `${name}・${len} 分`, // 「這顆」半頁的類型分段
   taskCap: '在做哪件事（選填，收工對帳用）',
   newTask: '＋ 新的一件事',
@@ -161,8 +162,9 @@ export const words = {
   prevWeekA11y: '上一週',
   nextWeekA11y: '下一週',
   weekReceiptLink: '這週的收據 ›',
-  daySumLine: (beans, minutes) => `${beans} 顆・${minutes} 分`,
-  blockTitle: (typeName, len, flow) => `${typeName}・${len} 分${flow ? `＋${flow}` : ''}`,
+  daySumLine: (beans, minutes) => `${beans} 顆・${Math.round(minutes)} 分`,
+  blockTitle: (typeName, len, flow) =>
+    `${typeName}・${words.typeLen(len)}${flow ? `＋${flow}` : ''}`,
   hourLabel: (h) =>
     h === 0
       ? '半夜 12'
@@ -243,10 +245,9 @@ export const words = {
     '去倒杯水，鈴響再回來。',
   ],
 };
-/** 待機開始鈕上方那一行（U4）：「一般 ›」或「一般・寫腳本第 12 集　估 3 顆 ›」。分鐘在開始鈕上 */
-export const thisRowLabel = (typeName, task) =>
-  task
-    ? `${typeName}・${task.name}　估 ${task.est} 顆 ${words.chevron}`
-    : `${typeName} ${words.chevron}`;
+/** 待機開始鈕上方那一行：類型名字「一般 ›」。分鐘在開始鈕上；事名 V2 起搬進卡片 */
+export const thisRowLabel = (typeName) => `${typeName} ${words.chevron}`;
+/** 卡片裡的事名那行：「寫腳本第 12 集・估 3 顆」 */
+export const taskLine = (task) => `${task.name}・估 ${task.est} 顆`;
 /** 待機開始鈕的字：「開始・25 分」「開始這顆・25 分」 */
 export const startLabel = (label, len) => `${label}・${len} 分`;

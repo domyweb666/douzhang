@@ -51,10 +51,9 @@ describe('開始與到點', () => {
     expect(s.current.startedAt).toBe(T0);
   });
 
-  test('開發期測試顆 1 分鐘：endAt 等於現在加 1 分', () => {
+  test('開發期測試顆 5 秒：endAt 等於現在加 5 秒', () => {
     const s = start(withClue(), T0, { typeId: DEV_TYPE.id });
-    expect(s.current.len).toBe(1);
-    expect(s.current.endAt).toBe(T0 + MIN);
+    expect(s.current.endAt).toBe(T0 + 5000);
   });
 
   test('還沒到點是計時中，到點那一刻 phase 變 bell，不用另外存', () => {
@@ -93,10 +92,10 @@ describe('收下', () => {
     expect(s.days['2026-11-01'].beans[0].clue).toBe('');
   });
 
-  test('測試顆收下後休息 3 分（最少 3）', () => {
-    const now = T0 + MIN;
+  test('測試顆收下後休息也只有 5 秒（看掉番茄用，不等 3 分）', () => {
+    const now = T0 + 5000;
     const s = keep(start(withClue(), T0, { typeId: DEV_TYPE.id }), now, 'x');
-    expect(s.current.endAt).toBe(now + 3 * MIN);
+    expect(s.current.endAt).toBe(now + 5000);
   });
 
   test('不在計時中按收下，什麼都不變', () => {
@@ -151,9 +150,9 @@ describe('響了沒理（A3）', () => {
     expect(s.current.endAt).toBe(rang + 4 * MIN + 5 * MIN);
   });
 
-  test('測試顆拖到剛好 3 分（等於休息長度）才收下，也是直接待機', () => {
-    const rang = T0 + MIN;
-    const s = keep(start(withClue(), T0, { typeId: DEV_TYPE.id }), rang + 3 * MIN, 'x');
+  test('測試顆拖到剛好 5 秒（等於休息長度）才收下，也是直接待機', () => {
+    const rang = T0 + 5000;
+    const s = keep(start(withClue(), T0, { typeId: DEV_TYPE.id }), rang + 5000, 'x');
     expect(s.current).toBeNull();
   });
 });

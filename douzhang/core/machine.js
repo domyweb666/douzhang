@@ -2,14 +2,18 @@
 // 只存 endAt（幾點結束），不存剩幾秒：背景、鎖屏、殺掉再開都靠時間差重算（A3 驗邊界）。
 // 資料格式照 PWA：current、clue、days 的欄位名與 index.html 相同。
 import { blankDay, dayKey, restMinutes } from './store';
-import { MS_PER_MINUTE, params } from '../design/params';
+import { MS_PER_MINUTE, MS_PER_SECOND, SECONDS_PER_MINUTE, params } from '../design/params';
 import { words } from '../design/words';
 import { isTodayTask } from './settings';
 
 export const PHASE = { idle: 'idle', focus: 'focus', bell: 'bell', rest: 'rest' };
 
 /** 開發期專用的一分鐘類型。正式 build（__DEV__ 為 false）永遠不會被選到。 */
-export const DEV_TYPE = { id: 'dev-1min', name: words.devTypeName, len: 1 };
+export const DEV_TYPE = {
+  id: 'dev-test',
+  name: words.devTypeName,
+  len: params.devTestSeconds / SECONDS_PER_MINUTE,
+};
 
 export function typeOf(state, typeId) {
   if (typeId === DEV_TYPE.id) return DEV_TYPE;
@@ -96,7 +100,11 @@ export function keep(state, now, text) {
   const days = { ...state.days, [key]: { ...prev, beans: [...prev.beans, bean], closed: false } };
   const clue = line ? { text: line, at: now } : state.clue;
   // 響了沒理、拖到超過這顆的休息長度才回來收：休息早過了，直接待機（PRD S8）
-  const restMs = restMinutes(c.len) * MS_PER_MINUTE;
+  // 測試顆的休息跟它一樣短（V3），不然看一次掉番茄要等 3 分鐘
+  const restMs =
+    c.typeId === DEV_TYPE.id
+      ? params.devTestSeconds * MS_PER_SECOND
+      : restMinutes(c.len) * MS_PER_MINUTE;
   if (now - c.endAt >= restMs) return { ...state, days, clue, current: null };
   const picked = pickLine(state);
   return {

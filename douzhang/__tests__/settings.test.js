@@ -20,7 +20,7 @@ const T0 = new Date(2026, 10, 1, 9, 0, 0).getTime();
 const withClue = () => ({ ...blank(), clue: { text: '那句', at: T0 - MIN } });
 
 describe('任務類型（C1）', () => {
-  test('加一種：多一列「新類型」，長度是刻度的第一格，選中的不變', () => {
+  test('加一種：多一列「新類型」，長度 15 分，選中的不變', () => {
     const s = addType(blank(), T0);
     expect(s.settings.types).toHaveLength(2);
     expect(s.settings.types[1]).toEqual({ id: `t${T0}`, name: '新類型', len: 15 });

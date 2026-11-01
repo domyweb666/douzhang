@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { useTokens } from '../design/Tokens';
-import { words, startLabel, thisRowLabel } from '../design/words';
+import { words, startLabel, taskLine, thisRowLabel } from '../design/words';
 import { params } from '../design/params';
 import { DEV_TYPE, PHASE, canHangLeaf, closeHint, stoppedEarly, typeOf } from '../core/machine';
 import { BigButton } from '../ui/BigButton';
@@ -16,7 +16,6 @@ import { ThisSheet } from '../ui/TypeSheets';
 import { Jar } from '../ui/Jar';
 import { CloseSheet } from '../ui/CloseSheet';
 import { TextButton } from '../ui/TextButton';
-import { units } from '../core/store';
 
 function Label({ children }) {
   const T = useTokens();
@@ -32,19 +31,24 @@ function Body({ children }) {
   );
 }
 
-function Card({ children }) {
+/** onPress 有給就整張可點（待機時點卡片開「這顆」半頁，V2）。 */
+function Card({ children, onPress }) {
   const T = useTokens();
   return (
-    <View
-      style={{
+    <Pressable
+      disabled={!onPress}
+      accessibilityRole={onPress ? 'button' : undefined}
+      onPress={onPress}
+      style={({ pressed }) => ({
         backgroundColor: T.color.card,
         borderRadius: T.shape.radiusCard,
         padding: T.space.l,
-        marginTop: T.space.l,
-      }}
+        marginTop: T.space.m,
+        opacity: pressed ? T.opacity.pressed : 1,
+      })}
     >
       {children}
-    </View>
+    </Pressable>
   );
 }
 
@@ -72,12 +76,31 @@ function FirstInput({ value, onChange, wiped }) {
   );
 }
 
-/** greet：昨天收工種下的那句，今天第一次打開時小標換成「昨天的你留了一句」（F1）。 */
-function ClueCard({ text, greet }) {
+/** 這顆掛的事（今天估過的那件），沒選就沒有。 */
+const taskOf = (state, taskId) =>
+  (state.days[state.todayKey]?.tasks || []).find((t) => t.id === taskId);
+
+/** 卡片裡的事名那行（V2）：多米要一眼看到「現在在做哪件事」。 */
+function TaskLine({ task }) {
+  const T = useTokens();
+  if (!task) return null;
+  return (
+    <Text style={{ ...T.font.bodyStrong, color: T.color.textPrimary, marginTop: T.space.xs }}>
+      {taskLine(task)}
+    </Text>
+  );
+}
+
+/**
+ * 待機卡片：小標「這顆要做」（V2；昨天收工種下的那句今天第一次打開時是「昨天的你留了一句」，F1）、
+ * 有選事就一行事名、下面是那句。
+ */
+function ClueCard({ text, greet, task }) {
   const T = useTokens();
   return (
     <View>
-      <Label>{greet ? words.clueLabel : words.nextStep}</Label>
+      <Label>{greet ? words.clueLabel : words.thisToDo}</Label>
+      <TaskLine task={task} />
       <Text style={{ ...T.font.hero, color: T.color.textPrimary, marginTop: T.space.s }}>
         {text}
       </Text>
@@ -109,14 +132,9 @@ function Chip({ label, onPress, style }) {
 }
 
 /** 開始鈕上方那一行（U4）：類型＋今天在做的事，點了開「這顆」半頁（分鐘在開始鈕上）。 */
-function ThisRow({ state, type, onPress }) {
-  const task = (state.days[state.todayKey]?.tasks || []).find((t) => t.id === state.taskId);
+function ThisRow({ type, onPress }) {
   return (
-    <TextButton
-      label={thisRowLabel(type.name, task)}
-      onPress={onPress}
-      style={{ alignSelf: 'center' }}
-    />
+    <TextButton label={thisRowLabel(type.name)} onPress={onPress} style={{ alignSelf: 'center' }} />
   );
 }
 
@@ -178,12 +196,13 @@ function RestLine({ text }) {
   );
 }
 
-/** 計時中與休息共用：大時間＋小標＋一句；提早做完後多一行（B2）。 */
-function Countdown({ left, label, body, extra }) {
+/** 計時中與休息共用：大時間＋小標＋（計時中有選事就一行事名）＋一句；提早做完後多一行（B2）。 */
+function Countdown({ left, label, body, extra, task }) {
   return (
     <View>
       <Clock focus text={mmss(left)} />
       <Label>{label}</Label>
+      <TaskLine task={task} />
       <Body>{body}</Body>
       {extra ? <Label>{extra}</Label> : null}
     </View>
@@ -198,6 +217,7 @@ function CardBody({ phase, state, now, greet, wiped, firstLine, onFirstLine }) {
         left={left}
         label={words.doing}
         body={state.current.clue}
+        task={taskOf(state, state.current.taskId)}
         extra={state.current.done ? words.doneEarlyLine : null}
       />
     );
@@ -208,7 +228,7 @@ function CardBody({ phase, state, now, greet, wiped, firstLine, onFirstLine }) {
     return <Countdown left={shown} label={words.rest} body={words.restBody} />;
   }
   if (!state.clue) return <FirstInput value={firstLine} onChange={onFirstLine} wiped={wiped} />;
-  return <ClueCard text={state.clue.text} greet={greet} />;
+  return <ClueCard text={state.clue.text} greet={greet} task={taskOf(state, state.taskId)} />;
 }
 
 /** 待機卡片下那一行：過了收工時間是收工入口，收工了或掛了葉子是一句話（F1、F2）。 */
@@ -278,15 +298,23 @@ export function Home({ state, phase, now, greet, wiped, jarSeen, actions }) {
   const type = typeOf(state, state.settings.typeId);
   const idle = phase === PHASE.idle;
   const focus = phase === PHASE.focus;
-  // 今天的豆子依時間排，給豆罐；50 分那顆是雙豆
+  // 今天的番茄依時間排，給罐子；大小跟分鐘走（V4）
   const todayBeans = (state.days[state.todayKey]?.beans || [])
     .slice()
     .sort((a, b) => a.t - b.t)
-    .map((b) => ({ double: units(b.len) > 1 }));
+    .map((b) => ({ len: b.len }));
 
+  // V5：罐子在上（今天的番茄）；卡片、類型、開始鈕收成一組在下半部，按鈕下面留一截空
   return (
     <View style={{ flex: 1 }}>
-      <Card>
+      <Jar
+        beans={todayBeans}
+        seenRef={jarSeen}
+        sound={state.settings.sound}
+        tilt={state.settings.tilt}
+        style={{ marginTop: T.space.s }}
+      />
+      <Card onPress={idle && !first ? () => setSheet('this') : undefined}>
         <CardBody
           phase={phase}
           state={state}
@@ -298,14 +326,7 @@ export function Home({ state, phase, now, greet, wiped, jarSeen, actions }) {
         />
       </Card>
       <UnderCard phase={phase} state={state} now={now} first={first} setSheet={setSheet} />
-      <Jar
-        beans={todayBeans}
-        seenRef={jarSeen}
-        sound={state.settings.sound}
-        tilt={state.settings.tilt}
-        style={{ marginVertical: T.space.m }}
-      />
-      {idle ? <ThisRow state={state} type={type} onPress={() => setSheet('this')} /> : null}
+      {idle ? <ThisRow type={type} onPress={() => setSheet('this')} /> : null}
       <PrimaryButton
         phase={phase}
         first={first}
@@ -318,6 +339,7 @@ export function Home({ state, phase, now, greet, wiped, jarSeen, actions }) {
           setSheet('end');
         }}
       />
+      <View style={{ height: T.shape.primaryLift }} />
       {focus ? (
         <FocusSheetHost
           sheet={sheet}

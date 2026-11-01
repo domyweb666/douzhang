@@ -13,7 +13,7 @@ export function pickType(state, typeId) {
 }
 
 export function addType(state, now) {
-  const type = { id: `t${now}`, name: words.newTypeName, len: params.typeLengths[0] };
+  const type = { id: `t${now}`, name: words.newTypeName, len: params.newTypeMinutes };
   return withSettings(state, { types: [...state.settings.types, type] });
 }
 

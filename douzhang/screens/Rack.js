@@ -23,10 +23,7 @@ import { canHangLeaf, rackTopRow, typeOf } from '../core/machine';
 import { Leaf } from '../ui/Pod';
 import { DaySheet, WeekSheet } from '../ui/ReceiptSheets';
 
-const IMG = {
-  single: require('../assets/img/tomato.webp'),
-  double: require('../assets/img/tomato2.webp'),
-};
+const TOMATO = require('../assets/img/tomato.webp');
 const MS_PER_HOUR = 60 * MS_PER_MINUTE;
 
 /** 番茄架最下面那一列：'close' 收工（強調色）、'leaf' 今天不適合（次要色，06 狀態表），點了都開收工半頁。 */
@@ -214,12 +211,9 @@ function Block({ item, top, height, typeName, onPress }) {
         <>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: T.space.xs }}>
             <Image
-              source={item.double ? IMG.double : IMG.single}
+              source={TOMATO}
               resizeMode="contain"
-              style={{
-                width: T.shape.blockIcon * (item.double ? 2 : 1),
-                height: T.shape.blockIcon,
-              }}
+              style={{ width: T.shape.blockIcon, height: T.shape.blockIcon }}
             />
             <Text style={{ ...T.font.caption, color: T.color.textPrimary }}>
               {words.blockTitle(typeName, item.len, item.flow)}

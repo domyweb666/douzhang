@@ -27,7 +27,7 @@ export const CharacterColors = {
   podShade: { light: '#B83A26', dark: '#F07A62' }, // 作廢空心圈的框：白卡 5.72:1、深卡 6.21:1
   leaf: { light: '#BFE0A3', dark: '#7FA86A' }, // 原本的豆綠，留給葉子
   podSoft: { light: '#FBE3DE', dark: '#4A2620' }, // 番茄架時間軸上一顆番茄的底（U9）；上面的主要文字淺 14.25、深 11.59，次要文字 4.82／5.33
-  // 番茄本身用插圖 img/tomato.webp、tomato2.webp（2026-11-01 多米給，原本是豌豆 pea.webp），不是純色
+  // 番茄本身用插圖 img/tomato.webp（2026-11-02 多米給的透明番茄），大小跟分鐘走（V4），不是純色
 };
 
 // ---------- 模式解析 ----------
@@ -117,6 +117,7 @@ export function makeTokens(dark = false, hc = false) {
       rackDayCol: 90, // 豆棚每列左邊「N月D日／星期X」那欄寬（原來寫成 tapPrimary×1.5，D+E 審查員）
       sheetScrollMax: 420, // 收據半頁可捲區最高（原來寫成 tapPrimary×7）
       leafTilt: '-30deg', // 葉子斜放的角度（原型 .leaf）
+      primaryLift: 32, // 主畫面開始鈕下面留的空（V5：不貼著 Home 指示條）
       pageDot: 8, // 頁碼小圓點（PWA .dots 8px；2026-11-01 左右滑三頁）
       pageDotActive: 22, // 目前那頁的長膠囊（PWA .dots .on 22px）
       // 番茄架時間軸（2026-11-02 U9，示意圖量的）
