@@ -2,7 +2,7 @@
 // 任務類型 C1；節奏、提醒、手感 G1；備份與清空 G2–G4。狀態機在 core/settings.js，改完立刻生效（下一拍就讀新設定）。
 // U10（2026-11-02）：類型與收工時間改成「一列一個值 ›」，點了從底部開半頁用 iOS 滾輪選（原本一排排膠囊要找黑的那顆）。
 import { useState } from 'react';
-import { Linking, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
+import { Image, Linking, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { useTokens } from '../design/Tokens';
 import { words } from '../design/words';
@@ -13,6 +13,7 @@ import { Segmented } from '../ui/Segmented';
 import { Sheet } from '../ui/Sheet';
 import { BigButton } from '../ui/BigButton';
 import { hhmm } from '../ui/useNow';
+import { TOMATO_ASPECT, tomatoOf } from '../ui/tomatoImages';
 import { dayKey } from '../core/store';
 
 const LENGTHS = params.typeLengths.map((len) => ({ value: len, label: words.typeLen(len) }));
@@ -87,8 +88,41 @@ function Wheel({ options, value, onChange }) {
   );
 }
 
-/** 一種類型的半頁：改名、滾輪選長度、最下面刪除（只剩一種時沒有）。改了立刻存，「好」只是關。 */
-function TypeEditSheet({ type, canDelete, onClose, onRename, onSetLen, onRemove }) {
+/** 五顆番茄並排選色，選中的那顆外面一圈茄紫（W1）。 */
+function ColorPicker({ value, onChange }) {
+  const T = useTokens();
+  const size = T.shape.colorSwatch;
+  return (
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: T.space.m }}>
+      {params.tomatoColors.map((c) => {
+        const on = c === value;
+        return (
+          <Pressable
+            key={c}
+            accessibilityRole="button"
+            accessibilityLabel={words.tomatoColorName[c]}
+            accessibilityState={{ selected: on }}
+            onPress={() => onChange(c)}
+            style={{
+              width: T.shape.tapPrimary,
+              height: T.shape.tapPrimary,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: T.shape.radiusPill,
+              borderWidth: T.shape.selectRing,
+              borderColor: on ? T.color.accent : 'transparent', // token-ok: 沒選的不畫圈
+            }}
+          >
+            <Image source={tomatoOf(c)} style={{ width: size, height: size * TOMATO_ASPECT }} />
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+/** 一種類型的半頁：改名、番茄色、滾輪選長度、最下面刪除（只剩一種時沒有）。改了立刻存，「好」只是關。 */
+function TypeEditSheet({ type, canDelete, onClose, onRename, onSetLen, onSetColor, onRemove }) {
   const T = useTokens();
   if (!type) return null;
   return (
@@ -109,6 +143,7 @@ function TypeEditSheet({ type, canDelete, onClose, onRename, onSetLen, onRemove 
           minHeight: T.shape.tapMin,
         }}
       />
+      <ColorPicker value={type.color} onChange={onSetColor} />
       <Wheel options={LENGTHS} value={type.len} onChange={onSetLen} />
       <BigButton label={words.ok} onPress={onClose} />
       {canDelete ? (
@@ -359,6 +394,7 @@ function TypesSection({ settings, actions }) {
         onClose={() => setOpenId(null)}
         onRename={(name) => actions.onRenameType(openId, name)}
         onSetLen={(len) => actions.onSetTypeLen(openId, len)}
+        onSetColor={(color) => actions.onSetTypeColor(openId, color)}
         onRemove={() => actions.onRemoveType(openId)}
       />
     </View>

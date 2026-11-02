@@ -2,6 +2,7 @@
 // 只做讀、寫、補欄位、算單位。不碰畫面、不排通知、不決定轉態（那是 machine.js 的事）。
 // 安全標準：S1 狀態檔沒有機敏欄位；S6 寫失敗要回報給畫面；I1／I2 壞檔不蓋、缺欄位補預設、不信任外部型別。
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { params } from '../design/params';
 
 export const STORAGE_KEY = 'douzhang.v1'; // 跟 PWA 的 localStorage key 同名，只是換了地方住
 export const FORMAT_VERSION = 1;
@@ -9,7 +10,7 @@ export const MINUTES_PER_UNIT = 25; // 一顆＝25 分；50 分的顆算兩單�
 export const REST_DIVISOR = 5; // 休息＝長度 ÷ 5
 export const REST_MIN_MINUTES = 3;
 
-export const DEFAULT_TYPE = { id: 't1', name: '一般', len: 25 };
+export const DEFAULT_TYPE = { id: 't1', name: '一般', len: 25, color: 'red' };
 
 export function blank() {
   return {
@@ -45,7 +46,15 @@ function normalizeSettings(s) {
   const base = blank().settings;
   const types = arrayOf(s.types)
     .filter((t) => isObject(t) && typeof t.id === 'string' && typeof t.name === 'string')
-    .map((t) => ({ id: t.id, name: t.name, len: pick(t.len, DEFAULT_TYPE.len, 'number') }));
+    .map((t, i) => ({
+      id: t.id,
+      name: t.name,
+      len: pick(t.len, DEFAULT_TYPE.len, 'number'),
+      // W1 起每種類型一個番茄色；舊檔（含 PWA）沒有這欄，依序分配，不同類型一開始就不同色
+      color: params.tomatoColors.includes(t.color)
+        ? t.color
+        : params.tomatoColors[i % params.tomatoColors.length],
+    }));
   const settings = {
     types: types.length ? types : base.types,
     typeId: pick(s.typeId, base.typeId, 'string'),

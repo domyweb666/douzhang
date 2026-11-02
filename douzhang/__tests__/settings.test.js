@@ -13,6 +13,7 @@ import {
   setSound,
   setTilt,
   setTestMode,
+  setTypeColor,
   setTypeLen,
 } from '../core/settings';
 
@@ -24,7 +25,12 @@ describe('任務類型（C1）', () => {
   test('加一種：多一列「新類型」，長度 15 分，選中的不變', () => {
     const s = addType(blank(), T0);
     expect(s.settings.types).toHaveLength(2);
-    expect(s.settings.types[1]).toEqual({ id: `t${T0}`, name: '新類型', len: 15 });
+    expect(s.settings.types[1]).toEqual({
+      id: `t${T0}`,
+      name: '新類型',
+      len: 15,
+      color: 'orange', // 第一個還沒人用的番茄色
+    });
     expect(s.settings.typeId).toBe('t1');
   });
 
@@ -139,5 +145,22 @@ describe('測試模式（開發期開關）', () => {
     const old = blank();
     delete old.settings.demo;
     expect(normalize(JSON.parse(JSON.stringify(old))).settings.demo).toBe(false);
+  });
+});
+
+describe('番茄色（W1）', () => {
+  test('舊檔沒有顏色依序分配；換色只收五色之一', () => {
+    const s = normalize({
+      settings: {
+        types: [
+          { id: 'a', name: '一', len: 25 },
+          { id: 'b', name: '二', len: 50 },
+        ],
+      },
+      days: {},
+    });
+    expect(s.settings.types.map((t) => t.color)).toEqual(['red', 'orange']);
+    expect(setTypeColor(s, 'b', 'pink').settings.types[1].color).toBe('pink');
+    expect(setTypeColor(s, 'b', 'blue')).toBe(s);
   });
 });

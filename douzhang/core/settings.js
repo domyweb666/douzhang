@@ -12,8 +12,20 @@ export function pickType(state, typeId) {
   return withSettings(state, { typeId });
 }
 
+/** 新類型拿第一個還沒人用的番茄色，都用過就從頭輪。 */
+function freeColor(types) {
+  const used = new Set(types.map((t) => t.color));
+  const all = params.tomatoColors;
+  return all.find((c) => !used.has(c)) || all[types.length % all.length];
+}
+
 export function addType(state, now) {
-  const type = { id: `t${now}`, name: words.newTypeName, len: params.newTypeMinutes };
+  const type = {
+    id: `t${now}`,
+    name: words.newTypeName,
+    len: params.newTypeMinutes,
+    color: freeColor(state.settings.types),
+  };
   return withSettings(state, { types: [...state.settings.types, type] });
 }
 
@@ -44,6 +56,13 @@ export const setCloseTime = (state, closeTime) =>
   params.closeTimes.includes(closeTime) ? withSettings(state, { closeTime }) : state;
 export const setSound = (state, sound) => withSettings(state, { sound: !!sound });
 export const setTilt = (state, tilt) => withSettings(state, { tilt: !!tilt });
+
+/** 換這種類型的番茄色（W1）；不是五色之一就不換。 */
+export function setTypeColor(state, id, color) {
+  if (!params.tomatoColors.includes(color)) return state;
+  const types = state.settings.types.map((t) => (t.id === id ? { ...t, color } : t));
+  return withSettings(state, { types });
+}
 export const setTestMode = (state, on) => withSettings(state, { demo: !!on }); // 存在 PWA 的 demo 欄
 
 /** 估這件事幾顆：寫進今天的 tasks，並把它設成目前那件事（之後收下的豆掛它）。 */

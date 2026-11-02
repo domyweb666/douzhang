@@ -7,10 +7,11 @@ import { AccessibilityInfo, Image, Pressable } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { DeviceMotion } from 'expo-sensors';
 import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
-import { Token, useTokens } from '../design/Tokens';
+import { Token } from '../design/Tokens';
 import { MS_PER_SECOND, jarParams, params } from '../design/params';
 import { words } from '../design/words';
 import { addBody, makeWorld, radiusFor, seed, step, tapAt } from '../core/jarPhysics';
+import { TOMATO_ASPECT, tomatoOf } from './tomatoImages';
 
 const SFX = {
   pop: require('../assets/sfx/pop.wav'),
@@ -21,12 +22,7 @@ const SFX = {
     require('../assets/sfx/hit350.wav'),
   ],
 };
-// 番茄圖（2026-11-02 多米給的透明番茄）：圖的寬＝本體寬、本體中心＝圖中心，蒂往上露出物理圓圈外。高度照圖的比例算，不寫死。
-const TOMATO = require('../assets/img/tomato.webp');
-const ASPECT = (() => {
-  const { width, height } = Image.resolveAssetSource(TOMATO);
-  return height / width;
-})();
+
 const HAPTIC = {
   'impact.rigid': Haptics.ImpactFeedbackStyle.Rigid,
   'impact.light': Haptics.ImpactFeedbackStyle.Light,
@@ -95,7 +91,7 @@ function hit(players, sound, impact) {
   Haptics.impactAsync(HAPTIC[Token.haptic.beanHit]).catch(() => {});
 }
 
-function dropOne(W, r, still) {
+function dropOne(W, r, color, still) {
   if (W.bodies.length >= W.P.maxBeans) return;
   const go = () => {
     const x = W.w / 2 + (Math.random() - 0.5) * r * 2;
@@ -105,16 +101,27 @@ function dropOne(W, r, still) {
     } else {
       addBody(W, r, x, -r * 2, (Math.random() - 0.5) * 2 * DROP.vxSpread, DROP.vy, true);
     }
+    W.bodies[W.bodies.length - 1].color = color; // 物理不管顏色，畫的時候用
   };
   W.timers.push(setTimeout(go, still ? DROP_REDUCED.delayMs : DROP.delayMs)); // 卸載時要清掉
 }
 
-const radiiOf = (W, beans) => beans.map((b) => radiusFor(W.P, b.len));
+/** 照 beans 重新安置，並把每顆的顏色貼回去（seed 照順序加，第 i 顆就是 beans[i]）。 */
+function seedBeans(W, beans) {
+  seed(
+    W,
+    beans.map((b) => radiusFor(W.P, b.len)),
+  );
+  W.bodies.forEach((body, i) => {
+    body.color = beans[i]?.color;
+  });
+}
 
 /** 跟上今天的番茄：多一顆就掉一顆；數目對不上（換日、匯入、清空）就重新安置。 */
 function follow(W, beans, still) {
-  if (beans.length === W.known + 1) dropOne(W, radiusFor(W.P, beans[beans.length - 1].len), still);
-  else if (beans.length !== W.known) seed(W, radiiOf(W, beans));
+  const last = beans[beans.length - 1];
+  if (beans.length === W.known + 1) dropOne(W, radiusFor(W.P, last.len), last.color, still);
+  else if (beans.length !== W.known) seedBeans(W, beans);
   W.known = beans.length;
 }
 
@@ -149,7 +156,7 @@ function useTilt(worldRef, on) {
 
 /** 畫面要的快照：每幀從世界抄一份出來（render 只讀這份，不碰可變的世界）。 */
 function snapshot(W) {
-  return W.bodies.map((b) => ({ id: b.id, x: b.x, y: b.y, r: b.r }));
+  return W.bodies.map((b) => ({ id: b.id, x: b.x, y: b.y, r: b.r, color: b.color }));
 }
 
 /** 每秒結算一次幀數：連續 lowFpsSeconds 秒低於門檻就回報。 */
@@ -212,11 +219,11 @@ function useLoop(worldRef, onLowFps) {
   return frame;
 }
 
-function Bean({ x, y, r }) {
-  const height = r * 2 * ASPECT;
+function Bean({ x, y, r, color }) {
+  const height = r * 2 * TOMATO_ASPECT;
   return (
     <Image
-      source={TOMATO}
+      source={tomatoOf(color)}
       style={{
         position: 'absolute',
         width: r * 2,
@@ -228,14 +235,13 @@ function Bean({ x, y, r }) {
 }
 
 /**
- * beans：今天的番茄（依時間排），每個 { len }（分鐘，決定大小）。多一顆就掉一顆；數目對不上（換日、匯入、清空）就重新安置。
+ * beans：今天的番茄（依時間排），每個 { len, color }（分鐘決定大小，類型決定顏色）。多一顆就掉一顆；數目對不上（換日、匯入、清空）就重新安置。
  * seenRef：殼保管的「豆罐上次看到幾顆」。鈴響時主畫面（連豆罐）整個換成鈴響頁，收下後豆罐重掛；
  *   沒有這個數，重掛就把剛收的那顆直接擺在罐底，不掉、不啵（D+E 審查員）。
  * sound：設定的聲音開關。tilt：設定的傾斜開關。
  * 靜止版（減少動態、或連續掉幀）：不傾斜、不彈、新豆直接出現在罐底，啵與觸覺照樣。
  */
 export function Jar({ beans, seenRef, sound, tilt, style }) {
-  const T = useTokens();
   const reduce = useReduceMotion();
   const [lowFps, setLowFps] = useState(false);
   const still = reduce || lowFps;
@@ -261,7 +267,7 @@ export function Jar({ beans, seenRef, sound, tilt, style }) {
     // 先擺上次看到的那些，多出來的（鈴響時收下的）再照常掉進來
     const before = seenRef.current;
     W.known = before != null && before <= beans.length ? before : beans.length;
-    seed(W, radiiOf(W, beans.slice(0, W.known)));
+    seedBeans(W, beans.slice(0, W.known));
     follow(W, beans, still);
     seenRef.current = W.known;
   };
@@ -291,18 +297,10 @@ export function Jar({ beans, seenRef, sound, tilt, style }) {
         tapAt(worldRef.current, e.nativeEvent.locationX, e.nativeEvent.locationY);
       }}
       accessibilityLabel={n ? `${words.todayBeans} ${n}` : words.todayBeans}
-      style={[
-        {
-          flex: 1,
-          overflow: 'hidden',
-          borderRadius: T.shape.radiusCard,
-          backgroundColor: T.color.card, // V5：罐子畫成卡片，空的時候也看得出這裡是罐子
-        },
-        style,
-      ]}
+      style={[{ flex: 1, overflow: 'hidden' }, style]}
     >
       {frame.map((b) => (
-        <Bean key={b.id} x={b.x} y={b.y} r={b.r} />
+        <Bean key={b.id} x={b.x} y={b.y} r={b.r} color={b.color} />
       ))}
     </Pressable>
   );

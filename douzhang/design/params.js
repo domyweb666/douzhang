@@ -7,6 +7,7 @@ export const params = {
   noteMaxChars: 60, // 記一筆一行（原型 maxlength）
   voidTextMaxChars: 40, // 作廢原因選填那一行（原型 maxlength）
   typeLengths: Array.from({ length: 18 }, (_, i) => (i + 1) * 5), // 5–90 分每 5 分一格（2026-11-02 V1 多米要到 90；滾輪選）
+  tomatoColors: ['red', 'orange', 'yellow', 'purple', 'pink'], // 每種類型一個番茄色（2026-11-02 W1）；圖在 ui/tomatoImages.js
   newTypeMinutes: 15, // 「加一種」新類型的長度（V1 刻度從 5 起算後明寫，維持原本 15）
   devTestSeconds: 5, // 開發期長按「開始」的測試顆與它的休息都是這麼久（V3：看番茄掉進罐子用）
   typeNameMaxChars: 20, // 安全標準 I7

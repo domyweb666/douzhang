@@ -297,6 +297,26 @@ function PrimaryButton({ phase, first, firstLine, len, testMode, onStart, onBack
   );
 }
 
+/** W3：番茄在整個畫面後面掉、滾、堆在最下面（頁面左右有內距，這層往外撐到螢幕邊）。 */
+function FullScreenJar({ state, jarSeen }) {
+  const T = useTokens();
+  // 今天的番茄依時間排；大小跟分鐘走（V4）、顏色跟類型（W1）
+  const todayBeans = (state.days[state.todayKey]?.beans || [])
+    .slice()
+    .sort((a, b) => a.t - b.t)
+    .map((b) => ({ len: b.len, color: typeOf(state, b.typeId).color }));
+  return (
+    <View style={{ position: 'absolute', top: 0, bottom: 0, left: -T.space.l, right: -T.space.l }}>
+      <Jar
+        beans={todayBeans}
+        seenRef={jarSeen}
+        sound={state.settings.sound}
+        tilt={state.settings.tilt}
+      />
+    </View>
+  );
+}
+
 export function Home({ state, phase, now, greet, wiped, jarSeen, actions }) {
   const T = useTokens();
   const { onStart, onBackFromRest } = actions;
@@ -307,49 +327,42 @@ export function Home({ state, phase, now, greet, wiped, jarSeen, actions }) {
   const type = typeOf(state, state.settings.typeId);
   const idle = phase === PHASE.idle;
   const focus = phase === PHASE.focus;
-  // 今天的番茄依時間排，給罐子；大小跟分鐘走（V4）
-  const todayBeans = (state.days[state.todayKey]?.beans || [])
-    .slice()
-    .sort((a, b) => a.t - b.t)
-    .map((b) => ({ len: b.len }));
 
-  // V5：罐子在上（今天的番茄）；卡片、類型、開始鈕收成一組在下半部，按鈕下面留一截空
+  // W3：番茄在整個畫面後面掉、滾、堆在最下面；卡片在上，類型與開始鈕在番茄堆上方。
+  // 前景層 box-none：空白處的點擊穿過去給罐子（點了番茄會彈），按鈕與卡片照常按。
   return (
     <View style={{ flex: 1 }}>
-      <Jar
-        beans={todayBeans}
-        seenRef={jarSeen}
-        sound={state.settings.sound}
-        tilt={state.settings.tilt}
-        style={{ marginTop: T.space.s }}
-      />
-      <Card onPress={idle && !first ? () => setSheet('this') : undefined}>
-        <CardBody
+      <FullScreenJar state={state} jarSeen={jarSeen} />
+      <View style={{ flex: 1 }} pointerEvents="box-none">
+        <Card onPress={idle && !first ? () => setSheet('this') : undefined}>
+          <CardBody
+            phase={phase}
+            state={state}
+            now={now}
+            greet={greet}
+            wiped={wiped}
+            firstLine={firstLine}
+            onFirstLine={setFirstLine}
+          />
+        </Card>
+        <UnderCard phase={phase} state={state} now={now} first={first} setSheet={setSheet} />
+        <View style={{ flex: 1 }} pointerEvents="none" />
+        {idle ? <ThisRow type={type} onPress={() => setSheet('this')} /> : null}
+        <PrimaryButton
           phase={phase}
-          state={state}
-          now={now}
-          greet={greet}
-          wiped={wiped}
+          first={first}
           firstLine={firstLine}
-          onFirstLine={setFirstLine}
+          len={type.len}
+          testMode={state.settings.demo}
+          onStart={onStart}
+          onBackFromRest={onBackFromRest}
+          onEnd={() => {
+            setEndEarly(stoppedEarly(state.current, now));
+            setSheet('end');
+          }}
         />
-      </Card>
-      <UnderCard phase={phase} state={state} now={now} first={first} setSheet={setSheet} />
-      {idle ? <ThisRow type={type} onPress={() => setSheet('this')} /> : null}
-      <PrimaryButton
-        phase={phase}
-        first={first}
-        firstLine={firstLine}
-        len={type.len}
-        testMode={state.settings.demo}
-        onStart={onStart}
-        onBackFromRest={onBackFromRest}
-        onEnd={() => {
-          setEndEarly(stoppedEarly(state.current, now));
-          setSheet('end');
-        }}
-      />
-      <View style={{ height: T.shape.primaryLift }} />
+        <View style={{ height: T.shape.pileRoom }} pointerEvents="none" />
+      </View>
       {focus ? (
         <FocusSheetHost
           sheet={sheet}

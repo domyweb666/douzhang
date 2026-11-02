@@ -50,6 +50,7 @@ import {
   setSound,
   setTilt,
   setTestMode,
+  setTypeColor,
   setTypeLen,
 } from './core/settings';
 import { useNow } from './ui/useNow';
@@ -320,6 +321,7 @@ function makeActions(live, act, commit, { setNotif, setGreet }) {
     onSetSound: (on) => commit(setSound(live, on)),
     onSetTilt: (on) => commit(setTilt(live, on)),
     onSetTestMode: (on) => commit(setTestMode(live, on)),
+    onSetTypeColor: (id, color) => commit(setTypeColor(live, id, color)),
     // 收工與葉子（F）
     onCloseDay: (text) => act((t) => closeDay(live, t, text)),
     onHangLeaf: () => act((t) => hangLeaf(live, t)),

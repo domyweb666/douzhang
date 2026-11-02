@@ -109,6 +109,14 @@ export const words = {
   check: '✓', // 半頁列選中的記號
   addType: '加一種',
   deleteThisType: '刪除這一類', // 類型半頁最下面（U10）
+  tomatoColorRow: '番茄顏色', // 類型半頁（W1）
+  tomatoColorName: {
+    red: '紅番茄',
+    orange: '橘番茄',
+    yellow: '黃番茄',
+    purple: '紫番茄',
+    pink: '粉番茄',
+  },
   typeNameA11y: '類型名字',
   newTypeName: '新類型',
   unnamedType: '未命名',

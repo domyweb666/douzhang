@@ -23,7 +23,7 @@ describe('全新安裝', () => {
   test('全新安裝讀出來是空的，類型只有一般 25 分', async () => {
     const { state, unreadable } = await load();
     expect(unreadable).toBe(false);
-    expect(state.settings.types).toEqual([{ id: 't1', name: '一般', len: 25 }]);
+    expect(state.settings.types).toEqual([{ id: 't1', name: '一般', len: 25, color: 'red' }]);
     expect(state.settings.typeId).toBe('t1');
     expect(state.clue).toBeNull();
     expect(state.days).toEqual({});

@@ -27,7 +27,7 @@ export const CharacterColors = {
   podShade: { light: '#B83A26', dark: '#F07A62' }, // 作廢空心圈的框：白卡 5.72:1、深卡 6.21:1
   leaf: { light: '#BFE0A3', dark: '#7FA86A' }, // 原本的豆綠，留給葉子
   podSoft: { light: '#FBE3DE', dark: '#4A2620' }, // 番茄架時間軸上一顆番茄的底（U9）；上面的主要文字淺 14.25、深 11.59，次要文字 4.82／5.33
-  // 番茄本身用插圖 img/tomato.webp（2026-11-02 多米給的透明番茄），大小跟分鐘走（V4），不是純色
+  // 番茄本身用插圖 img/tomato-〔色〕.webp（2026-11-02 多米給的扁平番茄轉色，萼片不動），大小跟分鐘走（V4），顏色跟類型（W1）
 };
 
 // ---------- 模式解析 ----------
@@ -111,13 +111,13 @@ export function makeTokens(dark = false, hc = false) {
       radiusSheet: 20,
       tapMin: 44,
       tapPrimary: 60,
-      beanRadius: 18, // 參數表 B
+      beanRadius: 28, // 25 分那顆的半徑（參數表 B 原 18；2026-11-02 W2 多米嫌小，直徑 56）
       podDot: 12, // 豆棚上的小豆（原型 .p 13px，取 space 刻度附近的整數；2026-11-01 E1 加）
       hairline: 1, // 列與列的分隔線（系統慣例 1pt；第四處用到時收進來，B+C 審查員）
       rackDayCol: 90, // 豆棚每列左邊「N月D日／星期X」那欄寬（原來寫成 tapPrimary×1.5，D+E 審查員）
       sheetScrollMax: 420, // 收據半頁可捲區最高（原來寫成 tapPrimary×7）
       leafTilt: '-30deg', // 葉子斜放的角度（原型 .leaf）
-      primaryLift: 32, // 主畫面開始鈕下面留的空（V5：不貼著 Home 指示條）
+      pileRoom: 140, // 主畫面開始鈕下面留給番茄堆的高度（W3 全版面：番茄堆在最下面，鈕在它上方）
       pageDot: 8, // 頁碼小圓點（PWA .dots 8px；2026-11-01 左右滑三頁）
       pageDotActive: 22, // 目前那頁的長膠囊（PWA .dots .on 22px）
       // 番茄架時間軸（2026-11-02 U9，示意圖量的）
@@ -128,6 +128,8 @@ export function makeTokens(dark = false, hc = false) {
       weekDayWidth: 40, // 上面那排一天的寬
       dayDot: 6, // 有紀錄那天下面的小點
       blockIcon: 16, // 時間軸裡的小番茄圖
+      colorSwatch: 36, // 設定選番茄色的那五顆（W1）
+      selectRing: 2, // 選中那顆外面的圈
     },
     // 動態：事件命名，數字只從參數表抄。每個都有減少動態版（替換，不是關掉）
     motion: {

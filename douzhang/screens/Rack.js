@@ -21,9 +21,9 @@ import { PageTitle } from '../ui/PageTitle';
 import { CloseSheet } from '../ui/CloseSheet';
 import { canHangLeaf, rackTopRow, typeOf } from '../core/machine';
 import { Leaf } from '../ui/Pod';
+import { tomatoOf } from '../ui/tomatoImages';
 import { DaySheet, WeekSheet } from '../ui/ReceiptSheets';
 
-const TOMATO = require('../assets/img/tomato.webp');
 const MS_PER_HOUR = 60 * MS_PER_MINUTE;
 
 /** 番茄架最下面那一列：'close' 收工（強調色）、'leaf' 今天不適合（次要色，06 狀態表），點了都開收工半頁。 */
@@ -175,7 +175,7 @@ function WeekStrip({ ws, thisWeek, selected, days, onSelect, onShift }) {
 }
 
 /** 時間軸上的一顆番茄或一次作廢。 */
-function Block({ item, top, height, typeName, onPress }) {
+function Block({ item, top, height, type, onPress }) {
   const T = useTokens();
   const mode = T._dark ? 'dark' : 'light';
   const isVoid = item.kind === 'void';
@@ -211,12 +211,12 @@ function Block({ item, top, height, typeName, onPress }) {
         <>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: T.space.xs }}>
             <Image
-              source={TOMATO}
+              source={tomatoOf(type?.color)}
               resizeMode="contain"
               style={{ width: T.shape.blockIcon, height: T.shape.blockIcon }}
             />
             <Text style={{ ...T.font.caption, color: T.color.textPrimary }}>
-              {words.blockTitle(typeName, item.len, item.flow)}
+              {words.blockTitle(type?.name || '', item.len, item.flow)}
             </Text>
           </View>
           <Text numberOfLines={2} style={{ ...T.font.sub, color: T.color.textPrimary }}>
@@ -277,7 +277,7 @@ function DayView({ state, dayKey, onOpen }) {
           item={it}
           top={(it.start - from) * perMs}
           height={Math.max(T.shape.timelineBlockMin, (it.end - it.start) * perMs)}
-          typeName={it.typeId ? typeOf(state, it.typeId).name : ''}
+          type={it.typeId ? typeOf(state, it.typeId) : null}
           onPress={onOpen}
         />
       ))}

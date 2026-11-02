@@ -13,6 +13,7 @@ export const DEV_TYPE = {
   id: 'dev-test',
   name: words.devTypeName,
   len: params.devTestSeconds / SECONDS_PER_MINUTE,
+  color: 'red',
 };
 
 export function typeOf(state, typeId) {

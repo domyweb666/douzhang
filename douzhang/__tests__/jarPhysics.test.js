@@ -20,17 +20,18 @@ const run = (W, seconds) => {
 test('參數從 Tokens 與 params 合成：重力、基準半徑、顆數上限與參數表同值', () => {
   const P = jarParams(Token);
   expect(P.gravity).toBe(1100);
-  expect(P.radius).toBe(18);
+  expect(P.radius).toBe(28); // 直徑 56（W2）
   expect(P.maxBeans).toBe(40);
 });
 
 test('番茄大小：25 分是基準，面積跟分鐘成正比（100 分會是兩倍寬），太小太大夾住', () => {
   const P = jarParams(Token);
-  expect(radiusFor(P, 25)).toBeCloseTo(18);
-  expect(radiusFor(P, 60)).toBeCloseTo(18 * Math.sqrt(60 / 25));
+  const R = P.radius;
+  expect(radiusFor(P, 25)).toBeCloseTo(R);
+  expect(radiusFor(P, 60)).toBeCloseTo(R * Math.sqrt(60 / 25));
   expect(radiusFor(P, 60)).toBeGreaterThan(radiusFor(P, 15));
-  expect(radiusFor(P, 5)).toBeCloseTo(18 * 0.7); // 5 分與測試顆都不會小到看不見
-  expect(radiusFor(P, 90)).toBeCloseTo(18 * 1.75); // 90 分不會撐爆罐子
+  expect(radiusFor(P, 5)).toBeCloseTo(R * 0.7); // 5 分與測試顆都不會小到看不見
+  expect(radiusFor(P, 90)).toBeCloseTo(R * 1.75); // 90 分不會撐爆罐子
 });
 
 test('從罐口掉一顆，兩秒後落在罐底，而且落地那一幀有回報（給啵與觸覺用）', () => {
