@@ -301,7 +301,7 @@ export function Rack({ state, now, actions, wiped, onSettings, onBack }) {
   const sum = daySum(state.days[selected]);
   const empty = !rackWeeks(state).length;
   return (
-    <View style={{ flex: 1, paddingBottom: clearance - T.space.card }}>
+    <View style={{ flex: 1, paddingBottom: clearance }}>
       <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
         <View style={{ flex: 1 }}>
           <PageTitle>{words.rack}</PageTitle>
