@@ -15,6 +15,17 @@ export const CharacterColors = {
   leaf: { light: '#BFE0A3', dark: '#7FA86A' }, // 原本的豆綠，留給葉子
   podSoft: { light: '#FBE3DE', dark: '#4A2620' }, // 番茄架時間軸上一顆番茄的底（U9）；上面的主要文字淺 14.25、深 11.59，次要文字 4.82／5.33
   // 番茄本身用插圖 img/tomato-〔色〕.webp（2026-11-02 多米給的扁平番茄轉色，萼片不動），大小跟分鐘走（V4），顏色跟類型（W1）
+  // 番茄火柴人的頭套（2026-11-15 Y1）：紅與綠取自 tomato-red.webp，淺深色同一組（番茄圖本來就不隨深淺色變）。
+  // 身體線條不在這裡：用介面的主要文字色，深色模式才看得到。
+  mascot: {
+    tomato: '#E33734',
+    tomatoShine: '#F0665E', // 左上那道亮面
+    tomatoRim: '#B32A28', // 臉外面那一圈
+    calyx: '#98C345',
+    stem: '#7BA637',
+    face: '#FFFFFF',
+    ink: '#2B2329', // 眼睛、眉毛、嘴、臉的框（畫在白臉上，不隨深淺色變）
+  },
 };
 
 /** 在元件裡用：const T = useTokens(); 然後 T.color.accent …（要在 DomyThemeProvider 裡面） */
@@ -128,6 +139,8 @@ export function makeTokens(c, dark = false, reduceMotion = false) {
       blockIcon: 16, // 時間軸裡的小番茄圖
       colorSwatch: 36, // 設定選番茄色的那五顆（W1）
       selectRing: 2, // 選中那顆外面的圈
+      mascotHeight: 148, // 番茄火柴人畫多高（Y1）
+      mascotMin: 88, // 位置不到這麼高就不畫（小手機、最大字級），縮太小看起來像壞掉
     },
     motion: {
       beanDrop: { delayMs: 180, vy: -160, vxSpread: 40 }, // 收下這顆 → 豆子掉進來
@@ -153,6 +166,17 @@ export function makeTokens(c, dark = false, reduceMotion = false) {
       sheetInReduced: { durationMs: 150, fromY: 0 }, // 只淡入
       cardPress: { scale: 0.985, durationMs: 150 }, // 按下卡片
       cardPressReduced: { scale: 1, durationMs: 0 },
+      // 番茄火柴人（Y1）：每個動作播一次多久；blendMs 是從站姿帶進動作、再帶回站姿各花多久（動作庫 0.28 秒）。
+      // 慶祝是兩跳（一跳 0.72 秒，要是整數倍才會停在地上）。減少動態時不播，只畫站姿。
+      // landWaitMs：慶祝等番茄落地，但罐子只回報「碰到罐底」；番茄落在別顆上面、或今天滿 40 顆不再掉時等不到，過這麼久就直接慶祝。
+      mascot: {
+        blendMs: 280,
+        cheerMs: 1440,
+        bowMs: 2000,
+        waveMs: 1600,
+        landWaitMs: 1800,
+        shadowOpacity: 0.16,
+      },
       pageSwitch: { durationMs: 380 }, // 原型左右滑的時長；導覽改按鈕後若用推進，交系統動畫
     },
     // 觸覺：事件命名，一事件一觸覺。expo-haptics API 查證 2026-10-31

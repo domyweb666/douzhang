@@ -207,6 +207,7 @@ function useDouzhang() {
   const [state, setState] = useState(null); // null＝還在讀檔
   const [saveFailed, setSaveFailed] = useState(false);
   const [unreadable, setUnreadable] = useState(false); // 本機檔讀不懂：先不覆蓋（I1），只有匯入或清空能換掉
+  const [moment, setMoment] = useState(null); // 'cheer'｜'bow'｜null：剛收下一顆、剛收工或掛葉子，火柴人還沒演過（Y1；不存檔，重開就沒有）
   const arm = useArm();
   const stateRef = useRef(null);
   useEffect(() => {
@@ -262,13 +263,14 @@ function useDouzhang() {
   if (!state) return null;
   // 休息到點沒按也回待機：每一拍在 render 時把過期的休息收掉，下一次動作才存回去
   const live = settle(state, now);
-  const actions = makeActions(live, act, commit, { setNotif, setGreet });
+  const actions = makeActions(live, act, commit, { setNotif, setGreet, setMoment });
   const view = { ...live, todayKey: dayKey(now) }; // 畫面要知道「今天」是哪一天（估過的事只看今天）
   return {
     live: view,
     now,
     phase: phaseOf(live, now),
     greet,
+    moment,
     saveFailed,
     unreadable,
     notif,
@@ -278,7 +280,7 @@ function useDouzhang() {
 }
 
 /** 畫面拿到的動作：純函式算新狀態，act 會先看按下那一刻的時鐘，commit 不需要時鐘。 */
-function makeActions(live, act, commit, { setNotif, setGreet }) {
+function makeActions(live, act, commit, { setNotif, setGreet, setMoment }) {
   return {
     onStart: async (opts) => {
       // 只有第一次（還沒問過）才會真的跳框；問不到也照樣開始（核心不靠通知）
@@ -290,10 +292,12 @@ function makeActions(live, act, commit, { setNotif, setGreet }) {
       }
       setNotif(ok ? 'granted' : 'denied');
       setGreet(false); // 招呼只到開始第一顆為止
+      setMoment(null); // 沒演到的慶祝或鞠躬不留到下一顆
       act((t) => start(live, t, opts));
     },
     onKeep: (text) => {
       setGreet(false); // 收下了新的一句，卡片上已經不是昨天那句
+      setMoment('cheer');
       act((t) => keep(live, t, text));
     },
     onBackFromRest: () => commit(backFromRest(live)),
@@ -318,8 +322,15 @@ function makeActions(live, act, commit, { setNotif, setGreet }) {
     onSetTestMode: (on) => commit(setTestMode(live, on)),
     onSetTypeColor: (id, color) => commit(setTypeColor(live, id, color)),
     // 收工與葉子（F）
-    onCloseDay: (text) => act((t) => closeDay(live, t, text)),
-    onHangLeaf: () => act((t) => hangLeaf(live, t)),
+    onCloseDay: (text) => {
+      setMoment('bow');
+      act((t) => closeDay(live, t, text));
+    },
+    onHangLeaf: () => {
+      setMoment('bow');
+      act((t) => hangLeaf(live, t));
+    },
+    onMascotDone: () => setMoment(null), // 火柴人演完了（Y1）
   };
 }
 
@@ -351,7 +362,7 @@ function Main() {
   const [page, setPage] = useState(PAGE.home); // 左右滑三頁：番茄架｜主畫面｜設定
   const jarSeen = useRef(null); // 豆罐上次看到幾顆：鈴響時豆罐卸載，收下後重掛要知道哪顆是新的
   if (!dz) return <View style={{ flex: 1, backgroundColor: T.color.background }} />;
-  const { live, now, phase, greet, saveFailed, unreadable, notif, actions, backup } = dz;
+  const { live, now, phase, greet, moment, saveFailed, unreadable, notif, actions, backup } = dz;
   return (
     <SafeAreaView edges={TOP_EDGES} style={{ flex: 1, backgroundColor: T.color.background }}>
       <StatusBar style="auto" />
@@ -396,6 +407,7 @@ function Main() {
               now={now}
               actions={actions}
               wiped={backup.wiped}
+              active={page === PAGE.rack}
               onSettings={() => setPage(PAGE.settings)}
               onBack={() => setPage(PAGE.home)}
             />
@@ -404,6 +416,7 @@ function Main() {
               phase={phase}
               now={now}
               greet={greet}
+              moment={page === PAGE.home ? moment : null} // 火柴人只在主畫面是眼前那頁時演（Y1）
               wiped={backup.wiped}
               jarSeen={jarSeen}
               actions={actions}

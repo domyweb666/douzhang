@@ -1,9 +1,9 @@
 {
   "station": "audit",
-  "updated_at": "2026-11-15T06:30:00+08:00",
+  "updated_at": "2026-11-15T07:10:00+08:00",
   "updated_by": "vibe-traffic-control",
   "pieces": {
-    "todo": 1,
+    "todo": 0,
     "machine_verified": 22,
     "human_verified": 3
   },

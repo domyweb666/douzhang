@@ -5,10 +5,10 @@
 // 2026-11-14 照 Domy 重新設計：選中的那天用產品色淡底（同分頁列的選中）、空狀態用 DomyEmptyState、整頁停在分頁列上面。
 import { useState } from 'react';
 import { Image, Pressable, ScrollView, Text, View } from 'react-native';
-import { DomyEmptyState, pressFeedback, useTabBarClearance } from '@domy/design';
+import { DomyButton, pressFeedback, useTabBarClearance } from '@domy/design';
 import { CharacterColors, useTokens } from '../design/Tokens';
 import { words } from '../design/words';
-import { MS_PER_MINUTE, params } from '../design/params';
+import { MS_PER_MINUTE } from '../design/params';
 import {
   dayTimeline,
   daySum,
@@ -23,7 +23,8 @@ import { PageTitle } from '../ui/PageTitle';
 import { CloseSheet } from '../ui/CloseSheet';
 import { canHangLeaf, rackTopRow, typeOf } from '../core/machine';
 import { Leaf } from '../ui/Pod';
-import { TOMATO_ASPECT, tomatoOf } from '../ui/tomatoImages';
+import { Mascot } from '../ui/Mascot';
+import { tomatoOf } from '../ui/tomatoImages';
 import { DaySheet, WeekSheet } from '../ui/ReceiptSheets';
 
 const MS_PER_HOUR = 60 * MS_PER_MINUTE;
@@ -69,24 +70,33 @@ function BottomRow({ kind, onPress }) {
   );
 }
 
-/** 空狀態：第一次是「第一顆響完…」＋回去開始一顆；剛清空是「全部清掉了…」＋去設定匯入（06 豆棚）。 */
-function Empty({ wiped, onBack, onSettings }) {
+/**
+ * 空狀態：第一次是「第一顆響完…」＋回去開始一顆；剛清空是「全部清掉了…」＋去設定匯入（06 豆棚）。
+ * Y1：上面站著番茄火柴人，滑到這頁時揮一次手（剛清空時只站著，不揮）。
+ * 排版照 DomyEmptyState（它的圖示位是固定大小的圓，放不下一整個人，所以這裡自己排）。
+ */
+function Empty({ wiped, active, onBack, onSettings }) {
   const T = useTokens();
-  const size = T.shape.colorSwatch;
   return (
-    <DomyEmptyState
-      icon={
-        <Image
-          source={tomatoOf(params.tomatoColors[0])}
-          style={{ width: size, height: size * TOMATO_ASPECT }}
-        />
-      }
-      title={wiped ? words.wipedLine : words.rackEmpty}
-      action={{
-        title: wiped ? words.wipedAction : words.rackEmptyAction,
-        onPress: wiped ? onSettings : onBack,
+    <View
+      style={{
+        alignItems: 'center',
+        gap: T.space.m,
+        paddingVertical: T.space.xl,
+        paddingHorizontal: T.space.section,
       }}
-    />
+    >
+      <Mascot action="wave" play={active && !wiped} height={T.shape.mascotHeight} />
+      <Text style={{ ...T.font.title3, color: T.color.textPrimary, textAlign: 'center' }}>
+        {wiped ? words.wipedLine : words.rackEmpty}
+      </Text>
+      <DomyButton
+        size="compact"
+        title={wiped ? words.wipedAction : words.rackEmptyAction}
+        onPress={wiped ? onSettings : onBack}
+        style={{ marginTop: T.space.xs }}
+      />
+    </View>
   );
 }
 
@@ -288,7 +298,7 @@ function dayToShow(state, ws) {
   return [...keys].reverse().find((k) => hasRecord(state.days[k])) || keys[0];
 }
 
-export function Rack({ state, now, actions, wiped, onSettings, onBack }) {
+export function Rack({ state, now, actions, wiped, active, onSettings, onBack }) {
   const T = useTokens();
   const clearance = useTabBarClearance(); // 收工那列與時間軸底部都停在分頁列上面
   const [selected, setSelected] = useState(state.todayKey);
@@ -311,7 +321,7 @@ export function Rack({ state, now, actions, wiped, onSettings, onBack }) {
         )}
       </View>
       {empty ? (
-        <Empty wiped={wiped} onBack={onBack} onSettings={onSettings} />
+        <Empty wiped={wiped} active={active} onBack={onBack} onSettings={onSettings} />
       ) : (
         <>
           <WeekStrip

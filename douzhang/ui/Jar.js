@@ -239,9 +239,10 @@ function Bean({ x, y, r, color }) {
  * seenRef：殼保管的「豆罐上次看到幾顆」。鈴響時主畫面（連豆罐）整個換成鈴響頁，收下後豆罐重掛；
  *   沒有這個數，重掛就把剛收的那顆直接擺在罐底，不掉、不啵（D+E 審查員）。
  * sound：設定的聲音開關。tilt：設定的傾斜開關。
+ * onLand：新收的那顆落地那一刻回報（跟啵同一幀；主畫面的火柴人等這一下才慶祝，Y1）。
  * 靜止版（減少動態、或連續掉幀）：不傾斜、不彈、新豆直接出現在罐底，啵與觸覺照樣。
  */
-export function Jar({ beans, seenRef, sound, tilt, style }) {
+export function Jar({ beans, seenRef, sound, tilt, onLand, style }) {
   const reduce = useReduceMotion();
   const [lowFps, setLowFps] = useState(false);
   const still = reduce || lowFps;
@@ -253,9 +254,12 @@ export function Jar({ beans, seenRef, sound, tilt, style }) {
 
   useEffect(() => {
     const W = worldRef.current;
-    W.onLand = () => land(players, sound);
+    W.onLand = () => {
+      land(players, sound);
+      onLand?.();
+    };
     W.onHit = (impact) => hit(players, sound, impact);
-  }, [players, sound]);
+  }, [players, sound, onLand]);
 
   const onLayout = (e) => {
     const W = worldRef.current;

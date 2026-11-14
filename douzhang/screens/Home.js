@@ -3,10 +3,10 @@
 // 豆罐在 D1 才進來，這裡先留一塊空位；豆棚、設定兩個字在，內容是 E1、G1 的事。
 // 2026-11-14 照 Domy Design System 重新設計：卡片是 Domy 的白卡圓角、記一筆是 Domy 的次要小鈕、
 // 番茄堆停在懸浮分頁列上面。子元件全放模組層級（規矩檔：元件不准定義在元件函式裡）。
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { DomyButton, pressFeedback, useTabBarClearance } from '@domy/design';
-import { useTokens } from '../design/Tokens';
+import { Token, useTokens } from '../design/Tokens';
 import { words, startLabel, taskLine, thisRowLabel } from '../design/words';
 import { params } from '../design/params';
 import { DEV_TYPE, PHASE, canHangLeaf, closeHint, stoppedEarly, typeOf } from '../core/machine';
@@ -18,6 +18,7 @@ import { ThisSheet } from '../ui/TypeSheets';
 import { Jar } from '../ui/Jar';
 import { CloseSheet } from '../ui/CloseSheet';
 import { TextButton } from '../ui/TextButton';
+import { Mascot } from '../ui/Mascot';
 
 function Label({ children }) {
   const T = useTokens();
@@ -281,7 +282,7 @@ function PrimaryButton({ phase, first, firstLine, len, testMode, onStart, onBack
 }
 
 /** W3：番茄在整個畫面後面掉、滾、堆在最下面（頁面左右有內距，這層往外撐到螢幕邊）。 */
-function FullScreenJar({ state, jarSeen }) {
+function FullScreenJar({ state, jarSeen, onLand }) {
   const T = useTokens();
   const clearance = useTabBarClearance(); // 番茄堆在分頁列上面，不被它蓋住
   // 今天的番茄依時間排；大小跟分鐘走（V4）、顏色跟類型（W1）
@@ -304,18 +305,58 @@ function FullScreenJar({ state, jarSeen }) {
         seenRef={jarSeen}
         sound={state.settings.sound}
         tilt={state.settings.tilt}
+        onLand={onLand}
       />
     </View>
   );
 }
 
-export function Home({ state, phase, now, greet, wiped, jarSeen, actions }) {
+/**
+ * 番茄火柴人現在在不在、演哪個動作、要不要播（Y1）。不在就回 null。
+ * 休息＝剛收下一顆：等番茄落地才慶祝（兩個同時動會搶）。今天收工了或掛了葉子：鞠躬。
+ * moment 只在主畫面是眼前那一頁時才有（殼給的）；重開 app 沒有 moment，就只是站著。
+ */
+function mascotOf({ phase, state, now, moment, landed }) {
+  if (phase === PHASE.rest) return { action: 'cheer', play: landed && moment === 'cheer' };
+  if (phase !== PHASE.idle || !state.clue) return null;
+  const hint = closeHint(state, now);
+  if (hint !== 'closed' && hint !== 'leaf') return null;
+  return { action: 'bow', play: moment === 'bow' };
+}
+
+/** 卡片與按鈕中間那塊空位。火柴人站在這塊的底部；空位太矮（小手機、最大字級）就不畫。 */
+function MascotSpot({ mascot, onDone }) {
+  const T = useTokens();
+  const [room, setRoom] = useState(0);
+  const height = Math.min(T.shape.mascotHeight, room);
+  return (
+    <View
+      pointerEvents="none"
+      onLayout={(e) => setRoom(e.nativeEvent.layout.height)}
+      style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-end' }}
+    >
+      {mascot && height >= T.shape.mascotMin ? (
+        <Mascot action={mascot.action} play={mascot.play} onDone={onDone} height={height} />
+      ) : null}
+    </View>
+  );
+}
+
+export function Home({ state, phase, now, greet, moment, wiped, jarSeen, actions }) {
   const T = useTokens();
   const clearance = useTabBarClearance();
   const { onStart, onBackFromRest } = actions;
   const [firstLine, setFirstLine] = useState('');
   const [sheet, setSheet] = useState(null); // null｜'note'｜'end'｜'void'｜'this'｜'close'
   const [endEarly, setEndEarly] = useState(false); // 打開「結束這顆」那一刻固定：不到五分鐘嗎
+  // 剛收的那顆落地了沒。鈴響時主畫面整個卸載，收下後重掛，所以每顆都從 false 起算。
+  // 罐子只在番茄碰到罐底時回報；落在別顆上面就等不到，所以過 landWaitMs 也當它落地了。
+  const [landed, setLanded] = useState(false);
+  const onLand = useCallback(() => setLanded(true), []);
+  useEffect(() => {
+    const timer = setTimeout(onLand, Token.motion.mascot.landWaitMs);
+    return () => clearTimeout(timer);
+  }, [onLand]);
   const first = !state.clue;
   const type = typeOf(state, state.settings.typeId);
   const idle = phase === PHASE.idle;
@@ -325,7 +366,7 @@ export function Home({ state, phase, now, greet, wiped, jarSeen, actions }) {
   // 前景層 box-none：空白處的點擊穿過去給罐子（點了番茄會彈），按鈕與卡片照常按。
   return (
     <View style={{ flex: 1 }}>
-      <FullScreenJar state={state} jarSeen={jarSeen} />
+      <FullScreenJar state={state} jarSeen={jarSeen} onLand={onLand} />
       <View style={{ flex: 1 }} pointerEvents="box-none">
         <Card onPress={idle && !first ? () => setSheet('this') : undefined}>
           <CardBody
@@ -339,7 +380,10 @@ export function Home({ state, phase, now, greet, wiped, jarSeen, actions }) {
           />
         </Card>
         <UnderCard phase={phase} state={state} now={now} first={first} setSheet={setSheet} />
-        <View style={{ flex: 1 }} pointerEvents="none" />
+        <MascotSpot
+          mascot={mascotOf({ phase, state, now, moment, landed })}
+          onDone={actions.onMascotDone}
+        />
         {idle ? <ThisRow type={type} onPress={() => setSheet('this')} /> : null}
         <PrimaryButton
           phase={phase}
