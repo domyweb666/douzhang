@@ -1,9 +1,11 @@
 // 主畫面（方向 A：卡片＋滿版按鈕）。四態：第一次、待機、計時中、休息。
 // R2（2026-11-01 重新設計）：待機不放大時間，那句是全頁最大的字；長度在開始鈕上，類型入口在鈕上方。
 // 豆罐在 D1 才進來，這裡先留一塊空位；豆棚、設定兩個字在，內容是 E1、G1 的事。
-// 子元件全放模組層級（規矩檔：元件不准定義在元件函式裡）。
+// 2026-11-14 照 Domy Design System 重新設計：卡片是 Domy 的白卡圓角、記一筆是 Domy 的次要小鈕、
+// 番茄堆停在懸浮分頁列上面。子元件全放模組層級（規矩檔：元件不准定義在元件函式裡）。
 import { useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
+import { DomyButton, pressFeedback, useTabBarClearance } from '@domy/design';
 import { useTokens } from '../design/Tokens';
 import { words, startLabel, taskLine, thisRowLabel } from '../design/words';
 import { params } from '../design/params';
@@ -39,13 +41,15 @@ function Card({ children, onPress }) {
       disabled={!onPress}
       accessibilityRole={onPress ? 'button' : undefined}
       onPress={onPress}
-      style={({ pressed }) => ({
-        backgroundColor: T.color.card,
-        borderRadius: T.shape.radiusCard,
-        padding: T.space.l,
-        marginTop: T.space.m,
-        opacity: pressed ? T.opacity.pressed : 1,
-      })}
+      style={({ pressed }) => [
+        {
+          backgroundColor: T.color.card,
+          borderRadius: T.shape.radiusCard,
+          padding: T.space.l,
+          marginTop: T.space.m,
+        },
+        onPress ? pressFeedback(pressed, T.reduceMotion) : null,
+      ]}
     >
       {children}
     </Pressable>
@@ -108,29 +112,6 @@ function ClueCard({ text, greet, task }) {
   );
 }
 
-function Chip({ label, onPress, style }) {
-  const T = useTokens();
-  return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={onPress}
-      style={({ pressed }) => [
-        {
-          height: T.shape.tapMin,
-          paddingHorizontal: T.space.l,
-          borderRadius: T.shape.radiusPill,
-          backgroundColor: T.color.fillButton,
-          justifyContent: 'center',
-          opacity: pressed ? T.opacity.pressed : 1,
-        },
-        style,
-      ]}
-    >
-      <Text style={{ ...T.font.chip, color: T.color.textPrimary }}>{label}</Text>
-    </Pressable>
-  );
-}
-
 /** 開始鈕上方那一行（U4）：類型＋今天在做的事，點了開「這顆」半頁（分鐘在開始鈕上）。 */
 function ThisRow({ type, onPress }) {
   return (
@@ -160,8 +141,10 @@ function JotChip({ current, onOpen }) {
   const T = useTokens();
   const count = (current.notes?.length || 0) + (current.pings?.length || 0);
   return (
-    <Chip
-      label={words.countLabel(words.quickNote, count)}
+    <DomyButton
+      variant="secondary"
+      size="compact"
+      title={words.countLabel(words.quickNote, count)}
       onPress={onOpen}
       style={{ alignSelf: 'center', marginTop: T.space.m }}
     />
@@ -300,13 +283,22 @@ function PrimaryButton({ phase, first, firstLine, len, testMode, onStart, onBack
 /** W3：番茄在整個畫面後面掉、滾、堆在最下面（頁面左右有內距，這層往外撐到螢幕邊）。 */
 function FullScreenJar({ state, jarSeen }) {
   const T = useTokens();
+  const clearance = useTabBarClearance(); // 番茄堆在分頁列上面，不被它蓋住
   // 今天的番茄依時間排；大小跟分鐘走（V4）、顏色跟類型（W1）
   const todayBeans = (state.days[state.todayKey]?.beans || [])
     .slice()
     .sort((a, b) => a.t - b.t)
     .map((b) => ({ len: b.len, color: typeOf(state, b.typeId).color }));
   return (
-    <View style={{ position: 'absolute', top: 0, bottom: 0, left: -T.space.l, right: -T.space.l }}>
+    <View
+      style={{
+        position: 'absolute',
+        top: 0,
+        bottom: clearance - T.space.card,
+        left: -T.space.screen,
+        right: -T.space.screen,
+      }}
+    >
       <Jar
         beans={todayBeans}
         seenRef={jarSeen}
@@ -319,6 +311,7 @@ function FullScreenJar({ state, jarSeen }) {
 
 export function Home({ state, phase, now, greet, wiped, jarSeen, actions }) {
   const T = useTokens();
+  const clearance = useTabBarClearance();
   const { onStart, onBackFromRest } = actions;
   const [firstLine, setFirstLine] = useState('');
   const [sheet, setSheet] = useState(null); // null｜'note'｜'end'｜'void'｜'this'｜'close'
@@ -361,7 +354,7 @@ export function Home({ state, phase, now, greet, wiped, jarSeen, actions }) {
             setSheet('end');
           }}
         />
-        <View style={{ height: T.shape.pileRoom }} pointerEvents="none" />
+        <View style={{ height: T.shape.pileRoom + clearance }} pointerEvents="none" />
       </View>
       {focus ? (
         <FocusSheetHost

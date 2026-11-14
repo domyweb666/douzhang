@@ -1,5 +1,7 @@
-// 分段選擇：幾個並排的膠囊，一次只能選一個（作廢原因、估幾顆、休息怎麼算）。選中＝強調底深字，沒選＝系統填色。
+// 分段選擇：幾個並排的膠囊，一次只能選一個（作廢原因、類型、休息怎麼算）。
+// Domy 的選項膠囊：選中＝產品色淡底（soft）＋產品色字，沒選＝中性填色。選中另外加粗，不只靠顏色。
 import { Pressable, Text, View } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { useTokens } from '../design/Tokens';
 
 export function Segmented({ options, value, onChange, style }) {
@@ -13,18 +15,27 @@ export function Segmented({ options, value, onChange, style }) {
             key={String(o.value)}
             accessibilityRole="button"
             accessibilityState={{ selected: on }}
-            onPress={() => onChange(o.value)}
-            style={{
+            onPress={() => {
+              if (!on) Haptics.selectionAsync().catch(() => {}); // Tokens.haptic.select：換類型、分段切換
+              onChange(o.value);
+            }}
+            style={({ pressed }) => ({
               minHeight: T.shape.tapMin,
               minWidth: T.shape.tapMin,
-              paddingHorizontal: T.space.m,
+              paddingHorizontal: T.space.card,
               borderRadius: T.shape.radiusPill,
-              backgroundColor: on ? T.color.accent : T.color.fillButton,
+              backgroundColor: on ? T.color.soft : T.color.fillButton,
               justifyContent: 'center',
               alignItems: 'center',
-            }}
+              opacity: pressed ? T.opacity.pressed : 1,
+            })}
           >
-            <Text style={{ ...T.font.chip, color: on ? T.color.onAccent : T.color.textPrimary }}>
+            <Text
+              style={{
+                ...(on ? T.font.chip : T.font.sub),
+                color: on ? T.color.accentText : T.color.textPrimary,
+              }}
+            >
               {o.label}
             </Text>
           </Pressable>

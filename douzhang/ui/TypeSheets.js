@@ -47,7 +47,7 @@ function Stepper({ value, onChange }) {
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: T.color.fillButton,
-        borderRadius: T.shape.radiusButton,
+        borderRadius: T.shape.radiusPill,
       }}
     >
       {key(words.minus, -1, words.estLess)}

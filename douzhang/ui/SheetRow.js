@@ -1,4 +1,4 @@
-// 半頁裡的一列：左邊主字（可帶小副標）、右邊值、選中打勾。類型、估幾顆、結束這顆三個半頁共用。
+// 半頁裡的一列（Domy 列的樣子）：左邊主字（可帶小副標）、右邊值、選中打勾。類型、估幾顆、結束這顆三個半頁共用。
 import { Pressable, Text, View } from 'react-native';
 import { useTokens } from '../design/Tokens';
 import { words } from '../design/words';
@@ -11,10 +11,11 @@ export function SheetRow({ title, sub, value, selected, onPress }) {
       accessibilityState={{ selected: !!selected }}
       onPress={onPress}
       style={({ pressed }) => ({
-        minHeight: T.shape.tapPrimary,
+        minHeight: T.shape.row,
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: T.space.s,
+        gap: T.space.m,
+        paddingVertical: T.space.m,
         borderBottomWidth: T.shape.hairline,
         borderBottomColor: T.color.separator,
         opacity: pressed ? T.opacity.pressed : 1,
@@ -30,9 +31,7 @@ export function SheetRow({ title, sub, value, selected, onPress }) {
       </View>
       {value ? <Text style={{ ...T.font.sub, color: T.color.textSecondary }}>{value}</Text> : null}
       {selected ? (
-        <Text style={{ ...T.font.body, color: T.color.accentText, marginLeft: T.space.s }}>
-          {words.check}
-        </Text>
+        <Text style={{ ...T.font.bodyStrong, color: T.color.accentText }}>{words.check}</Text>
       ) : null}
     </Pressable>
   );

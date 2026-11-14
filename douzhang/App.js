@@ -1,16 +1,10 @@
 // 殼：開機讀檔、每一拍看時鐘、到點換畫面、每次改動就存、狀態變了就重排通知。狀態機在 core/machine.js，畫面在 screens/。
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  Alert,
-  AppState,
-  KeyboardAvoidingView,
-  Linking,
-  Platform,
-  SafeAreaView,
-  Text,
-  View,
-} from 'react-native';
+import { Alert, AppState, KeyboardAvoidingView, Linking, Platform, Text, View } from 'react-native';
+import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import { DomyThemeProvider } from '@domy/design';
+import { douzhangTheme } from './design/theme';
 import { useTokens } from './design/Tokens';
 import { words } from './design/words';
 import { blank, dayKey, load, readRaw, save } from './core/store';
@@ -59,7 +53,8 @@ import { Home } from './screens/Home';
 import { Bell } from './screens/Bell';
 import { Settings } from './screens/Settings';
 import { Rack } from './screens/Rack';
-import { Pager } from './ui/Pager';
+import { PageTabs, Pager } from './ui/Pager';
+import { HomeIcon, RackIcon, SettingsIcon } from './ui/TabIcons';
 
 function DangerLine({ children }) {
   const T = useTokens();
@@ -330,23 +325,41 @@ function makeActions(live, act, commit, { setNotif, setGreet }) {
 
 const PAGE = { rack: 0, home: 1, settings: 2 };
 const PAGE_LABELS = [words.rack, words.home, words.settings];
+const TOP_EDGES = ['top', 'left', 'right'];
+const PAGE_TABS = [
+  { label: words.rack, Icon: RackIcon },
+  { label: words.home, Icon: HomeIcon },
+  { label: words.settings, Icon: SettingsIcon },
+];
 
+/** 2026-11-14 照 Domy Design System 重新設計：最外層包安全區與茄紫 Theme，useTokens() 才拿得到顏色。 */
 export default function App() {
+  return (
+    <SafeAreaProvider>
+      <DomyThemeProvider theme={douzhangTheme}>
+        <Main />
+      </DomyThemeProvider>
+    </SafeAreaProvider>
+  );
+}
+
+/** 下緣不留安全區：分頁列自己避開 Home 指示條，番茄堆停在分頁列上面（各頁用 useTabBarClearance）。 */
+function Main() {
   const T = useTokens();
+  const insets = useSafeAreaInsets();
   const dz = useDouzhang();
   const [page, setPage] = useState(PAGE.home); // 左右滑三頁：番茄架｜主畫面｜設定
   const jarSeen = useRef(null); // 豆罐上次看到幾顆：鈴響時豆罐卸載，收下後重掛要知道哪顆是新的
   if (!dz) return <View style={{ flex: 1, backgroundColor: T.color.background }} />;
   const { live, now, phase, greet, saveFailed, unreadable, notif, actions, backup } = dz;
-
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: T.color.background }}>
+    <SafeAreaView edges={TOP_EDGES} style={{ flex: 1, backgroundColor: T.color.background }}>
       <StatusBar style="auto" />
       <KeyboardAvoidingView
-        style={{ flex: 1, paddingBottom: T.space.m }}
+        style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <View style={{ paddingHorizontal: T.space.l }}>
+        <View style={{ paddingHorizontal: T.space.screen }}>
           {unreadable ? <DangerLine>{words.importUnreadable}</DangerLine> : null}
           {saveFailed ? <DangerLine>{words.saveFailed}</DangerLine> : null}
           {notif === 'denied' && phase === PHASE.focus ? (
@@ -354,7 +367,13 @@ export default function App() {
           ) : null}
         </View>
         {phase === PHASE.bell ? (
-          <View style={{ flex: 1, paddingHorizontal: T.space.l }}>
+          <View
+            style={{
+              flex: 1,
+              paddingHorizontal: T.space.screen,
+              paddingBottom: insets.bottom + T.space.m,
+            }}
+          >
             <Bell
               current={live.current}
               now={now}
@@ -399,6 +418,7 @@ export default function App() {
           </Pager>
         )}
       </KeyboardAvoidingView>
+      {phase === PHASE.bell ? null : <PageTabs page={page} onPage={setPage} tabs={PAGE_TABS} />}
     </SafeAreaView>
   );
 }

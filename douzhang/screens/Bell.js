@@ -2,6 +2,7 @@
 // A5：空白守門（「收下這顆」停用、多一顆「這顆不留話」）、右上「再做 15 分・30 分」一顆一次、念頭與有人找列在框下、很久才回來的副標。
 // R1（2026-11-01 重新設計）：框上放「這顆在做」那句，接的兩半同框。
 // U7（2026-11-02）：「再做 N 分」從右上角搬到收下鈕正上方，兩顆直接按，不再開半頁。
+// 2026-11-14 照 Domy 重新設計：「這顆在做」放在產品色淡底小卡（tint＋soft 框），輸入框是 Domy 的白底細框。
 import { Text, TextInput, View } from 'react-native';
 import { useTokens } from '../design/Tokens';
 import { words } from '../design/words';
@@ -26,18 +27,20 @@ function Header({ current, now }) {
   );
 }
 
-/** 這顆開始時那句。用框線不用底色，不跟下面的輸入框搶；上一顆不留話就不畫。 */
+/** 這顆開始時那句。淡紫底小卡，跟下面白底的輸入框分得開；上一顆不留話就不畫。 */
 function PrevLine({ text }) {
   const T = useTokens();
   if (!text) return null;
   return (
     <View
       style={{
+        backgroundColor: T.color.tint,
         borderWidth: T.shape.hairline,
-        borderColor: T.color.separator,
-        borderRadius: T.shape.radiusButton,
-        padding: T.space.m,
-        marginTop: T.space.m,
+        borderColor: T.color.soft,
+        borderRadius: T.shape.radiusCard,
+        paddingHorizontal: T.space.card,
+        paddingVertical: T.space.m,
+        marginTop: T.space.card,
       }}
     >
       <Text style={{ ...T.font.caption, color: T.color.textSecondary }}>{words.bellPrevCap}</Text>
@@ -106,12 +109,16 @@ export function Bell({ current, now, draft, onDraft, onKeep, onFlow }) {
         onChangeText={onDraft}
         placeholder={words.bellPlaceholder}
         placeholderTextColor={T.color.textSecondary}
+        selectionColor={T.color.accent}
         style={{
           ...T.font.sentence,
           color: T.color.textPrimary,
           backgroundColor: T.color.card,
-          borderRadius: T.shape.radiusButton,
-          padding: T.space.m,
+          borderWidth: T.shape.hairline,
+          borderColor: T.color.fieldBorder,
+          borderRadius: T.shape.radiusCard,
+          paddingHorizontal: T.space.card,
+          paddingVertical: T.space.m,
           marginTop: T.space.s,
           minHeight: T.shape.tapPrimary * 2,
         }}

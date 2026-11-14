@@ -2,11 +2,13 @@
 // 每顆番茄畫在開始的時刻、高度照長度、裡面寫鈴響時留的那句；作廢是虛線框。點一顆開那天的收據。
 // 換週用 ‹ › 不用左右滑：這頁本身在左右滑的分頁裡，再滑一層會搶手勢。
 // 沒番茄的日子不寫 0、沒有連續數字（S12、S15）。最下面一列：今天沒收工→收工；今天什麼都沒有→掛葉子（F1、F2）。
+// 2026-11-14 照 Domy 重新設計：選中的那天用產品色淡底（同分頁列的選中）、空狀態用 DomyEmptyState、整頁停在分頁列上面。
 import { useState } from 'react';
 import { Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { DomyEmptyState, pressFeedback, useTabBarClearance } from '@domy/design';
 import { CharacterColors, useTokens } from '../design/Tokens';
 import { words } from '../design/words';
-import { MS_PER_MINUTE } from '../design/params';
+import { MS_PER_MINUTE, params } from '../design/params';
 import {
   dayTimeline,
   daySum,
@@ -21,7 +23,7 @@ import { PageTitle } from '../ui/PageTitle';
 import { CloseSheet } from '../ui/CloseSheet';
 import { canHangLeaf, rackTopRow, typeOf } from '../core/machine';
 import { Leaf } from '../ui/Pod';
-import { tomatoOf } from '../ui/tomatoImages';
+import { TOMATO_ASPECT, tomatoOf } from '../ui/tomatoImages';
 import { DaySheet, WeekSheet } from '../ui/ReceiptSheets';
 
 const MS_PER_HOUR = 60 * MS_PER_MINUTE;
@@ -34,16 +36,20 @@ function BottomRow({ kind, onPress }) {
     <Pressable
       accessibilityRole="button"
       onPress={onPress}
-      style={({ pressed }) => ({
-        minHeight: T.shape.tapPrimary,
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: T.color.card,
-        borderRadius: T.shape.radiusCard,
-        paddingHorizontal: T.space.l,
-        marginTop: T.space.s,
-        opacity: pressed ? T.opacity.pressed : 1,
-      })}
+      style={({ pressed }) => [
+        {
+          minHeight: T.shape.row,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: T.space.m,
+          backgroundColor: T.color.card,
+          borderRadius: T.shape.radiusCard,
+          paddingHorizontal: T.space.card,
+          paddingVertical: T.space.m,
+          marginTop: T.space.s,
+        },
+        pressFeedback(pressed, T.reduceMotion),
+      ]}
     >
       <View style={{ flex: 1 }}>
         <Text
@@ -58,7 +64,7 @@ function BottomRow({ kind, onPress }) {
           {close ? words.rackCloseSub : words.rackLeafSub}
         </Text>
       </View>
-      <Text style={{ ...T.font.body, color: T.color.textSecondary }}>{words.chevron}</Text>
+      <Text style={{ ...T.font.body, color: T.color.textTertiary }}>{words.chevron}</Text>
     </Pressable>
   );
 }
@@ -66,31 +72,21 @@ function BottomRow({ kind, onPress }) {
 /** 空狀態：第一次是「第一顆響完…」＋回去開始一顆；剛清空是「全部清掉了…」＋去設定匯入（06 豆棚）。 */
 function Empty({ wiped, onBack, onSettings }) {
   const T = useTokens();
+  const size = T.shape.colorSwatch;
   return (
-    <View
-      style={{
-        backgroundColor: T.color.card,
-        borderRadius: T.shape.radiusCard,
-        paddingHorizontal: T.space.l,
-        marginTop: T.space.l,
+    <DomyEmptyState
+      icon={
+        <Image
+          source={tomatoOf(params.tomatoColors[0])}
+          style={{ width: size, height: size * TOMATO_ASPECT }}
+        />
+      }
+      title={wiped ? words.wipedLine : words.rackEmpty}
+      action={{
+        title: wiped ? words.wipedAction : words.rackEmptyAction,
+        onPress: wiped ? onSettings : onBack,
       }}
-    >
-      <Text
-        style={{
-          ...T.font.sub,
-          color: T.color.textSecondary,
-          textAlign: 'center',
-          marginTop: T.space.l,
-        }}
-      >
-        {wiped ? words.wipedLine : words.rackEmpty}
-      </Text>
-      <TextButton
-        label={wiped ? words.wipedAction : words.rackEmptyAction}
-        onPress={wiped ? onSettings : onBack}
-        style={{ alignSelf: 'center', marginVertical: T.space.m }}
-      />
-    </View>
+    />
   );
 }
 
@@ -101,7 +97,7 @@ function DayKey({ dayKey, day, selected, onPress }) {
   const has = hasRecord(day);
   const leafOnly = has && day.leaf && !day.beans.length && !day.voids.length;
   const dot = leafOnly ? CharacterColors.leaf[mode] : CharacterColors.pod[mode];
-  const fg = selected ? T.color.onAccent : T.color.textPrimary;
+  const fg = selected ? T.color.accentText : T.color.textPrimary;
   return (
     <Pressable
       accessibilityRole="button"
@@ -113,7 +109,7 @@ function DayKey({ dayKey, day, selected, onPress }) {
         paddingVertical: T.space.xs,
         alignItems: 'center',
         borderRadius: T.shape.radiusButton,
-        backgroundColor: selected ? T.color.accent : 'transparent', // token-ok: 沒選的那天不畫底
+        backgroundColor: selected ? T.color.soft : 'transparent', // token-ok: 沒選的那天不畫底
       }}
     >
       <Text style={{ ...T.font.caption, color: selected ? fg : T.color.textSecondary }}>
@@ -294,6 +290,7 @@ function dayToShow(state, ws) {
 
 export function Rack({ state, now, actions, wiped, onSettings, onBack }) {
   const T = useTokens();
+  const clearance = useTabBarClearance(); // 收工那列與時間軸底部都停在分頁列上面
   const [selected, setSelected] = useState(state.todayKey);
   const [dayOpen, setDayOpen] = useState(null);
   const [weekOpen, setWeekOpen] = useState(null);
@@ -304,7 +301,7 @@ export function Rack({ state, now, actions, wiped, onSettings, onBack }) {
   const sum = daySum(state.days[selected]);
   const empty = !rackWeeks(state).length;
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, paddingBottom: clearance - T.space.card }}>
       <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
         <View style={{ flex: 1 }}>
           <PageTitle>{words.rack}</PageTitle>

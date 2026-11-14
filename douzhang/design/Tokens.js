@@ -1,24 +1,11 @@
-// 豆帳 設計代號（v0.1 暫定）。畫面程式只准用 Token.*，不准寫色碼、字級、間距、動畫數字。
-// 兩層：palette＝原始值，只在這裡；Token＝語意層，依用途命名。
-// 來源：.uiux/03-線框（版面尺寸）、.uiux/04-手感/參數表-暫定.md（動態與觸覺）、index.html 原型（色票）。
-// 對比：見 對比檢查表-暫定.md；改任何顏色後整表重跑。
-import { AccessibilityInfo, PixelRatio, useColorScheme } from 'react-native';
-import { useEffect, useState } from 'react';
-
-// ---------- 原始值層（只在此處）。每色四組：淺／深／增加對比淺／增加對比深 ----------
-// 2026-11-02 第二輪 U1（多米選「夜紫＋番茄」）：從新 icon 抽色。背景、卡片、文字、分隔、填充不再走 iOS 系統色，
-// 改成帶一點紫的自訂值（系統灰配不上 icon）；代價是深色與增加對比要自己給，四組都在對比表算過。
-const palette = {
-  bg: { light: '#F6F2EE', dark: '#17111C', hcLight: '#F6F2EE', hcDark: '#0E0A11' }, // 微暖米白／紫黑
-  card: { light: '#FFFFFF', dark: '#241B2B', hcLight: '#FFFFFF', hcDark: '#2A2031' },
-  text: { light: '#1E1724', dark: '#F4EEF7', hcLight: '#000000', hcDark: '#FFFFFF' },
-  grey2: { light: '#6A6170', dark: '#ABA1B2', hcLight: '#554C5A', hcDark: '#D2C9D8' }, // 次要文字（填充底上也要過 4.5）
-  line: { light: '#DDD5E0', dark: '#3E3346', hcLight: '#B9AFBE', hcDark: '#5F5367' }, // 分隔線
-  fill: { light: '#ECE6EF', dark: '#33283B', hcLight: '#DCD3E1', hcDark: '#43374C' }, // 第二顆按鈕、chip、分段
-  plum: { light: '#3B2547', dark: '#E9DDF2', hcLight: '#2A1834', hcDark: '#F7F0FB' }, // 主要按鈕底、強調文字（icon 背景的茄紫）
-  onPlum: { light: '#FFFFFF', dark: '#2A1A33', hcLight: '#FFFFFF', hcDark: '#1A0F21' }, // 茄紫按鈕上的字
-  red: { light: '#C8102E', dark: '#FF453A', hcLight: '#A3000F', hcDark: '#FF6961' }, // 危險文字，淺色模式比原型 #FF3B30 深
-};
+// 豆帳 設計代號。畫面程式只准用 useTokens() 拿到的 T.*，不准寫色碼、字級、間距、動畫數字。
+// 2026-11-14 多米：照 Domy Design System（E:\domy-design，套件 @domy/design）重新設計全部 UI。
+// 顏色、字級、間距、圓角、按鈕與列的尺寸全部從 @domy/design 推出來（產品色在 design/theme.js）；
+// 這個檔只留豆帳自己才有的：番茄與葉子的角色色、大時間、時間軸與罐子的尺寸、動態、觸覺、音效。
+// 鍵名沿用舊版，畫面不用跟著改名；新畫面優先直接用 @domy/design 的元件。
+import { PixelRatio } from 'react-native';
+import { T as D, typeStyle, useDomy } from '@domy/design';
+import { douzhangTheme } from './theme';
 
 // 角色色：另外放，不進介面語意層。只准畫番茄、番茄串、葉子；不當文字色、不當按鈕色。
 // 2026-11-01 多米：番茄串的小圓點改番茄紅（取自番茄圖平均色 #CB4B34 附近，淺深各調到在卡片底上 ≥ 3:1）；葉子維持原本的綠。
@@ -30,96 +17,107 @@ export const CharacterColors = {
   // 番茄本身用插圖 img/tomato-〔色〕.webp（2026-11-02 多米給的扁平番茄轉色，萼片不動），大小跟分鐘走（V4），顏色跟類型（W1）
 };
 
-// ---------- 模式解析 ----------
-const pick = (c, dark, hc) => (hc ? (dark ? c.hcDark : c.hcLight) : dark ? c.dark : c.light);
-
-/** 在元件裡用：const T = useTokens(); 然後 T.color.accent …  */
+/** 在元件裡用：const T = useTokens(); 然後 T.color.accent …（要在 DomyThemeProvider 裡面） */
 export function useTokens() {
-  const dark = useColorScheme() === 'dark';
-  const [hc, setHc] = useState(false);
-  useEffect(() => {
-    let on = true;
-    // RN 0.88 有 isDarkerSystemColorsEnabled（iOS「增加對比」）；查證 2026-10-31 於安裝的 react-native 型別檔
-    AccessibilityInfo.isDarkerSystemColorsEnabled?.()
-      .then((v) => on && setHc(!!v))
-      .catch(() => {});
-    const sub = AccessibilityInfo.addEventListener?.('darkerSystemColorsChanged', (v) =>
-      setHc(!!v),
-    );
-    return () => {
-      on = false;
-      sub?.remove?.();
-    };
-  }, []);
-  return makeTokens(dark, hc);
+  const { c, scheme, reduceMotion } = useDomy();
+  return makeTokens(c, scheme === 'dark', reduceMotion);
 }
 
-export function makeTokens(dark = false, hc = false) {
-  const p = (c) => pick(c, dark, hc);
+// 中文多行時 Domy 的大字行高偏緊：那句與輸入框各多一格間距的行高
+const roomy = (variant, weight) => ({
+  ...typeStyle(variant),
+  fontWeight: weight,
+  lineHeight: D.type[variant].size + D.space[3],
+});
+
+export function makeTokens(c, dark = false, reduceMotion = false) {
   return {
     color: {
-      background: p(palette.bg),
-      card: p(palette.card),
-      textPrimary: p(palette.text),
-      separator: p(palette.line),
-      fillButton: p(palette.fill), // 第二顆按鈕、chip、分段
-      textSecondary: p(palette.grey2), // 小標、副標、收據時間、placeholder 也用這個
-      accent: p(palette.plum), // 主要按鈕底：每個畫面只出現一次
-      onAccent: p(palette.onPlum), // 主要按鈕上的字
-      accentText: p(palette.plum), // 可點的強調文字（「加一種」「收工」「連結」）；配 bodyStrong 字重
-      danger: p(palette.red), // 清空所有資料、錯誤字
+      background: c.canvas,
+      card: c.surface,
+      textPrimary: c.textPrimary,
+      textSecondary: c.textSecondary, // 小標、副標、收據時間、placeholder
+      textTertiary: c.textTertiary, // 箭頭
+      separator: c.separator,
+      fieldBorder: c.fieldBorder,
+      fillButton: c.surfaceMuted, // 第二顆按鈕、chip
+      accent: c.accent, // 主要按鈕底：每個畫面只出現一次
+      onAccent: c.onAccent,
+      accentText: c.strong, // 可點的強調文字、選中的字
+      soft: c.soft, // 選中的分頁、選項膠囊、選中的那天
+      tint: c.tint, // 淡底小卡
+      danger: c.destructive, // 清空所有資料、錯誤字
+      dangerSoft: c.destructiveSoft,
+      disabledText: c.textDisabled,
+      shadow: c.shadow, // 半頁後面的遮罩
     },
-    // 文字：基準字級對應 iOS 系統文字樣式（largeTitle 34／title1 28／title2 22／body 17／callout 16／subheadline 15／footnote 13）
-    // RN Text 預設跟系統字級縮放；不准 allowFontScaling={false}
+    // 文字：全部是 Domy 的字級（iOS 系統文字樣式）。RN Text 預設跟系統字級縮放；不准 allowFontScaling={false}
     font: {
-      largeTitle: { fontSize: 34, fontWeight: '700' }, // 頁面大標（原型 h1）
-      title: { fontSize: 28, fontWeight: '800' }, // 鈴響「響了。」
-      hero: { fontSize: 28, fontWeight: '600', lineHeight: 38 }, // 待機卡片裡那句：全頁最大的字（2026-11-01 重新設計 R2）
-      sentence: { fontSize: 22, fontWeight: '500', lineHeight: 32 }, // 鈴響與收工的輸入框（原型 .card .txt 22）
-      section: { fontSize: 22, fontWeight: '700' }, // 豆棚週標題、半頁標題
-      body: { fontSize: 17 },
-      bodyStrong: { fontSize: 17, fontWeight: '600' }, // 文字鈕（強調色沒有色相後靠字重）、鈴響問句
-      callout: { fontSize: 16 },
-      sub: { fontSize: 15 }, // 列副標、chip、hint 連結
-      chip: { fontSize: 15, fontWeight: '600' }, // 類型 chip（原型 .chip 15/600）
-      caption: { fontSize: 13 }, // 小標 cap、foot-note、卡片標籤
+      largeTitle: typeStyle('largeTitle'), // 番茄架、設定的頁標
+      title: typeStyle('title1'), // 鈴響「響了。」
+      hero: roomy('title1', '600'), // 待機卡片裡那句：全頁最大的字
+      sentence: roomy('title3', '400'), // 鈴響與收工的輸入框
+      section: typeStyle('title2'), // 半頁標題
+      title3: typeStyle('title3'), // 區塊標題（同 DomySection）
+      body: typeStyle('body'),
+      bodyStrong: typeStyle('headline'), // 文字鈕、鈴響問句
+      callout: typeStyle('callout'),
+      sub: typeStyle('subheadline'),
+      chip: { ...typeStyle('subheadline'), fontWeight: '600' },
+      caption: typeStyle('footnote'),
+      tab: typeStyle('caption'),
+      // 大時間是豆帳自己的（Domy 沒有）。數字等寬，字級上限 1.6 倍
       clock: {
         fontSize: 92,
         fontWeight: '700',
         fontVariant: ['tabular-nums'],
         maxFontSizeMultiplier: 1.6,
-      }, // 待機大時間；圓體要放字型檔，暫用系統字
+      },
       clockFocus: {
         fontSize: 72,
-        fontWeight: '800',
+        fontWeight: '700',
         fontVariant: ['tabular-nums'],
         maxFontSizeMultiplier: 1.6,
       },
-      button: { fontSize: 19, fontWeight: '700' }, // 主要按鈕（算大字，門檻 3:1）
-      button2: { fontSize: 17, fontWeight: '600' },
+      button: typeStyle('headline'), // 主要按鈕（同 DomyButton regular）
+      button2: typeStyle('headline'),
     },
-    // 間距：五個刻度，從線框與灰盒子量出的 4／8／10／12／14／16／18／20／22／26／34 合併
-    space: { xs: 4, s: 8, m: 12, l: 20, xl: 32 },
+    // 間距：Domy 的刻度，舊鍵名對上 4／8／12／20／32
+    space: {
+      xs: D.space[1],
+      s: D.space[2],
+      m: D.space[3],
+      card: D.space[4], // 卡片、列的左右內距（同 DomySection）
+      l: D.space[5],
+      section: D.space[6], // 區塊之間（同 DomyScreen 的 gap）
+      xl: D.space[8],
+      screen: D.size.screenMargin,
+    },
     /** 靠近文字的間距乘這個，最大字級時才不會擠（ScaledMetric 的對應） */
     fontScale: () => PixelRatio.getFontScale(),
-    // 按鈕狀態的不透明度：停用與按下。數字只在這裡
-    opacity: { disabled: 0.4, pressed: 0.85 },
+    // 停用改用顏色（同 DomyButton），按下照 Domy：縮一點，減少動態時變淡
+    opacity: { disabled: D.motion.pressedOpacity, pressed: D.motion.pressedOpacity, scrim: 0.32 },
+    press: { scale: D.motion.pressScale, durationMs: D.motion.pressDuration },
+    reduceMotion,
     shape: {
-      radiusCard: 16,
-      radiusButton: 14,
-      radiusPill: 999,
-      radiusSheet: 20,
-      tapMin: 44,
-      tapPrimary: 60,
+      radiusCard: D.radius.xl, // 卡片、分組（同 DomySection）
+      radiusButton: D.radius.md, // 輸入框、時間軸方塊、小卡
+      radiusPill: D.radius.pill, // 按鈕、膠囊
+      radiusSheet: D.radius['2xl'],
+      tapMin: D.size.touch,
+      tapPrimary: D.size.button, // 主要按鈕高
+      buttonCompact: D.size.buttonCompact,
+      row: D.size.row, // 列高
+      field: D.size.field,
+      pickerHeight: D.size.pickerHeight,
+      hairline: D.size.hairline,
+      grabber: { width: D.space[8] + D.space[1], height: D.space[1] + 1 }, // 半頁上緣的小把手（iOS 36×5）
       beanRadius: 28, // 25 分那顆的半徑（參數表 B 原 18；2026-11-02 W2 多米嫌小，直徑 56）
       podDot: 12, // 豆棚上的小豆（原型 .p 13px，取 space 刻度附近的整數；2026-11-01 E1 加）
-      hairline: 1, // 列與列的分隔線（系統慣例 1pt；第四處用到時收進來，B+C 審查員）
       rackDayCol: 90, // 豆棚每列左邊「N月D日／星期X」那欄寬（原來寫成 tapPrimary×1.5，D+E 審查員）
       sheetScrollMax: 420, // 收據半頁可捲區最高（原來寫成 tapPrimary×7）
       leafTilt: '-30deg', // 葉子斜放的角度（原型 .leaf）
       pileRoom: 140, // 主畫面開始鈕下面留給番茄堆的高度（W3 全版面：番茄堆在最下面，鈕在它上方）
-      pageDot: 8, // 頁碼小圓點（PWA .dots 8px；2026-11-01 左右滑三頁）
-      pageDotActive: 22, // 目前那頁的長膠囊（PWA .dots .on 22px）
       // 番茄架時間軸（2026-11-02 U9，示意圖量的）
       timelineHour: 64, // 一小時多高
       timelineGutter: 52, // 左邊時刻那欄寬
@@ -131,7 +129,6 @@ export function makeTokens(dark = false, hc = false) {
       colorSwatch: 36, // 設定選番茄色的那五顆（W1）
       selectRing: 2, // 選中那顆外面的圈
     },
-    // 動態：事件命名，數字只從參數表抄。每個都有減少動態版（替換，不是關掉）
     motion: {
       beanDrop: { delayMs: 180, vy: -160, vxSpread: 40 }, // 收下這顆 → 豆子掉進來
       beanDropReduced: { delayMs: 0, fadeMs: 200 }, // 淡入在罐底
@@ -180,10 +177,9 @@ export function makeTokens(dark = false, hc = false) {
       hitVolMax: 0.1,
       chime: { hz: [784, 1175], sec: 1.6 }, // 鈴聲，原生版改本地通知音檔
     },
-    _palette: palette, // 只給對比腳本與測試讀，畫面不准用
     _dark: dark,
-    _hc: hc, // 目前解析到的模式，除錯頁顯示用
   };
 }
 
-export const Token = makeTokens(false, false); // 無 hook 情境（例如純函式）用；元件裡請用 useTokens()
+// 無 hook 情境（罐子物理、測試）用：只拿動態、觸覺、音效、尺寸，顏色是淺色那份
+export const Token = makeTokens(douzhangTheme.colors.light, false);
