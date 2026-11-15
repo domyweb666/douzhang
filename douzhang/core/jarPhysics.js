@@ -27,7 +27,7 @@ export function radiusFor(P, minutes) {
   return P.radius * Math.min(P.sizeMax, Math.max(P.sizeMin, k));
 }
 
-/** 加一顆，半徑 r。fresh＝從罐口掉進來的，落地那一幀要回報（啵＋觸覺）。 */
+/** 加一顆，半徑 r。fresh＝從罐口掉進來的，落地那一幀要回報（啵＋觸覺）；落地＝第一次碰到罐底，或撞到下面已經落定的番茄。 */
 export function addBody(W, r, x, y, vx = 0, vy = 0, fresh = false) {
   W.bodies.push({ x, y, vx, vy, r, fresh, id: newId() });
 }
@@ -44,6 +44,19 @@ function integrate(W, dt) {
     b.x += b.vx * dt;
     b.y += b.vy * dt;
   }
+}
+
+/**
+ * 還在掉的那顆撞到下面已經落定的番茄，也算落地（2026-11-15）。
+ * 原本只認罐底：第一排滿了之後新的一顆都落在別顆上面，啵與觸覺就不見了。
+ * 兩顆都還在掉的互撞不算；落定的那顆要在下面（點一下彈上來撞到的不算）。
+ */
+function landOnPile(W, a, b) {
+  if (a.fresh === b.fresh) return;
+  const [falling, resting] = a.fresh ? [a, b] : [b, a];
+  if (resting.y <= falling.y) return;
+  falling.fresh = false;
+  W.landed.push(falling);
 }
 
 function solveBeanPairs(W) {
@@ -68,6 +81,7 @@ function solveBeanPairs(W) {
       b.y += ny * o;
       const rv = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
       if (rv >= 0) continue;
+      landOnPile(W, a, b);
       const jj = (-beanRest * rv) / 2;
       a.vx -= jj * nx;
       a.vy -= jj * ny;

@@ -96,3 +96,36 @@ test('遠離手指的豆不受影響', () => {
   tapAt(W, 280, 50);
   expect(W.bodies[0].vy).toBe(before);
 });
+
+/** 每幀照畫面那樣清空再走一步，回傳每次回報落地的 { 第幾幀, 那顆 }。 */
+const landings = (W, frames) => {
+  const seen = [];
+  for (let i = 0; i < frames; i++) {
+    W.impact = 0;
+    W.landed = [];
+    step(W, 1 / 60);
+    for (const b of W.landed) seen.push({ frame: i, body: b, y: b.y });
+  }
+  return seen;
+};
+
+test('罐底第一排滿了，新的一顆落在別顆上面：撞到那一幀就回報落地，而且只回報一次', () => {
+  const W = world();
+  for (let i = 0; i < 5; i++) addBody(W, 28, 30 + i * 60, 400 - 28); // 寬 300 的罐底排滿五顆
+  run(W, 1);
+  addBody(W, 28, 150, -56, 0, -160, true);
+  const seen = landings(W, 240);
+  expect(seen).toHaveLength(1);
+  expect(seen[0].body).toBe(W.bodies[5]);
+  expect(seen[0].y).toBeLessThan(400 - 28 - 28); // 回報時還在第一排上面，不是等它碰到罐底
+  expect(W.bodies[5].fresh).toBe(false);
+});
+
+test('兩顆都還在掉、半空中互撞不算落地：要等其中一顆碰到罐底', () => {
+  const W = world();
+  addBody(W, 18, 150, 100, 0, 0, true);
+  addBody(W, 18, 150, 40, 0, 600, true); // 上面那顆比較快，半空中追撞下面那顆
+  const seen = landings(W, 240);
+  expect(seen.length).toBeGreaterThan(0);
+  expect(seen[0].y).toBeGreaterThan(400 - 18 - 1); // 第一次回報就是碰到罐底那顆
+});

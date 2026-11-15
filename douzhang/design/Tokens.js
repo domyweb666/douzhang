@@ -168,7 +168,7 @@ export function makeTokens(c, dark = false, reduceMotion = false) {
       cardPressReduced: { scale: 1, durationMs: 0 },
       // 番茄火柴人（Y1）：每個動作播一次多久；blendMs 是從站姿帶進動作、再帶回站姿各花多久（動作庫 0.28 秒）。
       // 慶祝是兩跳（一跳 0.72 秒，要是整數倍才會停在地上）。減少動態時不播，只畫站姿。
-      // landWaitMs：慶祝等番茄落地，但罐子只回報「碰到罐底」；番茄落在別顆上面、或今天滿 40 顆不再掉時等不到，過這麼久就直接慶祝。
+      // landWaitMs：慶祝等番茄落地；今天滿 40 顆不再掉新的時等不到，過這麼久就直接慶祝。
       mascot: {
         blendMs: 280,
         cheerMs: 1440,

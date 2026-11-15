@@ -350,7 +350,7 @@ export function Home({ state, phase, now, greet, moment, wiped, jarSeen, actions
   const [sheet, setSheet] = useState(null); // null｜'note'｜'end'｜'void'｜'this'｜'close'
   const [endEarly, setEndEarly] = useState(false); // 打開「結束這顆」那一刻固定：不到五分鐘嗎
   // 剛收的那顆落地了沒。鈴響時主畫面整個卸載，收下後重掛，所以每顆都從 false 起算。
-  // 罐子只在番茄碰到罐底時回報；落在別顆上面就等不到，所以過 landWaitMs 也當它落地了。
+  // 今天滿 40 顆時罐子不再掉新的，等不到落地，所以過 landWaitMs 也當它落地了。
   const [landed, setLanded] = useState(false);
   const onLand = useCallback(() => setLanded(true), []);
   useEffect(() => {
