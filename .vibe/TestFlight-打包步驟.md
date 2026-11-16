@@ -7,8 +7,8 @@
 | 步驟 | 在哪裡做 | 大概多久 | 狀態 |
 |---|---|---|---|
 | 1. 登記 Bundle ID、新增 App | Apple 網站 | 5 分鐘 | 還沒做 |
-| 2. 設四個 Apple 金鑰 secret | GitHub 網站 | 5 分鐘 | 還沒做 |
-| 3. 建 deploy key | 跟 Claude 說一句 | 1 分鐘 | 還沒做 |
+| 2. 設四個 Apple 金鑰 secret | GitHub 網站 | 5 分鐘 | 11/16 四個名稱都在了（值對不對要等打包時問 Apple 才知道） |
+| 3. 建 deploy key | 跟 Claude 說一句 | 1 分鐘 | 11/16 做完，實測讀得到 |
 | 4. 推分支和 tag，開始打包 | 跟 Claude 說一句 | 30–40 分鐘（機器跑） | 還沒做 |
 | 5. 在 App Store Connect 把 build 加進測試群組 | Apple 網站 | 5 分鐘＋等處理 | 還沒做 |
 | 6. 手機裝起來 | iPhone 的 TestFlight | 2 分鐘 | 還沒做 |
