@@ -16,7 +16,10 @@ concurrency:
 
 jobs:
   build:
-    runs-on: macos-15
+    # macos-15 最新只到 Xcode 26.3（Swift 6.2），expo-modules-jsi 58 在它上面編不過
+    # （tf-2：JavaScriptObject.swift「sending 'slot' risks causing data races」）。
+    # macos-26 有 Xcode 26.4 以上，下面那步會挑 26 系列最新的。
+    runs-on: macos-26
     timeout-minutes: 60
     env:
       ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
