@@ -8,7 +8,10 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "org.domyweb.douzhang"
+      "bundleIdentifier": "org.domyweb.douzhang",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -26,7 +29,8 @@
         {
           "motionPermission": "傾斜手機時，罐子裡的番茄跟著滾。"
         }
-      ]
+      ],
+      "expo-asset"
     ]
   }
 }

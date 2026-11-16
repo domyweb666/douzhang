@@ -1,0 +1,154 @@
+name: TestFlight
+
+# 只有開口才打包：推一個 tf- 開頭的 tag（例如 tf-1），或在 Actions 頁按 Run workflow
+# （那顆鈕要等這個檔合進 main 才會出現）。推一般的 commit 不會觸發。
+# 做法照豆鍵（domyweb666/bigkeyboard）跑通的那套：App Store Connect API 金鑰＋Xcode 自動簽章，
+# 多的是 Expo 這一段：裝套件 → expo prebuild 產生 iOS 專案 → 封存 → 上傳。
+on:
+  push:
+    tags: ['tf-*']
+  workflow_dispatch:
+
+# 連按多次只編最後一次
+concurrency:
+  group: testflight
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 60
+    env:
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      BUNDLE_ID: org.domyweb.douzhang
+    defaults:
+      run:
+        working-directory: douzhang
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 選 Xcode 26
+        run: |
+          ls /Applications | grep -i xcode
+          sudo xcode-select -s "$(ls -d /Applications/Xcode_26*.app | sort -V | tail -1)"
+          xcodebuild -version
+
+      - name: 放置 App Store Connect 金鑰
+        env:
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+        run: |
+          mkdir -p "$HOME/private_keys"
+          printf '%s' "$ASC_PRIVATE_KEY" > "$HOME/private_keys/AuthKey_${ASC_KEY_ID}.p8"
+          sed "s/__TEAM_ID__/${APPLE_TEAM_ID}/" ../.github/ExportOptions.plist > "$HOME/ExportOptions.plist"
+
+      # 先問 Apple 再花二十分鐘編：金鑰對不對、App Store Connect 有沒有這個 app
+      - name: 金鑰自檢（直接問 Apple）
+        run: |
+          python3 -m venv "$HOME/venv" && "$HOME/venv/bin/pip" install -q pyjwt cryptography requests
+          "$HOME/venv/bin/python" - <<'PY'
+          import os, time, jwt, requests
+          key = open(os.path.expanduser(f"~/private_keys/AuthKey_{os.environ['ASC_KEY_ID']}.p8")).read()
+          print("金鑰檔行數:", len(key.strip().splitlines()), "| 以 BEGIN PRIVATE KEY 開頭:", key.strip().startswith("-----BEGIN PRIVATE KEY-----"))
+          token = jwt.encode({"iss": os.environ["ASC_ISSUER_ID"], "iat": int(time.time()), "exp": int(time.time())+600, "aud": "appstoreconnect-v1"},
+                             key, algorithm="ES256", headers={"kid": os.environ["ASC_KEY_ID"], "typ": "JWT"})
+          r = requests.get("https://api.appstoreconnect.apple.com/v1/apps?fields[apps]=bundleId,name&limit=200", headers={"Authorization": f"Bearer {token}"})
+          print("Apple 回應:", r.status_code)
+          if r.status_code != 200:
+              print(r.text[:800]); raise SystemExit("金鑰被 Apple 拒絕：請檢查 Key ID / Issuer ID / .p8 內容，以及金鑰是 Team Key 且角色為 Admin")
+          apps = [(a["attributes"]["name"], a["attributes"]["bundleId"]) for a in r.json()["data"]]
+          print("這把金鑰看得到的 app:", apps)
+          bundle = os.environ["BUNDLE_ID"]
+          if not any(b == bundle for _, b in apps):
+              raise SystemExit(f"App Store Connect 還沒有 bundle ID 為 {bundle} 的 app 紀錄，先去新增 App")
+          PY
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      # @domy/design 是私有 repo（package-lock 走 git+ssh），用它的唯讀 deploy key 抓
+      - name: 讓 npm 抓得到 @domy/design
+        env:
+          DOMY_DESIGN_DEPLOY_KEY: ${{ secrets.DOMY_DESIGN_DEPLOY_KEY }}
+        run: |
+          mkdir -p "$HOME/.ssh"
+          printf '%s\n' "$DOMY_DESIGN_DEPLOY_KEY" > "$HOME/.ssh/domy_design"
+          chmod 600 "$HOME/.ssh/domy_design"
+          # GitHub 公布的 ed25519 主機金鑰，寫死比 ssh-keyscan 安全
+          echo "github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl" >> "$HOME/.ssh/known_hosts"
+          printf 'Host github.com\n  IdentityFile %s\n  IdentitiesOnly yes\n' "$HOME/.ssh/domy_design" >> "$HOME/.ssh/config"
+
+      - name: 裝套件
+        run: npm ci --legacy-peer-deps
+
+      - name: 測試與 lint（不過就不編）
+        run: |
+          npm test
+          npx eslint .
+
+      # build 號＝這次 run 的編號；Team ID 從 secret 來。只改這台機器上的 app.json，不進 repo
+      - name: 填 build 號與 Team ID
+        run: |
+          node -e "
+          const fs = require('fs');
+          const config = JSON.parse(fs.readFileSync('app.json', 'utf8'));
+          config.expo.ios.buildNumber = process.env.GITHUB_RUN_NUMBER;
+          config.expo.ios.appleTeamId = process.env.APPLE_TEAM_ID;
+          fs.writeFileSync('app.json', JSON.stringify(config, null, 2));
+          console.log('version', config.expo.version, 'build', config.expo.ios.buildNumber);
+          "
+
+      - name: 產生 iOS 專案（expo prebuild，含 pod install）
+        run: npx expo prebuild --platform ios --clean
+
+      - name: 封存（自動簽章）
+        run: |
+          WORKSPACE="$(ls -d ios/*.xcworkspace | head -1)"
+          SCHEME="$(basename "$WORKSPACE" .xcworkspace)"
+          echo "workspace: $WORKSPACE | scheme: $SCHEME"
+          xcodebuild archive \
+            -workspace "$WORKSPACE" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$HOME/build/douzhang.xcarchive" \
+            DEVELOPMENT_TEAM="${APPLE_TEAM_ID}" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$HOME/private_keys/AuthKey_${ASC_KEY_ID}.p8" \
+            -authenticationKeyID "${ASC_KEY_ID}" \
+            -authenticationKeyIssuerID "${ASC_ISSUER_ID}"
+
+      - name: 上傳 TestFlight
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath "$HOME/build/douzhang.xcarchive" \
+            -exportOptionsPlist "$HOME/ExportOptions.plist" \
+            -exportPath "$HOME/build/export" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$HOME/private_keys/AuthKey_${ASC_KEY_ID}.p8" \
+            -authenticationKeyID "${ASC_KEY_ID}" \
+            -authenticationKeyIssuerID "${ASC_ISSUER_ID}"
+
+      - name: 清掉這次 runner 產的開發憑證（runner 用完即丟，憑證留著只會撞上限）
+        if: always()
+        run: |
+          [ -x "$HOME/venv/bin/python" ] || exit 0
+          "$HOME/venv/bin/python" - <<'PY'
+          import os, time, jwt, requests
+          key = open(os.path.expanduser(f"~/private_keys/AuthKey_{os.environ['ASC_KEY_ID']}.p8")).read()
+          tok = jwt.encode({"iss": os.environ["ASC_ISSUER_ID"], "iat": int(time.time()), "exp": int(time.time())+600, "aud": "appstoreconnect-v1"},
+                           key, algorithm="ES256", headers={"kid": os.environ["ASC_KEY_ID"], "typ": "JWT"})
+          H = {"Authorization": f"Bearer {tok}"}
+          c = requests.get("https://api.appstoreconnect.apple.com/v1/certificates?fields[certificates]=certificateType,displayName&limit=50", headers=H).json()
+          for x in c.get("data", []):
+              a = x["attributes"]
+              if a["certificateType"] in ("DEVELOPMENT", "IOS_DEVELOPMENT") and a.get("displayName") == "Created via API":
+                  r = requests.delete(f"https://api.appstoreconnect.apple.com/v1/certificates/{x['id']}", headers=H)
+                  print("清掉開發憑證", x["id"], r.status_code)
+          PY
+
+      - name: 清掉金鑰
+        if: always()
+        run: rm -rf "$HOME/private_keys" "$HOME/.ssh/domy_design"
