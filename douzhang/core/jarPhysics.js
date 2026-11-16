@@ -2,6 +2,7 @@
 // 所有數字由呼叫端從 design/Tokens.js 的 motion.jarPhysics、motion.beanDrop、shape.beanRadius 餵進來（P），這裡不寫死。
 // 輸入只有三種：加一顆（帶自己的半徑）、重力向量（傾斜）、點一下；輸出是每顆的位置與「這一幀落地了哪幾顆、最大撞擊速度」。
 // 2026-11-02 V4：番茄大小跟分鐘走，每顆自己一個半徑 r；雙豆（兩粒連桿）拿掉，一顆就是一顆。
+// 2026-11-16：每顆多一個角度 angle（弧度，順時針為正）與轉速 spin，給會滾的番茄畫用；算法在 roll()。
 
 export function makeWorld(P) {
   return {
@@ -27,10 +28,27 @@ export function radiusFor(P, minutes) {
   return P.radius * Math.min(P.sizeMax, Math.max(P.sizeMin, k));
 }
 
-/** 加一顆，半徑 r。fresh＝從罐口掉進來的，落地那一幀要回報（啵＋觸覺）；落地＝第一次碰到罐底，或撞到下面已經落定的番茄。 */
-export function addBody(W, r, x, y, vx = 0, vy = 0, fresh = false) {
-  W.bodies.push({ x, y, vx, vy, r, fresh, id: newId() });
+/** 加一顆，半徑 r。fresh＝從罐口掉進來的，落地那一幀要回報（啵＋觸覺）；落地＝第一次碰到罐底，或撞到下面已經落定的番茄。angle＝一開始歪多少。 */
+export function addBody(W, r, x, y, vx = 0, vy = 0, fresh = false, angle = 0) {
+  W.bodies.push({
+    x,
+    y,
+    px: x,
+    py: y,
+    ex: 0,
+    ey: 0,
+    vx,
+    vy,
+    r,
+    fresh,
+    angle,
+    spin: 0,
+    id: newId(),
+  });
 }
+
+/** 一開始歪多少：正負 lean 之間隨機。 */
+export const randomLean = (P) => (Math.random() * 2 - 1) * P.spin.lean;
 
 export const count = (W) => W.bodies.length;
 
@@ -129,13 +147,59 @@ function solveWalls(W) {
   }
 }
 
+/**
+ * 轉動（2026-11-16）：只算每顆的角度，不回頭動位置與速度，所以原本怎麼掉、怎麼堆都不變。
+ * 用「這一步實際移動了多少」算，不用 vx／vy：躺好的番茄速度每步都在抖（重力加上去、碰撞再彈回來），位置才是真的沒動。
+ * 實際移動還要再平滑過（ex、ey）：擠在堆裡的番茄會原地來回抖不到一個點，不濾掉的話位置沒動、臉卻慢慢轉走（電腦上量，靜置 10 秒最多轉走二十幾度）。
+ * 貼著罐底或牆的往「滾動不打滑」靠；兩顆貼在一起的互相帶（像齒輪）；半空中的照原本的轉速慢慢停。
+ */
+function roll(W, dt) {
+  const { grip, air, touch, still, sleep, smooth } = W.P.spin;
+  const B = W.bodies;
+  const moved = (v) => (Math.abs(v) > still ? v : 0);
+  const toward = (b, surface) => {
+    b.spin += (moved(surface) / b.r - b.spin) * grip;
+  };
+  for (const b of B) {
+    b.ex += ((b.x - b.px) / dt - b.ex) * smooth;
+    b.ey += ((b.y - b.py) / dt - b.ey) * smooth;
+    if (b.y >= W.h - b.r - touch) toward(b, b.ex);
+    if (b.x <= b.r + touch) toward(b, b.ey);
+    if (b.x >= W.w - b.r - touch) toward(b, -b.ey);
+  }
+  for (let i = 0; i < B.length; i++)
+    for (let j = i + 1; j < B.length; j++) {
+      const a = B[i];
+      const b = B[j];
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const d = Math.hypot(dx, dy);
+      if (d > a.r + b.r + touch || d <= 1e-2) continue;
+      // 沿著接觸面，兩顆實際的相對移動；扣掉各自轉動帶的，剩下的是接觸點互搓多少，兩顆各分一半
+      const along = ((b.ex - a.ex) * -dy + (b.ey - a.ey) * dx) / d;
+      const rub = ((moved(along) - a.spin * a.r - b.spin * b.r) * grip) / 2;
+      a.spin += rub / a.r;
+      b.spin += rub / b.r;
+    }
+  for (const b of B) {
+    b.spin *= air;
+    if (Math.abs(b.spin) < sleep) b.spin = 0;
+    b.angle += b.spin * dt;
+  }
+}
+
 /** 走一步 dt 秒。呼叫端每幀先把 W.impact 歸零、把 W.landed 清空，再分子步呼叫。 */
 export function step(W, dt) {
+  for (const b of W.bodies) {
+    b.px = b.x;
+    b.py = b.y;
+  }
   integrate(W, dt);
   for (let it = 0; it < W.P.iterations; it++) {
     solveBeanPairs(W);
     solveWalls(W);
   }
+  roll(W, dt);
 }
 
 /** 開機安置：照 radii（每顆的半徑）隨機撒，靜置重力預跑 settleSteps 步，進畫面時番茄已經落定（參數表 B）。 */
@@ -156,6 +220,11 @@ export function seed(W, radii) {
   W.gx = g[0];
   W.gy = g[1];
   W.landed = [];
+  // 預跑時是從亂撒的位置互相擠開，轉出來的角度沒有意義：安置好之後每顆重新給一個小歪度、不帶轉速
+  for (const b of W.bodies) {
+    b.angle = randomLean(W.P);
+    b.spin = 0;
+  }
 }
 
 /** 點一下：影響半徑內的豆往上彈、往離開手指的方向推（參數表 B「點一下彈」）。 */

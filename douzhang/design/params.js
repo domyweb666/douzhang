@@ -7,7 +7,7 @@ export const params = {
   noteMaxChars: 60, // 記一筆一行（原型 maxlength）
   voidTextMaxChars: 40, // 作廢原因選填那一行（原型 maxlength）
   typeLengths: Array.from({ length: 18 }, (_, i) => (i + 1) * 5), // 5–90 分每 5 分一格（2026-11-02 V1 多米要到 90；滾輪選）
-  tomatoColors: ['red', 'orange', 'yellow', 'purple', 'pink'], // 每種類型一個番茄色（2026-11-02 W1）；圖在 ui/tomatoImages.js
+  tomatoColors: ['red', 'orange', 'yellow', 'purple', 'pink'], // 每種類型一個番茄色（2026-11-02 W1）；色碼在 Tokens 的 CharacterColors.tomato.body，圖在 ui/Tomato.js
   newTypeMinutes: 15, // 「加一種」新類型的長度（V1 刻度從 5 起算後明寫，維持原本 15）
   devTestSeconds: 5, // 開發期長按「開始」的測試顆與它的休息都是這麼久（V3：看番茄掉進罐子用）
   typeNameMaxChars: 20, // 安全標準 I7
@@ -26,6 +26,7 @@ export const params = {
     lowFpsThreshold: 40, // 連續幾秒低於這個 fps 就退成靜止版（PRD S19 低電量退路）
     lowFpsSeconds: 3,
     redrawEpsilonPx: 0.5, // 每顆移動都小於這個就不重畫（靜止時省下重畫，D+E 審查員）
+    redrawEpsilonRad: 0.01, // 轉動也一樣：小於這個弧度不重畫（最大那顆的邊緣大約動 0.5 pt）
   },
   // 收據（PWA openWeek 的三個門檻）
   receipt: {

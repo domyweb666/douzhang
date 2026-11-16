@@ -4,7 +4,7 @@
 // 2026-11-14 照 Domy Design System 重新設計：每區是一個 DomySection（標題＋白卡，列之間自動分隔線），
 // 列用 DomySettingsRow（值＋箭頭、產品色膠囊、開關三種尾巴），說明字放在區塊的 footer。
 import { useState } from 'react';
-import { Image, Linking, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Linking, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { DomySection, DomySettingsRow, useTabBarClearance } from '@domy/design';
 import { useTokens } from '../design/Tokens';
@@ -16,7 +16,7 @@ import { Segmented } from '../ui/Segmented';
 import { Sheet } from '../ui/Sheet';
 import { BigButton } from '../ui/BigButton';
 import { hhmm } from '../ui/useNow';
-import { TOMATO_ASPECT, tomatoOf } from '../ui/tomatoImages';
+import { Tomato } from '../ui/Tomato';
 import { dayKey } from '../core/store';
 
 const LENGTHS = params.typeLengths.map((len) => ({ value: len, label: words.typeLen(len) }));
@@ -68,7 +68,7 @@ function ColorPicker({ value, onChange }) {
               backgroundColor: on ? T.color.soft : 'transparent', // token-ok: 沒選的不畫底
             }}
           >
-            <Image source={tomatoOf(c)} style={{ width: size, height: size * TOMATO_ASPECT }} />
+            <Tomato color={c} size={size} />
           </Pressable>
         );
       })}
@@ -139,11 +139,7 @@ function TypeRow({ type, onPress }) {
         backgroundColor: pressed ? T.color.fillButton : T.color.card,
       })}
     >
-      <Image
-        source={tomatoOf(type.color)}
-        resizeMode="contain"
-        style={{ width: icon, height: icon }}
-      />
+      <Tomato color={type.color} size={icon} />
       <Text style={{ ...T.font.body, color: T.color.textPrimary, flex: 1 }}>{type.name}</Text>
       <Text style={{ ...T.font.body, color: T.color.textSecondary }}>
         {words.typeLen(type.len)}

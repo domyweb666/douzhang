@@ -129,3 +129,71 @@ test('兩顆都還在掉、半空中互撞不算落地：要等其中一顆碰�
   expect(seen.length).toBeGreaterThan(0);
   expect(seen[0].y).toBeGreaterThan(400 - 18 - 1); // 第一次回報就是碰到罐底那顆
 });
+
+// 2026-11-16 番茄換成會滾的那顆：角度只給畫用，這裡驗「滾多遠轉多少、躺好不會自己轉、不影響位置」。
+test('罐底往右滾的那顆順時針轉，轉過的弧長跟滾過的距離差不多', () => {
+  const W = world();
+  W.w = 2000;
+  addBody(W, 28, 100, 400 - 28, 300, 0);
+  run(W, 5);
+  const b = W.bodies[0];
+  const travelled = b.x - 100;
+  expect(travelled).toBeGreaterThan(30);
+  expect(b.angle * 28).toBeGreaterThan(travelled * 0.8);
+  expect(b.angle * 28).toBeLessThan(travelled * 1.2);
+  expect(b.spin).toBe(0); // 停下來之後轉速歸零，不會留一點點慢慢轉
+});
+
+test('排滿的一排上面再躺一顆，放著不管：每顆的角度都不再變', () => {
+  const W = world();
+  for (let i = 0; i < 5; i++) addBody(W, 28, 30 + i * 60, 400 - 28, 0, 0, false, i / 10);
+  addBody(W, 28, 150, 400 - 28 - 50, 0, 0, false, 0.4);
+  run(W, 4); // 上面那顆先滾進兩顆中間，等它停
+  const before = W.bodies.map((b) => b.angle);
+  run(W, 5);
+  W.bodies.forEach((b, i) => {
+    expect(b.spin).toBe(0);
+    expect(b.angle).toBe(before[i]);
+  });
+});
+
+test('開機安置的每一顆只歪一點（不超過 lean），不帶轉速', () => {
+  const W = world();
+  seed(W, Array(20).fill(28));
+  for (const b of W.bodies) {
+    expect(Math.abs(b.angle)).toBeLessThanOrEqual(W.P.spin.lean);
+    expect(b.spin).toBe(0);
+  }
+});
+
+test('轉動只算角度：同樣的開局，轉速亂給一通，位置與速度一步都不差', () => {
+  const start = (W) => {
+    for (let i = 0; i < 5; i++) addBody(W, 28, 30 + i * 60, 400 - 28);
+    addBody(W, 28, 140, -56, 20, -160, true);
+  };
+  const A = world();
+  const B = world();
+  start(A);
+  start(B);
+  B.bodies.forEach((b, i) => {
+    b.spin = (i + 1) * 3;
+    b.angle = i;
+  });
+  run(A, 4);
+  run(B, 4);
+  A.bodies.forEach((a, i) => {
+    const b = B.bodies[i];
+    expect([b.x, b.y, b.vx, b.vy]).toEqual([a.x, a.y, a.vx, a.vy]);
+  });
+});
+
+test('掉在排滿的第一排上面：滾進兩顆中間的那顆有轉到，最後停住', () => {
+  const W = world();
+  for (let i = 0; i < 5; i++) addBody(W, 28, 30 + i * 60, 400 - 28);
+  run(W, 1);
+  addBody(W, 28, 140, -56, 20, -160, true);
+  run(W, 6);
+  const fresh = W.bodies[5];
+  expect(Math.abs(fresh.angle)).toBeGreaterThan(0.2);
+  expect(fresh.spin).toBe(0);
+});

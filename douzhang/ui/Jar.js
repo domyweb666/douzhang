@@ -3,15 +3,15 @@
 // 物理在 core/jarPhysics.js；數字全從 Tokens 與 params 來。
 // 世界物件放 ref（lazy init），只在事件、effect、loop 裡碰；畫面只讀每幀抄出來的快照 state。
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, Image, Pressable } from 'react-native';
+import { AccessibilityInfo, Pressable, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { DeviceMotion } from 'expo-sensors';
 import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
 import { Token } from '../design/Tokens';
 import { MS_PER_SECOND, jarParams, params } from '../design/params';
 import { words } from '../design/words';
-import { addBody, makeWorld, radiusFor, seed, step, tapAt } from '../core/jarPhysics';
-import { TOMATO_ASPECT, tomatoOf } from './tomatoImages';
+import { addBody, makeWorld, radiusFor, randomLean, seed, step, tapAt } from '../core/jarPhysics';
+import { Tomato } from './Tomato';
 
 const SFX = {
   pop: require('../assets/sfx/pop.wav'),
@@ -96,10 +96,11 @@ function dropOne(W, r, color, still) {
   const go = () => {
     const x = W.w / 2 + (Math.random() - 0.5) * r * 2;
     if (still) {
-      addBody(W, r, x, W.h - r);
+      addBody(W, r, x, W.h - r, 0, 0, false, randomLean(W.P));
       W.onLand?.();
     } else {
-      addBody(W, r, x, -r * 2, (Math.random() - 0.5) * 2 * DROP.vxSpread, DROP.vy, true);
+      const vx = (Math.random() - 0.5) * 2 * DROP.vxSpread;
+      addBody(W, r, x, -r * 2, vx, DROP.vy, true, randomLean(W.P));
     }
     W.bodies[W.bodies.length - 1].color = color; // 物理不管顏色，畫的時候用
   };
@@ -156,7 +157,14 @@ function useTilt(worldRef, on) {
 
 /** 畫面要的快照：每幀從世界抄一份出來（render 只讀這份，不碰可變的世界）。 */
 function snapshot(W) {
-  return W.bodies.map((b) => ({ id: b.id, x: b.x, y: b.y, r: b.r, color: b.color }));
+  return W.bodies.map((b) => ({
+    id: b.id,
+    x: b.x,
+    y: b.y,
+    r: b.r,
+    angle: b.angle,
+    color: b.color,
+  }));
 }
 
 /** 每秒結算一次幀數：連續 lowFpsSeconds 秒低於門檻就回報。 */
@@ -172,9 +180,12 @@ function countFrame(fps, t, onLowFps) {
 /** 兩份快照差不到門檻就算沒動：番茄都躺好時不重畫（退成靜止版要真的省下來）。 */
 function samePlace(a, b) {
   const px = params.jar.redrawEpsilonPx;
+  const rad = params.jar.redrawEpsilonRad;
   if (a.length !== b.length) return false;
   const near = (p, q) => Math.abs(p - q) < px;
-  return a.every((s, i) => near(s.x, b[i].x) && near(s.y, b[i].y));
+  return a.every(
+    (s, i) => near(s.x, b[i].x) && near(s.y, b[i].y) && Math.abs(s.angle - b[i].angle) < rad,
+  );
 }
 
 /** 每幀走物理、落地與碰撞事件交給 W.onLand／W.onHit、有動才把快照放進 state 重畫；連續掉幀就回報（退成靜止版）。 */
@@ -219,18 +230,20 @@ function useLoop(worldRef, onLowFps) {
   return frame;
 }
 
-function Bean({ x, y, r, color }) {
-  const height = r * 2 * TOMATO_ASPECT;
+/** 一顆番茄：外面這層每幀換位置與角度，裡面的圖不重畫。不接觸控：點到番茄也要算成點在罐子的哪裡（tapAt 吃罐子座標）。 */
+function Bean({ x, y, r, angle, color }) {
   return (
-    <Image
-      source={tomatoOf(color)}
+    <View
+      pointerEvents="none"
       style={{
         position: 'absolute',
         width: r * 2,
-        height,
-        transform: [{ translateX: x - r }, { translateY: y - height / 2 }],
+        height: r * 2,
+        transform: [{ translateX: x - r }, { translateY: y - r }, { rotate: `${angle}rad` }],
       }}
-    />
+    >
+      <Tomato color={color} size={r * 2} />
+    </View>
   );
 }
 
@@ -304,7 +317,7 @@ export function Jar({ beans, seenRef, sound, tilt, onLand, style }) {
       style={[{ flex: 1, overflow: 'hidden' }, style]}
     >
       {frame.map((b) => (
-        <Bean key={b.id} x={b.x} y={b.y} r={b.r} color={b.color} />
+        <Bean key={b.id} x={b.x} y={b.y} r={b.r} angle={b.angle} color={b.color} />
       ))}
     </Pressable>
   );

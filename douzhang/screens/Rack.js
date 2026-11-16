@@ -4,7 +4,7 @@
 // 沒番茄的日子不寫 0、沒有連續數字（S12、S15）。最下面一列：今天沒收工→收工；今天什麼都沒有→掛葉子（F1、F2）。
 // 2026-11-14 照 Domy 重新設計：選中的那天用產品色淡底（同分頁列的選中）、空狀態用 DomyEmptyState、整頁停在分頁列上面。
 import { useState } from 'react';
-import { Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { DomyButton, pressFeedback, useTabBarClearance } from '@domy/design';
 import { CharacterColors, useTokens } from '../design/Tokens';
 import { words } from '../design/words';
@@ -24,7 +24,7 @@ import { CloseSheet } from '../ui/CloseSheet';
 import { canHangLeaf, rackTopRow, typeOf } from '../core/machine';
 import { Leaf } from '../ui/Pod';
 import { Mascot } from '../ui/Mascot';
-import { tomatoOf } from '../ui/tomatoImages';
+import { Tomato } from '../ui/Tomato';
 import { DaySheet, WeekSheet } from '../ui/ReceiptSheets';
 
 const MS_PER_HOUR = 60 * MS_PER_MINUTE;
@@ -216,11 +216,7 @@ function Block({ item, top, height, type, onPress }) {
       ) : (
         <>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: T.space.xs }}>
-            <Image
-              source={tomatoOf(type?.color)}
-              resizeMode="contain"
-              style={{ width: T.shape.blockIcon, height: T.shape.blockIcon }}
-            />
+            <Tomato color={type?.color} size={T.shape.blockIcon} />
             <Text style={{ ...T.font.caption, color: T.color.textPrimary }}>
               {words.blockTitle(type?.name || '', item.len, item.flow)}
             </Text>
