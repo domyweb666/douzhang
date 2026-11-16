@@ -40,7 +40,16 @@ jobs:
           ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
         run: |
           mkdir -p "$HOME/private_keys"
-          printf '%s' "$ASC_PRIVATE_KEY" > "$HOME/private_keys/AuthKey_${ASC_KEY_ID}.p8"
+          # secret 貼進 GitHub 時換行常被吃掉變成一行。Python 讀得懂，xcodebuild 不收
+          # （tf-1：invalidPEMDocument）。所以這裡把金鑰重排成標準的每行 64 字。
+          printf '%s' "$ASC_PRIVATE_KEY" | python3 -c '
+          import re, sys, textwrap
+          raw = sys.stdin.read().replace("\\n", "")
+          body = re.sub(r"-----(BEGIN|END) PRIVATE KEY-----", "", raw)
+          body = re.sub(r"[^A-Za-z0-9+/=]", "", body)
+          lines = ["-----BEGIN PRIVATE KEY-----", *textwrap.wrap(body, 64), "-----END PRIVATE KEY-----"]
+          sys.stdout.write("\n".join(lines) + "\n")
+          ' > "$HOME/private_keys/AuthKey_${ASC_KEY_ID}.p8"
           sed "s/__TEAM_ID__/${APPLE_TEAM_ID}/" ../.github/ExportOptions.plist > "$HOME/ExportOptions.plist"
 
       # 先問 Apple 再花二十分鐘編：金鑰對不對、App Store Connect 有沒有這個 app

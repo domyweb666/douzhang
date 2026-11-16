@@ -72,7 +72,7 @@ Apple 和 GitHub 的網頁偶爾會改按鈕名稱，下面寫的名稱對不上
 3. Name 填上表的名稱（大小寫、底線要一模一樣），Secret 貼值，按「Add secret」。
 4. 重複四次。
 
-`ASC_PRIVATE_KEY` 要整段貼，從 `-----BEGIN PRIVATE KEY-----` 那行到 `-----END PRIVATE KEY-----` 那行都要，中間的換行照原樣。少一行打包就會在「金鑰自檢」那步停下來，並且印出原因。
+`ASC_PRIVATE_KEY` 要整段貼，從 `-----BEGIN PRIVATE KEY-----` 那行到 `-----END PRIVATE KEY-----` 那行都要。貼上去換行跑掉沒關係，打包流程會自己重排（11/16 第一次就是整把變成一行，Xcode 不收，後來改成流程自動修）。頭尾少字的話會在「金鑰自檢」那步停下來，並且印出原因。
 
 做完之後那一頁應該列出四個名稱。值看不到是正常的。
 
@@ -105,12 +105,18 @@ Claude 會把 `uiux-graybox` 分支和一個 `tf-1` 的 tag 推上 GitHub，打�
 想自己推的話，在 `E:\豆帳` 開終端機，一行一行跑：
 
 ```bash
-git tag tf-1
+git push origin uiux-graybox
 ```
 
 ```bash
-git push origin uiux-graybox tf-1
+git tag tf-2
 ```
+
+```bash
+git push origin tf-2
+```
+
+分支和 tag 要分兩次推。11/16 第一次兩個一起推，GitHub 沒有開始跑；把 tag 單獨再推一次才觸發。`tf-1` 已經用掉了，數字從 2 開始。
 
 進度在這裡看：<https://github.com/domyweb666/douzhang/actions>
 
