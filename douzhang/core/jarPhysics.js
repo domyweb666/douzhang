@@ -151,7 +151,9 @@ function solveWalls(W) {
  * 轉動（2026-11-16）：只算每顆的角度，不回頭動位置與速度，所以原本怎麼掉、怎麼堆都不變。
  * 用「這一步實際移動了多少」算，不用 vx／vy：躺好的番茄速度每步都在抖（重力加上去、碰撞再彈回來），位置才是真的沒動。
  * 實際移動還要再平滑過（ex、ey）：擠在堆裡的番茄會原地來回抖不到一個點，不濾掉的話位置沒動、臉卻慢慢轉走（電腦上量，靜置 10 秒最多轉走二十幾度）。
- * 貼著罐底或牆的往「滾動不打滑」靠；兩顆貼在一起的互相帶（像齒輪）；半空中的照原本的轉速慢慢停。
+ * 貼著罐底的往「滾動不打滑」靠；兩顆貼在一起的互相帶（像齒輪）；半空中的照原本的轉速慢慢停。
+ * 牆不帶轉（2026-11-16 模擬器上看到的）：收下後整排落回罐底時，貼著左右牆的那兩顆被牆「搓」到每秒轉好幾圈，
+ * 再像齒輪一顆帶一顆，整排的臉都轉一圈以上。拿掉牆之後同一個情境每顆轉不到 4°。
  */
 function roll(W, dt) {
   const { grip, air, touch, still, sleep, smooth } = W.P.spin;
@@ -164,8 +166,6 @@ function roll(W, dt) {
     b.ex += ((b.x - b.px) / dt - b.ex) * smooth;
     b.ey += ((b.y - b.py) / dt - b.ey) * smooth;
     if (b.y >= W.h - b.r - touch) toward(b, b.ex);
-    if (b.x <= b.r + touch) toward(b, b.ey);
-    if (b.x >= W.w - b.r - touch) toward(b, -b.ey);
   }
   for (let i = 0; i < B.length; i++)
     for (let j = i + 1; j < B.length; j++) {
@@ -177,9 +177,9 @@ function roll(W, dt) {
       if (d > a.r + b.r + touch || d <= 1e-2) continue;
       // 沿著接觸面，兩顆實際的相對移動；扣掉各自轉動帶的，剩下的是接觸點互搓多少，兩顆各分一半
       const along = ((b.ex - a.ex) * -dy + (b.ey - a.ey) * dx) / d;
-      const rub = ((moved(along) - a.spin * a.r - b.spin * b.r) * grip) / 2;
-      a.spin += rub / a.r;
-      b.spin += rub / b.r;
+      const slip = ((moved(along) - a.spin * a.r - b.spin * b.r) * grip) / 2;
+      a.spin += slip / a.r;
+      b.spin += slip / b.r;
     }
   for (const b of B) {
     b.spin *= air;

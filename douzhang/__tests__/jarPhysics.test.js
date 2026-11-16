@@ -197,3 +197,13 @@ test('掉在排滿的第一排上面：滾進兩顆中間的那顆有轉到，�
   expect(Math.abs(fresh.angle)).toBeGreaterThan(0.2);
   expect(fresh.spin).toBe(0);
 });
+
+test('貼著牆往下掉的那顆不會被牆搓著轉；整排一起落地也幾乎不轉', () => {
+  const W = world();
+  for (let i = 0; i < 5; i++) addBody(W, 30, 30 + i * 60, 100); // 寬 300 剛好排滿，左右兩顆貼牆
+  run(W, 4);
+  for (const b of W.bodies) {
+    expect(b.y).toBeGreaterThan(400 - 30 - 1);
+    expect(Math.abs(b.angle)).toBeLessThan(0.1);
+  }
+});
