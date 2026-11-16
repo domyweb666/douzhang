@@ -6,10 +6,10 @@
 
 | 步驟 | 在哪裡做 | 大概多久 | 狀態 |
 |---|---|---|---|
-| 1. 登記 Bundle ID、新增 App | Apple 網站 | 5 分鐘 | 還沒做 |
-| 2. 設四個 Apple 金鑰 secret | GitHub 網站 | 5 分鐘 | 11/16 四個名稱都在了（值對不對要等打包時問 Apple 才知道） |
+| 1. 登記 Bundle ID、新增 App | Apple 網站 | 5 分鐘 | 11/16 做完，Apple 查得到 |
+| 2. 設四個 Apple 金鑰 secret | GitHub 網站 | 5 分鐘 | 11/16 做完，Apple 認了 |
 | 3. 建 deploy key | 跟 Claude 說一句 | 1 分鐘 | 11/16 做完，實測讀得到 |
-| 4. 推分支和 tag，開始打包 | 跟 Claude 說一句 | 30–40 分鐘（機器跑） | 還沒做 |
+| 4. 推分支和 tag，開始打包 | 跟 Claude 說一句 | 約 10 分鐘（機器跑） | 11/16 第三次（`tf-3`）成功，1.0.0 build 3 已上傳 |
 | 5. 在 App Store Connect 把 build 加進測試群組 | Apple 網站 | 5 分鐘＋等處理 | 還沒做 |
 | 6. 手機裝起來 | iPhone 的 TestFlight | 2 分鐘 | 還沒做 |
 
@@ -98,7 +98,7 @@ Claude 會產生一對鑰匙，公開的那半登記到 `domy-design`（唯讀�
 
 > 打包
 
-Claude 會把 `uiux-graybox` 分支和一個 `tf-1` 的 tag 推上 GitHub，打包就開始了，然後盯著它跑。這條流程還沒在 GitHub 上跑過，第一次很可能卡在某一步要回頭修，讓 Claude 盯會比較快。
+Claude 會把 `uiux-graybox` 分支和一個 `tf-` 開頭的 tag 推上 GitHub，打包就開始了，然後盯著它跑。11/16 第一輪跑了三次才過（前兩次的原因寫在最後的「11/16 第一次打包的紀錄」），現在這條流程是跑通過的。
 
 推之前要知道一件事：番茄帳的 repo 是公開的，`uiux-graybox` 這條分支目前只在你電腦上。推上去之後，分支裡的程式和 `.vibe`、`.uiux` 這些工作紀錄都會公開。
 
@@ -109,20 +109,20 @@ git push origin uiux-graybox
 ```
 
 ```bash
-git tag tf-2
+git tag tf-4
 ```
 
 ```bash
-git push origin tf-2
+git push origin tf-4
 ```
 
-分支和 tag 要分兩次推。11/16 第一次兩個一起推，GitHub 沒有開始跑；把 tag 單獨再推一次才觸發。`tf-1` 已經用掉了，數字從 2 開始。
+分支和 tag 要分兩次推。11/16 第一次兩個一起推，GitHub 沒有開始跑；把 tag 單獨再推一次才觸發。`tf-1` 到 `tf-3` 已經用掉了，下一個從 4 開始。
 
 進度在這裡看：<https://github.com/domyweb666/douzhang/actions>
 
-全部打綠勾大約要 30 到 40 分鐘。機器會照這個順序做：問 Apple 金鑰對不對 → 裝套件 → 跑測試 → 產生 iOS 專案 → 封存簽章 → 上傳。哪一步紅了，把那一步的名稱告訴 Claude。
+全部打綠勾大約 10 分鐘（11/16 那次是 9 分半）。機器會照這個順序做：問 Apple 金鑰對不對 → 裝套件 → 跑測試 → 產生 iOS 專案 → 封存簽章 → 上傳。哪一步紅了，把那一步的名稱告訴 Claude。
 
-以後出新版，tag 的數字往上加就好（`tf-2`、`tf-3`）。build 號機器會自己編，不用手動改。
+以後出新版，tag 的數字往上加就好。build 號機器會自己編（等於第幾次跑），不用手動改。
 
 ---
 
@@ -131,7 +131,7 @@ git push origin tf-2
 上傳成功後，Apple 還要處理一下，通常 5 到 30 分鐘，好了會寄信。
 
 1. 開 <https://appstoreconnect.apple.com/apps> → 番茄帳 → 上面的「TestFlight」分頁。
-2. 看到 build 1.0.0 出現、狀態從「處理中」變成可以點。出口合規那題已經在設定檔裡答過了，不會再問。
+2. 看到 1.0.0 (3) 出現、狀態從「處理中」變成可以點。build 號是 3，因為前兩次沒傳成功。出口合規那題已經在設定檔裡答過了，不會再問。
 3. 左邊「內部測試」旁邊按 ＋，建一個群組，名字隨意（例如「自己」）。「啟用自動分發」留著勾，以後的 build 會自動進來。
 4. 在群組裡的「測試人員」按 ＋，勾你自己的帳號。
 5. 如果 build 沒有自動出現在群組裡，到群組的「Build」區塊按 ＋ 手動加。
@@ -183,3 +183,16 @@ git push origin tf-2
 3. 開 <https://github.com/domyweb666/douzhang/settings/secrets/actions> → New repository secret。Name 填 `DOMY_DESIGN_DEPLOY_KEY`，Secret 貼 `douzhang_ci` 的全部內容（這個檔沒有副檔名，用記事本開）。
 
 4. 兩個檔都刪掉。鑰匙已經存在 GitHub 上，本機不用留。
+
+---
+
+## 11/16 第一次打包的紀錄
+
+| 次 | 結果 | 原因與處理 |
+|---|---|---|
+| `tf-1` | 紅在封存 | 金鑰貼進 GitHub 後整把變成一行，Xcode 不收。流程改成自動把金鑰重排回標準格式 |
+| `tf-2` | 紅在封存 | Expo 58 的 `expo-modules-jsi` 在 Xcode 26.3 編不過。打包機器從 macOS 15 換成 macOS 26，用 Xcode 26.6 |
+| `tf-3` | 全綠 | 1.0.0 build 3 上傳成功，9 分半 |
+
+上傳時有三行 dSYM 的警告（React、ReactNativeDependencies、hermesvm 三個預先編好的框架沒帶除錯符號）。不影響安裝和使用，只是之後閃退報告裡這三塊的堆疊會看不到函式名稱。
+
