@@ -67,6 +67,7 @@ export const setCloseTime = (state, closeTime) =>
   params.closeTimes.includes(closeTime) ? withSettings(state, { closeTime }) : state;
 export const setSound = (state, sound) => withSettings(state, { sound: !!sound });
 export const setTilt = (state, tilt) => withSettings(state, { tilt: !!tilt });
+export const setShield = (state, shield) => withSettings(state, { shield: !!shield });
 
 /** 換這種類型的番茄色（W1）；不是五色之一就不換。 */
 export function setTypeColor(state, id, color) {

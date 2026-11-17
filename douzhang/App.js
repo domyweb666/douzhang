@@ -39,6 +39,13 @@ import {
   removeAutoBackups,
 } from './core/backup';
 import {
+  applyShield,
+  authorizeShield,
+  forgetShield,
+  pickShieldApps,
+  shouldShield,
+} from './core/shield';
+import {
   addType,
   estimate,
   pickTask,
@@ -50,6 +57,7 @@ import {
   setRestLongMinutes,
   setRestMode,
   setRestShort,
+  setShield,
   setSound,
   setTilt,
   setTestMode,
@@ -240,6 +248,7 @@ function useBackup(stateRef, unreadable, replaceAll) {
         style: 'destructive',
         onPress: () => {
           const removed = removeAutoBackups(); // P5：清乾淨，含自動備份
+          forgetShield(); // P5：擋板解開，選過要擋的 app 也忘掉
           setLastBackup(lastAutoBackupAt());
           setProblem(removed ? null : 'backupsLeft');
           setWiped(true);
@@ -387,6 +396,14 @@ function useDouzhang() {
     };
   }, [arm, setGreet]);
 
+  // 擋 app 跟著狀態走（AF1）：開關開著且這顆還在跑才蓋，其他時候解開。答案變了才叫原生；
+  // 讀完檔第一次有答案時也叫一次（開機對齊）。null＝還在讀檔，先不動。
+  // 響的那一刻 app 在背景的話時鐘不走，要等回到番茄帳才會解開（第一版的取捨）。
+  const shielded = state ? shouldShield(state, now) : null;
+  useEffect(() => {
+    if (shielded !== null) applyShield(shielded);
+  }, [shielded]);
+
   if (!state) return null;
   // 休息到點沒按也回待機：每一拍在 render 時把過期的休息收掉，下一次動作才存回去
   const live = settle(state, now);
@@ -450,6 +467,18 @@ function makeActions(live, act, commit, { setNotif, setGreet, setMoment }) {
     onSetSound: (on) => commit(setSound(live, on)),
     onSetTilt: (on) => commit(setTilt(live, on)),
     onSetTestMode: (on) => commit(setTestMode(live, on)),
+    // 擋 app（AF1）：兩個都回「有沒有授權」，設定頁靠它決定要不要寫那一行
+    onSetShield: async (on) => {
+      if (on && !(await authorizeShield())) return false; // 要打開才問；不允許就不開
+      commit(setShield(live, on));
+      return true;
+    },
+    onPickShieldApps: async () => {
+      if (!(await authorizeShield())) return false; // 沒授權時系統的選擇畫面是空的
+      await pickShieldApps();
+      applyShield(shouldShield(live, Date.now())); // 計時中改了要擋的：照新選的重蓋一次
+      return true;
+    },
     onSetTypeColor: (id, color) => commit(setTypeColor(live, id, color)),
     // 收工與葉子（F）
     onCloseDay: (text) => {

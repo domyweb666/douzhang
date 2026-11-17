@@ -18,6 +18,7 @@ import { BigButton } from '../ui/BigButton';
 import { hhmm } from '../ui/useNow';
 import { Tomato } from '../ui/Tomato';
 import { dayKey } from '../core/store';
+import { shieldAvailable, shieldCount } from '../core/shield';
 
 const LENGTHS = params.typeLengths.map((len) => ({ value: len, label: words.typeLen(len) }));
 const CLOSE_TIMES = params.closeTimes.map((t) => ({ value: t, label: t }));
@@ -305,6 +306,31 @@ function ReminderSection({ settings, actions, notif }) {
   );
 }
 
+/**
+ * 計時中擋住其他 app（AF1）。沒有原生模組（Expo Go、Android）整區不畫。
+ * 兩列都要先有螢幕使用時間的授權：不允許就不開、不開選擇畫面，卡片下換成那一行說明。
+ */
+function ShieldSection({ settings, actions }) {
+  const [denied, setDenied] = useState(false);
+  if (!shieldAvailable) return null;
+  const count = shieldCount();
+  const onToggle = async (on) => setDenied(!(await actions.onSetShield(on)));
+  const onPick = async () => setDenied(!(await actions.onPickShieldApps()));
+  return (
+    <DomySection title={words.shieldSection} footer={denied ? words.shieldDenied : words.shieldSub}>
+      <DomySettingsRow
+        label={words.shieldRow}
+        toggle={{ value: !!settings.shield, onValueChange: onToggle }}
+      />
+      <DomySettingsRow
+        label={words.shieldAppsRow}
+        value={count ? words.shieldAppsCount(count) : words.shieldAppsNone}
+        onPress={onPick}
+      />
+    </DomySection>
+  );
+}
+
 function FeelSection({ settings, actions }) {
   return (
     <DomySection title={words.feel}>
@@ -381,6 +407,7 @@ export function Settings({ state, actions, notif, backup, onWipe }) {
         <TypesSection settings={state.settings} actions={actions} />
         <RhythmSection settings={state.settings} actions={actions} />
         <ReminderSection settings={state.settings} actions={actions} notif={notif} />
+        <ShieldSection settings={state.settings} actions={actions} />
         <FeelSection settings={state.settings} actions={actions} />
         <DevSection settings={state.settings} actions={actions} />
         <BackupSection backup={backup} />

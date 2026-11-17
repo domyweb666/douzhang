@@ -11,6 +11,9 @@
       "bundleIdentifier": "org.domyweb.douzhang",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
+      },
+      "entitlements": {
+        "com.apple.developer.family-controls": true
       }
     },
     "android": {

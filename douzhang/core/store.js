@@ -27,6 +27,7 @@ export function blank() {
       restShort: 'auto', // 短休息：'auto' 跟著番茄長度，或固定幾分（params.restShortOptions）
       restLongEvery: 4, // 今天每收下幾顆來一次長休息；0＝關
       restLongMinutes: 15,
+      shield: false, // AF1 計時中擋住其他 app；選了哪些 app 存在原生那邊，不在這個檔
     },
     current: null,
     clue: null,
@@ -73,6 +74,7 @@ function normalizeSettings(s) {
     restShort: onScale(params.restShortOptions, s.restShort, base.restShort),
     restLongEvery: onScale(params.restLongEveryOptions, s.restLongEvery, base.restLongEvery),
     restLongMinutes: onScale(params.restLongMinuteOptions, s.restLongMinutes, base.restLongMinutes),
+    shield: pick(s.shield, base.shield, 'boolean'),
   };
   if (!settings.types.some((t) => t.id === settings.typeId)) settings.typeId = settings.types[0].id;
   return settings;

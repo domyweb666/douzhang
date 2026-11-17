@@ -154,6 +154,15 @@ export const words = {
   soundRow: '聲音',
   feel: '手感',
   tiltRow: '傾斜手機，番茄跟著滾',
+  // 計時中擋住其他 app（AF1）
+  shieldSection: '專注',
+  shieldRow: '計時中擋住其他 app',
+  shieldAppsRow: '要擋的 app',
+  shieldAppsNone: '還沒選',
+  shieldAppsCount: (count) => `${count} 項`,
+  shieldSub: '按開始那一刻擋上；收下、結束，或響了之後回到番茄帳就解開。',
+  shieldDenied: '螢幕使用時間沒有允許，所以開不了。',
+  shieldPickDone: '完成', // 系統選擇畫面右上角
 
   // 備份與清空（G2–G4；06 設定狀態表、安全標準 S3–S5）。系統訊息第一句先講有沒有損失
   backup: '備份',

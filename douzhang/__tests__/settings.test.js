@@ -10,6 +10,7 @@ import {
   renameType,
   setCloseTime,
   setRestMode,
+  setShield,
   setSound,
   setTilt,
   setTestMode,
@@ -92,6 +93,15 @@ describe('節奏、提醒、手感（G1）', () => {
     expect(s.settings.closeTime).toBe('21:00');
     expect(s.settings.sound).toBe(false);
     expect(s.settings.tilt).toBe(false);
+  });
+
+  test('擋 app 開關：開、關，存檔讀回來還在；不是布林的值當關（AF1）', () => {
+    const on = setShield(blank(), true);
+    expect(on.settings.shield).toBe(true);
+    expect(normalize(JSON.parse(JSON.stringify(on))).settings.shield).toBe(true);
+    expect(setShield(on, false).settings.shield).toBe(false);
+    const odd = { ...blank(), settings: { ...blank().settings, shield: 'yes' } };
+    expect(normalize(odd).settings.shield).toBe(false);
   });
 
   test('收工時間只能選刻度上的整點；刻度外的值不改', () => {
