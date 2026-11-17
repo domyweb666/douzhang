@@ -1,5 +1,12 @@
 # HANDOFF（2026-11-17 晚更新）：擋 app（AF1）機器層做完，Swift 沒編過、手機沒跑過；下一步是多米說打包才出 TestFlight build
 
+## 2026-11-17 深夜：多米決定換核心，比較頁等他選（最新，先看這段）
+- 多米用過 build 3 後說「接」沒說服他，拿 FocusPomo 當參考提了十一點。決定：核心換成「種番茄＋時間帳本」。產品定稿最上面已改。
+- 比較頁 https://claude.ai/artifact/2DBVVuZ7JVUN34eNKFeLxw （原始檔 `.uiux/03-線框/2026-11-17-改版比較頁.html`），五題，我建議 1A 2C 3B 4A 5B。**多米還沒選，程式一行都沒動。**
+- 多米選完：先覆誦資料怎麼搬與切片，再動工。細節在切片帳本「AG 換核心」那節。
+- 他回報改不了類型名字：是 AB1（cb8705f 已修），build 3 沒有；注音鍵盤沒測過，下一個 build 請他確認。
+- 擋 app（AF1）維持下面那段的狀態：機器層做完、沒打包。多米說「先不打包」。
+
 ## 2026-11-17 晚的更新（以這段為準，下面 18:46 那份裡「擋 app 還沒動工」「先確認四件事」都已經過時）
 - 多米選「甲，自己寫模組」：沒裝 `react-native-device-activity`，自己寫了 `douzhang/modules/app-shield/`（Swift 約 130 行）。沒有 App Group、沒有擴充、沒有新套件。
 - 做完的：原生模組、`core/shield.js`、設定頁「專注」一區兩列、`App.js` 一個 effect 管蓋上與解開、`app.json` 加簽章權限、測試 186 過 1 跳過、eslint 0 錯、prettier 過、expo export 過。細節、代決清單九條在 `.vibe/切片帳本.md`「AF1」那節。

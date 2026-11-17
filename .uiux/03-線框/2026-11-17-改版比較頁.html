@@ -1,0 +1,588 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>番茄帳改版比較頁</title>
+<style>
+/* 版面：一欄往下五題，每題的選項是一排手機畫面，窄螢幕自動換行；最下面固定一條作答列 */
+:root {
+  --bg: #F0ECF3; --panel: #FFFFFF; --fg: #231A2A; --muted: #675C70; --line: #DAD1E1;
+  --accent: #4A2F5A; --on-accent: #FFFFFF; --soft: #E6DAEE; --pick: #2B7A4B; --phone-edge: #2B2329;
+  /* 手機畫面裡是 app 的淺色模式，固定不跟著頁面深淺變 */
+  --app-bg: #F6F3EC; --app-card: #FFFFFF; --app-fg: #1F1A22; --app-sub: #6E6872; --app-line: #E4DFD6;
+  --app-accent: #3B2547; --app-strong: #4A2F5A; --app-soft: #ECE3F1;
+  --font: -apple-system, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #18131C; --panel: #221B28; --fg: #EEE7F3; --muted: #AC9FB6; --line: #3A3042;
+    --accent: #D9C2E8; --on-accent: #2A1A33; --soft: #3A2B45; --pick: #7FD19B; --phone-edge: #4D4356;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #18131C; --panel: #221B28; --fg: #EEE7F3; --muted: #AC9FB6; --line: #3A3042;
+  --accent: #D9C2E8; --on-accent: #2A1A33; --soft: #3A2B45; --pick: #7FD19B; --phone-edge: #4D4356;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 16px; line-height: 1.6;
+  padding-block: 28px 120px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 44px; }
+h1 { font-size: 30px; line-height: 1.25; margin: 0 0 8px; text-wrap: balance; }
+h2 { font-size: 22px; line-height: 1.3; margin: 0 0 6px; text-wrap: balance; }
+h3 { font-size: 17px; margin: 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+p { margin: 0; }
+.lead { color: var(--muted); max-width: 40em; }
+.q { display: flex; flex-direction: column; gap: 16px; }
+.qno { color: var(--accent); font-variant-numeric: tabular-nums; margin-right: 6px; }
+.opts { display: flex; flex-wrap: wrap; gap: 24px 20px; }
+.opt { flex: 0 1 282px; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.opt-body { display: flex; flex-direction: column; gap: 6px; }
+.opt-body p { font-size: 14.5px; color: var(--muted); }
+.rec { font-size: 12px; font-weight: 700; background: var(--accent); color: var(--on-accent); padding: 1px 8px; border-radius: 99px; }
+button { font: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.pick {
+  align-self: flex-start; border: 1.5px solid var(--accent); background: transparent; color: var(--accent);
+  border-radius: 99px; padding: 6px 16px; font-weight: 700; font-size: 14.5px;
+}
+.opt.selected .pick { background: var(--pick); border-color: var(--pick); color: var(--bg); }
+.opt.selected .phone { outline: 4px solid var(--pick); outline-offset: 3px; }
+.play { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 10px 14px; }
+.play button { border: 0; background: var(--accent); color: var(--on-accent); border-radius: 99px; padding: 7px 16px; font-weight: 700; font-size: 14.5px; }
+.play input { flex: 1 1 160px; min-width: 0; accent-color: var(--accent); }
+.play span { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 14.5px; }
+.drop { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; }
+.drop ul { margin: 8px 0 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 6px; }
+.drop li { max-width: 42em; }
+
+/* 作答列 */
+.answer {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; background: var(--panel); border-top: 1px solid var(--line);
+  padding-top: 10px; padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.answer-in { max-width: 1000px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.answer-in small { color: var(--muted); font-size: 13px; }
+#ans { font-weight: 800; font-size: 19px; letter-spacing: .04em; font-variant-numeric: tabular-nums; user-select: all; }
+#copy { margin-left: auto; border: 0; background: var(--accent); color: var(--on-accent); border-radius: 99px; padding: 7px 18px; font-weight: 700; }
+
+/* 手機畫面 */
+.phone {
+  width: 100%; max-width: 270px; height: 548px; border: 6px solid var(--phone-edge); border-radius: 36px; overflow: hidden;
+  background: var(--app-bg); color: var(--app-fg); font-size: 13px; line-height: 1.35; position: relative;
+}
+.scr { position: absolute; inset: 0; display: flex; flex-direction: column; padding: 30px 12px 0; }
+.scr h4 { font-size: 22px; margin: 0; font-weight: 800; }
+.sub { color: var(--app-sub); }
+.center { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.chip { display: inline-flex; align-items: center; gap: 5px; background: var(--app-soft); color: var(--app-strong); border-radius: 99px; padding: 4px 11px; font-weight: 700; font-size: 12.5px; border: 0; }
+.bigtime { font-size: 52px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -.01em; line-height: 1.1; }
+.pile { position: absolute; left: 0; right: 0; bottom: 0; height: 130px; }
+.pile span { position: absolute; line-height: 0; }
+.btn { background: var(--app-accent); color: #fff; border-radius: 99px; padding: 11px 0; text-align: center; font-weight: 700; font-size: 14px; width: 100%; }
+.btn2 { background: #EEE9E0; color: var(--app-fg); }
+.tbtn { color: var(--app-strong); font-weight: 700; text-align: center; }
+.note { border: 1px dashed #BDB4C4; border-radius: 12px; padding: 9px 12px; color: var(--app-sub); width: 100%; text-align: left; }
+.tabs { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); display: flex; background: var(--app-card); border-radius: 99px; padding: 4px; box-shadow: 0 4px 14px rgba(40, 25, 50, .14); font-size: 10.5px; font-weight: 700; white-space: nowrap; }
+.tabs i { font-style: normal; padding: 6px 11px; border-radius: 99px; color: var(--app-fg); }
+.tabs i.on { background: var(--app-soft); color: var(--app-strong); }
+.dim { position: absolute; inset: 0; background: rgba(30, 20, 36, .32); }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--app-card); border-radius: 22px 22px 0 0; padding: 16px 14px 18px; display: flex; flex-direction: column; gap: 10px; }
+.sheet::before { content: ""; width: 36px; height: 4px; border-radius: 4px; background: #D9D3DD; align-self: center; }
+.seg { display: inline-flex; flex: none; background: #EAE5DD; border-radius: 99px; padding: 2px; }
+.seg button { border: 0; background: transparent; color: var(--app-sub); border-radius: 99px; padding: 3px 9px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.seg button.on { background: var(--app-card); color: var(--app-fg); }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.week { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 11px; color: var(--app-sub); margin-top: 8px; }
+.week b { display: block; font-size: 14px; color: var(--app-fg); border-radius: 9px; padding: 2px 0; }
+.week .on b { background: var(--app-soft); color: var(--app-strong); }
+.grid { position: relative; margin-top: 8px; }
+.hr { position: absolute; left: 0; right: 0; display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--app-sub); height: 0; }
+.hr::after { content: ""; flex: 1; height: 1px; background: var(--app-line); }
+.hr span { width: 24px; }
+.blk { position: absolute; border-radius: 7px; overflow: hidden; padding: 2px 6px; font-size: 11px; line-height: 1.25; }
+.blk b { font-weight: 700; }
+.blk .dur { float: right; opacity: .8; font-variant-numeric: tabular-nums; }
+.blk p { font-size: 10.5px; opacity: .85; margin-top: 2px; }
+.card { background: var(--app-card); border-radius: 14px; padding: 10px 12px; }
+.nums { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.nums small { color: var(--app-sub); display: block; font-size: 11px; }
+.nums b { font-size: 15.5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.bars { display: flex; align-items: flex-end; gap: 4px; height: 96px; }
+.bars div { flex: 1; display: flex; flex-direction: column-reverse; border-radius: 4px; overflow: hidden; min-width: 0; }
+.bars i { display: block; }
+.barlab { display: flex; gap: 4px; font-size: 10px; color: var(--app-sub); margin-top: 3px; }
+.barlab span { flex: 1; text-align: center; }
+.tagrow { display: grid; grid-template-columns: 20px 44px 1fr auto; align-items: center; gap: 6px; font-size: 12px; padding: 4px 0; }
+.tagrow .share { height: 6px; border-radius: 6px; background: #EFEAE2; overflow: hidden; }
+.tagrow .share i { display: block; height: 100%; border-radius: 6px; }
+.tagrow span:last-child { color: var(--app-sub); font-variant-numeric: tabular-nums; }
+.tomgrid { display: flex; flex-wrap: wrap; gap: 4px; line-height: 0; }
+.pill { display: flex; align-items: center; gap: 10px; background: var(--app-card); border: 2px solid transparent; border-radius: 99px; padding: 7px 14px 7px 9px; width: 100%; text-align: left; color: var(--app-fg); }
+.pill b { flex: 1; font-size: 14px; }
+.pill small { color: var(--app-sub); font-variant-numeric: tabular-nums; font-size: 12px; }
+.pill.on, .cell.on { border-color: var(--app-accent); background: var(--app-soft); }
+.cells { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.cell { display: flex; align-items: center; gap: 7px; background: #F3EFE8; border: 2px solid transparent; border-radius: 14px; padding: 8px 9px; text-align: left; color: var(--app-fg); }
+.cell b { display: block; font-size: 13px; }
+.cell small { color: var(--app-sub); font-size: 11px; }
+.scroller { display: flex; gap: 6px; overflow-x: auto; width: 100%; padding-bottom: 4px; scrollbar-width: none; }
+.scroller .chip { flex: none; border: 2px solid transparent; background: var(--app-card); color: var(--app-fg); }
+.scroller .chip.on { background: var(--app-soft); border-color: var(--app-accent); color: var(--app-strong); }
+@media (prefers-reduced-motion: no-preference) { .opt .phone { transition: outline-color .15s; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>番茄帳改版比較頁</h1>
+    <p class="lead">五題各選一個，選完把最下面那串字貼給我。標「建議」的是我會選的。手機畫面裡的紀錄都是示範資料，畫面是示意，字級與間距進 app 會照設計系統重排。</p>
+  </header>
+
+  <section class="q" id="q1">
+    <div>
+      <h2><span class="qno">1</span>計時中的番茄</h2>
+      <p class="lead">「種番茄」要讓人在計時中就看得到這顆在長。按播放看整顆 25 分鐘怎麼變，或自己拖進度。</p>
+    </div>
+    <div class="play">
+      <button type="button" id="q1play">▶ 播放一顆</button>
+      <input type="range" id="q1p" min="0" max="100" value="38" aria-label="這顆的進度">
+      <span id="q1lab"></span>
+    </div>
+    <div class="opts">
+      <div class="opt" data-q="1" data-o="A">
+        <div class="phone"><div class="scr" id="q1a"></div></div>
+        <div class="opt-body">
+          <h3>A　從青到紅 <span class="rec">建議</span></h3>
+          <p>一顆番茄掛在藤上，越接近到點越大、越紅。一眼看得出還剩多少，用的是現有的番茄圖，不用多畫東西。</p>
+          <button type="button" class="pick">選 1A</button>
+        </div>
+      </div>
+      <div class="opt" data-q="1" data-o="B">
+        <div class="phone"><div class="scr" id="q1b"></div></div>
+        <div class="opt-body">
+          <h3>B　從芽到果</h3>
+          <p>四個階段：發芽、開花、結青果、轉紅。比較有「種」的感覺，但要多畫一整株，前半段看不到番茄。</p>
+          <button type="button" class="pick">選 1B</button>
+        </div>
+      </div>
+      <div class="opt" data-q="1" data-o="C">
+        <div class="phone"><div class="scr" id="q1c"></div></div>
+        <div class="opt-body">
+          <h3>C　不長（現在的樣子）</h3>
+          <p>只有倒數和番茄堆，番茄在收下那一刻才出現。最省事，但「種番茄」只剩收成那一下。</p>
+          <button type="button" class="pick">選 1C</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="q" id="q2">
+    <div>
+      <h2><span class="qno">2</span>響了之後的慶祝畫面</h2>
+      <p class="lead">現在的鈴響頁主角是輸入框。改成先恭喜、再收下，寫一句變成選填。</p>
+    </div>
+    <div class="opts">
+      <div class="opt" data-q="2" data-o="A">
+        <div class="phone"><div class="scr" id="q2a"></div></div>
+        <div class="opt-body">
+          <h3>A　整頁一顆大番茄</h3>
+          <p>畫面只有這顆熟了的番茄和三個動作。最乾淨。</p>
+          <button type="button" class="pick">選 2A</button>
+        </div>
+      </div>
+      <div class="opt" data-q="2" data-o="B">
+        <div class="phone"><div class="scr" id="q2b"></div></div>
+        <div class="opt-body">
+          <h3>B　底部半頁</h3>
+          <p>主畫面還看得到，番茄堆在後面。慶祝感比較弱，但跟 app 其他半頁一致。</p>
+          <button type="button" class="pick">選 2B</button>
+        </div>
+      </div>
+      <div class="opt" data-q="2" data-o="C">
+        <div class="phone"><div class="scr" id="q2c"></div></div>
+        <div class="opt-body">
+          <h3>C　整頁＋今天收了幾顆 <span class="rec">建議</span></h3>
+          <p>大番茄下面排出今天已經收下的，新的這顆排在最後。看得到累積，不用數字比較。</p>
+          <button type="button" class="pick">選 2C</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="q" id="q3">
+    <div>
+      <h2><span class="qno">3</span>番茄架的方塊樣式</h2>
+      <p class="lead">兩個選項都有日、2 日、週三種檢視，點畫面上方切換。短的番茄靠太近時改成左右並排，不再疊在一起（看星期四早上 9 點那兩顆 5 分鐘的）。</p>
+    </div>
+    <div class="opts">
+      <div class="opt" data-q="3" data-o="A">
+        <div class="phone"><div class="scr" id="q3a"></div></div>
+        <div class="opt-body">
+          <h3>A　實心色塊</h3>
+          <p>整塊是標籤的顏色。週檢視最醒目，但日檢視裡字壓在濃色上，黃色那種要換深色字。</p>
+          <button type="button" class="pick">選 3A</button>
+        </div>
+      </div>
+      <div class="opt" data-q="3" data-o="B">
+        <div class="phone"><div class="scr" id="q3b"></div></div>
+        <div class="opt-body">
+          <h3>B　淡底加色條 <span class="rec">建議</span></h3>
+          <p>淡色底、左邊一條標籤色。跟現在的番茄架同一套樣子，筆記的字好讀；週檢視沒有 A 那麼搶眼。</p>
+          <button type="button" class="pick">選 3B</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="q" id="q4">
+    <div>
+      <h2><span class="qno">4</span>分析頁放哪裡</h2>
+      <p class="lead">內容兩個選項一樣：專注時間、幾顆、每天一根依標籤分色的長條、各標籤占多少。可切日、週、月。沒有「比上週少幾 %」的箭頭。</p>
+    </div>
+    <div class="opts">
+      <div class="opt" data-q="4" data-o="A">
+        <div class="phone"><div class="scr" id="q4a"></div></div>
+        <div class="opt-body">
+          <h3>A　收在番茄架裡 <span class="rec">建議</span></h3>
+          <p>番茄架上方切「行事曆｜分析」，取代現在右上角的「這週的收據」。底下維持三個分頁。</p>
+          <button type="button" class="pick">選 4A</button>
+        </div>
+      </div>
+      <div class="opt" data-q="4" data-o="B">
+        <div class="phone"><div class="scr" id="q4b"></div></div>
+        <div class="opt-body">
+          <h3>B　獨立第四個分頁</h3>
+          <p>底下多一顆「分析」。一點就到，但分頁列變擠，主畫面不再在正中間。</p>
+          <button type="button" class="pick">選 4B</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="q" id="q5">
+    <div>
+      <h2><span class="qno">5</span>選這顆要做什麼（標籤）</h2>
+      <p class="lead">「類型」和「在做哪件事」合成一個標籤：名稱、顏色、預設長度。新安裝先給這五個，可以改名、改長度、新增。畫面上的標籤可以點。</p>
+    </div>
+    <div class="opts">
+      <div class="opt" data-q="5" data-o="A">
+        <div class="phone"><div class="scr" id="q5a"></div></div>
+        <div class="opt-body">
+          <h3>A　整頁清單</h3>
+          <p>點主畫面的標籤名稱，換到一整頁，一列一個。標籤多的時候最好找，但每次都離開主畫面。</p>
+          <button type="button" class="pick">選 5A</button>
+        </div>
+      </div>
+      <div class="opt" data-q="5" data-o="B">
+        <div class="phone"><div class="scr" id="q5b"></div></div>
+        <div class="opt-body">
+          <h3>B　半頁兩欄 <span class="rec">建議</span></h3>
+          <p>從底部開半頁，兩欄排開，一次看得到六個以上。跟現在的操作最接近。</p>
+          <button type="button" class="pick">選 5B</button>
+        </div>
+      </div>
+      <div class="opt" data-q="5" data-o="C">
+        <div class="phone"><div class="scr" id="q5c"></div></div>
+        <div class="opt-body">
+          <h3>C　主畫面橫排</h3>
+          <p>標籤直接排在開始鈕上面，左右滑。不用多點一下，但超過四個就要滑才看得到。</p>
+          <button type="button" class="pick">選 5C</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="drop">
+    <h2>會一起拿掉或改掉的</h2>
+    <p class="lead">這幾項不用選，不反對我就照做；有要留的直接跟我說。</p>
+    <ul>
+      <li>收工流程整個拿掉：收工半頁、「明天的第一句」、設定裡的收工時間。一天過了午夜自己結束。</li>
+      <li>主畫面「這顆要做」那張卡拿掉，位置給計時中的番茄。</li>
+      <li>「估幾顆」和週收據的對帳拿掉。舊資料留在檔案裡不刪，只是畫面不再顯示。</li>
+      <li>寫一句改成選填：不寫可以直接收下，不用多按「這顆不留話」。寫了的會出現在番茄架那一顆上。</li>
+      <li>沒番茄的日子掛葉子：行事曆上空的日子就是空的，葉子先拿掉。</li>
+      <li>正計時這一輪不做。</li>
+    </ul>
+  </section>
+</div>
+
+<div class="answer">
+  <div class="answer-in">
+    <small>你的選擇</small>
+    <span id="ans"></span>
+    <button type="button" id="copy">複製</button>
+  </div>
+</div>
+
+<script>
+const INK = '#2B2329';
+const C = { red: '#E4472F', orange: '#F0892B', yellow: '#F2BC2F', purple: '#8C5BA9', pink: '#EE7E9D', green: '#9CC25A' };
+const SOFT = { red: '#FBE3DE', orange: '#FDEBD6', yellow: '#FBF1CC', purple: '#EEE4F4', pink: '#FCE4EB' };
+const TAGS = [
+  { id: 'focus', name: '專注', min: 25, color: 'red' },
+  { id: 'work', name: '工作', min: 50, color: 'purple' },
+  { id: 'read', name: '閱讀', min: 30, color: 'orange' },
+  { id: 'study', name: '學習', min: 45, color: 'yellow' },
+  { id: 'move', name: '運動', min: 10, color: 'pink' },
+];
+const tagOf = (id) => TAGS.find((t) => t.id === id);
+
+/* app 裡那顆番茄（描邊表情），照 ui/Tomato.js 的座標 */
+function tomato(fill, size, face = true) {
+  const f = face
+    ? `<circle cx="37" cy="55" r="3.8" fill="${INK}"/><circle cx="63" cy="55" r="3.8" fill="${INK}"/>
+       <path d="M43.5 63 Q50 69.5 56.5 63" fill="none" stroke="${INK}" stroke-width="3.2" stroke-linecap="round"/>
+       <ellipse cx="27" cy="64" rx="5.5" ry="3.2" fill="#fff" fill-opacity=".3"/><ellipse cx="73" cy="64" rx="5.5" ry="3.2" fill="#fff" fill-opacity=".3"/>`
+    : '';
+  return `<svg width="${size}" height="${size}" viewBox="0 0 100 100" aria-hidden="true">
+    <circle cx="50" cy="53" r="44" fill="${fill}" stroke="${INK}" stroke-width="4"/>
+    <path d="M19 44 C21 33 28 25 38 21" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="5" stroke-linecap="round"/>
+    <ellipse cx="37" cy="10" rx="12" ry="5.5" transform="rotate(-14 37 10)" fill="#6FAE52" stroke="${INK}" stroke-width="3.5"/>
+    <ellipse cx="63" cy="10" rx="12" ry="5.5" transform="rotate(14 63 10)" fill="#6FAE52" stroke="${INK}" stroke-width="3.5"/>
+    <path d="M50 11 V3.5" fill="none" stroke="${INK}" stroke-width="4" stroke-linecap="round"/>${f}</svg>`;
+}
+
+const PILE = [
+  [0, 0, 46, 'red', -8], [44, 0, 40, 'purple', 12], [82, 0, 52, 'red', 4], [132, 0, 38, 'orange', -14], [168, 0, 46, 'yellow', 9], [212, 0, 42, 'red', -5],
+  [20, 36, 42, 'orange', 10], [62, 34, 44, 'red', -12], [108, 42, 40, 'pink', 6], [146, 32, 46, 'red', 14], [192, 36, 40, 'purple', -9],
+  [44, 70, 40, 'red', 5], [92, 76, 36, 'yellow', -10], [132, 70, 44, 'red', 8],
+];
+const pile = (n = PILE.length) =>
+  `<div class="pile">${PILE.slice(0, n).map(([x, y, s, c, r]) => `<span style="left:${x}px;bottom:${y}px;transform:rotate(${r}deg)">${tomato(C[c], s)}</span>`).join('')}</div>`;
+
+const tabs = (on, four) => {
+  const names = four ? ['番茄架', '主畫面', '分析', '設定'] : ['番茄架', '主畫面', '設定'];
+  return `<div class="tabs">${names.map((n) => `<i class="${n === on ? 'on' : ''}">${n}</i>`).join('')}</div>`;
+};
+
+/* ── 1 計時中的番茄 ── */
+const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+const mix = (a, b, t) => {
+  const A = hex(a), B = hex(b);
+  return '#' + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, '0')).join('');
+};
+const ripe = (p) => (p < 0.6 ? mix(C.green, C.yellow, p / 0.6) : mix(C.yellow, C.red, (p - 0.6) / 0.4));
+const clock = (p) => {
+  const s = Math.round((1 - p) * 25 * 60);
+  return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+};
+function plant(p) {
+  const h = 26 + 60 * Math.min(1, p / 0.45), top = 118 - h;
+  const leaf = (y, side) => `<ellipse cx="${60 + side * 13}" cy="${y}" rx="12" ry="6" transform="rotate(${side * 24} ${60 + side * 13} ${y})" fill="#6FAE52" stroke="${INK}" stroke-width="2.5"/>`;
+  let s = `<svg viewBox="0 0 120 130" width="150" height="162" aria-hidden="true">
+    <path d="M12 121 H108" stroke="${INK}" stroke-width="3" stroke-linecap="round"/>
+    <path d="M60 120 V${top}" stroke="#4E8B3A" stroke-width="5" stroke-linecap="round" fill="none"/>`;
+  s += leaf(104, -1);
+  if (h > 40) s += leaf(88, 1);
+  if (h > 62) s += leaf(70, -1);
+  if (p >= 0.2 && p < 0.45) {
+    for (let i = 0; i < 5; i++) {
+      const a = (i * 72 - 90) * Math.PI / 180;
+      s += `<circle cx="${60 + 8 * Math.cos(a)}" cy="${top - 4 + 8 * Math.sin(a)}" r="5.5" fill="#F7D64A" stroke="${INK}" stroke-width="2"/>`;
+    }
+    s += `<circle cx="60" cy="${top - 4}" r="4" fill="#F0892B" stroke="${INK}" stroke-width="2"/>`;
+  }
+  if (p >= 0.45) {
+    const r = 8 + 16 * Math.min(1, (p - 0.45) / 0.4);
+    const col = p < 0.75 ? C.green : mix(C.green, C.red, Math.min(1, (p - 0.75) / 0.25));
+    const cy = top + r - 4;
+    s += `<circle cx="60" cy="${cy}" r="${r}" fill="${col}" stroke="${INK}" stroke-width="3"/>`;
+    if (r > 17) s += `<circle cx="${60 - r * 0.3}" cy="${cy}" r="2" fill="${INK}"/><circle cx="${60 + r * 0.3}" cy="${cy}" r="2" fill="${INK}"/>`;
+  }
+  return s + '</svg>';
+}
+function drawQ1(p) {
+  const head = (big) => `<div class="center" style="gap:6px"><span class="chip">${tomato(C.red, 14, false)}專注・25 分</span>
+    <div class="bigtime"${big ? ' style="font-size:60px;margin-top:40px"' : ''}>${clock(p)}</div></div>`;
+  const size = 40 + 62 * p;
+  document.getElementById('q1a').innerHTML = `${head()}
+    <div class="center" style="margin-top:2px"><div style="width:4px;height:26px;background:#4E8B3A;border-radius:3px"></div>
+    <div style="line-height:0;margin-top:-6px">${tomato(ripe(p), size, p > 0.25)}</div>
+    <div class="sub" style="margin-top:6px;height:18px">${p >= 1 ? '熟了' : ''}</div></div>${pile()}`;
+  document.getElementById('q1b').innerHTML = `${head()}<div class="center" style="margin-top:-4px">${plant(p)}</div>${pile()}`;
+  document.getElementById('q1c').innerHTML = `${head(true)}${pile()}`;
+  document.getElementById('q1lab').textContent = p >= 1 ? '到點' : `剩 ${clock(p)}`;
+}
+const range = document.getElementById('q1p');
+range.addEventListener('input', () => drawQ1(range.value / 100));
+let playing = null;
+document.getElementById('q1play').addEventListener('click', () => {
+  cancelAnimationFrame(playing);
+  const t0 = performance.now(), dur = 8000;
+  const step = (t) => {
+    const p = Math.min(1, (t - t0) / dur);
+    range.value = Math.round(p * 100);
+    drawQ1(p);
+    if (p < 1) playing = requestAnimationFrame(step);
+  };
+  playing = requestAnimationFrame(step);
+});
+drawQ1(range.value / 100);
+
+/* ── 2 慶祝畫面 ── */
+const actions = `<div class="note">✎ 寫一句給自己（選填）</div><div class="btn">收下，休息一下</div>
+  <div class="row" style="width:100%;justify-content:space-around"><span class="tbtn">再做 15 分</span><span class="tbtn">再做 30 分</span></div>`;
+document.getElementById('q2a').innerHTML = `<div class="center" style="gap:12px;margin-top:38px">
+  <div style="line-height:0">${tomato(C.red, 150)}</div>
+  <h4>熟了，又收下一顆</h4><div class="sub">專注・25 分</div></div>
+  <div class="center" style="gap:10px;margin-top:auto;margin-bottom:26px">${actions}</div>`;
+document.getElementById('q2b').innerHTML = `<div class="center" style="gap:6px"><span class="chip">${tomato(C.red, 14, false)}專注・25 分</span>
+  <div class="bigtime">00:00</div></div>${pile()}<div class="dim"></div>
+  <div class="sheet"><div class="row" style="justify-content:flex-start;gap:12px"><div style="line-height:0">${tomato(C.red, 64)}</div>
+  <div><h4 style="font-size:19px">熟了，又收下一顆</h4><div class="sub">專注・25 分</div></div></div>${actions}</div>`;
+document.getElementById('q2c').innerHTML = `<div class="center" style="gap:10px;margin-top:22px">
+  <div style="line-height:0">${tomato(C.red, 128)}</div>
+  <h4>熟了，又收下一顆</h4><div class="sub">專注・25 分</div>
+  <div class="card center" style="width:100%;gap:6px"><div class="sub">今天收了 4 顆</div>
+  <div class="tomgrid" style="justify-content:center;align-items:flex-end">${tomato(C.purple, 30)}${tomato(C.orange, 24)}${tomato(C.red, 22)}${tomato(C.red, 34)}</div></div></div>
+  <div class="center" style="gap:10px;margin-top:auto;margin-bottom:22px">${actions}</div>`;
+
+/* ── 3 番茄架：示範資料 [星期幾 0=一, 開始(時), 分鐘, 標籤, 筆記] ── */
+const S = [
+  [0, 9.5, 50, 'work', '第二節標題改成問句'], [0, 10.75, 25, 'focus', ''], [0, 13.25, 45, 'study', '聽完第三堂，筆記補到一半'],
+  [1, 9.25, 30, 'read', '讀完第四章'], [1, 10.5, 50, 'work', '腳本初稿寫到第三段'], [1, 13, 25, 'focus', ''], [1, 13.6, 25, 'focus', ''],
+  [2, 10, 45, 'study', ''], [2, 11.25, 50, 'work', '投影片排到第 12 張'], [2, 14, 10, 'move', ''],
+  [3, 9.15, 5, 'focus', ''], [3, 9.3, 5, 'focus', ''], [3, 10, 50, 'work', '字幕校完一半，從 12:40 接'], [3, 11.25, 30, 'read', ''],
+  [3, 13, 25, 'focus', ''], [3, 13.6, 25, 'focus', '縮圖文字定案'], [3, 14.4, 10, 'move', ''],
+];
+const DAYS = ['一', '二', '三', '四', '五', '六', '日'], FIRST = 9, TODAY = 3, H0 = 9, H1 = 15, PPH = 50;
+function lanes(items, minH) {
+  let cluster = [], end = -1;
+  const out = [];
+  const flush = () => { const n = Math.max(...cluster.map((b) => b.lane)) + 1; cluster.forEach((b) => (b.n = n)); cluster = []; };
+  items.forEach(([, s, m, tag, note]) => {
+    const top = (s - H0) * PPH, h = Math.max(minH, (m / 60) * PPH);
+    if (cluster.length && top >= end) { flush(); end = -1; }
+    let lane = 0;
+    while (cluster.some((b) => b.lane === lane && b.top + b.h > top)) lane++;
+    const b = { top, h, lane, n: 1, m, tag: tagOf(tag), note };
+    cluster.push(b); out.push(b);
+    end = Math.max(end, top + h);
+  });
+  if (cluster.length) flush();
+  return out;
+}
+function drawCal(el, style, view) {
+  const cols = view === 'day' ? [TODAY] : view === 'two' ? [TODAY - 1, TODAY] : [0, 1, 2, 3, 4, 5, 6];
+  const gutter = 28, W = 234 - gutter, colW = W / cols.length, minH = view === 'week' ? 7 : 20;
+  let blocks = '';
+  cols.forEach((d, ci) => {
+    lanes(S.filter((x) => x[0] === d), minH).forEach((b) => {
+      const w = colW / b.n - 2, left = gutter + ci * colW + b.lane * (colW / b.n);
+      const look = style === 'A'
+        ? `background:${C[b.tag.color]};color:${b.tag.color === 'yellow' ? '#3A2A00' : '#fff'}`
+        : `background:${SOFT[b.tag.color]};border-left:3px solid ${C[b.tag.color]};color:#1F1A22`;
+      let inner = '';
+      if (view !== 'week' && b.h >= 18) {
+        const dur = view === 'day' && b.n === 1 ? `<span class="dur">${b.m} 分</span>` : '';
+        inner = `${dur}<b>${b.tag.name}</b>`;
+        if (view === 'two' && b.h >= 34) inner += `<p>${b.m} 分</p>`;
+        if (view === 'day' && b.note && b.h >= 36) inner += `<p>${b.note}</p>`;
+      }
+      const pad = view === 'week' || b.h < 18 ? 'padding:0;' : '';
+      blocks += `<div class="blk" style="top:${b.top}px;height:${b.h - 1}px;left:${left}px;width:${w}px;${pad}${look}">${inner}</div>`;
+    });
+  });
+  let hours = '';
+  for (let h = H0; h <= H1; h++) hours += `<div class="hr" style="top:${(h - H0) * PPH}px"><span>${h}</span></div>`;
+  const title = view === 'day' ? '11月12日（四）' : view === 'two' ? '11月11–12日' : '11月9–15日';
+  const seg = [['day', '日'], ['two', '2日'], ['week', '週']].map(([v, n]) => `<button type="button" data-view="${v}" class="${v === view ? 'on' : ''}">${n}</button>`).join('');
+  el.innerHTML = `<div class="row"><h4 style="font-size:15px;white-space:nowrap">${title}</h4><div class="seg">${seg}</div></div>
+    <div class="week">${DAYS.map((n, i) => `<div class="${cols.includes(i) && view !== 'week' ? 'on' : ''}">${n}<b>${FIRST + i}</b></div>`).join('')}</div>
+    <div class="grid" style="height:${(H1 - H0) * PPH + 8}px;margin-top:14px">${hours}${blocks}</div>${tabs('番茄架')}`;
+  el.querySelectorAll('[data-view]').forEach((b) => b.addEventListener('click', () => drawCal(el, style, b.dataset.view)));
+}
+drawCal(document.getElementById('q3a'), 'A', 'day');
+drawCal(document.getElementById('q3b'), 'B', 'day');
+
+/* ── 4 分析 ── */
+const span = (m) => (m >= 60 ? `${Math.floor(m / 60)} 小時${m % 60 ? ` ${m % 60} 分` : ''}` : `${m} 分`);
+function monthData() {
+  const days = [];
+  for (let d = 0; d < 30; d++) {
+    const rest = d % 7 >= 5, src = S.filter((x) => x[0] === d % 4);
+    days.push(rest ? [] : src.filter((_, i) => (i + d) % 5 !== 0));
+  }
+  return days;
+}
+function drawStats(el, where, rng) {
+  const days = rng === 'day' ? [S.filter((x) => x[0] === TODAY)] : rng === 'week' ? DAYS.map((_, i) => S.filter((x) => x[0] === i)) : monthData();
+  const all = days.flat(), total = all.reduce((a, x) => a + x[2], 0);
+  const byTag = TAGS.map((t) => ({ t, m: all.filter((x) => x[3] === t.id).reduce((a, x) => a + x[2], 0) })).filter((x) => x.m).sort((a, b) => b.m - a.m);
+  let chart;
+  if (rng === 'day') {
+    chart = `<div class="tomgrid" style="align-items:flex-end">${all.map((x) => tomato(C[tagOf(x[3]).color], 18 + x[2] * 0.36)).join('')}</div>`;
+  } else {
+    const max = Math.max(...days.map((d) => d.reduce((a, x) => a + x[2], 0)));
+    chart = `<div class="bars">${days.map((d) => `<div>${TAGS.map((t) => {
+      const m = d.filter((x) => x[3] === t.id).reduce((a, x) => a + x[2], 0);
+      return m ? `<i style="height:${(m / max) * 96}px;background:${C[t.color]}"></i>` : '';
+    }).join('')}</div>`).join('')}</div>
+    <div class="barlab">${rng === 'week' ? DAYS.map((n) => `<span>${n}</span>`).join('') : '<span style="text-align:left">11/1</span><span>11/15</span><span style="text-align:right">11/30</span>'}</div>`;
+  }
+  const seg = [['day', '日'], ['week', '週'], ['month', '月']].map(([v, n]) => `<button type="button" data-rng="${v}" class="${v === rng ? 'on' : ''}">${n}</button>`).join('');
+  const when = rng === 'day' ? '11月12日（四）' : rng === 'week' ? '11月9–15日' : '11月';
+  const head = where === 'A'
+    ? `<div class="row"><h4>番茄架</h4><div class="seg"><button type="button">行事曆</button><button type="button" class="on">分析</button></div></div>`
+    : `<h4>分析</h4>`;
+  el.innerHTML = `${head}<div class="row" style="margin-top:8px"><span class="sub">${when}</span><div class="seg">${seg}</div></div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+    <div class="card nums"><div><small>專注</small><b>${span(total)}</b></div><div><small>收下</small><b>${all.length} 顆</b></div></div>
+    <div class="card">${chart}</div>
+    <div class="card">${byTag.map(({ t, m }) => `<div class="tagrow"><span style="line-height:0">${tomato(C[t.color], 18, false)}</span><b>${t.name}</b>
+      <div class="share"><i style="width:${Math.round((m / total) * 100)}%;background:${C[t.color]}"></i></div><span>${span(m)}</span></div>`).join('')}</div></div>
+    ${tabs(where === 'A' ? '番茄架' : '分析', where === 'B')}`;
+  el.querySelectorAll('[data-rng]').forEach((b) => b.addEventListener('click', () => drawStats(el, where, b.dataset.rng)));
+}
+drawStats(document.getElementById('q4a'), 'A', 'week');
+drawStats(document.getElementById('q4b'), 'B', 'week');
+
+/* ── 5 標籤 ── */
+function drawTags(id, kind, sel = 'focus') {
+  const el = document.getElementById(id);
+  const cur = tagOf(sel);
+  const home = `<div class="center" style="gap:6px"><span class="chip">${tomato(C[cur.color], 14, false)}${cur.name}・${cur.min} 分 ›</span>
+    <div class="bigtime">${String(cur.min).padStart(2, '0')}:00</div></div>`;
+  if (kind === 'A') {
+    el.innerHTML = `<div class="row"><h4>這顆要做</h4><span class="tbtn">新標籤</span></div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px">${TAGS.map((t) =>
+        `<button type="button" class="pill ${t.id === sel ? 'on' : ''}" data-tag="${t.id}"><span style="line-height:0">${tomato(C[t.color], 30)}</span><b>${t.name}</b><small>${t.min} 分</small></button>`).join('')}</div>`;
+  } else if (kind === 'B') {
+    el.innerHTML = `${home}${pile()}<div class="dim"></div><div class="sheet"><h4 style="font-size:19px">這顆要做</h4>
+      <div class="cells">${TAGS.map((t) =>
+        `<button type="button" class="cell ${t.id === sel ? 'on' : ''}" data-tag="${t.id}"><span style="line-height:0">${tomato(C[t.color], 28)}</span><span><b>${t.name}</b><small>${t.min} 分</small></span></button>`).join('')}
+      <div class="cell" style="justify-content:center;color:#4A2F5A;font-weight:700">＋ 新標籤</div></div></div>`;
+  } else {
+    el.innerHTML = `<div class="center" style="gap:10px"><div class="bigtime">${String(cur.min).padStart(2, '0')}:00</div>
+      <div class="scroller">${TAGS.map((t) =>
+        `<button type="button" class="chip ${t.id === sel ? 'on' : ''}" data-tag="${t.id}">${tomato(C[t.color], 16, false)}${t.name}・${t.min}</button>`).join('')}</div>
+      <div class="btn" style="margin-top:4px">開始</div></div>${pile()}`;
+  }
+  el.querySelectorAll('[data-tag]').forEach((b) => b.addEventListener('click', () => drawTags(id, kind, b.dataset.tag)));
+}
+drawTags('q5a', 'A'); drawTags('q5b', 'B'); drawTags('q5c', 'C');
+
+/* ── 作答列 ── */
+const picks = {};
+try { Object.assign(picks, JSON.parse(localStorage.getItem('picks') || '{}')); } catch (e) {}
+function showPicks() {
+  document.querySelectorAll('.opt').forEach((o) => o.classList.toggle('selected', picks[o.dataset.q] === o.dataset.o));
+  document.getElementById('ans').textContent = [1, 2, 3, 4, 5].map((q) => `${q}${picks[q] || '？'}`).join(' ');
+}
+document.querySelectorAll('.pick').forEach((b) => b.addEventListener('click', () => {
+  const o = b.closest('.opt');
+  picks[o.dataset.q] = o.dataset.o;
+  try { localStorage.setItem('picks', JSON.stringify(picks)); } catch (e) {}
+  showPicks();
+}));
+document.getElementById('copy').addEventListener('click', (e) => {
+  const text = document.getElementById('ans').textContent, btn = e.currentTarget;
+  const done = () => { btn.textContent = '已複製'; setTimeout(() => (btn.textContent = '複製'), 1500); };
+  const fallback = () => { const r = document.createRange(); r.selectNodeContents(document.getElementById('ans')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = '已選取，請按複製'; };
+  if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, fallback); else fallback();
+});
+showPicks();
+</script>
