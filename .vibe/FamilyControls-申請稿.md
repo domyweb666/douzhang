@@ -64,5 +64,5 @@ The feature is off by default and the user can turn it off at any time. The app 
 ## 紀錄
 
 - 2026-11-17 多米決定申請。
-- 送出日期：
+- 送出日期：2026-11-17（多米回報「我剛送出」；送了哪幾個 bundle ID 待補）
 - 核准日期：
