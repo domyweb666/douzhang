@@ -1,68 +1,35 @@
-# Family Controls (Distribution) 申請稿（番茄帳）
+# Family Controls 權限申請（番茄帳）
 
-> 2026-11-17 多米決定申請。這份是給你照著填的，英文段落可以直接貼。
-> 送出後把日期補在最下面「紀錄」，核准信來了也記一筆，我才知道可以動工。
+> 2026-11-17 多米決定申請並送出。這份原本是照舊版表單寫的填表稿；多米打開後表單已經改版，下面改成實際的樣子。
 
-## 送之前先確認兩件事
-
-1. 用**帳號持有人（Account Holder）**的 Apple ID 登入。申請是跟著開發者團隊走的，其他角色可能送不出去。
-2. 到 App Store Connect → 番茄帳 → App 資訊，抄下「Apple ID」那串數字（表單上叫 App Apple ID，不是你登入用的信箱）。
-
-## 表單
+## 表單實際長怎樣（2026-11-17 多米截圖）
 
 網址：https://developer.apple.com/contact/request/family-controls-distribution
 
-表單的欄位我沒辦法登入看，下面是別人回報過的欄位。2026 年有人說表單改版成整個帳號填一次、沒有 bundle ID 欄位，所以**以你實際看到的為準**；看到下面沒列的欄位，截圖給我，我幫你寫。
+- 標題「Get the Family Controls Framework Entitlement」。
+- 只有三格，都是自動帶入、不能改：姓名、Email、Team ID。**沒有 App 名稱、bundle ID、用途說明**。
+- 下面是條款，最底下一顆「Get Entitlement」。
+- 頁面上寫的是「Once assigned to your developer account」：權限是給**整個開發者帳號**的，不是一個一個 bundle ID 申請。所以不用另外替三個擴充各送一次。
 
-| 欄位 | 填什麼 |
-|---|---|
-| App name | 番茄帳 |
-| App Apple ID | App Store Connect 上那串數字 |
-| Bundle ID | `org.domyweb.douzhang` |
-| 用途說明（自由填寫） | 貼下面那段英文 |
+## 條款裡跟番茄帳有關的三條
 
-### 用途說明（貼這段）
+1. App 的主要用途要是其中一種：家長管小孩的裝置；或「讓個人管理自己的裝置，用專注控制、計時器、任務管理來幫助專注與生產力」。番茄帳是第二種。
+2. 不能拿來擋廣告、不能用在公司組織、不能管另一個成年人的裝置。
+3. 從這個功能拿到的裝置或使用資料，不能用在廣告、不能給資料仲介，也不能拿去做專注功能以外的事。番茄帳沒有帳號、沒有伺服器、沒有第三方 SDK，本來就不會送出去。
 
-```
-番茄帳 is a Pomodoro focus timer for individual users. The user writes down one concrete next step, starts a focus session (5 to 90 minutes), and gets a notification when it ends.
+## 還不知道的
 
-We are requesting Family Controls so users can optionally block distracting apps on their own device during a focus session. This is a self-control feature for the device owner. It is not used to monitor or manage another person's device.
+- 按下「Get Entitlement」之後是立刻生效，還是要等審核。舊版表單要等一天到一個多月；新版我沒有看過按下去之後的畫面。
+- 怎麼確認生效：到 developer.apple.com → Certificates, Identifiers & Profiles → Identifiers → `org.domyweb.douzhang`，看能力清單裡能不能勾 Family Controls。
 
-How it works:
-1. In Settings, the user turns on "Block apps during focus". We request authorization with AuthorizationCenter (individual authorization) and the user confirms with Face ID or passcode.
-2. The user picks apps, categories, or websites with the system FamilyActivityPicker. We only store the opaque selection tokens on the device.
-3. When the user starts a focus session, we apply a shield to the selected apps with ManagedSettings.
-4. When the session ends, or the user stops it, we remove the shield.
+## 生效之後
 
-The feature is off by default and the user can turn it off at any time. The app has no account system, no server, no analytics or advertising SDKs. Nothing about the user's app selection or app usage leaves the device, and we do not use the DeviceActivity report data.
-```
-
-## 要不要連擴充一起送
-
-建議**主 app 先送，三個擴充也順手各送一次**。表單免費，每個 bundle ID 各自排隊；之後如果要「到點自動解開」或自訂擋板的樣子就會用到，現在一起送可以少等一輪。
-
-擴充的 bundle ID（其他欄位跟主 app 一樣，用途說明最前面加一句）：
-
-| Bundle ID | 最前面加這句 |
-|---|---|
-| `org.domyweb.douzhang.ActivityMonitor` | `This is the Device Activity Monitor extension of 番茄帳 (org.domyweb.douzhang). It removes the shield when a focus session ends while the app is in the background.` |
-| `org.domyweb.douzhang.ShieldConfiguration` | `This is the Shield Configuration extension of 番茄帳 (org.domyweb.douzhang). It shows the app's own text on the shield screen.` |
-| `org.domyweb.douzhang.ShieldAction` | `This is the Shield Action extension of 番茄帳 (org.domyweb.douzhang). It handles the button on the shield screen.` |
-
-如果表單要求 bundle ID 必須先在開發者後台登記過，擴充這三個就先跳過，只送主 app。
-
-## 核准之後（我來做，除了第 1 步）
-
-1. 你到 developer.apple.com → Identifiers → `org.domyweb.douzhang`，在 Additional Capabilities 勾 Family Controls (Distribution)，再加一個 App Group。
+1. 多米到上面那一頁，替 `org.domyweb.douzhang` 勾 Family Controls，再加一個 App Group。之後加的擴充（`.ActivityMonitor`、`.ShieldConfiguration`、`.ShieldAction`）要用時再各自登記、勾同一個能力。
 2. 我裝套件、改打包流程、寫功能，用 GitHub Actions 出 TestFlight build。
-3. 你在手機上驗。
-
-## 等太久怎麼辦
-
-論壇上的等待時間從一天到一個多月都有。超過兩週沒消息，Apple 工程師在論壇上的建議是開一張 code-level support ticket，附上 Team ID 和 bundle ID。
+3. 多米在手機上驗。
 
 ## 紀錄
 
 - 2026-11-17 多米決定申請。
-- 送出日期：2026-11-17（多米回報「我剛送出」；送了哪幾個 bundle ID 待補）
-- 核准日期：
+- 2026-11-17 多米回報已送出（新版表單，按「Get Entitlement」）。按下去之後看到什麼、有沒有收到信：待補。
+- 生效日期：
