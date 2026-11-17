@@ -1,0 +1,416 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>番茄帳主畫面比較頁</title>
+<style>
+/* 版面：上面一條狀態切換，下面四支手機並排（現況＋三個方向），再往下是六樣去哪的對照表與八題小選擇；最下面固定作答列 */
+:root {
+  --bg: #F0ECF3; --panel: #FFFFFF; --fg: #231A2A; --muted: #675C70; --line: #DAD1E1;
+  --accent: #4A2F5A; --on-accent: #FFFFFF; --soft: #E6DAEE; --pick: #2B7A4B; --phone-edge: #2B2329;
+  /* 手機畫面裡是 app 的淺色模式，固定不跟著頁面深淺變 */
+  --app-bg: #F6F3EC; --app-card: #FFFFFF; --app-fg: #1F1A22; --app-sub: #6E6872; --app-line: #E4DFD6;
+  --app-accent: #3B2547; --app-strong: #4A2F5A; --app-soft: #ECE3F1; --app-fill: #EEE9E0; --app-ink: #2B2329;
+  --font: -apple-system, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #18131C; --panel: #221B28; --fg: #EEE7F3; --muted: #AC9FB6; --line: #3A3042;
+    --accent: #D9C2E8; --on-accent: #2A1A33; --soft: #3A2B45; --pick: #7FD19B; --phone-edge: #4D4356;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #18131C; --panel: #221B28; --fg: #EEE7F3; --muted: #AC9FB6; --line: #3A3042;
+  --accent: #D9C2E8; --on-accent: #2A1A33; --soft: #3A2B45; --pick: #7FD19B; --phone-edge: #4D4356;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 16px; line-height: 1.6;
+  padding-block: 28px 130px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 1060px; margin: 0 auto; display: flex; flex-direction: column; gap: 40px; }
+h1 { font-size: 30px; line-height: 1.25; margin: 0 0 8px; text-wrap: balance; }
+h2 { font-size: 22px; line-height: 1.3; margin: 0 0 6px; text-wrap: balance; }
+h3 { font-size: 17px; margin: 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+p { margin: 0; }
+.lead { color: var(--muted); max-width: 42em; }
+.lead + .lead { margin-top: 6px; }
+.qno { color: var(--accent); font-variant-numeric: tabular-nums; margin-right: 4px; }
+.rec { font-size: 12px; font-weight: 700; background: var(--accent); color: var(--on-accent); padding: 1px 8px; border-radius: 99px; }
+.ref { font-size: 12px; font-weight: 700; border: 1px solid var(--muted); color: var(--muted); padding: 0 8px; border-radius: 99px; }
+button { font: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* 狀態切換 */
+.ctrl { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 10px 14px; }
+.ctrl-seg { display: inline-flex; background: var(--soft); border-radius: 99px; padding: 3px; }
+.ctrl-seg button { border: 0; background: transparent; color: var(--fg); border-radius: 99px; padding: 6px 16px; font-weight: 700; font-size: 15px; }
+.ctrl-seg button.on { background: var(--accent); color: var(--on-accent); }
+.prog { display: flex; align-items: center; gap: 10px; flex: 1 1 240px; min-width: 0; }
+.prog input { flex: 1; min-width: 0; accent-color: var(--accent); }
+.prog span { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 14.5px; white-space: nowrap; }
+.prog button { border: 0; background: var(--accent); color: var(--on-accent); border-radius: 99px; padding: 6px 14px; font-weight: 700; font-size: 14.5px; }
+.prog[aria-disabled="true"] { opacity: .4; pointer-events: none; }
+
+/* 四支手機 */
+.opts { display: flex; flex-wrap: wrap; gap: 26px 18px; }
+.opt { flex: 0 1 244px; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.opt-body { display: flex; flex-direction: column; gap: 6px; }
+.opt-body p { font-size: 14.5px; color: var(--muted); }
+.opt-body p b { color: var(--fg); }
+.pick { align-self: flex-start; border: 1.5px solid var(--accent); background: transparent; color: var(--accent); border-radius: 99px; padding: 6px 16px; font-weight: 700; font-size: 14.5px; }
+.opt.selected .pick { background: var(--pick); border-color: var(--pick); color: var(--bg); }
+.opt.selected .phone { outline: 4px solid var(--pick); outline-offset: 3px; }
+
+.phone {
+  width: 100%; max-width: 244px; aspect-ratio: 393 / 852; border: 6px solid var(--phone-edge); border-radius: 34px; overflow: hidden;
+  background: var(--app-bg); color: var(--app-fg); font-size: 12.5px; line-height: 1.35; position: relative;
+}
+.scr { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; padding: 30px 12px 0; }
+.grow { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; min-height: 0; }
+.chip { display: inline-flex; align-items: center; gap: 5px; background: var(--app-soft); color: var(--app-strong); border-radius: 99px; padding: 5px 11px; font-weight: 700; font-size: 12px; line-height: 1; }
+.chip2 { display: inline-flex; align-items: center; background: var(--app-fill); color: var(--app-fg); border-radius: 99px; padding: 5px 10px; font-weight: 600; font-size: 11px; line-height: 1; white-space: nowrap; }
+.chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; margin-top: 8px; }
+.time { font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -.01em; line-height: 1.05; }
+.sub { color: var(--app-sub); text-align: center; font-size: 11.5px; }
+.links { display: flex; gap: 14px; justify-content: center; margin-top: 10px; color: var(--app-strong); font-weight: 700; font-size: 11.5px; white-space: nowrap; }
+.btn { background: var(--app-accent); color: #FFFFFF; border-radius: 99px; padding: 10px 0; text-align: center; font-weight: 700; font-size: 13px; width: 100%; }
+.tbtn { color: var(--app-sub); font-weight: 700; text-align: center; padding: 6px 0; font-size: 12px; }
+.vine { width: 3px; height: 17px; background: #4E8B3A; border-radius: 3px; }
+.pile { position: absolute; left: 0; right: 0; bottom: 46px; height: 92px; pointer-events: none; }
+.pile span, .tray span { position: absolute; line-height: 0; }
+.fall { position: absolute; line-height: 0; opacity: .9; }
+.tray { position: absolute; left: 10px; right: 10px; bottom: 50px; height: 46px; border-bottom: 2px solid var(--app-line); border-left: 2px solid var(--app-line); border-right: 2px solid var(--app-line); border-radius: 0 0 16px 16px; }
+.tabs { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); display: flex; background: var(--app-card); border-radius: 99px; padding: 3px; box-shadow: 0 4px 14px rgba(40, 25, 50, .14); font-size: 10px; font-weight: 700; white-space: nowrap; }
+.tabs i { font-style: normal; padding: 5px 10px; border-radius: 99px; color: var(--app-fg); }
+.tabs i.on { background: var(--app-soft); color: var(--app-strong); }
+.more { position: absolute; top: 26px; right: 12px; width: 30px; height: 30px; border-radius: 50%; background: var(--app-fill); color: var(--app-fg); display: grid; place-items: center; font-weight: 800; font-size: 14px; letter-spacing: 1px; }
+.corner { position: absolute; top: 26px; right: 12px; }
+.mark { position: absolute; left: 50%; transform: translateX(-50%); bottom: 64px; font-size: 10.5px; color: var(--app-sub); background: var(--app-card); border: 1px dashed #BDB4C4; border-radius: 8px; padding: 3px 8px; white-space: nowrap; }
+
+/* 對照表 */
+.tbl-wrap { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; }
+table { border-collapse: collapse; width: 100%; min-width: 680px; font-size: 14.5px; }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-top: 1px solid var(--line); }
+thead th { border-top: 0; color: var(--muted); font-weight: 700; font-size: 13px; }
+tbody th { white-space: nowrap; }
+td.same { color: var(--muted); }
+
+/* 小選擇 */
+.qs { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.q { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.q > p { font-size: 14px; color: var(--muted); }
+.choices { display: flex; flex-direction: column; gap: 6px; }
+.choices button { text-align: left; border: 1.5px solid var(--line); background: transparent; color: var(--fg); border-radius: 10px; padding: 7px 10px; font-size: 14.5px; display: flex; gap: 8px; align-items: baseline; }
+.choices button b { color: var(--accent); font-variant-numeric: tabular-nums; }
+.choices button.on { border-color: var(--pick); background: var(--soft); }
+.choices button.on b { color: var(--pick); }
+.choices .rec { margin-left: auto; flex: none; }
+
+/* 作答列 */
+.answer {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; background: var(--panel); border-top: 1px solid var(--line);
+  padding-top: 10px; padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.answer-in { max-width: 1060px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; }
+.answer-in small { color: var(--muted); font-size: 13px; }
+#ans { font-weight: 800; font-size: 18px; letter-spacing: .03em; font-variant-numeric: tabular-nums; user-select: all; overflow-wrap: anywhere; }
+#copy { margin-left: auto; border: 0; background: var(--accent); color: var(--on-accent); border-radius: 99px; padding: 7px 18px; font-weight: 700; }
+@media (prefers-reduced-motion: no-preference) { .opt .phone { transition: outline-color .15s; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>番茄帳主畫面比較頁</h1>
+    <p class="lead">2026-11-18 定了主畫面的主角是「這一顆番茄」：待機時還沒種下，計時中在長，休息時等下一顆。這頁比的是其他東西退到哪裡：罐子番茄堆、火柴人、聚焦模式、記一筆、背景音、標籤膠囊。</p>
+    <p class="lead">四支手機同一個狀態並排。用下面那條切待機、計時中、休息；計時中可以拖進度看番茄長大。鈴響那一頁（慶祝畫面）這次不動。手機畫面是示意，比例照 iPhone 15 縮小，顏色照 domy-design 的茄紫，字級與間距不是最後的值。</p>
+  </header>
+
+  <section style="display:flex;flex-direction:column;gap:16px">
+    <h2><span class="qno">1</span>主畫面選哪個方向</h2>
+    <div class="ctrl">
+      <div class="ctrl-seg" role="group" aria-label="狀態">
+        <button type="button" data-st="idle">待機</button>
+        <button type="button" data-st="focus" class="on">計時中</button>
+        <button type="button" data-st="rest">休息</button>
+      </div>
+      <div class="prog" id="progbox">
+        <input id="p" type="range" min="0" max="100" value="55" aria-label="計時中走到幾成">
+        <span id="plab">剩 11:15</span>
+        <button type="button" id="play">播一顆（8 秒）</button>
+      </div>
+    </div>
+
+    <div class="opts">
+      <div class="opt" data-dir="now">
+        <div class="phone"><div class="scr" id="ph-now"></div></div>
+        <div class="opt-body">
+          <h3>現況 <span class="ref">參考，不能選</span></h3>
+          <p>build 5 的樣子。待機時畫面上<b>沒有番茄</b>，只有標籤、時間和一排從整個畫面掉下來的番茄堆。計時中大時間下面三顆一樣大的鈕，跟番茄搶眼。休息時中間換成火柴人。</p>
+        </div>
+      </div>
+
+      <div class="opt" data-dir="A">
+        <div class="phone"><div class="scr" id="ph-A"></div></div>
+        <div class="opt-body">
+          <h3>A 只留番茄</h3>
+          <p>番茄最大、放正中央，時間縮到它下面。記一筆、背景音、聚焦模式變一行小字鈕。<b>罐子番茄堆搬到番茄架</b>最上面「今天」那格；火柴人只在慶祝畫面出現。</p>
+          <p>代價：主畫面摸不到番茄堆，收成的回饋只剩慶祝畫面那一下。</p>
+        </div>
+        <button type="button" class="pick" data-q="1" data-v="A">選 A</button>
+      </div>
+
+      <div class="opt" data-dir="B">
+        <div class="phone"><div class="scr" id="ph-B"></div></div>
+        <div class="opt-body">
+          <h3>B 番茄在中間，罐子壓成托盤 <span class="rec">推薦</span></h3>
+          <p>番茄一樣放正中央。<b>番茄堆留在主畫面</b>，但只在下面一條托盤裡掉、滾、點了會彈，不再從整個畫面落下來。計時中三顆鈕縮成一排小膠囊。火柴人休息時站在托盤旁邊，縮小。</p>
+          <p>代價：畫面上還是有兩群番茄，靠大小分主從。推薦理由：產品定稿把「罐子裡的番茄摸得到」算在計時中那一段，AA1 調過的手感不用丟。</p>
+        </div>
+        <button type="button" class="pick" data-q="1" data-v="B">選 B</button>
+      </div>
+
+      <div class="opt" data-dir="C">
+        <div class="phone"><div class="scr" id="ph-C"></div></div>
+        <div class="opt-body">
+          <h3>C 番茄就是時鐘</h3>
+          <p>一圈進度環圍著番茄，走完一圈就熟。記一筆、背景音、聚焦模式、結束這顆全部收進右上的「⋯」。<b>罐子番茄堆搬到番茄架</b>；火柴人只在慶祝畫面。</p>
+          <p>代價：⋯ 裡的東西要多按一下，計時中記一筆從按一下變成按兩下。</p>
+        </div>
+        <button type="button" class="pick" data-q="1" data-v="C">選 C</button>
+      </div>
+    </div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:12px">
+    <h2>六樣東西在各方向去了哪裡</h2>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th></th><th>現況</th><th>A 只留番茄</th><th>B 托盤</th><th>C 番茄就是時鐘</th></tr></thead>
+        <tbody>
+          <tr><th>罐子番茄堆</th><td>整個畫面掉、堆在下面</td><td>搬到番茄架「今天」</td><td>主畫面下面一條托盤</td><td>搬到番茄架「今天」</td></tr>
+          <tr><th>火柴人</th><td>休息時在正中央</td><td>只在慶祝畫面</td><td>休息時站托盤旁，縮小</td><td>只在慶祝畫面</td></tr>
+          <tr><th>聚焦模式</th><td>計時中一顆鈕</td><td>計時中一行小字鈕</td><td>計時中一排小膠囊</td><td>收進 ⋯</td></tr>
+          <tr><th>記一筆</th><td>計時中一顆鈕</td><td>計時中一行小字鈕</td><td>計時中一排小膠囊</td><td>收進 ⋯</td></tr>
+          <tr><th>背景音</th><td>待機、計時中各一顆鈕</td><td>待機在右上角；計時中小字鈕</td><td>待機在標籤下；計時中小膠囊</td><td>收進 ⋯</td></tr>
+          <tr><th>標籤膠囊</th><td>最上面</td><td>番茄正下方（像番茄的名牌）</td><td>番茄正下方</td><td>左上角</td></tr>
+          <tr><th>結束這顆</th><td>底部文字鈕</td><td>底部文字鈕</td><td>底部文字鈕</td><td>收進 ⋯</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:12px">
+    <h2>核心卡上還沒決定的八樣</h2>
+    <p class="lead">核心卡 5-1 的兩條待重看、5-2 的七條待決定，扣掉罐子番茄堆（第 1 題已經定它去哪），剩這八樣。推薦是我的意見，決定是你的。</p>
+    <div class="qs" id="qs"></div>
+  </section>
+</div>
+
+<div class="answer">
+  <div class="answer-in">
+    <small>你的選擇：</small><span id="ans">1？</span>
+    <button type="button" id="copy">複製</button>
+  </div>
+</div>
+
+<script>
+const INK = '#2B2329';
+const C = { red: '#E4472F', orange: '#F0892B', yellow: '#F2BC2F', purple: '#8C5BA9', pink: '#EE7E9D', green: '#9CC25A' };
+
+/* app 裡那顆番茄（描邊表情），座標照 ui/Tomato.js */
+function tomato(fill, size, face = true) {
+  const f = face
+    ? `<circle cx="37" cy="55" r="3.8" fill="${INK}"/><circle cx="63" cy="55" r="3.8" fill="${INK}"/>
+       <path d="M43.5 63 Q50 69.5 56.5 63" fill="none" stroke="${INK}" stroke-width="3.2" stroke-linecap="round"/>
+       <ellipse cx="27" cy="64" rx="5.5" ry="3.2" fill="#fff" fill-opacity=".3"/><ellipse cx="73" cy="64" rx="5.5" ry="3.2" fill="#fff" fill-opacity=".3"/>`
+    : '';
+  return `<svg width="${size}" height="${size}" viewBox="0 0 100 100" aria-hidden="true">
+    <circle cx="50" cy="53" r="44" fill="${fill}" stroke="${INK}" stroke-width="4"/>
+    <path d="M19 44 C21 33 28 25 38 21" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="5" stroke-linecap="round"/>
+    <ellipse cx="37" cy="10" rx="12" ry="5.5" transform="rotate(-14 37 10)" fill="#6FAE52" stroke="${INK}" stroke-width="3.5"/>
+    <ellipse cx="63" cy="10" rx="12" ry="5.5" transform="rotate(14 63 10)" fill="#6FAE52" stroke="${INK}" stroke-width="3.5"/>
+    <path d="M50 11 V3.5" fill="none" stroke="${INK}" stroke-width="4" stroke-linecap="round"/>${f}</svg>`;
+}
+
+/* 番茄火柴人（示意）：番茄頭、雙手舉高 */
+const mascot = (h) => `<svg width="${h * 0.62}" height="${h}" viewBox="0 0 62 100" aria-hidden="true">
+  <g stroke="${INK}" stroke-width="3" stroke-linecap="round" fill="none">
+    <path d="M31 46 V74 M31 74 L20 96 M31 74 L42 96 M31 54 L12 36 M31 54 L50 36"/></g>
+  <g transform="translate(9 0)">${tomato('#E33734', 44).replace('<svg', '<svg x="0" y="0"')}</g></svg>`;
+
+/* 計時中的顏色：青 → 黃（六成）→ 紅，照 core/grow.js */
+const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+const mix = (a, b, t) => '#' + hex(a).map((v, i) => Math.round(v + (hex(b)[i] - v) * t).toString(16).padStart(2, '0')).join('');
+const ripe = (p) => (p < 0.6 ? mix(C.green, C.yellow, p / 0.6) : mix(C.yellow, C.red, (p - 0.6) / 0.4));
+const scale = (p) => 0.4 + 0.6 * p; // params.grow.minScale
+const mmss = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(Math.round(s) % 60).padStart(2, '0')}`;
+const left = (p) => mmss(Math.round((1 - p) * 25 * 60));
+const REST = '04:12';
+
+/* 今天收了的番茄：現況的番茄堆（整個畫面寬）與 B 的托盤 */
+const PILE = [
+  [0, 0, 40, 'red', -8], [38, 0, 35, 'purple', 12], [72, 0, 45, 'red', 4], [116, 0, 33, 'orange', -14], [148, 0, 40, 'yellow', 9], [186, 0, 37, 'red', -5],
+  [17, 31, 37, 'orange', 10], [54, 30, 38, 'red', -12], [94, 37, 35, 'pink', 6], [127, 28, 40, 'red', 14], [167, 31, 35, 'purple', -9],
+  [38, 61, 35, 'red', 5], [80, 66, 31, 'yellow', -10], [115, 61, 38, 'red', 8],
+];
+const pile = () => `<div class="pile">${PILE.map(([x, y, s, c, r]) => `<span style="left:${x}px;bottom:${y}px;transform:rotate(${r}deg)">${tomato(C[c], s)}</span>`).join('')}</div>`;
+const TRAY = [[4, 0, 30, 'red', -6], [32, 0, 26, 'purple', 10], [56, 0, 32, 'red', 3], [86, 0, 24, 'orange', -12], [108, 0, 30, 'yellow', 7], [136, 0, 27, 'red', -4], [161, 0, 26, 'pink', 9], [18, 22, 24, 'orange', 12], [70, 24, 25, 'red', -8], [120, 22, 24, 'purple', 5]];
+const tray = (extra) => `<div class="tray">${TRAY.map(([x, y, s, c, r]) => `<span style="left:${x}px;bottom:${y}px;transform:rotate(${r}deg)">${tomato(C[c], s)}</span>`).join('')}${extra || ''}</div>`;
+
+const tabs = () => `<div class="tabs">${['番茄架', '主畫面', '設定'].map((n) => `<i class="${n === '主畫面' ? 'on' : ''}">${n}</i>`).join('')}</div>`;
+const tag = (more) => `<span class="chip">${tomato(C.red, 13, false)}專注・25 分${more ? ' ›' : ''}</span>`;
+const hang = (fill, size, face) => `<div class="vine"></div><div style="line-height:0;margin-top:-4px">${tomato(fill, size, face)}</div>`;
+
+/* 進度環（C）：r 85 的圓，走過的部分用標籤色 */
+function ring(p, color, inner) {
+  const len = 2 * Math.PI * 85;
+  return `<div style="position:relative;width:180px;height:180px;display:grid;place-items:center">
+    <svg width="180" height="180" viewBox="0 0 200 200" style="position:absolute;inset:0" aria-hidden="true">
+      <circle cx="100" cy="100" r="85" fill="none" stroke="#E4DFD6" stroke-width="8"/>
+      <circle cx="100" cy="100" r="85" fill="none" stroke="${color}" stroke-width="8" stroke-linecap="round"
+        stroke-dasharray="${len * p} ${len}" transform="rotate(-90 100 100)"/></svg>
+    <div style="line-height:0">${inner}</div></div>`;
+}
+
+const DRAW = {
+  now(st, p) {
+    if (st === 'idle')
+      return `${tag(true)}<div class="time" style="font-size:43px;margin-top:6px">25:00</div>
+        <div class="chips"><span class="chip2">♪ 背景音</span></div><div class="grow"></div>
+        <div class="btn">開始・25 分</div><div style="height:142px;flex:none"></div>${pile()}${tabs()}`;
+    if (st === 'focus')
+      return `${tag()}<div class="time" style="font-size:43px;margin-top:6px">${left(p)}</div>
+        <div class="chips"><span class="chip2">記一筆</span><span class="chip2">聚焦模式</span><span class="chip2">♪ 雨</span></div>
+        <div class="grow">${hang(ripe(p), 79 * scale(p), p > 0.25)}</div>
+        <div class="tbtn">結束這顆</div><div style="height:142px;flex:none"></div>${pile()}${tabs()}`;
+    return `${tag()}<div class="time" style="font-size:43px;margin-top:6px">${REST}</div>
+      <div class="sub" style="margin-top:4px">休息<br>離開螢幕。喝水、看遠處、伸展、閉眼都好。</div>
+      <div class="grow" style="justify-content:flex-end">${mascot(88)}</div>
+      <div class="btn" style="margin-top:6px">回來了，開始下一顆</div><div style="height:142px;flex:none"></div>${pile()}${tabs()}`;
+  },
+  A(st, p) {
+    const corner = st === 'idle' ? `<span class="chip2 corner">♪ 背景音</span>` : '';
+    if (st === 'idle')
+      return `${corner}<div class="grow">${hang(C.green, 120 * 0.4, false)}<div style="margin-top:12px">${tag(true)}</div></div>
+        <div class="btn">開始・25 分</div><div style="height:58px;flex:none"></div>${tabs()}`;
+    if (st === 'focus')
+      return `<div class="grow">${hang(ripe(p), 128 * scale(p), p > 0.25)}
+        <div class="time" style="font-size:34px;margin-top:12px">${left(p)}</div>
+        <div class="sub" style="margin-top:2px">專注・25 分</div>
+        <div class="links"><span>記一筆</span><span>背景音</span><span>聚焦模式</span></div></div>
+        <div class="tbtn">結束這顆</div><div style="height:58px;flex:none"></div>${tabs()}`;
+    return `<div class="grow">${hang(C.green, 120 * 0.4, false)}
+      <div class="time" style="font-size:34px;margin-top:14px">${REST}</div>
+      <div class="sub" style="margin-top:4px">休息。離開螢幕，<br>喝水、看遠處、伸展、閉眼都好。</div></div>
+      <div class="btn">回來了，開始下一顆</div><div style="height:58px;flex:none"></div>${tabs()}
+      <div class="mark">剛收的那顆在番茄架「今天」</div>`;
+  },
+  B(st, p) {
+    const under = 112;
+    if (st === 'idle')
+      return `<div class="grow">${hang(C.green, 120 * 0.4, false)}<div style="margin-top:12px">${tag(true)}</div>
+        <div class="chips"><span class="chip2">♪ 背景音</span></div></div>
+        <div class="btn">開始・25 分</div><div style="height:${under}px;flex:none"></div>${tray()}${tabs()}`;
+    if (st === 'focus')
+      return `<div class="grow">${hang(ripe(p), 120 * scale(p), p > 0.25)}
+        <div class="time" style="font-size:34px;margin-top:10px">${left(p)}</div>
+        <div class="sub" style="margin-top:2px">專注・25 分</div>
+        <div class="chips"><span class="chip2">記一筆</span><span class="chip2">♪ 雨</span><span class="chip2">聚焦模式</span></div></div>
+        <div class="tbtn">結束這顆</div><div style="height:${under}px;flex:none"></div>${tray()}${tabs()}`;
+    const newest = `<span style="left:150px;bottom:30px;transform:rotate(-6deg)">${tomato(C.red, 30)}</span>`;
+    return `<div class="grow">${hang(C.green, 120 * 0.4, false)}
+      <div class="time" style="font-size:34px;margin-top:14px">${REST}</div>
+      <div class="sub" style="margin-top:4px">休息。離開螢幕，<br>喝水、看遠處、伸展、閉眼都好。</div></div>
+      <div class="btn">回來了，開始下一顆</div><div style="height:${under}px;flex:none"></div>
+      ${tray(newest)}<div style="position:absolute;right:16px;bottom:100px;line-height:0">${mascot(46)}</div>${tabs()}`;
+  },
+  C(st, p) {
+    const top = `<div style="position:absolute;top:30px;left:12px">${tag(st === 'idle')}</div><span class="more">⋯</span>`;
+    if (st === 'idle')
+      return `${top}<div class="grow">${ring(0, C.red, tomato(C.green, 120 * 0.4, false))}
+        <div class="time" style="font-size:30px;margin-top:6px">25:00</div></div>
+        <div class="btn">開始・25 分</div><div style="height:58px;flex:none"></div>${tabs()}`;
+    if (st === 'focus')
+      return `${top}<div class="grow">${ring(p, C.red, tomato(ripe(p), 118 * scale(p), p > 0.25))}
+        <div class="time" style="font-size:30px;margin-top:6px">${left(p)}</div></div>
+        <div style="height:96px;flex:none"></div>${tabs()}`;
+    return `${top}<div class="grow">${ring(0.32, '#6FAE52', tomato(C.green, 120 * 0.4, false))}
+      <div class="time" style="font-size:30px;margin-top:6px">${REST}</div>
+      <div class="sub" style="margin-top:2px">休息。離開螢幕，喝水、看遠處。</div></div>
+      <div class="btn">回來了，開始下一顆</div><div style="height:58px;flex:none"></div>${tabs()}
+      <div class="mark">剛收的那顆在番茄架「今天」</div>`;
+  },
+};
+
+let st = 'focus';
+const range = document.getElementById('p');
+const plab = document.getElementById('plab');
+function draw() {
+  const p = range.value / 100;
+  for (const k of Object.keys(DRAW)) document.getElementById('ph-' + k).innerHTML = DRAW[k](st, p);
+  plab.textContent = p >= 1 ? '到點' : `剩 ${left(p)}`;
+  document.getElementById('progbox').setAttribute('aria-disabled', st === 'focus' ? 'false' : 'true');
+}
+document.querySelectorAll('.ctrl-seg button').forEach((b) =>
+  b.addEventListener('click', () => {
+    st = b.dataset.st;
+    document.querySelectorAll('.ctrl-seg button').forEach((x) => x.classList.toggle('on', x === b));
+    draw();
+  }),
+);
+range.addEventListener('input', draw);
+let raf = null;
+document.getElementById('play').addEventListener('click', () => {
+  cancelAnimationFrame(raf);
+  const t0 = performance.now();
+  const step = (t) => {
+    const p = Math.min(1, (t - t0) / 8000);
+    range.value = Math.round(p * 100);
+    draw();
+    if (p < 1) raf = requestAnimationFrame(step);
+  };
+  raf = requestAnimationFrame(step);
+});
+draw();
+
+/* 八題小選擇 */
+const QS = [
+  { n: 2, t: '火柴人', d: '慶祝、鞠躬、揮手三個動作。鞠躬原本配收工，收工已經拿掉。', o: [['a', '留，位置照第 1 題的方向', 1], ['b', '整個拿掉']] },
+  { n: 3, t: '聚焦模式（橫放翻牌時鐘）', d: '計時中的另一種畫面，現在裡面沒有番茄在長。', o: [['a', '留，翻牌時鐘不變'], ['b', '留，翻牌旁邊也放那顆在長的番茄', 1], ['c', '拿掉']] },
+  { n: 4, t: '記一筆（冒出念頭、有人找）', d: '幫「種」：計時中被打斷時記下來，這顆不用停。', o: [['a', '留，位置照第 1 題的方向', 1], ['b', '拿掉']] },
+  { n: 5, t: '收成時留一句（舊的「接」）', d: '11-17 已經降成選填，寫了會出現在番茄架那一顆上。', o: [['a', '留在慶祝畫面，選填', 1], ['b', '拿掉']] },
+  { n: 6, t: '再做一下 15／30 分', d: '熟了還想做，同一顆多長一段。', o: [['a', '留', 1], ['b', '拿掉']] },
+  { n: 7, t: '葉子（沒番茄的日子不算缺）', d: '不幫「種」，但守住「不讓人有罪惡感」那條邊界。產品定稿說等版面定案時一起定。', o: [['a', '留在番茄架', 1], ['b', '拿掉']] },
+  { n: 8, t: '收下後自動開始下一顆', d: '11-01 定不做，理由是會跳過寫一句。那句現在是選填，理由不成立了，要換一個理由或改決定。', o: [['a', '還是不做：休息是番茄鐘的一半，不該被跳過', 1], ['b', '做成設定，預設關']] },
+  { n: 9, t: '鎖定畫面看番茄在長（Live Activity）', d: '如果計時中手機多半鎖著，這是唯一看得到番茄在長的地方。要 development build，Expo Go 跑不了。', o: [['a', '還是之後，先觀察計時中手機放哪', 1], ['b', '排進下一輪']] },
+];
+const pickd = { 1: null };
+const qs = document.getElementById('qs');
+qs.innerHTML = QS.map((q) => `<div class="q"><h3><span class="qno">${q.n}</span>${q.t}</h3><p>${q.d}</p>
+  <div class="choices">${q.o.map(([v, label, rec]) => `<button type="button" data-q="${q.n}" data-v="${v}"><b>${v}</b><span>${label}</span>${rec ? '<span class="rec">推薦</span>' : ''}</button>`).join('')}</div></div>`).join('');
+QS.forEach((q) => (pickd[q.n] = null));
+
+const ans = document.getElementById('ans');
+function showAns() {
+  ans.textContent = Object.keys(pickd).map((n) => `${n}${pickd[n] || '？'}`).join(' ');
+}
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-q]');
+  if (!b) return;
+  const n = b.dataset.q;
+  pickd[n] = b.dataset.v;
+  if (n === '1') document.querySelectorAll('.opt').forEach((o) => o.classList.toggle('selected', o.dataset.dir === b.dataset.v));
+  else b.parentElement.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b));
+  showAns();
+});
+showAns();
+document.getElementById('copy').addEventListener('click', () => {
+  const text = ans.textContent;
+  const done = () => { document.getElementById('copy').textContent = '已複製'; };
+  const fallback = () => { const r = document.createRange(); r.selectNodeContents(ans); const s = getSelection(); s.removeAllRanges(); s.addRange(r); };
+  try { navigator.clipboard.writeText(text).then(done, fallback); } catch (err) { fallback(); }
+});
+</script>
