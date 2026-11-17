@@ -1,6 +1,7 @@
 # HANDOFF（2026-11-17 深夜，11-18 補）：1.0.0 build 5 已上傳 TestFlight（含換核心六片、擋 app、白噪音）；11-18 又做完主畫面改版 AH1–AH8（不在 build 5 裡）；手機上一次都還沒驗
 
 > **2026-11-18 補**：多米說「UI 很含糊」→ 核心動作卡重寫 v0.2（動詞「種」）→ 主畫面比較頁 https://claude.ai/artifact/C6T29GZoJzbgo6y6C4pU4W → 多米 13 點 → AH1–AH8 機器層做完（最後存檔 b8bf9da，沒推）。計時中與休息改成「番茄就是時鐘」、火柴人拿掉、聚焦模式加番茄、計時中鎖分頁、月檢視葉子、休息完自動開始（設定預設關）。jest 236 過 1 跳過、eslint 0 錯、expo export iOS 過。**Expo Go 就能看**，驗收 AH1–AH15 在 `.vibe/操作清單-待驗.md` 最上面；代決十條在切片帳本「AH 主畫面改版」那節。下一個會話先問多米要不要用 Expo Go 走一遍 AH1–AH15。
+> **tf-6 還沒上 TestFlight**（多米 11-18 說「打包 TestFlight」，分支推到 5891d11、tag `tf-6` 已推）：第一次跑到封存都綠，紅在「上傳 TestFlight」，Apple 回 `Error Downloading App Information`，同一時間多米的 App Store Connect 網頁也顯示「抱歉，發生錯誤」，是 Apple 當機；重跑一次又遇到 GitHub 的 macOS 機器排不到（not acquired by Runner），根本沒開始跑。程式沒問題，不用改。等 App Store Connect 網頁恢復正常，`gh run rerun 44153125992 --repo domyweb666/douzhang --failed` 再跑一次（不用換 tag）。
 
 > 給下一個新會話的交接便條。先向多米摘要「上次做完什麼、卡在哪」，等他點頭再動工。
 > 真相源：`.vibe/產品定稿.md` 最上面「2026-11-17 改版」、`.vibe/切片帳本.md`「進行中」最上面兩節（AG 換核心、螢幕使用時間 API 裡的 AF1）、`.vibe/規矩檔.md`、`.vibe/操作清單-待驗.md` 最上面兩節。
