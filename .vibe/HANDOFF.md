@@ -5,7 +5,7 @@
 > 上一份 HANDOFF 是 11-01 的，中間 U～AB 各輪沒更新過便條，那段歷史看帳本。
 
 ## 一句話現況
-番茄帳（原豆帳，`douzhang/`，Expo SDK 58／RN 0.88）分支 `uiux-graybox`，工作樹乾淨，**比遠端多 9 筆 commit，沒推**。TestFlight 上是 1.0.0 (3)，今天做的都不在裡面。jest 176 過 1 跳過、eslint 0 錯、prettier 過、`npx expo export --platform ios` 打包過。
+番茄帳（原豆帳，`douzhang/`，Expo SDK 58／RN 0.88）分支 `uiux-graybox`，工作樹乾淨，**今天的 commit 都沒推**（從 2182f9c 起）。TestFlight 上是 1.0.0 (3)，今天做的都不在裡面。jest 176 過 1 跳過、eslint 0 錯、prettier 過、`npx expo export --platform ios` 打包過。
 
 ## 這次完成了什麼（2026-11-17）
 - 出比較頁（https://claude.ai/artifact/6QWSeuPSno9rypGYqZpH1q），多米選：體型 A、聚焦 A、設定 A、強制接管用螢幕使用時間 API。
