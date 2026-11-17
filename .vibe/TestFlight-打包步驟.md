@@ -116,7 +116,7 @@ git tag tf-6
 git push origin tf-6
 ```
 
-分支和 tag 要分兩次推。11/16 第一次兩個一起推，GitHub 沒有開始跑；把 tag 單獨再推一次才觸發。`tf-1` 到 `tf-5` 已經用掉了，下一個從 6 開始（11/17：`tf-4` 紅在一個套件版本、`tf-5` 綠，1.0.0 build 5）。
+分支和 tag 要分兩次推。11/16 第一次兩個一起推，GitHub 沒有開始跑；把 tag 單獨再推一次才觸發。`tf-1` 到 `tf-6` 已經用掉了，下一個從 7 開始（11/17：`tf-4` 紅在一個套件版本、`tf-5` 綠，1.0.0 build 5；11/18：`tf-6` 前四次碰上 Apple 當機，上傳那步回 `Error Downloading App Information`、金鑰自檢回 `UNEXPECTED_ERROR`，用 `gh run rerun <run 編號> --failed` 重跑同一個 run，第五次綠，1.0.0 build 6）。
 
 進度在這裡看：<https://github.com/domyweb666/douzhang/actions>
 
