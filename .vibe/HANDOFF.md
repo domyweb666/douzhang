@@ -1,4 +1,15 @@
-# HANDOFF（2026-11-17 18:46）：四樣做完等多米實測；下一件是「計時中擋住其他 app」，還沒動工
+# HANDOFF（2026-11-17 晚更新）：擋 app（AF1）機器層做完，Swift 沒編過、手機沒跑過；下一步是多米說打包才出 TestFlight build
+
+## 2026-11-17 晚的更新（以這段為準，下面 18:46 那份裡「擋 app 還沒動工」「先確認四件事」都已經過時）
+- 多米選「甲，自己寫模組」：沒裝 `react-native-device-activity`，自己寫了 `douzhang/modules/app-shield/`（Swift 約 130 行）。沒有 App Group、沒有擴充、沒有新套件。
+- 做完的：原生模組、`core/shield.js`、設定頁「專注」一區兩列、`App.js` 一個 effect 管蓋上與解開、`app.json` 加簽章權限、測試 186 過 1 跳過、eslint 0 錯、prettier 過、expo export 過。細節、代決清單九條在 `.vibe/切片帳本.md`「AF1」那節。
+- **沒驗到的**：Swift 這台不能編；簽章沒試過；授權框、選擇畫面、擋板一次都沒跑過。只有 TestFlight build 在手機上能驗（黃金 110–120，驗收清單 AF1–AF12 在 `.vibe/操作清單-待驗.md` 最上面）。
+- **還不知道**：多米有沒有在 App ID 那頁勾 Family Controls (Distribution) 並按 Save。打包前要問。
+- 下一步：多米說「打包」才推 tag `tf-4`（先推分支再推 tag；今天的 commit 從 2182f9c 起都沒推）。第一次很可能紅在 Swift 編譯或簽章：看 Actions 紀錄修到綠，簽章過了去 `.vibe/FamilyControls-申請稿.md` 補一筆。封存用的是開發憑證，如果報缺 Family Controls (Development)，請多米在 App ID 那頁把 Development 那個也勾起來。
+- 今天四樣（icon、體型、休息設定、聚焦模式）還是沒在手機上看過，同一個 build 可以一起驗。
+
+---
+以下是 18:46 的原文：
 
 > 給下一個新會話的交接便條。先向多米摘要「上次做完什麼、卡在哪」，等他點頭再動工。
 > 真相源：`.vibe/切片帳本.md`「進行中」最上面三節（2026-11-17 的四樣、螢幕使用時間 API）、`.vibe/規矩檔.md`、`.vibe/操作清單-待驗.md` 最上面那節、`.vibe/FamilyControls-申請稿.md`。
