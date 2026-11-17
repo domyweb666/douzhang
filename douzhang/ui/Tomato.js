@@ -35,10 +35,11 @@ function Leaf({ side }) {
 }
 
 /**
+ * fill：直接給色碼（計時中還沒熟的那顆，顏色一路在變；2026-11-17 AG2），有給就不看 color。
  * color：類型的番茄色（params.tomatoColors 其中一個）；不認得的色（舊資料、被刪的類型）一律紅。size：畫多寬多高。
  * 用 memo：罐子每幀重畫幾十顆的位置，圖本身只要顏色與大小沒變就不重算。
  */
-export const Tomato = memo(function Tomato({ color, size }) {
+export const Tomato = memo(function Tomato({ color, size, fill }) {
   return (
     <Svg
       accessible={false}
@@ -52,7 +53,7 @@ export const Tomato = memo(function Tomato({ color, size }) {
         cx={ART.body.cx}
         cy={ART.body.cy}
         r={ART.body.r}
-        fill={INK.body[color] || INK.body.red}
+        fill={fill || INK.body[color] || INK.body.red}
         stroke={INK.ink}
         strokeWidth={ART.body.line}
       />

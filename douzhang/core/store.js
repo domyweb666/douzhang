@@ -3,6 +3,7 @@
 // 安全標準：S1 狀態檔沒有機敏欄位；S6 寫失敗要回報給畫面；I1／I2 壞檔不蓋、缺欄位補預設、不信任外部型別。
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { params } from '../design/params';
+import { words } from '../design/words';
 
 export const STORAGE_KEY = 'douzhang.v1'; // 跟 PWA 的 localStorage key 同名，只是換了地方住
 export const FORMAT_VERSION = 1;
@@ -10,13 +11,20 @@ export const MINUTES_PER_UNIT = 25; // 一顆＝25 分；50 分的顆算兩單�
 export const REST_DIVISOR = 5; // 休息＝長度 ÷ 5
 export const REST_MIN_MINUTES = 3;
 
-export const DEFAULT_TYPE = { id: 't1', name: '一般', len: 25, color: 'red' };
+// 新安裝的五個標籤（2026-11-17 AG1；程式裡沿用 types 這個欄位名）。第一個留著原本的 id t1 與 25 分：
+// 舊檔缺類型時補的、選到不存在的類型時退回的都是它
+const PRESET_TYPES = params.presetTags.map((t, i) => ({
+  id: `t${i + 1}`,
+  name: words.presetTags[i],
+  ...t,
+}));
+export const DEFAULT_TYPE = PRESET_TYPES[0];
 
 export function blank() {
   return {
     v: FORMAT_VERSION,
     settings: {
-      types: [{ ...DEFAULT_TYPE }],
+      types: PRESET_TYPES.map((t) => ({ ...t })),
       typeId: DEFAULT_TYPE.id,
       restMode: 'auto',
       sound: true,

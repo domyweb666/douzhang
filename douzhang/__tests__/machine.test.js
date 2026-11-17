@@ -28,17 +28,25 @@ const T0 = new Date(2026, 10, 1, 9, 0, 0).getTime(); // 2026-11-01 09:00 本地
 const withClue = () => ({ ...blank(), clue: { text: '把第二節標題改成問句', at: T0 - MIN } });
 
 describe('第一次', () => {
-  test('沒有那句、第一句也空白，按開始不會開始', () => {
-    const s = start(blank(), T0, { firstLine: '   ' });
-    expect(s.current).toBeNull();
-    expect(phaseOf(s, T0)).toBe(PHASE.idle);
+  test('一句都沒寫過也能直接開始（AG1：寫一句改成選填）', () => {
+    const s = start(blank(), T0);
+    expect(phaseOf(s, T0)).toBe(PHASE.focus);
+    expect(s.clue).toBeNull();
+    expect(s.current.clue).toBe('');
   });
 
-  test('第一次寫一句按開始這顆，那句同時成為下一步，直接進計時中', () => {
-    const s = start(blank(), T0, { firstLine: '打開讀書筆記，把三個重點各寫一句' });
-    expect(s.clue.text).toBe('打開讀書筆記，把三個重點各寫一句');
-    expect(s.current.clue).toBe(s.clue.text);
-    expect(phaseOf(s, T0)).toBe(PHASE.focus);
+  test('舊版留下來的那句不會被開始動到，也不帶進這顆', () => {
+    const s = start(withClue(), T0);
+    expect(s.clue.text).toBe('把第二節標題改成問句');
+    expect(s.current.clue).toBe('');
+  });
+
+  test('不寫字直接收下：這顆照樣進帳，那句是空的', () => {
+    const s = keep(start(blank(), T0), T0 + 25 * MIN, '');
+    const beans = Object.values(s.days)[0].beans;
+    expect(beans).toHaveLength(1);
+    expect(beans[0].clue).toBe('');
+    expect(phaseOf(s, T0 + 25 * MIN)).toBe(PHASE.rest);
   });
 });
 
@@ -246,11 +254,11 @@ describe('休息（A6）', () => {
   });
 
   test('抽到跟上一次同一句時改抽下一句，連續兩顆不會同句（亂數固定成一定撞到）', () => {
-    const spy = jest.spyOn(Math, 'random').mockReturnValue(0.5); // 24 句 → 永遠抽到第 12 句
+    const spy = jest.spyOn(Math, 'random').mockReturnValue(0.5); // 18 句 → 永遠抽到第 9 句
     const first = keep(start(withClue(), T0), T0 + 25 * MIN, 'x');
-    expect(first.lastLine).toBe(12);
+    expect(first.lastLine).toBe(9);
     const second = keep(start(backFromRest(first), T0), T0 + 25 * MIN, 'x');
-    expect(second.lastLine).toBe(13);
+    expect(second.lastLine).toBe(10);
     expect(second.current.msg).not.toBe(first.current.msg);
     spy.mockRestore();
   });

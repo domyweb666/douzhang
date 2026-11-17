@@ -9,21 +9,18 @@ import { Accelerometer } from 'expo-sensors';
 import { DomyThemeProvider } from '@domy/design';
 import { douzhangTheme } from './design/theme';
 import { useTokens } from './design/Tokens';
-import { words } from './design/words';
+import { words, tagLabel } from './design/words';
 import { params } from './design/params';
 import { POSE, startTracker, track } from './core/posture';
 import { blank, dayKey, load, readRaw, save } from './core/store';
 import {
   PHASE,
   backFromRest,
-  closeDay,
   flow,
-  hangLeaf,
   jot,
   keep,
   markDone,
   phaseOf,
-  seePlanted,
   setDraft,
   settle,
   start,
@@ -47,12 +44,9 @@ import {
 } from './core/shield';
 import {
   addType,
-  estimate,
-  pickTask,
   pickType,
   removeType,
   renameType,
-  setCloseTime,
   setRestLongEvery,
   setRestLongMinutes,
   setRestMode,
@@ -109,9 +103,10 @@ function StatusLines({ unreadable, saveFailed, notifOff }) {
 }
 
 /** 鈴響頁連同它的邊距。onHome：收下或再做一下之後回主畫面（停在番茄架或設定時響了，不是回原來那頁）。 */
-function BellPage({ current, now, actions, onHome }) {
+function BellPage({ state, now, actions, onHome }) {
   const T = useTokens();
   const insets = useSafeAreaInsets();
+  const current = state.current;
   const then = (action) => (value) => {
     onHome();
     action(value);
@@ -125,6 +120,7 @@ function BellPage({ current, now, actions, onHome }) {
       }}
     >
       <Bell
+        state={state}
         current={current}
         now={now}
         draft={current.draft || ''}
@@ -171,26 +167,6 @@ function useArm() {
     lastPlan.current = plan;
     sync(next);
   }, []);
-}
-
-/**
- * 昨天收工種下的那句：今天第一次看到時小標打招呼一次（F1）。開機那一次由讀檔處理；
- * iOS 的「明天打開」多半是從背景叫回來、不是重開，所以回前景也看一次。
- */
-function useGreeting(stateRef, commit) {
-  const [greet, setGreet] = useState(false);
-  useEffect(() => {
-    const sub = AppState.addEventListener('change', (next) => {
-      const s = stateRef.current;
-      if (next !== 'active' || !s) return;
-      const t = Date.now();
-      const seen = seePlanted(settle(s, t), t); // 過期的休息先收掉，才算回到待機
-      setGreet(seen.greet); // 每次叫回來重新判斷：打過招呼後再打開一次就回到「下一步」
-      if (seen.state.planted !== s.planted) commit(seen.state);
-    });
-    return () => sub.remove();
-  }, [stateRef, commit]);
-  return [greet, setGreet];
 }
 
 /**
@@ -343,7 +319,7 @@ function useDouzhang() {
   const [state, setState] = useState(null); // null＝還在讀檔
   const [saveFailed, setSaveFailed] = useState(false);
   const [unreadable, setUnreadable] = useState(false); // 本機檔讀不懂：先不覆蓋（I1），只有匯入或清空能換掉
-  const [moment, setMoment] = useState(null); // 'cheer'｜'bow'｜null：剛收下一顆、剛收工或掛葉子，火柴人還沒演過（Y1；不存檔，重開就沒有）
+  const [moment, setMoment] = useState(null); // 'cheer'｜null：剛收下一顆，火柴人還沒演過（Y1；不存檔，重開就沒有）
   const arm = useArm();
   const stateRef = useRef(null);
   useEffect(() => {
@@ -364,17 +340,15 @@ function useDouzhang() {
   );
   // 動作都在「按下那一刻」看時鐘：recipe 拿到現在的毫秒，回新狀態
   const act = useCallback((recipe) => commit(recipe(Date.now())), [commit]);
-  const [greet, setGreet] = useGreeting(stateRef, commit);
   // 匯入、清空：整份換掉。這是唯一准蓋掉「讀不懂的本機檔」的路（I1），所以不經 commit 的 unreadable 檢查
   const replaceAll = useCallback(
     (next) => {
       setUnreadable(false);
-      setGreet(false);
       setState(next);
       save(next).then((ok) => setSaveFailed(!ok));
       arm(next, true);
     },
-    [arm, setGreet],
+    [arm],
   );
   const backup = useBackup(stateRef, unreadable, replaceAll);
 
@@ -384,17 +358,13 @@ function useDouzhang() {
       if (!alive) return;
       setUnreadable(broken);
       const settled = settle(loaded, Date.now());
-      const seen = seePlanted(settled, Date.now());
-      setState(seen.state);
-      setGreet(seen.greet);
-      // 標成看過要存下來，不然每次開都打招呼；壞檔不蓋（I1，跟 commit 同一條規則）
-      if (seen.state !== settled && !broken) save(seen.state).then((ok) => setSaveFailed(!ok));
-      arm(seen.state, true); // 開機對齊：系統裡排的要跟現在的狀態一致
+      setState(settled);
+      arm(settled, true); // 開機對齊：系統裡排的要跟現在的狀態一致
     });
     return () => {
       alive = false;
     };
-  }, [arm, setGreet]);
+  }, [arm]);
 
   // 擋 app 跟著狀態走（AF1）：開關開著且這顆還在跑才蓋，其他時候解開。答案變了才叫原生；
   // 讀完檔第一次有答案時也叫一次（開機對齊）。null＝還在讀檔，先不動。
@@ -407,13 +377,12 @@ function useDouzhang() {
   if (!state) return null;
   // 休息到點沒按也回待機：每一拍在 render 時把過期的休息收掉，下一次動作才存回去
   const live = settle(state, now);
-  const actions = makeActions(live, act, commit, { setNotif, setGreet, setMoment });
+  const actions = makeActions(live, act, commit, { setNotif, setMoment });
   const view = { ...live, todayKey: dayKey(now) }; // 畫面要知道「今天」是哪一天（估過的事只看今天）
   return {
     live: view,
     now,
     phase: phaseOf(live, now),
-    greet,
     moment,
     saveFailed,
     unreadable,
@@ -424,7 +393,7 @@ function useDouzhang() {
 }
 
 /** 畫面拿到的動作：純函式算新狀態，act 會先看按下那一刻的時鐘，commit 不需要時鐘。 */
-function makeActions(live, act, commit, { setNotif, setGreet, setMoment }) {
+function makeActions(live, act, commit, { setNotif, setMoment }) {
   return {
     onStart: async (opts) => {
       // 只有第一次（還沒問過）才會真的跳框；問不到也照樣開始（核心不靠通知）
@@ -435,12 +404,10 @@ function makeActions(live, act, commit, { setNotif, setGreet, setMoment }) {
         ok = false;
       }
       setNotif(ok ? 'granted' : 'denied');
-      setGreet(false); // 招呼只到開始第一顆為止
-      setMoment(null); // 沒演到的慶祝或鞠躬不留到下一顆
+      setMoment(null); // 沒演到的慶祝不留到下一顆
       act((t) => start(live, t, opts));
     },
     onKeep: (text) => {
-      setGreet(false); // 收下了新的一句，卡片上已經不是昨天那句
       setMoment('cheer');
       act((t) => keep(live, t, text));
     },
@@ -450,20 +417,17 @@ function makeActions(live, act, commit, { setNotif, setGreet, setMoment }) {
     onJot: (kind, text) => commit(jot(live, kind, text)),
     onDoneEarly: () => commit(markDone(live)),
     onVoid: (v) => act((t) => voidBean(live, t, v)),
-    // 類型與估幾顆（C）
+    // 標籤（C1；2026-11-17 AG1 起介面上叫標籤，估幾顆拿掉）
     onPickType: (id) => commit(pickType(live, id)),
     onAddType: () => act((t) => addType(live, t)),
     onRenameType: (id, name) => commit(renameType(live, id, name)),
     onSetTypeLen: (id, len) => commit(setTypeLen(live, id, len)),
     onRemoveType: (id) => commit(removeType(live, id)),
-    onEstimate: (v) => act((t) => estimate(live, t, v)),
-    onPickTask: (id) => act((t) => pickTask(live, t, id)),
     // 節奏、提醒、手感（G1）
     onSetRestMode: (mode) => commit(setRestMode(live, mode)),
     onSetRestShort: (v) => commit(setRestShort(live, v)),
     onSetRestLongEvery: (v) => commit(setRestLongEvery(live, v)),
     onSetRestLongMinutes: (v) => commit(setRestLongMinutes(live, v)),
-    onSetCloseTime: (time) => commit(setCloseTime(live, time)),
     onSetSound: (on) => commit(setSound(live, on)),
     onSetTilt: (on) => commit(setTilt(live, on)),
     onSetTestMode: (on) => commit(setTestMode(live, on)),
@@ -480,15 +444,6 @@ function makeActions(live, act, commit, { setNotif, setGreet, setMoment }) {
       return true;
     },
     onSetTypeColor: (id, color) => commit(setTypeColor(live, id, color)),
-    // 收工與葉子（F）
-    onCloseDay: (text) => {
-      setMoment('bow');
-      act((t) => closeDay(live, t, text));
-    },
-    onHangLeaf: () => {
-      setMoment('bow');
-      act((t) => hangLeaf(live, t));
-    },
     onMascotDone: () => setMoment(null), // 火柴人演完了（Y1）
   };
 }
@@ -522,13 +477,15 @@ function Main() {
   const zen = useZen(zenKeyOf(dz));
   const handoff = useZenHandoff(zen, () => setPage(PAGE.home));
   if (!dz) return <View style={{ flex: 1, backgroundColor: T.color.background }} />;
-  const { live, now, phase, greet, moment, saveFailed, unreadable, notif, actions, backup } = dz;
+  const { live, now, phase, moment, saveFailed, unreadable, notif, actions, backup } = dz;
+  const zenType = zen.on ? typeOf(live, live.current.typeId) : null;
   if (zen.on)
     return (
       <Focus
         current={live.current}
         now={now}
-        color={typeOf(live, live.current.typeId).color}
+        color={zenType.color}
+        label={tagLabel(zenType)}
         onLeave={handoff.leaveTo}
       />
     );
@@ -545,18 +502,12 @@ function Main() {
           notifOff={notif === 'denied' && phase === PHASE.focus}
         />
         {phase === PHASE.bell ? (
-          <BellPage
-            current={live.current}
-            now={now}
-            actions={actions}
-            onHome={() => setPage(PAGE.home)}
-          />
+          <BellPage state={live} now={now} actions={actions} onHome={() => setPage(PAGE.home)} />
         ) : (
           <Pager page={page} onPage={setPage} labels={PAGE_LABELS}>
             <Rack
               state={live}
               now={now}
-              actions={actions}
               wiped={backup.wiped}
               active={page === PAGE.rack}
               onSettings={() => setPage(PAGE.settings)}
@@ -566,9 +517,7 @@ function Main() {
               state={live}
               phase={phase}
               now={now}
-              greet={greet}
               moment={page === PAGE.home ? moment : null} // 火柴人只在主畫面是眼前那頁時演（Y1）
-              wiped={backup.wiped}
               jarSeen={jarSeen}
               actions={actions}
               zen={handoff.forHome}

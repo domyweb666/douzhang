@@ -24,6 +24,16 @@ export const CharacterColors = {
       purple: '#8C5BA9',
       pink: '#EE7E9D',
     },
+    // 番茄架實心方塊上的字（2026-11-17 AG4，比較頁 3A）：紅、紫底用白字（4.0、5.3:1），橘、黃、粉底用墨色（6.2、9.0、5.9:1）
+    onBody: {
+      red: '#FFFFFF',
+      orange: '#2B2329',
+      yellow: '#2B2329',
+      purple: '#FFFFFF',
+      pink: '#2B2329',
+    },
+    unripe: '#9CC25A', // 計時中還沒熟的青番茄（2026-11-17 AG2）；中間轉黃用 body.yellow
+    vine: '#4E8B3A', // 掛著它的那段藤
     leaf: '#6FAE52',
     ink: '#2B2329', // 外框、蒂、眼睛、嘴（跟火柴人的 ink 同色）
     shine: '#FFFFFF', // 左上那道亮面與兩頰，透明度是圖的一部分，在 ui/Tomato.js
@@ -165,6 +175,14 @@ export function makeTokens(c, dark = false, reduceMotion = false) {
       selectRing: 2, // 選中那顆外面的圈
       mascotHeight: 148, // 番茄火柴人畫多高（Y1）
       zenSeam: 2, // 聚焦模式每張牌中間那道橫縫
+      // 計時中長大的番茄（AG2）與慶祝畫面（AG3）
+      growSize: 132, // 全熟那一刻畫多大
+      growVine: 28, // 上面那段藤多長
+      growVineWidth: 4,
+      growMin: 96, // 中間那塊空位不到這麼高就不畫（小手機、最大字級）
+      celebrateTomato: 132, // 慶祝畫面那顆
+      celebrateDot: 26, // 「今天收了幾顆」那排的小番茄
+      celebrateDotNew: 34, // 那排最後、剛收的這顆
       mascotMin: 88, // 位置不到這麼高就不畫（小手機、最大字級），縮太小看起來像壞掉
     },
     motion: {

@@ -21,10 +21,16 @@ beforeEach(async () => {
 });
 
 describe('全新安裝', () => {
-  test('全新安裝讀出來是空的，類型只有一般 25 分', async () => {
+  test('全新安裝讀出來是空的，有五個預設標籤，選中第一個（專注 25 分）', async () => {
     const { state, unreadable } = await load();
     expect(unreadable).toBe(false);
-    expect(state.settings.types).toEqual([{ id: 't1', name: '一般', len: 25, color: 'red' }]);
+    expect(state.settings.types).toEqual([
+      { id: 't1', name: '專注', len: 25, color: 'red' },
+      { id: 't2', name: '工作', len: 50, color: 'purple' },
+      { id: 't3', name: '閱讀', len: 30, color: 'orange' },
+      { id: 't4', name: '學習', len: 45, color: 'yellow' },
+      { id: 't5', name: '運動', len: 10, color: 'pink' },
+    ]);
     expect(state.settings.typeId).toBe('t1');
     expect(state.clue).toBeNull();
     expect(state.days).toEqual({});

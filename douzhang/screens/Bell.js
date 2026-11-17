@@ -1,53 +1,122 @@
-// 鈴響・寫一句（方向 A：底部收下，貼鍵盤上緣）。
-// A5：空白守門（「收下這顆」停用、多一顆「這顆不留話」）、右上「再做 15 分・30 分」一顆一次、念頭與有人找列在框下、很久才回來的副標。
-// R1（2026-11-01 重新設計）：框上放「這顆在做」那句，接的兩半同框。
-// U7（2026-11-02）：「再做 N 分」從右上角搬到收下鈕正上方，兩顆直接按，不再開半頁。
-// 2026-11-14 照 Domy 重新設計：「這顆在做」放在產品色淡底小卡（tint＋soft 框），輸入框是 Domy 的白底細框。
-import { Text, TextInput, View } from 'react-native';
+// 響了之後的慶祝畫面（2026-11-17 AG3，比較頁 2C「整頁＋今天收了幾顆」）。
+// 原本這頁的主角是輸入框（寫一句給下一顆的自己）；換核心後先恭喜、再收下，寫一句變成選填：
+// 不寫可以直接收下，不用多按「這顆不留話」。寫了的那句記在這顆上，番茄架那一格看得到。
+// 由上到下：這顆熟了的番茄、標題、今天收了幾顆那排、選填的一句、計時中記的念頭與有人找、收下、再做 15／30 分。
+import { useState } from 'react';
+import { ScrollView, Text, TextInput, View } from 'react-native';
 import { useTokens } from '../design/Tokens';
-import { words } from '../design/words';
+import { words, tagLabel } from '../design/words';
 import { params, MS_PER_MINUTE } from '../design/params';
-import { restMinutes } from '../core/store';
+import { dayKey, restMinutes } from '../core/store';
+import { typeOf } from '../core/machine';
 import { BigButton } from '../ui/BigButton';
 import { TextButton } from '../ui/TextButton';
+import { Tomato } from '../ui/Tomato';
 
-function Header({ current, now }) {
-  const T = useTokens();
+/** 很久才回來（超過這顆的休息長度）：多一行「響了 N 分鐘前。收下後直接回待機。」 */
+function lateMinutes(current, now) {
   const agoMs = now - current.endAt;
-  const lateSub = agoMs >= restMinutes(current.len) * MS_PER_MINUTE;
+  return agoMs >= restMinutes(current.len) * MS_PER_MINUTE ? Math.floor(agoMs / MS_PER_MINUTE) : 0;
+}
+
+function Header({ type, late }) {
+  const T = useTokens();
+  const sub = { ...T.font.sub, color: T.color.textSecondary, textAlign: 'center' };
   return (
-    <View style={{ marginTop: T.space.l }}>
-      <Text style={{ ...T.font.title, color: T.color.textPrimary }}>{words.rang}</Text>
-      {lateSub ? (
-        <Text style={{ ...T.font.caption, color: T.color.textSecondary, marginTop: T.space.xs }}>
-          {words.rangAgo(Math.floor(agoMs / MS_PER_MINUTE))}
-        </Text>
-      ) : null}
+    <View style={{ alignItems: 'center', gap: T.space.xs, marginTop: T.space.l }}>
+      <Tomato color={type.color} size={T.shape.celebrateTomato} />
+      <Text
+        accessibilityRole="header"
+        style={{ ...T.font.title, color: T.color.textPrimary, textAlign: 'center' }}
+      >
+        {words.ripeTitle}
+      </Text>
+      <Text style={sub}>{tagLabel(type)}</Text>
+      {late ? <Text style={sub}>{words.rangAgo(late)}</Text> : null}
     </View>
   );
 }
 
-/** 這顆開始時那句。淡紫底小卡，跟下面白底的輸入框分得開；上一顆不留話就不畫。 */
-function PrevLine({ text }) {
+/**
+ * 「今天收了 N 顆」：開始那天已經收下的，加上這一顆排在最後、比較大。看得到累積，不跟昨天比。
+ * 太多顆時只畫最後幾顆（params.celebrateTomatoes），數字照實寫。
+ */
+function TodayRow({ state, current, type }) {
   const T = useTokens();
-  if (!text) return null;
+  const kept = state.days[dayKey(current.startedAt)]?.beans || [];
+  const shown = kept
+    .slice()
+    .sort((a, b) => a.t - b.t)
+    .slice(-(params.celebrateTomatoes - 1));
   return (
     <View
       style={{
-        backgroundColor: T.color.tint,
+        alignItems: 'center',
+        gap: T.space.s,
+        backgroundColor: T.color.card,
+        borderRadius: T.shape.radiusCard,
+        padding: T.space.card,
+        marginTop: T.space.l,
+      }}
+    >
+      <Text style={{ ...T.font.sub, color: T.color.textSecondary }}>
+        {words.todayKept(kept.length + 1)}
+      </Text>
+      <View
+        accessible={false}
+        style={{
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+          alignItems: 'flex-end',
+          gap: T.space.xs,
+        }}
+      >
+        {shown.map((b) => (
+          <Tomato key={b.t} color={typeOf(state, b.typeId).color} size={T.shape.celebrateDot} />
+        ))}
+        <Tomato color={type.color} size={T.shape.celebrateDotNew} />
+      </View>
+    </View>
+  );
+}
+
+/** 選填的一句：先是一列可點的字，點了才變成輸入框（不然一進來鍵盤就蓋住番茄）。打過字的回來直接是輸入框。 */
+function NoteField({ draft, onDraft }) {
+  const T = useTokens();
+  const [open, setOpen] = useState(!!draft);
+  if (!open)
+    return (
+      <TextButton
+        secondary
+        label={words.noteOptional}
+        onPress={() => setOpen(true)}
+        style={{ alignSelf: 'center', marginTop: T.space.m }}
+      />
+    );
+  return (
+    <TextInput
+      autoFocus
+      multiline
+      maxLength={params.firstLineMaxChars}
+      value={draft}
+      onChangeText={onDraft}
+      placeholder={words.notePlaceholder}
+      placeholderTextColor={T.color.textSecondary}
+      selectionColor={T.color.accent}
+      style={{
+        ...T.font.body,
+        color: T.color.textPrimary,
+        backgroundColor: T.color.card,
         borderWidth: T.shape.hairline,
-        borderColor: T.color.soft,
+        borderColor: T.color.fieldBorder,
         borderRadius: T.shape.radiusCard,
         paddingHorizontal: T.space.card,
         paddingVertical: T.space.m,
-        marginTop: T.space.card,
+        marginTop: T.space.m,
+        minHeight: T.shape.tapPrimary,
       }}
-    >
-      <Text style={{ ...T.font.caption, color: T.color.textSecondary }}>{words.bellPrevCap}</Text>
-      <Text style={{ ...T.font.callout, color: T.color.textPrimary, marginTop: T.space.xs }}>
-        {text}
-      </Text>
-    </View>
+    />
   );
 }
 
@@ -72,69 +141,38 @@ function Jotted({ current }) {
   );
 }
 
-/** 「再做 15 分」「再做 30 分」並排；一顆只准延一次，延過就不畫（A5）。 */
+/** 「再做 15 分」「再做 30 分」並排的文字鈕；一顆只准延一次，延過就不畫（A5）。 */
 function FlowRow({ current, onFlow }) {
   const T = useTokens();
   if (current.flowed) return null;
   return (
-    <View style={{ flexDirection: 'row', gap: T.space.m, marginBottom: T.space.m }}>
+    <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: T.space.xs }}>
       {params.flowMinutes.map((minutes) => (
-        <BigButton
-          key={minutes}
-          second
-          label={words.flowMore(minutes)}
-          onPress={() => onFlow(minutes)}
-          style={{ flex: 1 }}
-        />
+        <TextButton key={minutes} label={words.flowMore(minutes)} onPress={() => onFlow(minutes)} />
       ))}
     </View>
   );
 }
 
-export function Bell({ current, now, draft, onDraft, onKeep, onFlow }) {
+export function Bell({ state, current, now, draft, onDraft, onKeep, onFlow }) {
   const T = useTokens();
-  const empty = !draft.trim();
+  const type = typeOf(state, current.typeId);
+  const late = lateMinutes(current, now);
   return (
     <View style={{ flex: 1 }}>
-      <Header current={current} now={now} />
-      <PrevLine text={current.clue} />
-      <Text style={{ ...T.font.bodyStrong, color: T.color.textPrimary, marginTop: T.space.l }}>
-        {words.bellAsk}
-      </Text>
-      <TextInput
-        autoFocus
-        multiline
-        maxLength={params.firstLineMaxChars}
-        value={draft}
-        onChangeText={onDraft}
-        placeholder={words.bellPlaceholder}
-        placeholderTextColor={T.color.textSecondary}
-        selectionColor={T.color.accent}
-        style={{
-          ...T.font.sentence,
-          color: T.color.textPrimary,
-          backgroundColor: T.color.card,
-          borderWidth: T.shape.hairline,
-          borderColor: T.color.fieldBorder,
-          borderRadius: T.shape.radiusCard,
-          paddingHorizontal: T.space.card,
-          paddingVertical: T.space.m,
-          marginTop: T.space.s,
-          minHeight: T.shape.tapPrimary * 2,
-        }}
-      />
-      <Jotted current={current} />
-      <View style={{ flex: 1 }} />
+      <ScrollView
+        style={{ flex: 1 }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: T.space.l }}
+      >
+        <Header type={type} late={late} />
+        <TodayRow state={state} current={current} type={type} />
+        <NoteField draft={draft} onDraft={onDraft} />
+        <Jotted current={current} />
+      </ScrollView>
+      <BigButton label={late ? words.keepThis : words.keepAndRest} onPress={() => onKeep(draft)} />
       <FlowRow current={current} onFlow={onFlow} />
-      <BigButton label={words.keepThis} disabled={empty} onPress={() => onKeep(draft)} />
-      {empty ? (
-        <TextButton
-          secondary
-          label={words.keepWithoutNote}
-          onPress={() => onKeep('')}
-          style={{ alignSelf: 'center', marginTop: T.space.xs }}
-        />
-      ) : null}
     </View>
   );
 }

@@ -24,18 +24,27 @@ import {
 const MIN = 60 * 1000;
 const T0 = new Date(2026, 10, 1, 9, 0, 0).getTime();
 const withClue = () => ({ ...blank(), clue: { text: '那句', at: T0 - MIN } });
+/** 只剩第一個標籤的狀態（新安裝預設有五個）。 */
+const single = () => {
+  const s = blank();
+  return { ...s, settings: { ...s.settings, types: [s.settings.types[0]] } };
+};
 
 describe('任務類型（C1）', () => {
-  test('加一種：多一列「新類型」，長度 15 分，選中的不變', () => {
+  test('加一個標籤：排在最後、叫「新標籤」、長度 15 分，選中的不變', () => {
     const s = addType(blank(), T0);
-    expect(s.settings.types).toHaveLength(2);
-    expect(s.settings.types[1]).toEqual({
+    expect(s.settings.types).toHaveLength(6);
+    expect(s.settings.types[5]).toEqual({
       id: `t${T0}`,
-      name: '新類型',
+      name: '新標籤',
       len: 15,
-      color: 'orange', // 第一個還沒人用的番茄色
+      color: 'red', // 預設五個已經把五種番茄色用完，從頭輪
     });
     expect(s.settings.typeId).toBe('t1');
+  });
+
+  test('只有一個標籤時，新加的拿第一個還沒人用的番茄色', () => {
+    expect(addType(single(), T0).settings.types[1].color).toBe('orange');
   });
 
   test('改名最多 20 字，空白變「未命名」', () => {
@@ -63,9 +72,9 @@ describe('任務類型（C1）', () => {
   });
 
   test('只剩一種時不能刪；刪掉選中的那種就退回第一個', () => {
-    const one = blank();
+    const one = single();
     expect(removeType(one, 't1')).toBe(one);
-    const two = pickType(addType(blank(), T0), `t${T0}`);
+    const two = pickType(addType(single(), T0), `t${T0}`);
     const s = removeType(two, `t${T0}`);
     expect(s.settings.types).toHaveLength(1);
     expect(s.settings.typeId).toBe('t1');

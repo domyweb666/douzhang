@@ -24,7 +24,7 @@ describe('該排什麼', () => {
   test('計時中排一則到點通知，時刻等於結束時刻，文案固定不含那句', () => {
     const s = start(withClue(), T0);
     const list = planned(s, T0 + MIN);
-    expect(list).toEqual([{ title: '響了。', body: '寫一行給下一顆的自己。', at: T0 + 25 * MIN }]);
+    expect(list).toEqual([{ title: '響了。', body: '這顆熟了，回來收下。', at: T0 + 25 * MIN }]);
     expect(JSON.stringify(list)).not.toContain('把第二節');
   });
 
@@ -82,7 +82,7 @@ describe('同步到系統', () => {
     expect(order[0]).toBe('cancel');
     expect(order[1].content).toEqual({
       title: '響了。',
-      body: '寫一行給下一顆的自己。',
+      body: '這顆熟了，回來收下。',
       sound: 'default',
     });
     expect(order[1].trigger).toEqual({ type: 'date', date: new Date(T0 + 25 * MIN) });

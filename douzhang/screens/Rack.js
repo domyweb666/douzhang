@@ -5,7 +5,7 @@
 // 2026-11-14 照 Domy 重新設計：選中的那天用產品色淡底（同分頁列的選中）、空狀態用 DomyEmptyState、整頁停在分頁列上面。
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import { DomyButton, pressFeedback, useTabBarClearance } from '@domy/design';
+import { DomyButton, useTabBarClearance } from '@domy/design';
 import { CharacterColors, useTokens } from '../design/Tokens';
 import { words } from '../design/words';
 import { MS_PER_MINUTE } from '../design/params';
@@ -20,55 +20,13 @@ import {
 } from '../core/receipt';
 import { TextButton } from '../ui/TextButton';
 import { PageTitle } from '../ui/PageTitle';
-import { CloseSheet } from '../ui/CloseSheet';
-import { canHangLeaf, rackTopRow, typeOf } from '../core/machine';
+import { typeOf } from '../core/machine';
 import { Leaf } from '../ui/Pod';
 import { Mascot } from '../ui/Mascot';
 import { Tomato } from '../ui/Tomato';
 import { DaySheet, WeekSheet } from '../ui/ReceiptSheets';
 
 const MS_PER_HOUR = 60 * MS_PER_MINUTE;
-
-/** 番茄架最下面那一列：'close' 收工（強調色）、'leaf' 今天不適合（次要色，06 狀態表），點了都開收工半頁。 */
-function BottomRow({ kind, onPress }) {
-  const T = useTokens();
-  const close = kind === 'close';
-  return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={onPress}
-      style={({ pressed }) => [
-        {
-          minHeight: T.shape.row,
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: T.space.m,
-          backgroundColor: T.color.card,
-          borderRadius: T.shape.radiusCard,
-          paddingHorizontal: T.space.card,
-          paddingVertical: T.space.m,
-          marginTop: T.space.s,
-        },
-        pressFeedback(pressed, T.reduceMotion),
-      ]}
-    >
-      <View style={{ flex: 1 }}>
-        <Text
-          style={{
-            ...T.font.bodyStrong,
-            color: close ? T.color.accentText : T.color.textSecondary,
-          }}
-        >
-          {close ? words.closeDay : words.rackLeafTitle}
-        </Text>
-        <Text style={{ ...T.font.caption, color: T.color.textSecondary }}>
-          {close ? words.rackCloseSub : words.rackLeafSub}
-        </Text>
-      </View>
-      <Text style={{ ...T.font.body, color: T.color.textTertiary }}>{words.chevron}</Text>
-    </Pressable>
-  );
-}
 
 /**
  * 空狀態：第一次是「第一顆響完…」＋回去開始一顆；剛清空是「全部清掉了…」＋去設定匯入（06 豆棚）。
@@ -294,14 +252,12 @@ function dayToShow(state, ws) {
   return [...keys].reverse().find((k) => hasRecord(state.days[k])) || keys[0];
 }
 
-export function Rack({ state, now, actions, wiped, active, onSettings, onBack }) {
+export function Rack({ state, wiped, active, onSettings, onBack }) {
   const T = useTokens();
   const clearance = useTabBarClearance(); // 收工那列與時間軸底部都停在分頁列上面
   const [selected, setSelected] = useState(state.todayKey);
   const [dayOpen, setDayOpen] = useState(null);
   const [weekOpen, setWeekOpen] = useState(null);
-  const [closeOpen, setCloseOpen] = useState(false);
-  const bottom = rackTopRow(state, now);
   const thisWeek = weekStart(state.todayKey);
   const ws = weekStart(selected);
   const sum = daySum(state.days[selected]);
@@ -345,22 +301,12 @@ export function Rack({ state, now, actions, wiped, active, onSettings, onBack })
           </ScrollView>
         </>
       )}
-      {bottom ? <BottomRow kind={bottom} onPress={() => setCloseOpen(true)} /> : null}
       <DaySheet
         dayKey={dayOpen}
         day={dayOpen ? state.days[dayOpen] : null}
         onClose={() => setDayOpen(null)}
       />
       <WeekSheet weekStart={weekOpen} state={state} onClose={() => setWeekOpen(null)} />
-      <CloseSheet
-        key={`close-${closeOpen}`}
-        visible={closeOpen}
-        clueText={state.clue?.text}
-        leafOk={canHangLeaf(state, now)}
-        onClose={() => setCloseOpen(false)}
-        onCloseDay={actions.onCloseDay}
-        onHangLeaf={actions.onHangLeaf}
-      />
     </View>
   );
 }

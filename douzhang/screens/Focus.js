@@ -211,7 +211,7 @@ function useReveal() {
  * current：計時中的那顆；color：它的類型的番茄色。
  * onLeave(sheet)：離開聚焦模式；sheet 是 'note'（記一筆）｜'end'（結束這顆）｜null（只是回主畫面）。
  */
-export function Focus({ current, now, color, onLeave }) {
+export function Focus({ current, now, color, label, onLeave }) {
   const T = useTokens();
   const { width } = useWindowDimensions();
   const [controls, reveal] = useReveal();
@@ -227,7 +227,7 @@ export function Focus({ current, now, color, onLeave }) {
         style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: width * Z.lineGap }}
       >
         <FlipClock digits={clockDigits(left)} screenWidth={width} />
-        <DoingLine color={color} text={current.clue} maxWidth={width * (1 - Z.cardWidth)} />
+        <DoingLine color={color} text={label} maxWidth={width * (1 - Z.cardWidth)} />
       </Pressable>
       <Controls visible={controls} onLeave={onLeave} />
     </View>

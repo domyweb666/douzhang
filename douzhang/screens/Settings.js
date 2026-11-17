@@ -1,11 +1,10 @@
-// 設定（左右滑三頁的右邊那頁）。五區依序：任務類型、節奏、提醒、手感、備份（PRD S18）。
+// 設定（左右滑三頁的右邊那頁）。依序：標籤、節奏、提醒、專注、手感、備份（PRD S18；2026-11-17 AG1 類型改叫標籤、拿掉收工時間）。
 // 任務類型 C1；節奏、提醒、手感 G1；備份與清空 G2–G4。狀態機在 core/settings.js，改完立刻生效（下一拍就讀新設定）。
 // U10（2026-11-02）：類型與收工時間改成「一列一個值 ›」，點了從底部開半頁用 iOS 滾輪選（原本一排排膠囊要找黑的那顆）。
 // 2026-11-14 照 Domy Design System 重新設計：每區是一個 DomySection（標題＋白卡，列之間自動分隔線），
 // 列用 DomySettingsRow（值＋箭頭、產品色膠囊、開關三種尾巴），說明字放在區塊的 footer。
 import { useState } from 'react';
-import { Linking, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
+import { Linking, Pressable, ScrollView, Text, View } from 'react-native';
 import { DomySection, DomySettingsRow, useTabBarClearance } from '@domy/design';
 import { useTokens } from '../design/Tokens';
 import { words } from '../design/words';
@@ -14,14 +13,13 @@ import { TextButton } from '../ui/TextButton';
 import { PageTitle } from '../ui/PageTitle';
 import { Segmented } from '../ui/Segmented';
 import { Sheet } from '../ui/Sheet';
+import { TagEditSheet, Wheel } from '../ui/TagSheets';
 import { BigButton } from '../ui/BigButton';
 import { hhmm } from '../ui/useNow';
 import { Tomato } from '../ui/Tomato';
 import { dayKey } from '../core/store';
 import { shieldAvailable, shieldCount } from '../core/shield';
 
-const LENGTHS = params.typeLengths.map((len) => ({ value: len, label: words.typeLen(len) }));
-const CLOSE_TIMES = params.closeTimes.map((t) => ({ value: t, label: t }));
 const REST_SHORTS = params.restShortOptions.map((v) => ({
   value: v,
   label: v === 'auto' ? words.restShortAuto : words.minutes(v),
@@ -38,99 +36,6 @@ const REST_MODES = [
   { value: 'auto', label: words.restModeAuto },
   { value: 'self', label: words.restModeSelf },
 ];
-
-/** iOS 原生滾輪（滾動有系統的輕觸覺）。options：[{ value, label }]。 */
-function Wheel({ options, value, onChange }) {
-  const T = useTokens();
-  return (
-    <Picker
-      selectedValue={value}
-      onValueChange={onChange}
-      itemStyle={{ ...T.font.section, color: T.color.textPrimary }}
-    >
-      {options.map((o) => (
-        <Picker.Item key={String(o.value)} label={o.label} value={o.value} />
-      ))}
-    </Picker>
-  );
-}
-
-/** 五顆番茄並排選色，選中的那顆外面一圈茄紫（W1）。 */
-function ColorPicker({ value, onChange }) {
-  const T = useTokens();
-  const size = T.shape.colorSwatch;
-  return (
-    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: T.space.m }}>
-      {params.tomatoColors.map((c) => {
-        const on = c === value;
-        return (
-          <Pressable
-            key={c}
-            accessibilityRole="button"
-            accessibilityLabel={words.tomatoColorName[c]}
-            accessibilityState={{ selected: on }}
-            onPress={() => onChange(c)}
-            style={{
-              width: T.shape.tapPrimary,
-              height: T.shape.tapPrimary,
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderRadius: T.shape.radiusPill,
-              borderWidth: T.shape.selectRing,
-              borderColor: on ? T.color.accent : 'transparent', // token-ok: 沒選的不畫圈
-              backgroundColor: on ? T.color.soft : 'transparent', // token-ok: 沒選的不畫底
-            }}
-          >
-            <Tomato color={c} size={size} />
-          </Pressable>
-        );
-      })}
-    </View>
-  );
-}
-
-/** 一種類型的半頁：改名、番茄色、滾輪選長度、最下面刪除（只剩一種時沒有）。改了立刻存，「好」只是關。 */
-function TypeEditSheet({ type, canDelete, onClose, onRename, onSetLen, onSetColor, onRemove }) {
-  const T = useTokens();
-  if (!type) return null;
-  return (
-    <Sheet visible title={type.name} onClose={onClose}>
-      <TextInput
-        key={type.name} // 不受控：清空存成「未命名」時要重掛，框裡才會顯示新名字
-        defaultValue={type.name}
-        maxLength={params.typeNameMaxChars}
-        onEndEditing={(e) => onRename(e.nativeEvent.text)}
-        returnKeyType="done"
-        accessibilityLabel={words.typeNameA11y}
-        selectionColor={T.color.accent}
-        style={{
-          ...T.font.body,
-          color: T.color.textPrimary,
-          backgroundColor: T.color.card,
-          borderWidth: T.shape.hairline,
-          borderColor: T.color.fieldBorder,
-          borderRadius: T.shape.radiusButton,
-          paddingHorizontal: T.space.card,
-          minHeight: T.shape.field,
-        }}
-      />
-      <ColorPicker value={type.color} onChange={onSetColor} />
-      <Wheel options={LENGTHS} value={type.len} onChange={onSetLen} />
-      <BigButton label={words.ok} onPress={onClose} />
-      {canDelete ? (
-        <TextButton
-          danger
-          label={words.deleteThisType}
-          onPress={() => {
-            onClose();
-            onRemove();
-          }}
-          style={{ alignSelf: 'center', marginTop: T.space.s }}
-        />
-      ) : null}
-    </Sheet>
-  );
-}
 
 /** 一種類型：前面一顆它的番茄色、名字，右邊長度＋箭頭（DomySettingsRow 的樣子，多一顆小番茄）。 */
 function TypeRow({ type, onPress }) {
@@ -179,7 +84,7 @@ function TypesSection({ settings, actions }) {
           style={{ minHeight: T.shape.row }}
         />
       </DomySection>
-      <TypeEditSheet
+      <TagEditSheet
         type={open}
         canDelete={settings.types.length > 1}
         onClose={() => setOpenId(null)}
@@ -203,7 +108,7 @@ function RestModeRow({ value, onChange }) {
   );
 }
 
-/** 節奏那區卡片下的說明：休息怎麼算（看得到那兩列時才講），最後一行是收工時間。 */
+/** 節奏那區卡片下的說明：休息怎麼算（看得到那兩列時才講）。 */
 function rhythmFooter(settings) {
   const lines = [];
   if (settings.restMode === 'self') lines.push(words.restSelfSub);
@@ -212,7 +117,7 @@ function rhythmFooter(settings) {
     if (settings.restLongEvery)
       lines.push(words.restLongSub(settings.restLongEvery, settings.restLongMinutes));
   }
-  return [...lines, words.closeTimeSub].join('\n');
+  return lines.join('\n');
 }
 
 /** 長休息半頁：左邊每幾顆（含「關」）、右邊幾分，兩個滾輪並排。 */
@@ -239,7 +144,7 @@ function LongRestWheels({ settings, actions }) {
 
 /** 「我自己決定」的休息沒有長度，短休息、長休息兩列收起來（2026-11-17 設定 A）。 */
 function RhythmSection({ settings, actions }) {
-  const [open, setOpen] = useState(null); // 'short'｜'long'｜'close'｜null
+  const [open, setOpen] = useState(null); // 'short'｜'long'｜null
   const close = () => setOpen(null);
   const timed = settings.restMode !== 'self';
   const longValue = settings.restLongEvery
@@ -263,10 +168,6 @@ function RhythmSection({ settings, actions }) {
             onPress={() => setOpen('long')}
           />
         ) : null}
-        <DomySettingsRow
-          label={words.closeTimeRow}
-          picker={{ value: settings.closeTime, onPress: () => setOpen('close') }}
-        />
       </DomySection>
       <Sheet visible={open === 'short'} title={words.restShortRow} onClose={close}>
         <Wheel options={REST_SHORTS} value={settings.restShort} onChange={actions.onSetRestShort} />
@@ -274,10 +175,6 @@ function RhythmSection({ settings, actions }) {
       </Sheet>
       <Sheet visible={open === 'long'} title={words.restLongRow} onClose={close}>
         <LongRestWheels settings={settings} actions={actions} />
-        <BigButton label={words.ok} onPress={close} />
-      </Sheet>
-      <Sheet visible={open === 'close'} title={words.closeTimeRow} onClose={close}>
-        <Wheel options={CLOSE_TIMES} value={settings.closeTime} onChange={actions.onSetCloseTime} />
         <BigButton label={words.ok} onPress={close} />
       </Sheet>
     </View>

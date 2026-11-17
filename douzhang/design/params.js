@@ -8,6 +8,17 @@ export const params = {
   voidTextMaxChars: 40, // 作廢原因選填那一行（原型 maxlength）
   typeLengths: Array.from({ length: 18 }, (_, i) => (i + 1) * 5), // 5–90 分每 5 分一格（2026-11-02 V1 多米要到 90；滾輪選）
   tomatoColors: ['red', 'orange', 'yellow', 'purple', 'pink'], // 每種類型一個番茄色（2026-11-02 W1）；色碼在 Tokens 的 CharacterColors.tomato.body，圖在 ui/Tomato.js
+  // 新安裝的五個標籤（2026-11-17 AG1）：長度與番茄色；名字在 words.presetTags，順序對齊
+  presetTags: [
+    { len: 25, color: 'red' },
+    { len: 50, color: 'purple' },
+    { len: 30, color: 'orange' },
+    { len: 45, color: 'yellow' },
+    { len: 10, color: 'pink' },
+  ],
+  // 計時中長大的番茄（2026-11-17 AG2，比較頁 1A）：一開始是全熟大小的幾成；進度過了 turnAt 才從黃轉成標籤色
+  grow: { minScale: 0.4, turnAt: 0.6 },
+  celebrateTomatoes: 12, // 慶祝畫面「今天收了幾顆」那排最多畫幾顆（多的只畫最後這幾顆）
   newTypeMinutes: 15, // 「加一種」新類型的長度（V1 刻度從 5 起算後明寫，維持原本 15）
   devTestSeconds: 5, // 開發期長按「開始」的測試顆與它的休息都是這麼久（V3：看番茄掉進罐子用）
   typeNameMaxChars: 20, // 安全標準 I7

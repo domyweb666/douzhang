@@ -9,7 +9,7 @@ export const words = {
   thisToDo: '這顆要做', // 待機卡片小標（2026-11-02 V2，多米看不懂「下一步」）
   start: '開始',
   startFirst: '開始這顆',
-  rang: '響了。', // 鈴響頁標題
+  rang: '響了。', // 到點通知的標題（鈴響頁 2026-11-17 AG3 起改成慶祝畫面，不再用這兩個字當標題）
   keepThis: '收下這顆',
   keepWithoutNote: '這顆不留話',
   flowMore: (minutes) => `再做 ${minutes} 分`, // 分鐘數從 params.flowMinutes 來
@@ -40,7 +40,7 @@ export const words = {
   closeDay: '收工', // 收工半頁標題與按鈕同字、番茄架頂端列
 
   // 設定與狀態
-  taskType: '任務類型',
+  taskType: '標籤',
   notificationOff: '到點通知沒開',
   wipeAll: '清空所有資料',
 
@@ -55,7 +55,7 @@ export const words = {
   doing: '正在做',
   restBody: '離開螢幕。喝水、看遠處、伸展、閉眼都好。',
   backFromRest: '回來了，開始下一顆',
-  bellSub: '寫一行給下一顆的自己。', // R1 後只當到點通知內文
+  bellSub: '這顆熟了，回來收下。', // 到點通知內文（2026-11-17 AG3：寫一句改成選填，通知不再叫人寫）
   bellPlaceholder: '寫一行給下一顆的自己',
   bellPrevCap: '這顆在做', // 鈴響頁上一句小卡（2026-11-01 重新設計 R1）
   bellAsk: '下一顆接著做什麼？',
@@ -96,6 +96,15 @@ export const words = {
   zenLeave: '回主畫面', // 聚焦模式點一下畫面出現的三顆之一（另外兩顆是記一筆、結束這顆）
   zenScreenA11y: (time) => `聚焦模式，剩 ${time}。點兩下顯示按鈕`,
 
+  // 標籤（2026-11-17 AG1：「類型」與「在做哪件事」合成標籤，介面上都叫標籤；程式裡欄位名還是 types）
+  presetTags: ['專注', '工作', '閱讀', '學習', '運動'], // 新安裝的五個，長度與顏色在 params.presetTags
+  newTag: '＋ 新標籤', // 標籤半頁最後一格
+  // 慶祝畫面（2026-11-17 AG3，比較頁 2C）
+  ripeTitle: '熟了，又收下一顆',
+  todayKept: (n) => `今天收了 ${n} 顆`,
+  noteOptional: '✎ 寫一句給自己（選填）',
+  notePlaceholder: '這顆做了什麼、下次從哪接',
+  keepAndRest: '收下，休息一下',
   // 類型與估幾顆（C1、C2；2026-11-02 U5 併成一張「這顆」半頁）
   thisBean: '這顆', // 半頁標題
   typeLen: (len) => (len < 1 ? `${Math.round(len * 60)} 秒` : `${len} 分`), // 不到一分鐘的只有開發期測試顆
@@ -112,8 +121,8 @@ export const words = {
   estValueA11y: (n) => `估 ${n} 顆`,
   noTask: '不掛任何事',
   check: '✓', // 半頁列選中的記號
-  addType: '加一種',
-  deleteThisType: '刪除這一類', // 類型半頁最下面（U10）
+  addType: '加一個標籤',
+  deleteThisType: '刪除這個標籤', // 標籤半頁最下面（U10）
   tomatoColorRow: '番茄顏色', // 類型半頁（W1）
   tomatoColorName: {
     red: '紅番茄',
@@ -122,8 +131,8 @@ export const words = {
     purple: '紫番茄',
     pink: '粉番茄',
   },
-  typeNameA11y: '類型名字',
-  newTypeName: '新類型',
+  typeNameA11y: '標籤名字',
+  newTypeName: '新標籤',
   unnamedType: '未命名',
   back: '回去',
 
@@ -133,7 +142,7 @@ export const words = {
   restModeAuto: '到點提醒我',
   restModeSelf: '我自己決定',
   // 短休息、長休息（2026-11-17 設定 A）
-  typeSub: '每種類型一個長度，番茄大小跟著長度走',
+  typeSub: '每個標籤一個長度，番茄大小跟著長度走',
   restShortRow: '短休息',
   restShortAuto: '跟著長度',
   restShortAutoSub: '跟著長度：番茄長度 ÷ 5，最少 3 分。',
@@ -255,26 +264,20 @@ export const words = {
   voidHint: '作廢多半跟番茄長度、或任務沒切小有關，不是意志力。',
   flowHint: '這週一半以上的番茄都延長了，這類事可以試試把番茄拉長。',
 
-  // 休息（A6）：收下後那 24 句，輪替、不連續重複（原型 LINES 原文）。可愛的話只准由這裡說。
+  // 休息（A6）：收下後那幾句，輪替、不連續重複（原型 LINES 原文；2026-11-17 AG1 拿掉講「那句」「收據」的六句，剩 18 句）。可愛的話只准由這裡說。
   restLines: [
     '收下了，這顆是完整的。',
     '番茄串上多一顆。',
     '響完了，起來喝口水。',
-    '那句會在下一顆等你。',
-    '寫下來了，腦袋可以先放掉它。',
     '好，停在這裡剛剛好。',
     '一顆，沒有半顆。',
     '先離開螢幕五分鐘。',
-    '收據開好了。',
     '去窗邊看一下遠的地方。',
-    '這一句留給五分鐘後的你。',
     '番茄串又長一點了。',
     '站起來伸個懶腰吧。',
     '手機先別拿，走兩步。',
     '剛那段辛苦了。',
-    '下一步在這裡了，不用一直記著。',
     '這顆長得挺飽滿。',
-    '記好了，休息去。',
     '一段沒被打斷的，收進來。',
     '好，喝水時間。',
     '番茄上串了。',
@@ -283,9 +286,8 @@ export const words = {
     '去倒杯水，鈴響再回來。',
   ],
 };
-/** 待機開始鈕上方那一行：類型名字「一般 ›」。分鐘在開始鈕上；事名 V2 起搬進卡片 */
-export const thisRowLabel = (typeName) => `${typeName} ${words.chevron}`;
-/** 卡片裡的事名那行：「寫腳本第 12 集・估 3 顆」 */
-export const taskLine = (task) => `${task.name}・估 ${task.est} 顆`;
+/** 主畫面最上面那顆膠囊：「專注・25 分」；待機時可點，後面多一個 ›（2026-11-17 AG1） */
+export const tagLabel = (type, more) =>
+  `${type.name}・${words.typeLen(type.len)}${more ? ` ${words.chevron}` : ''}`;
 /** 待機開始鈕的字：「開始・25 分」「開始這顆・25 分」 */
 export const startLabel = (label, len) => `${label}・${len} 分`;

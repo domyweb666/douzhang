@@ -41,17 +41,13 @@ export function settle(state, now) {
 }
 
 /**
- * 開始一顆。firstLine 只在第一次（沒有那句）時傳：那句同時成為這顆的下一步。
- * 空白的 firstLine 不開始（06 定案：沒有那句，第一顆響完無句可接）。
+ * 開始一顆。2026-11-17 AG1 起不用先有一句（「接」降成選填筆記）：按了就開始。
+ * state.clue 是舊版留下來的那句，不動它、也不再帶進這顆。
  */
-export function start(state, now, { typeId = state.settings.typeId, firstLine } = {}) {
-  const text = (firstLine || '').trim();
-  if (!state.clue && !text) return state;
+export function start(state, now, { typeId = state.settings.typeId } = {}) {
   const type = typeOf(state, typeId);
-  const clue = text ? { text, at: now } : state.clue;
   return {
     ...state,
-    clue,
     current: {
       phase: PHASE.focus,
       typeId: type.id,
@@ -63,7 +59,7 @@ export function start(state, now, { typeId = state.settings.typeId, firstLine } 
       flowed: false,
       // 只掛今天估過的那件事：昨天估的不跟著過夜（B+C 審查員）
       taskId: isTodayTask(state, now, state.taskId) ? state.taskId : null,
-      clue: clue ? clue.text : '',
+      clue: '',
     },
   };
 }
