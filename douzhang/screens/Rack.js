@@ -1,32 +1,41 @@
-// 番茄架（左右滑三頁的左邊那頁）。2026-11-02 U9：上面一排這週七天（‹ › 換週），下面選中那天的時間軸，
-// 每顆番茄畫在開始的時刻、高度照長度、裡面寫鈴響時留的那句；作廢是虛線框。點一顆開那天的收據。
-// 換週用 ‹ › 不用左右滑：這頁本身在左右滑的分頁裡，再滑一層會搶手勢。
-// 沒番茄的日子不寫 0、沒有連續數字（S12、S15）。最下面一列：今天沒收工→收工；今天什麼都沒有→掛葉子（F1、F2）。
-// 2026-11-14 照 Domy 重新設計：選中的那天用產品色淡底（同分頁列的選中）、空狀態用 DomyEmptyState、整頁停在分頁列上面。
+// 番茄架（左右滑三頁的左邊那頁）。2026-11-17 AG4＋AG5 改版：時間帳本。
+// 標題右邊切「行事曆｜分析」。行事曆有天／3 天／週／月四種檢視（ui/Timeline.js、ui/MonthGrid.js），
+// 分析有日／週／月（ui/Stats.js）。兩邊共用同一個選中的日子與同一列 ‹ 這一段 ›。
+// 換一段用 ‹ › 不用左右滑：這頁本身在左右滑的分頁裡，再滑一層會搶手勢。
+// 沒番茄的日子不寫 0、沒有連續數字（S12、S15）。收工、掛葉子、這週的收據都拿掉了（AG1、AG5）。
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { DomyButton, useTabBarClearance } from '@domy/design';
 import { CharacterColors, useTokens } from '../design/Tokens';
 import { words } from '../design/words';
-import { MS_PER_MINUTE } from '../design/params';
-import {
-  dayTimeline,
-  daySum,
-  hasRecord,
-  rackWeeks,
-  shiftWeek,
-  weekDays,
-  weekStart,
-} from '../core/receipt';
+import { daySum, hasRecord, rackWeeks, weekDays, weekStart } from '../core/receipt';
+import { VIEW, reachesToday, shiftPeriod, viewDays } from '../core/calendar';
+import { RANGE } from '../core/stats';
 import { TextButton } from '../ui/TextButton';
 import { PageTitle } from '../ui/PageTitle';
-import { typeOf } from '../core/machine';
-import { Leaf } from '../ui/Pod';
+import { Segmented } from '../ui/Segmented';
 import { Mascot } from '../ui/Mascot';
-import { Tomato } from '../ui/Tomato';
-import { DaySheet, WeekSheet } from '../ui/ReceiptSheets';
+import { Timeline } from '../ui/Timeline';
+import { MonthGrid } from '../ui/MonthGrid';
+import { StatsView } from '../ui/Stats';
+import { DaySheet } from '../ui/ReceiptSheets';
 
-const MS_PER_HOUR = 60 * MS_PER_MINUTE;
+const MODE = { calendar: 'calendar', stats: 'stats' };
+const MODES = [
+  { value: MODE.calendar, label: words.rackModeCalendar },
+  { value: MODE.stats, label: words.rackModeStats },
+];
+const VIEWS = [
+  { value: VIEW.day, label: words.viewDay },
+  { value: VIEW.three, label: words.viewThree },
+  { value: VIEW.week, label: words.viewWeek },
+  { value: VIEW.month, label: words.viewMonth },
+];
+const RANGES = [
+  { value: RANGE.day, label: words.rangeDay },
+  { value: RANGE.week, label: words.viewWeek },
+  { value: RANGE.month, label: words.viewMonth },
+];
 
 /**
  * 空狀態：第一次是「第一顆響完…」＋回去開始一顆；剛清空是「全部清掉了…」＋去設定匯入（06 豆棚）。
@@ -58,13 +67,52 @@ function Empty({ wiped, active, onBack, onSettings }) {
   );
 }
 
-/** 上面那排的一天：星期、日期、有紀錄的話下面一顆點（番茄紅；只有葉子就葉子綠）。 */
-function DayKey({ dayKey, day, selected, onPress }) {
+/** 這一段叫什麼：天＝11月17日 星期二；3 天＝起訖；週＝這週或某月某日那週；月＝2026年11月。 */
+function periodTitle(period, selected, todayKey) {
+  if (period === VIEW.month) return words.monthTitle(selected);
+  if (period === VIEW.week) {
+    const ws = weekStart(selected);
+    return ws === weekStart(todayKey) ? words.thisWeek : words.weekOf(ws);
+  }
+  if (period === VIEW.three) {
+    const days = viewDays(VIEW.three, selected);
+    return words.daysRange(days[0], days[2]);
+  }
+  return `${words.monthDay(selected)} ${words.weekday(selected)}`;
+}
+
+/** ‹ 這一段 ›。畫面上已經有今天就沒有 ›（不往還沒到的日子翻）。 */
+function PeriodNav({ period, selected, todayKey, onShift }) {
   const T = useTokens();
-  const mode = T._dark ? 'dark' : 'light';
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: T.space.s }}>
+      <TextButton
+        label={words.prevWeek}
+        a11yLabel={words.prevPeriodA11y}
+        onPress={() => onShift(-1)}
+      />
+      <Text
+        style={{ ...T.font.bodyStrong, color: T.color.textPrimary, flex: 1, textAlign: 'center' }}
+      >
+        {periodTitle(period, selected, todayKey)}
+      </Text>
+      {reachesToday(period, selected, todayKey) ? (
+        <View style={{ width: T.shape.tapMin }} />
+      ) : (
+        <TextButton
+          label={words.nextWeek}
+          a11yLabel={words.nextPeriodA11y}
+          onPress={() => onShift(1)}
+        />
+      )}
+    </View>
+  );
+}
+
+/** 一天的小方格：星期、日期、有紀錄的話下面一顆番茄紅的點。selected 的有產品色淡底。 */
+function DayKey({ dayKey, day, selected, wide, onPress }) {
+  const T = useTokens();
   const has = hasRecord(day);
-  const leafOnly = has && day.leaf && !day.beans.length && !day.voids.length;
-  const dot = leafOnly ? CharacterColors.leaf[mode] : CharacterColors.pod[mode];
   const fg = selected ? T.color.accentText : T.color.textPrimary;
   return (
     <Pressable
@@ -73,7 +121,8 @@ function DayKey({ dayKey, day, selected, onPress }) {
       accessibilityState={{ selected }}
       onPress={onPress}
       style={{
-        width: T.shape.weekDayWidth,
+        flex: wide ? 1 : undefined,
+        width: wide ? undefined : T.shape.weekDayWidth,
         paddingVertical: T.space.xs,
         alignItems: 'center',
         borderRadius: T.shape.radiusButton,
@@ -90,214 +139,139 @@ function DayKey({ dayKey, day, selected, onPress }) {
           height: T.shape.dayDot,
           borderRadius: T.shape.radiusPill,
           marginTop: T.space.xs,
-          backgroundColor: has ? dot : 'transparent', // token-ok: 沒紀錄的日子不畫點
+          backgroundColor: has ? CharacterColors.pod[T._dark ? 'dark' : 'light'] : 'transparent', // token-ok: 沒紀錄的日子不畫點
         }}
       />
     </Pressable>
   );
 }
 
-/** ‹ 這週 › ＋七天。下一週只到這週為止。 */
-function WeekStrip({ ws, thisWeek, selected, days, onSelect, onShift }) {
+/**
+ * 時間軸上面那排日子。天檢視：這週七天，點了換到那一天。
+ * 3 天、週檢視：一欄一個、對齊下面的欄（左邊空出時刻那欄的寬），今天有淡底，點了切到那天的天檢視。
+ */
+function DayHeads({ state, view, selected, onPick }) {
   const T = useTokens();
+  const single = view === VIEW.day;
+  const keys = single ? weekDays(weekStart(selected)) : viewDays(view, selected);
   return (
-    <View style={{ marginTop: T.space.m }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <TextButton
-          label={words.prevWeek}
-          a11yLabel={words.prevWeekA11y}
-          onPress={() => onShift(-1)}
-        />
-        <Text
-          style={{ ...T.font.bodyStrong, color: T.color.textPrimary, flex: 1, textAlign: 'center' }}
-        >
-          {ws === thisWeek ? words.thisWeek : words.weekOf(ws)}
-        </Text>
-        {ws < thisWeek ? (
-          <TextButton
-            label={words.nextWeek}
-            a11yLabel={words.nextWeekA11y}
-            onPress={() => onShift(1)}
-          />
-        ) : (
-          <View style={{ width: T.shape.tapMin }} />
-        )}
-      </View>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: T.space.s }}>
-        {weekDays(ws).map((k) => (
-          <DayKey
-            key={k}
-            dayKey={k}
-            day={days[k]}
-            selected={k === selected}
-            onPress={() => onSelect(k)}
-          />
-        ))}
-      </View>
-    </View>
-  );
-}
-
-/** 時間軸上的一顆番茄或一次作廢。 */
-function Block({ item, top, height, type, onPress }) {
-  const T = useTokens();
-  const mode = T._dark ? 'dark' : 'light';
-  const isVoid = item.kind === 'void';
-  const sub = { ...T.font.caption, color: T.color.textSecondary };
-  return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={onPress}
+    <View
       style={{
-        position: 'absolute',
-        top,
-        height,
-        left: T.shape.timelineGutter,
-        right: 0,
-        overflow: 'hidden',
-        borderRadius: T.shape.radiusButton,
-        paddingHorizontal: T.space.s,
-        paddingVertical: T.space.xs,
-        backgroundColor: isVoid ? 'transparent' : CharacterColors.podSoft[mode], // token-ok: 作廢只畫框
-        // iOS 的虛線框四邊要一樣寬，所以作廢不畫左邊那條粗邊
-        borderWidth: isVoid ? T.shape.hairline : 0,
-        borderStyle: isVoid ? 'dashed' : 'solid',
-        borderColor: T.color.textSecondary,
-        borderLeftWidth: isVoid ? T.shape.hairline : T.shape.timelineEdge,
-        borderLeftColor: isVoid ? T.color.textSecondary : CharacterColors.pod[mode],
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: T.space.s,
+        paddingLeft: single ? 0 : T.shape.timelineGutter,
       }}
     >
-      {isVoid ? (
-        <Text numberOfLines={1} style={sub}>
-          {words.voidLine(item)}
-        </Text>
-      ) : (
-        <>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: T.space.xs }}>
-            <Tomato color={type?.color} size={T.shape.blockIcon} />
-            <Text style={{ ...T.font.caption, color: T.color.textPrimary }}>
-              {words.blockTitle(type?.name || '', item.len, item.flow)}
-            </Text>
-          </View>
-          <Text numberOfLines={2} style={{ ...T.font.sub, color: T.color.textPrimary }}>
-            {item.clue || words.noNoteMark}
-          </Text>
-        </>
-      )}
-    </Pressable>
-  );
-}
-
-/** 選中那天：葉子日畫葉子；有番茄或作廢畫時間軸；什麼都沒有就空白（不寫 0）。 */
-function DayView({ state, dayKey, onOpen }) {
-  const T = useTokens();
-  const day = state.days[dayKey];
-  const { items, from, to } = dayTimeline(day);
-  if (!items.length) {
-    if (!day?.leaf) return null;
-    return (
-      <View style={{ alignItems: 'center', marginTop: T.space.xl, gap: T.space.m }}>
-        <Leaf />
-        <Text style={{ ...T.font.sub, color: T.color.textSecondary }}>{words.leafDay}</Text>
-      </View>
-    );
-  }
-  const perMs = T.shape.timelineHour / MS_PER_HOUR;
-  const hours = [];
-  for (let t = from; t <= to; t += MS_PER_HOUR) hours.push(t);
-  return (
-    <View style={{ height: (to - from) * perMs, marginTop: T.space.m }}>
-      {hours.map((t) => (
-        <View
-          key={t}
-          style={{
-            position: 'absolute',
-            top: (t - from) * perMs,
-            left: 0,
-            right: 0,
-            flexDirection: 'row',
-            alignItems: 'center',
-          }}
-        >
-          <Text
-            style={{
-              ...T.font.caption,
-              color: T.color.textSecondary,
-              width: T.shape.timelineGutter,
-            }}
-          >
-            {words.hourLabel(new Date(t).getHours())}
-          </Text>
-          <View style={{ flex: 1, height: T.shape.hairline, backgroundColor: T.color.separator }} />
-        </View>
-      ))}
-      {items.map((it) => (
-        <Block
-          key={`${it.kind}-${it.start}`}
-          item={it}
-          top={(it.start - from) * perMs}
-          height={Math.max(T.shape.timelineBlockMin, (it.end - it.start) * perMs)}
-          type={it.typeId ? typeOf(state, it.typeId) : null}
-          onPress={onOpen}
+      {keys.map((k) => (
+        <DayKey
+          key={k}
+          dayKey={k}
+          day={state.days[k]}
+          wide={!single}
+          selected={single ? k === selected : k === state.todayKey}
+          onPress={() => onPick(k)}
         />
       ))}
     </View>
   );
 }
 
-/** 換到某一週時選哪天：有今天選今天，不然選那週最後一天有紀錄的，都沒有就週一。 */
-function dayToShow(state, ws) {
-  const keys = weekDays(ws);
-  if (keys.includes(state.todayKey)) return state.todayKey;
-  return [...keys].reverse().find((k) => hasRecord(state.days[k])) || keys[0];
+/** 天檢視右上那行小計：幾顆、幾分鐘。沒番茄就不寫。 */
+function DaySum({ day }) {
+  const T = useTokens();
+  const sum = daySum(day);
+  if (!sum) return null;
+  return (
+    <Text
+      style={{
+        ...T.font.sub,
+        color: T.color.textSecondary,
+        textAlign: 'right',
+        marginTop: T.space.s,
+      }}
+    >
+      {words.daySumLine(sum.beans, sum.minutes)}
+    </Text>
+  );
 }
 
-export function Rack({ state, wiped, active, onSettings, onBack }) {
+/** 行事曆那一半：月是格子，其他三種是時間軸。 */
+function CalendarBody({ state, now, view, selected, onPickDay, onOpenDay }) {
+  if (view === VIEW.month)
+    return <MonthGrid state={state} monthKey={selected} onPickDay={onPickDay} />;
+  return (
+    <>
+      <DayHeads state={state} view={view} selected={selected} onPick={onPickDay} />
+      {view === VIEW.day ? <DaySum day={state.days[selected]} /> : null}
+      <Timeline
+        state={state}
+        keys={viewDays(view, selected)}
+        view={view}
+        now={now}
+        onOpen={onOpenDay}
+      />
+    </>
+  );
+}
+
+export function Rack({ state, now, wiped, active, onSettings, onBack }) {
   const T = useTokens();
-  const clearance = useTabBarClearance(); // 收工那列與時間軸底部都停在分頁列上面
+  const clearance = useTabBarClearance(); // 內容停在分頁列上面
+  const [mode, setMode] = useState(MODE.calendar);
+  const [view, setView] = useState(VIEW.day);
+  const [range, setRange] = useState(RANGE.week);
   const [selected, setSelected] = useState(state.todayKey);
   const [dayOpen, setDayOpen] = useState(null);
-  const [weekOpen, setWeekOpen] = useState(null);
-  const thisWeek = weekStart(state.todayKey);
-  const ws = weekStart(selected);
-  const sum = daySum(state.days[selected]);
+  const calendar = mode === MODE.calendar;
+  const period = calendar ? view : range; // 日／週／月跟天／週／月是同一組字，換一段的算法共用
   const empty = !rackWeeks(state).length;
+  // 天檢視點上面那排是換一天；其他檢視（含月）點某一天是切到那天的天檢視
+  const pickDay = (key) => {
+    setSelected(key);
+    setView(VIEW.day);
+  };
   return (
     <View style={{ flex: 1, paddingBottom: clearance }}>
       <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
         <View style={{ flex: 1 }}>
           <PageTitle>{words.rack}</PageTitle>
         </View>
-        {empty ? null : (
-          <TextButton label={words.weekReceiptLink} onPress={() => setWeekOpen(ws)} />
-        )}
+        {empty ? null : <Segmented options={MODES} value={mode} onChange={setMode} />}
       </View>
       {empty ? (
         <Empty wiped={wiped} active={active} onBack={onBack} onSettings={onSettings} />
       ) : (
         <>
-          <WeekStrip
-            ws={ws}
-            thisWeek={thisWeek}
-            selected={selected}
-            days={state.days}
-            onSelect={setSelected}
-            onShift={(n) => setSelected(dayToShow(state, shiftWeek(ws, n)))}
+          <Segmented
+            options={calendar ? VIEWS : RANGES}
+            value={period}
+            onChange={calendar ? setView : setRange}
+            style={{ marginTop: T.space.m }}
           />
-          <View
-            style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: T.space.m }}
+          <PeriodNav
+            period={period}
+            selected={selected}
+            todayKey={state.todayKey}
+            onShift={(step) => setSelected(shiftPeriod(period, selected, step))}
+          />
+          <ScrollView
+            style={{ flex: 1 }}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: T.space.l }}
           >
-            <Text style={{ ...T.font.sub, color: T.color.textSecondary }}>
-              {`${words.monthDay(selected)} ${words.weekday(selected)}`}
-            </Text>
-            {sum ? (
-              <Text style={{ ...T.font.sub, color: T.color.textSecondary }}>
-                {words.daySumLine(sum.beans, sum.minutes)}
-              </Text>
-            ) : null}
-          </View>
-          <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: T.space.l }}>
-            <DayView state={state} dayKey={selected} onOpen={() => setDayOpen(selected)} />
+            {calendar ? (
+              <CalendarBody
+                state={state}
+                now={now}
+                view={view}
+                selected={selected}
+                onPickDay={pickDay}
+                onOpenDay={setDayOpen}
+              />
+            ) : (
+              <StatsView state={state} range={range} selected={selected} />
+            )}
           </ScrollView>
         </>
       )}
@@ -306,7 +280,6 @@ export function Rack({ state, wiped, active, onSettings, onBack }) {
         day={dayOpen ? state.days[dayOpen] : null}
         onClose={() => setDayOpen(null)}
       />
-      <WeekSheet weekStart={weekOpen} state={state} onClose={() => setWeekOpen(null)} />
     </View>
   );
 }

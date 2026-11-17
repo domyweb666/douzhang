@@ -18,6 +18,7 @@ export const params = {
   ],
   // 計時中長大的番茄（2026-11-17 AG2，比較頁 1A）：一開始是全熟大小的幾成；進度過了 turnAt 才從黃轉成標籤色
   grow: { minScale: 0.4, turnAt: 0.6 },
+  monthDotsMax: 8, // 月檢視一格最多畫幾顆小圓點，再多寫「+N」（AG4）
   celebrateTomatoes: 12, // 慶祝畫面「今天收了幾顆」那排最多畫幾顆（多的只畫最後這幾顆）
   newTypeMinutes: 15, // 「加一種」新類型的長度（V1 刻度從 5 起算後明寫，維持原本 15）
   devTestSeconds: 5, // 開發期長按「開始」的測試顆與它的休息都是這麼久（V3：看番茄掉進罐子用）
@@ -83,3 +84,4 @@ export const jarParams = (T) => ({
 export const MS_PER_SECOND = 1000;
 export const SECONDS_PER_MINUTE = 60;
 export const MS_PER_MINUTE = SECONDS_PER_MINUTE * MS_PER_SECOND;
+export const MS_PER_HOUR = 60 * MS_PER_MINUTE;

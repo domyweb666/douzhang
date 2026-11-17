@@ -167,7 +167,20 @@ export function makeTokens(c, dark = false, reduceMotion = false) {
       timelineHour: 64, // 一小時多高
       timelineGutter: 52, // 左邊時刻那欄寬
       timelineBlockMin: 28, // 一顆再短也至少這麼高，字才放得下
-      timelineEdge: 4, // 每顆左邊那條番茄色的邊
+      timelineEdge: 4, // 每顆左邊那條番茄色的邊（AG4 改實心色塊後只剩收據用）
+      // 番茄架改版（2026-11-17 AG4，比較頁 3A）：天／3 天／週共用時間軸，月是一格一天
+      timelineBlockMinWeek: 8, // 週檢視沒有字，一顆最矮畫這麼高
+      timelineTextMin: 18, // 方塊不到這麼高就不寫字
+      timelineNoteMin: 44, // 方塊至少這麼高才多寫一行那句
+      timelineLaneGap: 2, // 並排與上下相鄰的方塊之間留的縫
+      nowLine: 2, // 今天那欄標出現在時間的橫線
+      monthDot: 10, // 月檢視一顆番茄的小圓點
+      monthWeek: 60, // 有番茄的週一列多高
+      monthWeekFlat: 30, // 沒番茄的週壓扁成這麼高
+      // 分析（AG5）
+      statsBars: 112, // 長條圖最高那根多高
+      statsShare: 6, // 各標籤占比那條橫槓多粗
+      statsName: 64, // 各標籤那列名字欄多寬
       weekDayWidth: 40, // 上面那排一天的寬
       dayDot: 6, // 有紀錄那天下面的小點
       blockIcon: 16, // 時間軸裡的小番茄圖

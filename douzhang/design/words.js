@@ -203,6 +203,34 @@ export const words = {
   rackLeafTitle: '今天不適合番茄？',
   rackLeafSub: '整天在回訊息、開會，掛一片葉子',
 
+  // 番茄架改版（2026-11-17 AG4、AG5）：上方切行事曆｜分析；行事曆有天／3 天／週／月，分析有日／週／月
+  rackModeCalendar: '行事曆',
+  rackModeStats: '分析',
+  viewDay: '天',
+  viewThree: '3 天',
+  viewWeek: '週',
+  viewMonth: '月',
+  rangeDay: '日',
+  prevPeriodA11y: '上一段',
+  nextPeriodA11y: '下一段',
+  weekdayShort: ['一', '二', '三', '四', '五', '六', '日'], // 月檢視與長條圖下面那排，週一開頭
+  monthTitle: (key) => {
+    const d = new Date(`${key}T00:00`);
+    return `${d.getFullYear()}年${d.getMonth() + 1}月`;
+  },
+  daysRange: (from, to) => `${words.monthDay(from)}–${words.monthDay(to)}`,
+  moreBeans: (n) => `+${n}`,
+  monthDayA11y: (key, beans) =>
+    `${words.monthDay(key)} ${words.weekday(key)}${beans ? `，${beans} 顆` : ''}`,
+  statsFocus: '專注',
+  statsKept: '收下',
+  beansCount: (n) => `${n} 顆`,
+  duration: (minutes) => {
+    const m = Math.round(minutes);
+    if (m < 60) return `${m} 分`;
+    return `${Math.floor(m / 60)} 小時${m % 60 ? ` ${m % 60} 分` : ''}`;
+  },
+  statsEmpty: '這段時間還沒有番茄。',
   // 番茄架時間軸（U9）
   prevWeek: '‹',
   nextWeek: '›',
