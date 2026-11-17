@@ -11,7 +11,8 @@ import { RANGE } from '../core/stats';
 import { Timeline } from '../ui/Timeline';
 import { MonthGrid } from '../ui/MonthGrid';
 import { StatsView } from '../ui/Stats';
-import { GrowingTomato } from '../ui/GrowingTomato';
+import { RingTomato } from '../ui/RingTomato';
+import { CharacterColors } from '../design/Tokens';
 import { TagPickSheet } from '../ui/TagSheets';
 import { MoreSheet } from '../ui/FocusSheets';
 // 憲法 1 不准測試 import screens（怕測試綁死畫面結構）。這個檔是例外：它的工作就是把整頁渲染一次，只看「畫得出來、該有的字在」
@@ -19,7 +20,10 @@ import { MoreSheet } from '../ui/FocusSheets';
 import { Bell } from '../screens/Bell';
 import { Rack } from '../screens/Rack';
 import { Home } from '../screens/Home';
+import { Focus } from '../screens/Focus';
 /* eslint-enable no-restricted-imports */
+
+const INK = CharacterColors.tomato;
 
 // 罐子要加速度計、音效與每幀重畫，跟這裡要驗的無關；鍵盤與安全區在測試環境沒有原生那一半
 jest.mock('../ui/Jar', () => ({ Jar: () => null }));
@@ -150,7 +154,7 @@ describe('番茄架', () => {
   });
 });
 
-describe('主畫面與慶祝畫面', () => {
+describe('主畫面', () => {
   const home = (state, now) => (
     <Home
       state={{ ...state, todayKey: dayKey(now) }}
@@ -183,7 +187,9 @@ describe('主畫面與慶祝畫面', () => {
     expect(rest).toContain('休息');
     expect(rest).not.toContain('NaN');
   });
+});
 
+describe('半頁、長大的番茄與慶祝畫面', () => {
   test('⋯ 半頁：記一筆（帶筆數）、背景音、聚焦模式、結束這顆', async () => {
     const out = await draw(
       <MoreSheet visible noteCount={2} soundValue="雨" onClose={noop} onPick={noop} />,
@@ -192,9 +198,34 @@ describe('主畫面與慶祝畫面', () => {
       expect(out).toContain(name);
   });
 
+  test('聚焦模式：翻牌旁邊那顆番茄從開始到點都畫得出來（AH6）', async () => {
+    const running = start(sample(), NOW);
+    for (const m of [0, 10, 25]) {
+      const out = await draw(
+        <Focus
+          current={running.current}
+          now={NOW + m * MIN}
+          color="purple"
+          label="專注・25 分"
+          onLeave={noop}
+        />,
+      );
+      expect(out).not.toContain('NaN');
+      expect(out).toContain('專注・25 分');
+    }
+  });
+
   test('長大的番茄從頭到尾都畫得出來', async () => {
     for (const p of [0, 0.3, 0.6, 1]) {
-      const out = await draw(<GrowingTomato progress={p} color="purple" height={200} />);
+      const out = await draw(
+        <RingTomato
+          size={200}
+          progress={p}
+          ringColor={INK.body.purple}
+          fill={INK.unripe}
+          scale={0.4 + 0.6 * p}
+        />,
+      );
       expect(out).not.toContain('NaN');
     }
   });

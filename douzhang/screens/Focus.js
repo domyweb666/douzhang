@@ -1,5 +1,6 @@
 // 聚焦模式（2026-11-17 多米看比較頁選 A「翻牌」）：計時中橫放的整頁時鐘。
 // 黑底、四張深灰牌倒數、下面一行這顆在做什麼（前面一顆這個類型的小番茄）。淺色深色都是這一組。
+// 2026-11-18 AH6：翻牌左邊多一顆在長的番茄（多米「翻牌旁邊也放那顆在長的番茄」）。
 // 平常只有時鐘；點一下畫面，底下出現「記一筆」「結束這顆」「回主畫面」，過幾秒自己收起來。
 // 記一筆與結束都要打字或選，橫向時鍵盤會蓋掉大半個畫面，所以按了先回直向的主畫面再開那張半頁。
 // 版面大小跟著畫面寬（params.zen 的比例）；顏色與翻牌的數字在 Tokens。
@@ -15,13 +16,15 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { useTokens } from '../design/Tokens';
+import { CharacterColors, useTokens } from '../design/Tokens';
 import { words } from '../design/words';
 import { params } from '../design/params';
+import { growProgress, growScale, ripeColor } from '../core/grow';
 import { clockDigits, mmss } from '../ui/useNow';
 import { Tomato } from '../ui/Tomato';
 
 const Z = params.zen;
+const INK = CharacterColors.tomato;
 
 /**
  * 一張牌。數字換了：牌往後倒、換上新數字、再立回來。減少動態時不翻，直接是新數字。
@@ -113,6 +116,26 @@ function FlipClock({ digits, screenWidth }) {
       <Colon size={screenWidth * Z.colonDot} gap={screenWidth * Z.colonGap} />
       {card(2)}
       {card(3)}
+    </View>
+  );
+}
+
+/** 翻牌左邊那顆在長的番茄（AH6）：位子固定是全熟大小，番茄從青長成標籤色、從小長到滿（跟主畫面同一套算法）。 */
+function ZenTomato({ current, now, color, screenWidth }) {
+  const box = screenWidth * Z.tomato;
+  const progress = growProgress(current, now);
+  const ripe = INK.body[color] || INK.body.red;
+  return (
+    <View
+      accessible={false}
+      importantForAccessibility="no-hide-descendants"
+      accessibilityElementsHidden
+      style={{ width: box, height: box, alignItems: 'center', justifyContent: 'center' }}
+    >
+      <Tomato
+        fill={ripeColor(progress, { unripe: INK.unripe, ripe })}
+        size={box * growScale(progress)}
+      />
     </View>
   );
 }
@@ -226,7 +249,10 @@ export function Focus({ current, now, color, label, onLeave }) {
         accessibilityLabel={words.zenScreenA11y(mmss(left))}
         style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: width * Z.lineGap }}
       >
-        <FlipClock digits={clockDigits(left)} screenWidth={width} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: width * Z.tomatoGap }}>
+          <ZenTomato current={current} now={now} color={color} screenWidth={width} />
+          <FlipClock digits={clockDigits(left)} screenWidth={width * Z.clockScale} />
+        </View>
         <DoingLine color={color} text={label} maxWidth={width * (1 - Z.cardWidth)} />
       </Pressable>
       <Controls visible={controls} onLeave={onLeave} />

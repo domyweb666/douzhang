@@ -184,11 +184,7 @@ export function makeTokens(c, dark = false, reduceMotion = false) {
       colorSwatch: 36, // 設定選番茄色的那五顆（W1）
       selectRing: 2, // 選中那顆外面的圈
       zenSeam: 2, // 聚焦模式每張牌中間那道橫縫
-      // 計時中長大的番茄（AG2）與慶祝畫面（AG3）
-      growSize: 132, // 全熟那一刻畫多大
-      growVine: 28, // 上面那段藤多長
-      growVineWidth: 4,
-      growMin: 96, // 中間那塊空位不到這麼高就不畫（小手機、最大字級）
+      // 慶祝畫面（AG3）。計時中那顆原本掛在藤上（AG2 的 growSize、growVine），2026-11-18 AH2 改成環裡那顆，見下面 ring*
       celebrateTomato: 132, // 慶祝畫面那顆
       celebrateDot: 26, // 「今天收了幾顆」那排的小番茄
       celebrateDotNew: 34, // 那排最後、剛收的這顆

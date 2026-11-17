@@ -9,8 +9,9 @@ import { useTokens } from '../design/Tokens';
 /**
  * page：現在是第幾頁（呼叫端管）；onPage：滑完時回報新頁碼。
  * page 從外面改（例如點分頁列、鈴響收下後回主畫面）時自己捲過去。labels：每頁的 key。
+ * locked：不能左右滑（2026-11-18 AH5 多米：計時中不能切頁）。
  */
-export function Pager({ page, onPage, labels, children }) {
+export function Pager({ page, onPage, labels, locked, children }) {
   const T = useTokens();
   const { width } = useWindowDimensions();
   const ref = useRef(null);
@@ -22,6 +23,7 @@ export function Pager({ page, onPage, labels, children }) {
       ref={ref}
       horizontal
       pagingEnabled
+      scrollEnabled={!locked}
       showsHorizontalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
       contentOffset={{ x: page * width, y: 0 }}

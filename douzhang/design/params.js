@@ -53,6 +53,11 @@ export const params = {
     colonDot: 0.018,
     colonGap: 0.03,
     lineGap: 0.026, // 時鐘跟下面那句的距離
+    // 2026-11-18 AH6 多米：翻牌旁邊也放那顆在長的番茄。時鐘縮成原本的 clockScale 倍讓出位子，
+    // 番茄的位子固定是全熟大小（tomato），長大時時鐘不會被推動；三樣加起來約佔 81% 寬
+    clockScale: 0.78,
+    tomato: 0.17,
+    tomatoGap: 0.03,
   },
   // 豆罐（參數表 B）：雙豆連結。其餘物理數字在 Tokens.motion.jarPhysics
   jar: {

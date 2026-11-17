@@ -486,6 +486,9 @@ function Main() {
   if (!dz) return <View style={{ flex: 1, backgroundColor: T.color.background }} />;
   const { live, now, phase, saveFailed, unreadable, notif, actions, backup } = dz;
   const zenType = zen.on ? typeOf(live, live.current.typeId) : null;
+  // 計時中鎖在主畫面（AH5，多米 2026-11-18）：分頁列不畫、不能滑。休息完自動開始時人可能在別頁，一樣拉回主畫面
+  const focusing = phase === PHASE.focus;
+  const shownPage = focusing ? PAGE.home : page;
   if (zen.on)
     return (
       <Focus
@@ -511,7 +514,7 @@ function Main() {
         {phase === PHASE.bell ? (
           <BellPage state={live} now={now} actions={actions} onHome={() => setPage(PAGE.home)} />
         ) : (
-          <Pager page={page} onPage={setPage} labels={PAGE_LABELS}>
+          <Pager page={shownPage} onPage={setPage} labels={PAGE_LABELS} locked={focusing}>
             <Rack
               state={live}
               now={now}
@@ -537,7 +540,9 @@ function Main() {
           </Pager>
         )}
       </KeyboardAvoidingView>
-      {phase === PHASE.bell ? null : <PageTabs page={page} onPage={setPage} tabs={PAGE_TABS} />}
+      {phase === PHASE.bell || focusing ? null : (
+        <PageTabs page={shownPage} onPage={setPage} tabs={PAGE_TABS} />
+      )}
     </SafeAreaView>
   );
 }
