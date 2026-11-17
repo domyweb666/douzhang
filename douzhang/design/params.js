@@ -20,6 +20,22 @@ export const params = {
   restShortOptions: ['auto', 3, 5, 10, 15], // 'auto'＝跟著番茄長度（÷5 最少 3），其餘是固定幾分
   restLongEveryOptions: [0, 3, 4, 5], // 今天每收下幾顆來一次長休息；0＝關
   restLongMinuteOptions: [15, 20, 30],
+  // 聚焦模式（2026-11-17 多米看比較頁選 A 翻牌）：計時中橫放的整頁時鐘
+  zen: {
+    sampleMs: 200, // 加速度計多久看一次（跟罐子的傾斜分開，那個要 16 毫秒）
+    ratio: 0.75, // 重力有這麼多成落在同一軸才算直拿或橫放；斜拿、平放都不算
+    dwellMs: 800, // 新姿勢要維持這麼久才換畫面
+    controlsMs: 3000, // 點一下畫面，底下三顆鈕出現這麼久
+    // 版面都是「佔畫面寬度的幾成」，比較頁量的：四張牌加冒號大約佔 78% 寬
+    cardWidth: 0.16,
+    cardHeight: 0.24,
+    digitSize: 0.19,
+    cardRadius: 0.024,
+    gap: 0.014,
+    colonDot: 0.018,
+    colonGap: 0.03,
+    lineGap: 0.026, // 時鐘跟下面那句的距離
+  },
   // 豆罐（參數表 B）：雙豆連結。其餘物理數字在 Tokens.motion.jarPhysics
   jar: {
     // V4：番茄大小跟分鐘走，面積成正比（半徑∝√分鐘）；sizeRefMinutes 那麼長的是基準半徑，太小太大各夾住

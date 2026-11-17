@@ -91,6 +91,11 @@ export const words = {
   voidReasons: ['念頭', '訊息', '卡住', '其他'],
   voidTextPlaceholder: '例：去看留言（分鐘數會自動記）',
 
+  // 聚焦模式（2026-11-17）：計時中橫放的整頁時鐘
+  zenEnter: '聚焦模式', // 計時中「記一筆」旁邊那顆
+  zenLeave: '回主畫面', // 聚焦模式點一下畫面出現的三顆之一（另外兩顆是記一筆、結束這顆）
+  zenScreenA11y: (time) => `聚焦模式，剩 ${time}。點兩下顯示按鈕`,
+
   // 類型與估幾顆（C1、C2；2026-11-02 U5 併成一張「這顆」半頁）
   thisBean: '這顆', // 半頁標題
   typeLen: (len) => (len < 1 ? `${Math.round(len * 60)} 秒` : `${len} 分`), // 不到一分鐘的只有開發期測試顆

@@ -3,10 +3,15 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, AppState, KeyboardAvoidingView, Linking, Platform, Text, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import * as ScreenOrientation from 'expo-screen-orientation';
+import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
+import { Accelerometer } from 'expo-sensors';
 import { DomyThemeProvider } from '@domy/design';
 import { douzhangTheme } from './design/theme';
 import { useTokens } from './design/Tokens';
 import { words } from './design/words';
+import { params } from './design/params';
+import { POSE, startTracker, track } from './core/posture';
 import { blank, dayKey, load, readRaw, save } from './core/store';
 import {
   PHASE,
@@ -22,6 +27,7 @@ import {
   setDraft,
   settle,
   start,
+  typeOf,
   voidBean,
 } from './core/machine';
 import { askPermissionOnce, notifStatus, planned, sync } from './core/notify';
@@ -54,6 +60,7 @@ import { useNow } from './ui/useNow';
 import { TextButton } from './ui/TextButton';
 import { Home } from './screens/Home';
 import { Bell } from './screens/Bell';
+import { Focus } from './screens/Focus';
 import { Settings } from './screens/Settings';
 import { Rack } from './screens/Rack';
 import { PageTabs, Pager } from './ui/Pager';
@@ -77,6 +84,46 @@ function NotificationOffLine({ onOpen }) {
         {words.notificationOffLine}
       </Text>
       <TextButton label={words.openNotifications} onPress={onOpen} />
+    </View>
+  );
+}
+
+/** 最上面那幾行狀態：本機檔讀不懂、存不進去、計時中通知沒開。都沒有就什麼都不佔。 */
+function StatusLines({ unreadable, saveFailed, notifOff }) {
+  const T = useTokens();
+  return (
+    <View style={{ paddingHorizontal: T.space.screen }}>
+      {unreadable ? <DangerLine>{words.importUnreadable}</DangerLine> : null}
+      {saveFailed ? <DangerLine>{words.saveFailed}</DangerLine> : null}
+      {notifOff ? <NotificationOffLine onOpen={() => Linking.openSettings()} /> : null}
+    </View>
+  );
+}
+
+/** 鈴響頁連同它的邊距。onHome：收下或再做一下之後回主畫面（停在番茄架或設定時響了，不是回原來那頁）。 */
+function BellPage({ current, now, actions, onHome }) {
+  const T = useTokens();
+  const insets = useSafeAreaInsets();
+  const then = (action) => (value) => {
+    onHome();
+    action(value);
+  };
+  return (
+    <View
+      style={{
+        flex: 1,
+        paddingHorizontal: T.space.screen,
+        paddingBottom: insets.bottom + T.space.m,
+      }}
+    >
+      <Bell
+        current={current}
+        now={now}
+        draft={current.draft || ''}
+        onDraft={actions.onDraft}
+        onKeep={then(actions.onKeep)}
+        onFlow={then(actions.onFlow)}
+      />
     </View>
   );
 }
@@ -203,6 +250,83 @@ function useBackup(stateRef, unreadable, replaceAll) {
     ]);
   return { lastBackup, problem, wiped, onExport, onImport, onWipe };
 }
+
+const ZEN_AWAKE = 'zen';
+/** 鎖方向。鎖不了（裝置不支援、Expo Go 不給）就照原方向畫，不擋計時。 */
+const lockTo = (lock) => ScreenOrientation.lockAsync(lock).catch(() => {});
+
+/**
+ * 聚焦模式（2026-11-17）：計時中把手機橫放，或按「聚焦模式」，整頁換成橫向翻牌時鐘；直拿回來、按回主畫面或鈴響就回直向。
+ * key：計時中那顆的記號（開始與結束時刻），沒在計時是 null。聚焦只跟著那一顆：響了、結束、再做一下都從直向重新開始。
+ * 橫放靠加速度計看重力落在哪一軸（開著直向鎖定也有效）；沒有加速度計（模擬器）就只剩按鈕。
+ * 聚焦模式開著時螢幕不自己熄。
+ */
+function useZen(key) {
+  const [zenFor, setZenFor] = useState(null);
+  const on = key != null && zenFor === key;
+  const enter = useCallback(() => setZenFor(key), [key]);
+  // 先轉回直向再換畫面：主畫面的番茄堆第一次排版就要是直的寬高
+  const leave = useCallback(() => {
+    lockTo(ScreenOrientation.OrientationLock.PORTRAIT_UP).then(() => setZenFor(null));
+  }, []);
+
+  useEffect(() => {
+    const { LANDSCAPE, PORTRAIT_UP } = ScreenOrientation.OrientationLock;
+    lockTo(on ? LANDSCAPE : PORTRAIT_UP);
+    if (!on) return undefined;
+    activateKeepAwakeAsync(ZEN_AWAKE).catch(() => {});
+    return () => {
+      deactivateKeepAwake(ZEN_AWAKE).catch(() => {});
+    };
+  }, [on]);
+
+  useEffect(() => {
+    if (key == null) return undefined;
+    let sub = null;
+    let gone = false;
+    let tracker = startTracker();
+    Accelerometer.isAvailableAsync()
+      .then((ok) => {
+        if (!ok || gone) return;
+        Accelerometer.setUpdateInterval(params.zen.sampleMs);
+        sub = Accelerometer.addListener((sample) => {
+          const next = track(tracker, sample, Date.now(), params.zen);
+          tracker = next.tracker;
+          if (next.changed === POSE.landscape) enter();
+          if (next.changed === POSE.portrait) leave();
+        });
+      })
+      .catch(() => {});
+    return () => {
+      gone = true;
+      sub?.remove();
+    };
+  }, [key, enter, leave]);
+
+  return { on, enter, leave };
+}
+
+/**
+ * 聚焦模式跟主畫面之間傳的東西。leaveTo(sheet)：離開聚焦回主畫面，sheet 是回去要直接開的半頁
+ * （'note' 記一筆｜'end' 結束這顆｜null 不開）。forHome：主畫面要的三樣（見 Home 的 zen）。
+ */
+function useZenHandoff(zen, goHome) {
+  const [sheet, setSheet] = useState(null);
+  const clear = useCallback(() => setSheet(null), []);
+  const leaveTo = (next) => {
+    setSheet(next);
+    goHome();
+    zen.leave();
+  };
+  return {
+    leaveTo,
+    forHome: { onEnter: zen.enter, initialSheet: sheet, onInitialSheetOpened: clear },
+  };
+}
+
+/** 計時中那顆的記號：再做一下會換結束時刻，所以延長後是新的記號。 */
+const zenKeyOf = (dz) =>
+  dz && dz.phase === PHASE.focus ? `${dz.live.current.startedAt}-${dz.live.current.endAt}` : null;
 
 /** 狀態與動作全在這裡：殼只負責排版。每個動作先算新狀態（純函式），再 commit（存檔＋對齊通知）。 */
 function useDouzhang() {
@@ -363,12 +487,22 @@ export default function App() {
 /** 下緣不留安全區：分頁列自己避開 Home 指示條，番茄堆停在分頁列上面（各頁用 useTabBarClearance）。 */
 function Main() {
   const T = useTokens();
-  const insets = useSafeAreaInsets();
   const dz = useDouzhang();
   const [page, setPage] = useState(PAGE.home); // 左右滑三頁：番茄架｜主畫面｜設定
   const jarSeen = useRef(null); // 豆罐上次看到幾顆：鈴響時豆罐卸載，收下後重掛要知道哪顆是新的
+  const zen = useZen(zenKeyOf(dz));
+  const handoff = useZenHandoff(zen, () => setPage(PAGE.home));
   if (!dz) return <View style={{ flex: 1, backgroundColor: T.color.background }} />;
   const { live, now, phase, greet, moment, saveFailed, unreadable, notif, actions, backup } = dz;
+  if (zen.on)
+    return (
+      <Focus
+        current={live.current}
+        now={now}
+        color={typeOf(live, live.current.typeId).color}
+        onLeave={handoff.leaveTo}
+      />
+    );
   return (
     <SafeAreaView edges={TOP_EDGES} style={{ flex: 1, backgroundColor: T.color.background }}>
       <StatusBar style="auto" />
@@ -376,36 +510,18 @@ function Main() {
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <View style={{ paddingHorizontal: T.space.screen }}>
-          {unreadable ? <DangerLine>{words.importUnreadable}</DangerLine> : null}
-          {saveFailed ? <DangerLine>{words.saveFailed}</DangerLine> : null}
-          {notif === 'denied' && phase === PHASE.focus ? (
-            <NotificationOffLine onOpen={() => Linking.openSettings()} />
-          ) : null}
-        </View>
+        <StatusLines
+          unreadable={unreadable}
+          saveFailed={saveFailed}
+          notifOff={notif === 'denied' && phase === PHASE.focus}
+        />
         {phase === PHASE.bell ? (
-          <View
-            style={{
-              flex: 1,
-              paddingHorizontal: T.space.screen,
-              paddingBottom: insets.bottom + T.space.m,
-            }}
-          >
-            <Bell
-              current={live.current}
-              now={now}
-              draft={live.current.draft || ''}
-              onDraft={actions.onDraft}
-              onKeep={(text) => {
-                setPage(PAGE.home); // 停在番茄架或設定時響了：收下後回主畫面的休息，不是回原來那頁
-                actions.onKeep(text);
-              }}
-              onFlow={(minutes) => {
-                setPage(PAGE.home);
-                actions.onFlow(minutes);
-              }}
-            />
-          </View>
+          <BellPage
+            current={live.current}
+            now={now}
+            actions={actions}
+            onHome={() => setPage(PAGE.home)}
+          />
         ) : (
           <Pager page={page} onPage={setPage} labels={PAGE_LABELS}>
             <Rack
@@ -426,6 +542,7 @@ function Main() {
               wiped={backup.wiped}
               jarSeen={jarSeen}
               actions={actions}
+              zen={handoff.forHome}
             />
             <Settings
               state={live}

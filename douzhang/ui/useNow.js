@@ -27,6 +27,13 @@ export function mmss(ms) {
   return `${minutes}:${seconds}`;
 }
 
+/** 剩餘毫秒 → 四個數字「mmss」（聚焦模式的四張牌；跟 mmss 同一種進位，分鐘補到兩位）。 */
+export function clockDigits(ms) {
+  const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
+  const minutes = String(Math.min(99, Math.floor(totalSeconds / 60))).padStart(2, '0');
+  return minutes + String(totalSeconds % 60).padStart(2, '0');
+}
+
 /** 時刻 → 「HH:MM」（收據用）。 */
 export function hhmm(timestamp) {
   const d = new Date(timestamp);

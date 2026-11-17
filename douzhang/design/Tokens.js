@@ -74,6 +74,15 @@ export function makeTokens(c, dark = false, reduceMotion = false) {
       dangerSoft: c.destructiveSoft,
       disabledText: c.textDisabled,
       shadow: c.shadow, // 半頁後面的遮罩
+      // 聚焦模式（2026-11-17）：橫放的整頁時鐘，淺色深色都是同一組黑底。
+      // 牌上的數字對牌 15.2:1、那句對黑底 6.4:1、鈕上的字對鈕 12.5:1
+      zen: {
+        background: '#000000',
+        card: '#1C1C1E', // 翻牌的牌
+        digit: '#F2F2F4', // 牌上的數字、鈕上的字
+        dim: '#8E8E93', // 冒號兩點、下面那句
+        pill: '#2C2C2E', // 點一下才出現的三顆鈕
+      },
     },
     // 文字：全部是 Domy 的字級（iOS 系統文字樣式）。RN Text 預設跟系統字級縮放；不准 allowFontScaling={false}
     font: {
@@ -103,6 +112,8 @@ export function makeTokens(c, dark = false, reduceMotion = false) {
         fontVariant: ['tabular-nums'],
         maxFontSizeMultiplier: 1.6,
       },
+      // 聚焦模式牌上的數字：大小跟著畫面寬（params.zen.digitSize），不跟系統字級放大，不然會撐出牌子
+      zenDigit: { fontWeight: '800', fontVariant: ['tabular-nums'], maxFontSizeMultiplier: 1 },
       button: typeStyle('headline'), // 主要按鈕（同 DomyButton regular）
       button2: typeStyle('headline'),
     },
@@ -153,6 +164,7 @@ export function makeTokens(c, dark = false, reduceMotion = false) {
       colorSwatch: 36, // 設定選番茄色的那五顆（W1）
       selectRing: 2, // 選中那顆外面的圈
       mascotHeight: 148, // 番茄火柴人畫多高（Y1）
+      zenSeam: 2, // 聚焦模式每張牌中間那道橫縫
       mascotMin: 88, // 位置不到這麼高就不畫（小手機、最大字級），縮太小看起來像壞掉
     },
     motion: {
@@ -186,6 +198,9 @@ export function makeTokens(c, dark = false, reduceMotion = false) {
         },
       },
       jarPhysicsReduced: { tilt: false }, // 豆子靜止排在底部
+      // 聚焦模式翻牌：牌先往後倒（halfMs）、換數字、再立回來（halfMs）。perspective 是牌高的幾倍。減少動態時不翻，數字直接換
+      zenFlip: { halfMs: 150, fold: '-88deg', perspective: 2.5 },
+      zenControls: { fadeMs: 200 }, // 三顆鈕淡入淡出
       sheetIn: { durationMs: 280, fromY: 60 }, // 半頁滑入（原型 .sheet）
       sheetInReduced: { durationMs: 150, fromY: 0 }, // 只淡入
       cardPress: { scale: 0.985, durationMs: 150 }, // 按下卡片

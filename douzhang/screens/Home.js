@@ -121,13 +121,13 @@ function ThisRow({ type, onPress }) {
 }
 
 /** 卡片下面那一塊，依狀態不同：待機是收工那行、計時中是記一筆、休息是那句輪替＋下一顆。 */
-function UnderCard({ phase, state, now, first, setSheet }) {
+function UnderCard({ phase, state, now, first, setSheet, onZen }) {
   if (phase === PHASE.idle)
     return first ? null : (
       <CloseHint hint={closeHint(state, now)} onOpen={() => setSheet('close')} />
     );
   if (phase === PHASE.focus)
-    return <JotChip current={state.current} onOpen={() => setSheet('note')} />;
+    return <FocusChips current={state.current} onNote={() => setSheet('note')} onZen={onZen} />;
   if (phase !== PHASE.rest) return null;
   return (
     <>
@@ -137,18 +137,30 @@ function UnderCard({ phase, state, now, first, setSheet }) {
   );
 }
 
-/** 計時中的「記一筆」（U6：念頭與有人找合成一顆，半頁裡再選）；記過幾筆就在後面帶數字。 */
-function JotChip({ current, onOpen }) {
+/**
+ * 計時中卡片下面那兩顆：「記一筆」（U6：念頭與有人找合成一顆，半頁裡再選；記過幾筆就在後面帶數字）
+ * 與「聚焦模式」（2026-11-17：換成橫向的整頁時鐘）。
+ */
+function FocusChips({ current, onNote, onZen }) {
   const T = useTokens();
   const count = (current.notes?.length || 0) + (current.pings?.length || 0);
   return (
-    <DomyButton
-      variant="secondary"
-      size="compact"
-      title={words.countLabel(words.quickNote, count)}
-      onPress={onOpen}
-      style={{ alignSelf: 'center', marginTop: T.space.m }}
-    />
+    <View
+      style={{
+        flexDirection: 'row',
+        justifyContent: 'center',
+        gap: T.space.m,
+        marginTop: T.space.m,
+      }}
+    >
+      <DomyButton
+        variant="secondary"
+        size="compact"
+        title={words.countLabel(words.quickNote, count)}
+        onPress={onNote}
+      />
+      <DomyButton variant="secondary" size="compact" title={words.zenEnter} onPress={onZen} />
+    </View>
   );
 }
 
@@ -343,21 +355,49 @@ function MascotSpot({ mascot, onDone }) {
   );
 }
 
-export function Home({ state, phase, now, greet, moment, wiped, jarSeen, actions }) {
-  const T = useTokens();
-  const clearance = useTabBarClearance();
-  const { onStart, onBackFromRest } = actions;
-  const [firstLine, setFirstLine] = useState('');
-  const [sheet, setSheet] = useState(null); // null｜'note'｜'end'｜'void'｜'this'｜'close'
-  const [endEarly, setEndEarly] = useState(false); // 打開「結束這顆」那一刻固定：不到五分鐘嗎
-  // 剛收的那顆落地了沒。鈴響時主畫面整個卸載，收下後重掛，所以每顆都從 false 起算。
-  // 今天滿 40 顆時罐子不再掉新的，等不到落地，所以過 landWaitMs 也當它落地了。
+/**
+ * 主畫面現在開著哪張半頁：null｜'note'｜'end'｜'void'｜'this'｜'close'。
+ * initial：從聚焦模式按「記一筆」「結束這顆」回來時是 'note'｜'end'，掛上來就直接開那張；
+ * 開了就告訴殼（onOpened）把它清掉，下一顆不會自己跳出來。
+ * endEarly：打開「結束這顆」那一刻固定的判斷——那時開始不到五分鐘嗎。
+ */
+function useHomeSheet({ initialSheet: initial, onInitialSheetOpened: onOpened }, current, now) {
+  const [sheet, setSheet] = useState(initial);
+  const [endEarly, setEndEarly] = useState(
+    () => initial === 'end' && !!current && stoppedEarly(current, now),
+  );
+  useEffect(() => {
+    if (initial) onOpened();
+  }, [initial, onOpened]);
+  const openEnd = () => {
+    setEndEarly(stoppedEarly(current, now));
+    setSheet('end');
+  };
+  return { sheet, setSheet, endEarly, openEnd };
+}
+
+/**
+ * 剛收的那顆落地了沒。鈴響時主畫面整個卸載，收下後重掛，所以每顆都從 false 起算。
+ * 今天滿 40 顆時罐子不再掉新的，等不到落地，所以過 landWaitMs 也當它落地了。
+ */
+function useLanded() {
   const [landed, setLanded] = useState(false);
   const onLand = useCallback(() => setLanded(true), []);
   useEffect(() => {
     const timer = setTimeout(onLand, Token.motion.mascot.landWaitMs);
     return () => clearTimeout(timer);
   }, [onLand]);
+  return [landed, onLand];
+}
+
+/** zen：聚焦模式的三樣——onEnter 進去；initialSheet、onInitialSheetOpened 見 useHomeSheet。 */
+export function Home({ state, phase, now, greet, moment, wiped, jarSeen, actions, zen }) {
+  const T = useTokens();
+  const clearance = useTabBarClearance();
+  const { onStart, onBackFromRest } = actions;
+  const [firstLine, setFirstLine] = useState('');
+  const { sheet, setSheet, endEarly, openEnd } = useHomeSheet(zen, state.current, now);
+  const [landed, onLand] = useLanded();
   const first = !state.clue;
   const type = typeOf(state, state.settings.typeId);
   const idle = phase === PHASE.idle;
@@ -380,7 +420,14 @@ export function Home({ state, phase, now, greet, moment, wiped, jarSeen, actions
             onFirstLine={setFirstLine}
           />
         </Card>
-        <UnderCard phase={phase} state={state} now={now} first={first} setSheet={setSheet} />
+        <UnderCard
+          phase={phase}
+          state={state}
+          now={now}
+          first={first}
+          setSheet={setSheet}
+          onZen={zen.onEnter}
+        />
         <MascotSpot
           mascot={mascotOf({ phase, state, now, moment, landed })}
           onDone={actions.onMascotDone}
@@ -394,10 +441,7 @@ export function Home({ state, phase, now, greet, moment, wiped, jarSeen, actions
           testMode={state.settings.demo}
           onStart={onStart}
           onBackFromRest={onBackFromRest}
-          onEnd={() => {
-            setEndEarly(stoppedEarly(state.current, now));
-            setSheet('end');
-          }}
+          onEnd={openEnd}
         />
         <View style={{ height: T.shape.pileRoom + clearance }} pointerEvents="none" />
       </View>

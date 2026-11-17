@@ -3,7 +3,7 @@
     "name": "番茄帳",
     "slug": "douzhang",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
@@ -30,7 +30,13 @@
           "motionPermission": "傾斜手機時，罐子裡的番茄跟著滾。"
         }
       ],
-      "expo-asset"
+      "expo-asset",
+      [
+        "expo-screen-orientation",
+        {
+          "initialOrientation": "PORTRAIT_UP"
+        }
+      ]
     ]
   }
 }
