@@ -35,3 +35,4 @@
 - 2026-11-17 多米截圖 `org.domyweb.douzhang` 的 Capabilities：清單裡有「Family Controls (Distribution)」，前面的框可以勾（另外還有 Development 版與「Family Controls App and Website Usage」，這兩個不用勾）。看起來按完當下就給了，沒有等審核。
 - 還沒做：勾 Family Controls (Distribution) 並按 Save。真正的證明是勾了之後出一個 TestFlight build 簽得過。
 - 生效日期：2026-11-17（以清單出現可勾的項目為準；簽章驗過再補一筆）
+- 2026-11-17 深夜：**簽章驗過了。** GitHub Actions `tf-5`（1.0.0 build 5）帶著 `com.apple.developer.family-controls` 封存、匯出、上傳 TestFlight 都成功，簽出來的 app 權限裡有 `family-controls = 1`。權限確定生效。主 app 一個 bundle ID 就夠，沒有擴充、沒有 App Group。還沒做：在手機上實際跳授權框、選 app、看擋板。

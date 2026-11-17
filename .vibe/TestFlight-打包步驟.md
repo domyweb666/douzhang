@@ -109,14 +109,14 @@ git push origin uiux-graybox
 ```
 
 ```bash
-git tag tf-4
+git tag tf-6
 ```
 
 ```bash
-git push origin tf-4
+git push origin tf-6
 ```
 
-分支和 tag 要分兩次推。11/16 第一次兩個一起推，GitHub 沒有開始跑；把 tag 單獨再推一次才觸發。`tf-1` 到 `tf-3` 已經用掉了，下一個從 4 開始。
+分支和 tag 要分兩次推。11/16 第一次兩個一起推，GitHub 沒有開始跑；把 tag 單獨再推一次才觸發。`tf-1` 到 `tf-5` 已經用掉了，下一個從 6 開始（11/17：`tf-4` 紅在一個套件版本、`tf-5` 綠，1.0.0 build 5）。
 
 進度在這裡看：<https://github.com/domyweb666/douzhang/actions>
 

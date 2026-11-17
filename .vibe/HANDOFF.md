@@ -1,11 +1,11 @@
-# HANDOFF（2026-11-17 深夜）：換核心 AG1–AG6 機器層全做完、手機一次都沒看過；擋 app 做完沒打包
+# HANDOFF（2026-11-17 深夜）：1.0.0 build 5 已上傳 TestFlight（含換核心六片、擋 app、白噪音）；手機上一次都還沒驗
 
 > 給下一個新會話的交接便條。先向多米摘要「上次做完什麼、卡在哪」，等他點頭再動工。
 > 真相源：`.vibe/產品定稿.md` 最上面「2026-11-17 改版」、`.vibe/切片帳本.md`「進行中」最上面兩節（AG 換核心、螢幕使用時間 API 裡的 AF1）、`.vibe/規矩檔.md`、`.vibe/操作清單-待驗.md` 最上面兩節。
 > 上一份便條（疊了三段補充的那份）備份在 `.vibe/handoff/archive/HANDOFF-2026-11-17-2350-replaced.md`。
 
 ## 一句話現況
-番茄帳（`douzhang/`，Expo SDK 58／RN 0.88）分支 `uiux-graybox`，工作樹乾淨，**從 2182f9c 起的 commit 都沒推**。TestFlight 上還是 1.0.0 (3)，2026-11-17 做的全部不在裡面。jest 238 過 1 跳過、eslint 0 錯、prettier 過、`npx expo export --platform ios` 打包過。
+番茄帳（`douzhang/`，Expo SDK 58／RN 0.88）分支 `uiux-graybox`，工作樹乾淨，分支已推到 97ce171。**TestFlight 上是 1.0.0 (5)**（tag `tf-5`，2026-11-17 深夜），2026-11-17 做的全部都在裡面。下一個 tag 是 `tf-6`。jest 238 過 1 跳過、eslint 0 錯、prettier 過、`npx expo export --platform ios` 打包過。
 
 ## 2026-11-17 這一天發生的事（依序）
 1. 白天：新 icon、體型 A、短休息與長休息、聚焦模式（翻牌時鐘）。手機上沒看過。
@@ -25,7 +25,8 @@
 - **AG1–AG6 的畫面在手機與模擬器上一次都沒開過。** 冒煙測試只證明畫得出來。這一輪沒有新的原生模組，**Expo Go 就能看**。驗收步驟 AG1–AG25 在 `.vibe/操作清單-待驗.md` 最上面。
 - 多米還沒回：跟 FocusPomo 拉開的核心要不要定成「計時中的那一段」（產品定稿裡標了還沒點頭）。
 - 代決清單十五條在切片帳本「AG 換核心」那節，三條特別請多米看的在驗收清單那節最下面（預設標籤、實心方塊的字色、換一段用 ‹ › 不是滑）。
-- 擋 app（AF1）：多米有沒有在 App ID 勾 Family Controls (Distribution) 並 Save，**還是不知道**。說「打包」才推 tag `tf-4`（先推分支再推 tag）。第一次很可能紅在 Swift 編譯或簽章。驗收 AF1–AF12。
+- 擋 app（AF1）：`tf-5` 證明 Swift 編得過、Family Controls 簽得過（申請稿已補一筆）。授權框、選擇畫面、擋板在手機上還沒跑過。驗收 AF1–AF12。
+- `tf-4` 紅過一次：`expo-screen-orientation` 58.0.4 比專案的 expo 58.0.22 新，釘回 58.0.3 才過。專案的 Expo 套件整體落後十一個補丁版，之後要升就一次升齊並把釘拿掉。
 - 多米回報「類型改不了名字」：是 AB1（cb8705f 已修），build 3 沒有。注音鍵盤沒測過，下一個 build 或 Expo Go 請他確認（驗收清單 AG3）。
 - 沒清的舊東西：`words.js` 的舊詞、`core/` 裡收工與估幾顆的函式與測試、`ReceiptSheets.js` 的 `WeekSheet`、黃金行為 1–109 裡作廢的條目沒逐條標。清單在切片帳本。
 
@@ -44,7 +45,7 @@
 - 白噪音要接的地方：`douzhang/App.js` 的 `useDouzhang`（照擋 app 那個 effect 的寫法：答案變了才叫）、`screens/Home.js` 的 `FocusChips`、`core/store.js` 的設定欄位、`ui/Jar.js`（現有的 expo-audio 用法）
 
 ## 下一步從哪繼續
-1. 摘要一句：「換核心六片做完沒驗、擋 app 沒打包。」問多米要先用 Expo Go 驗，還是直接打包一起驗（打包前要先確認 App ID 勾了 Family Controls）。
+1. 摘要一句：「build 5 在 TestFlight 上，等你裝起來驗。」多米要先在 App Store Connect 把 build 5 加進測試群組才裝得到（`.vibe/TestFlight-打包步驟.md` 第 5、6 步）。驗收清單三節：AG1–AG25、AF1–AF12、白天四樣 AC／AD／AE／IC。
 2. 多米回報哪一步怪：從那一步修，修完跑測試、eslint、token-check，commit `[機器存檔點] 實測修正：…`，錯誤日誌記一條。同一個 bug 修兩次沒好就停下來量測，不要再推理。
 3. 還欠的：清舊東西（清單在切片帳本）、送審稿補背景音訊用途、黃金行為舊條目逐條標作廢、多米還沒回的核心方向。
 
