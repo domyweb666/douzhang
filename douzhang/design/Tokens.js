@@ -122,6 +122,13 @@ export function makeTokens(c, dark = false, reduceMotion = false) {
         fontVariant: ['tabular-nums'],
         maxFontSizeMultiplier: 1.6,
       },
+      // 進度環下面的時間（2026-11-18 AH2）：環已經是主角，時間比待機的大時間小一階
+      clockRing: {
+        fontSize: 56,
+        fontWeight: '700',
+        fontVariant: ['tabular-nums'],
+        maxFontSizeMultiplier: 1.4,
+      },
       // 聚焦模式牌上的數字：大小跟著畫面寬（params.zen.digitSize），不跟系統字級放大，不然會撐出牌子
       zenDigit: { fontWeight: '800', fontVariant: ['tabular-nums'], maxFontSizeMultiplier: 1 },
       button: typeStyle('headline'), // 主要按鈕（同 DomyButton regular）
@@ -197,6 +204,11 @@ export function makeTokens(c, dark = false, reduceMotion = false) {
       celebrateDot: 26, // 「今天收了幾顆」那排的小番茄
       celebrateDotNew: 34, // 那排最後、剛收的這顆
       mascotMin: 88, // 位置不到這麼高就不畫（小手機、最大字級），縮太小看起來像壞掉
+      // 計時中與休息「番茄就是時鐘」（2026-11-18 AH2，比較頁 C）：一圈進度環圍著那顆番茄
+      ringSize: 264, // 進度環最大直徑
+      ringStroke: 10, // 環多粗
+      ringTomato: 0.62, // 全熟那顆佔環直徑幾成
+      ringRoom: 0.72, // 環最多佔中間那塊高度幾成（下面還要放時間），小手機與最大字級時環跟著縮
     },
     motion: {
       beanDrop: { delayMs: 180, vy: -160, vxSpread: 40 }, // 收下這顆 → 豆子掉進來

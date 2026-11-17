@@ -80,6 +80,26 @@ export function EndSheet({ visible, current, early, onClose, onDoneEarly, onVoid
   );
 }
 
+/**
+ * 計時中右上「⋯」開的半頁（2026-11-18 AH2，比較頁 C）：原本畫面上那排鈕與底部「結束這顆」都收進這裡。
+ * 點一列就關掉自己，交給呼叫端開下一張（onPick：'note'｜'sound'｜'zen'｜'end'）。
+ * noteCount：這顆記過幾筆；soundValue：現在選的背景音（關、雨、柴火）。
+ */
+export function MoreSheet({ visible, noteCount, soundValue, onClose, onPick }) {
+  return (
+    <Sheet visible={visible} title={words.moreTitle} onClose={onClose}>
+      <SheetRow
+        title={words.quickNote}
+        value={noteCount ? String(noteCount) : undefined}
+        onPress={() => onPick('note')}
+      />
+      <SheetRow title={words.ambienceTitle} value={soundValue} onPress={() => onPick('sound')} />
+      <SheetRow title={words.zenEnter} onPress={() => onPick('zen')} />
+      <SheetRow title={words.endThis} onPress={() => onPick('end')} />
+    </Sheet>
+  );
+}
+
 /** 作廢原因：四個分段＋一行選填 → 記一筆。 */
 export function VoidSheet({ visible, onClose, onVoid }) {
   const T = useTokens();

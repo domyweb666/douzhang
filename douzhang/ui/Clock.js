@@ -2,9 +2,11 @@
 import { Text } from 'react-native';
 import { useTokens } from '../design/Tokens';
 
-export function Clock({ text, focus, style }) {
+/** ring：進度環下面那個（AH2）；focus：待機的大時間；都沒有：舊的最大那號。 */
+export function Clock({ text, focus, ring, style }) {
   const T = useTokens();
-  const { maxFontSizeMultiplier, ...font } = focus ? T.font.clockFocus : T.font.clock;
+  const pick = ring ? T.font.clockRing : focus ? T.font.clockFocus : T.font.clock;
+  const { maxFontSizeMultiplier, ...font } = pick;
   return (
     <Text
       maxFontSizeMultiplier={maxFontSizeMultiplier}

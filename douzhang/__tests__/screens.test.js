@@ -13,6 +13,7 @@ import { MonthGrid } from '../ui/MonthGrid';
 import { StatsView } from '../ui/Stats';
 import { GrowingTomato } from '../ui/GrowingTomato';
 import { TagPickSheet } from '../ui/TagSheets';
+import { MoreSheet } from '../ui/FocusSheets';
 // 憲法 1 不准測試 import screens（怕測試綁死畫面結構）。這個檔是例外：它的工作就是把整頁渲染一次，只看「畫得出來、該有的字在」
 /* eslint-disable no-restricted-imports */
 import { Bell } from '../screens/Bell';
@@ -157,7 +158,6 @@ describe('主畫面與慶祝畫面', () => {
       state={{ ...state, todayKey: dayKey(now) }}
       phase={phaseOf(state, now)}
       now={now}
-      moment={null}
       jarSeen={{ current: null }}
       actions={actions}
       zen={zen}
@@ -172,15 +172,26 @@ describe('主畫面與慶祝畫面', () => {
     expect(out).toContain('♪ 背景音');
   });
 
-  test('計時中：倒數、記一筆、聚焦模式、結束這顆；休息：回來了', async () => {
+  test('計時中（AH2 番茄就是時鐘）：倒數、標籤、⋯；休息：綠環倒數、回來了', async () => {
     const running = start(sample(), NOW);
     expect(phaseOf(running, NOW + 5 * MIN)).toBe(PHASE.focus);
     const focus = await draw(home(running, NOW + 5 * MIN));
     expect(focus).toContain('20:00');
-    expect(focus).toContain('聚焦模式');
-    expect(focus).toContain('結束這顆');
+    expect(focus).toContain('專注・25 分');
+    expect(focus).toContain('⋯');
+    expect(focus).not.toContain('NaN');
     const rest = await draw(home(keep(running, NOW + 25 * MIN, ''), NOW + 26 * MIN));
     expect(rest).toContain('回來了，開始下一顆');
+    expect(rest).toContain('休息');
+    expect(rest).not.toContain('NaN');
+  });
+
+  test('⋯ 半頁：記一筆（帶筆數）、背景音、聚焦模式、結束這顆', async () => {
+    const out = await draw(
+      <MoreSheet visible noteCount={2} soundValue="雨" onClose={noop} onPick={noop} />,
+    );
+    for (const name of ['這一顆', '記一筆', '2', '背景音', '雨', '聚焦模式', '結束這顆'])
+      expect(out).toContain(name);
   });
 
   test('長大的番茄從頭到尾都畫得出來', async () => {
