@@ -232,8 +232,8 @@ export const words = {
   },
   daysRange: (from, to) => `${words.monthDay(from)}–${words.monthDay(to)}`,
   moreBeans: (n) => `+${n}`,
-  monthDayA11y: (key, beans) =>
-    `${words.monthDay(key)} ${words.weekday(key)}${beans ? `，${beans} 顆` : ''}`,
+  monthDayA11y: (key, beans, leaf) =>
+    `${words.monthDay(key)} ${words.weekday(key)}${beans ? `，${beans} 顆` : ''}${leaf ? `，${words.leafA11y}` : ''}`,
   statsFocus: '專注',
   statsKept: '收下',
   beansCount: (n) => `${n} 顆`,

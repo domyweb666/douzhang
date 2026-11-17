@@ -98,19 +98,26 @@ export function axisHours(columns) {
 export const hourOfDay = (now) => (now - dateOf(dayKey(now)).getTime()) / MS_PER_HOUR;
 
 /**
- * 這個月的格子：一週一列（週一開頭），每格 { key, inMonth, beans }；
+ * 這個月的格子：一週一列（週一開頭），每格 { key, inMonth, beans, leaf }；
  * busy＝這週在這個月裡有沒有番茄，沒有的週畫面壓扁成一行。不屬於這個月的格子不帶番茄。
+ * leaf（2026-11-18 AH7 多米：葉子留在番茄架）：這個月裡、已經過完、沒有番茄的日子掛一片葉子，不算缺。
+ * 今天與以後不掛（今天還沒過完）；第一顆番茄那天以前也不掛（那時還沒在用番茄帳，不是「沒做」）。
  */
-export function monthWeeks(state, key) {
+export function monthWeeks(state, key, todayKey) {
   const d = dateOf(key);
   const month = d.getMonth();
   const lastKey = dayKey(new Date(d.getFullYear(), month + 1, 0).getTime());
+  const firstKey = Object.keys(state.days)
+    .filter((k) => state.days[k]?.beans?.length > 0)
+    .sort()[0];
   const weeks = [];
   let ws = weekStart(dayKey(new Date(d.getFullYear(), month, 1).getTime()));
   while (ws <= lastKey) {
     const days = weekDays(ws).map((k) => {
       const inMonth = dateOf(k).getMonth() === month;
-      return { key: k, inMonth, beans: inMonth ? state.days[k]?.beans || [] : [] };
+      const beans = inMonth ? state.days[k]?.beans || [] : [];
+      const leaf = inMonth && !!firstKey && k >= firstKey && k < todayKey && beans.length === 0;
+      return { key: k, inMonth, beans, leaf };
     });
     weeks.push({ weekStart: ws, days, busy: days.some((x) => x.beans.length > 0) });
     ws = shiftWeek(ws, 1);

@@ -1,12 +1,15 @@
 // 番茄架的月檢視（2026-11-17 AG4）：一格一天，裡面是那天收下的番茄（一顆一個標籤色的小圓點）。
 // 沿用蒜日子的「彈性週」：沒番茄的週壓扁成一行，只剩日期。這樣整個月不會出現一排排空格子
 // （產品定稿：不製造罪惡感，沒番茄的日子不寫 0）。點一天就切到那天的天檢視。
+// 2026-11-18 AH7：過完、沒番茄的日子掛一片葉子，不算缺（規則在 core/calendar.js 的 monthWeeks）。
+// 壓扁的週不畫葉子：畫了那列就撐開，整個月又變回一排排格子。
 import { Pressable, Text, View } from 'react-native';
 import { CharacterColors, useTokens } from '../design/Tokens';
 import { words } from '../design/words';
 import { params } from '../design/params';
 import { monthWeeks } from '../core/calendar';
 import { typeOf } from '../core/machine';
+import { Leaf } from './Pod';
 
 const INK = CharacterColors.tomato;
 
@@ -55,7 +58,7 @@ function DayCell({ state, day, busy, onPress }) {
     <Pressable
       disabled={dim}
       accessibilityRole="button"
-      accessibilityLabel={words.monthDayA11y(day.key, day.beans.length)}
+      accessibilityLabel={words.monthDayA11y(day.key, day.beans.length, busy && day.leaf)}
       onPress={onPress}
       style={{ flex: 1, alignItems: 'center', gap: T.space.xs, paddingVertical: T.space.xs }}
     >
@@ -76,6 +79,7 @@ function DayCell({ state, day, busy, onPress }) {
         </Text>
       </View>
       {busy && day.beans.length ? <Dots state={state} beans={day.beans} /> : null}
+      {busy && day.leaf ? <Leaf /> : null}
     </Pressable>
   );
 }
@@ -100,7 +104,7 @@ export function MonthGrid({ state, monthKey, onPickDay }) {
           </Text>
         ))}
       </View>
-      {monthWeeks(state, monthKey).map((week) => (
+      {monthWeeks(state, monthKey, state.todayKey).map((week) => (
         <View
           key={week.weekStart}
           style={{

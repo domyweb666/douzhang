@@ -157,6 +157,26 @@ describe('月檢視', () => {
     expect(weeks[2].days[3].beans).toHaveLength(2); // 11/12 星期四
     expect(weeks[0].days[4].beans).toEqual([]); // 10/30 在別的月份
   });
+
+  test('葉子（AH7）：過完、沒番茄的日子才有；今天、以後、第一顆以前、別的月份、有番茄的都沒有', () => {
+    const t = blank();
+    t.days['2026-11-03'] = dayWith(bean(3, 9, 0, 25));
+    t.days['2026-11-12'] = dayWith(bean(12, 9, 0, 25));
+    const leafOf = (key) =>
+      monthWeeks(t, '2026-11-17', '2026-11-17')
+        .flatMap((w) => w.days)
+        .find((x) => x.key === key).leaf;
+    expect(leafOf('2026-11-04')).toBe(true); // 過完、沒番茄
+    expect(leafOf('2026-11-16')).toBe(true);
+    expect(leafOf('2026-11-03')).toBe(false); // 有番茄
+    expect(leafOf('2026-11-02')).toBe(false); // 第一顆以前
+    expect(leafOf('2026-11-17')).toBe(false); // 今天還沒過完
+    expect(leafOf('2026-11-20')).toBe(false); // 以後
+    expect(leafOf('2026-10-30')).toBe(false); // 別的月份
+    expect(
+      monthWeeks(blank(), '2026-11-17', '2026-11-17').some((w) => w.days.some((x) => x.leaf)),
+    ).toBe(false); // 一顆都還沒有：整個月都不掛
+  });
 });
 
 describe('分析', () => {
