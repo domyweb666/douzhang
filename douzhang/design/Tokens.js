@@ -32,7 +32,7 @@ export const CharacterColors = {
       purple: '#FFFFFF',
       pink: '#2B2329',
     },
-    unripe: '#9CC25A', // 計時中還沒熟的青番茄（2026-11-17 AG2）；中間轉黃用 body.yellow
+    unripe: '#9CC25A', // 計時中還沒熟的青番茄（2026-11-17 AG2）；2026-11-18 AH1 起直接變成標籤色，不經過黃
     vine: '#4E8B3A', // 掛著它的那段藤
     leaf: '#6FAE52',
     ink: '#2B2329', // 外框、蒂、眼睛、嘴（跟火柴人的 ink 同色）

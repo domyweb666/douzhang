@@ -8,7 +8,7 @@ import { CharacterColors } from '../design/Tokens';
 const MIN = 60 * 1000;
 const T0 = new Date(2026, 10, 17, 9, 0, 0).getTime();
 const INK = CharacterColors.tomato;
-const COLORS = { unripe: INK.unripe, turning: INK.body.yellow, ripe: INK.body.red };
+const COLORS = { unripe: INK.unripe, ripe: INK.body.red };
 
 describe('走了幾成', () => {
   test('剛開始是 0，一半是 0.5，到點是 1，過了也不超過 1', () => {
@@ -40,10 +40,22 @@ describe('大小與顏色', () => {
     expect(growScale(2)).toBe(1);
   });
 
-  test('顏色：開始是青的，到 turnAt 是黃的，到點是標籤的番茄色', () => {
+  test('顏色：開始是青的，到點是標籤的番茄色，中間不經過黃（AH1）', () => {
     expect(ripeColor(0, COLORS)).toBe(INK.unripe.toLowerCase());
-    expect(ripeColor(params.grow.turnAt, COLORS)).toBe(INK.body.yellow.toLowerCase());
     expect(ripeColor(1, COLORS)).toBe(INK.body.red.toLowerCase());
+    const purple = { unripe: INK.unripe, ripe: INK.body.purple };
+    // 一半的時候是青與紫各一半，不是黃
+    const [r, g, b] = [1, 3, 5].map((i) => parseInt(ripeColor(0.5, purple).slice(i, i + 2), 16));
+    const mid = (k) =>
+      Math.round(
+        (parseInt(INK.unripe.slice(k, k + 2), 16) + parseInt(INK.body.purple.slice(k, k + 2), 16)) /
+          2,
+      );
+    expect([r, g, b].map((v, i) => Math.abs(v - mid([1, 3, 5][i])) <= 1)).toEqual([
+      true,
+      true,
+      true,
+    ]);
   });
 
   test('中間的顏色都是合法的 #rrggbb', () => {

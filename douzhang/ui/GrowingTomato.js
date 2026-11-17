@@ -12,11 +12,7 @@ const INK = CharacterColors.tomato;
 export function GrowingTomato({ progress, color, height }) {
   const T = useTokens();
   const full = Math.min(T.shape.growSize, height - T.shape.growVine);
-  const fill = ripeColor(progress, {
-    unripe: INK.unripe,
-    turning: INK.body.yellow,
-    ripe: INK.body[color] || INK.body.red,
-  });
+  const fill = ripeColor(progress, { unripe: INK.unripe, ripe: INK.body[color] || INK.body.red });
   return (
     <View
       accessible={false}

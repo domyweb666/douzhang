@@ -30,9 +30,10 @@ function mix(from, to, t) {
     .join('')}`;
 }
 
-/** 什麼顏色：青 → 黃（到 turnAt）→ 這個標籤的番茄色。三個顏色都是 #RRGGBB。 */
-export function ripeColor(progress, { unripe, turning, ripe }) {
-  const p = clamp01(progress);
-  const turn = params.grow.turnAt;
-  return p < turn ? mix(unripe, turning, p / turn) : mix(turning, ripe, (p - turn) / (1 - turn));
+/**
+ * 什麼顏色：青一路變成這個標籤的番茄色。兩個顏色都是 #RRGGBB。
+ * 2026-11-18 AH1 多米：不經過黃。原本的青 → 黃 → 標籤色，紫色標籤會先變黃再變紫，黃色標籤六成就熟了。
+ */
+export function ripeColor(progress, { unripe, ripe }) {
+  return mix(unripe, ripe, clamp01(progress));
 }

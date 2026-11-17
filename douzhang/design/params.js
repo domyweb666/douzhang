@@ -16,8 +16,8 @@ export const params = {
     { len: 45, color: 'yellow' },
     { len: 10, color: 'pink' },
   ],
-  // 計時中長大的番茄（2026-11-17 AG2，比較頁 1A）：一開始是全熟大小的幾成；進度過了 turnAt 才從黃轉成標籤色
-  grow: { minScale: 0.4, turnAt: 0.6 },
+  // 計時中長大的番茄（2026-11-17 AG2，比較頁 1A）：一開始是全熟大小的幾成。2026-11-18 AH1 多米：從青直接變標籤色，拿掉中間的黃（turnAt）
+  grow: { minScale: 0.4 },
   // 白噪音（2026-11-17 AG6）：能選的種類（第一個是關）、音量三段與各自的大小（0–1）
   ambience: {
     kinds: ['off', 'rain', 'fire'],
