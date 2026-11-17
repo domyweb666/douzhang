@@ -32,4 +32,6 @@
 
 - 2026-11-17 多米決定申請。
 - 2026-11-17 多米回報已送出（新版表單，按「Get Entitlement」）。按下去之後看到什麼、有沒有收到信：待補。
-- 生效日期：
+- 2026-11-17 多米截圖 `org.domyweb.douzhang` 的 Capabilities：清單裡有「Family Controls (Distribution)」，前面的框可以勾（另外還有 Development 版與「Family Controls App and Website Usage」，這兩個不用勾）。看起來按完當下就給了，沒有等審核。
+- 還沒做：勾 Family Controls (Distribution) 並按 Save。真正的證明是勾了之後出一個 TestFlight build 簽得過。
+- 生效日期：2026-11-17（以清單出現可勾的項目為準；簽章驗過再補一筆）
