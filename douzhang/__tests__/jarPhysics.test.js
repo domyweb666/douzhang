@@ -1,7 +1,7 @@
 // 罐子物理測試：只驗「不穿牆、落地會回報、大小跟分鐘走、點一下會動」，手感本身要真機（閘門 3）。
 import { Token } from '../design/Tokens';
 import { addBody, count, makeWorld, radiusFor, seed, step, tapAt } from '../core/jarPhysics';
-import { jarParams } from '../design/params';
+import { jarParams, params } from '../design/params';
 
 const world = () => {
   const W = makeWorld(jarParams(Token));
@@ -30,8 +30,16 @@ test('番茄大小：25 分是基準，面積跟分鐘成正比（100 分會是�
   expect(radiusFor(P, 25)).toBeCloseTo(R);
   expect(radiusFor(P, 60)).toBeCloseTo(R * Math.sqrt(60 / 25));
   expect(radiusFor(P, 60)).toBeGreaterThan(radiusFor(P, 15));
-  expect(radiusFor(P, 5)).toBeCloseTo(R * 0.7); // 5 分與測試顆都不會小到看不見
-  expect(radiusFor(P, 90)).toBeCloseTo(R * 1.75); // 90 分不會撐爆罐子
+  expect(radiusFor(P, 5)).toBeCloseTo(R * 0.5); // 5 分與測試顆都不會小到看不見（直徑 28）
+  expect(radiusFor(P, 90)).toBeCloseTo(R * Math.sqrt(90 / 25)); // 刻度最長的 90 分還沒碰到上限（直徑 106）
+  expect(radiusFor(P, 200)).toBeCloseTo(R * 1.9); // 匯入的舊檔再長也不會撐爆罐子
+});
+
+test('放寬兩端之後，刻度上每一格長度的番茄都比前一格大（2026-11-17 體型 A）', () => {
+  const P = jarParams(Token);
+  const sizes = params.typeLengths.map((len) => radiusFor(P, len));
+  for (let i = 2; i < sizes.length; i++) expect(sizes[i]).toBeGreaterThan(sizes[i - 1]);
+  expect(sizes[1]).toBeGreaterThan(sizes[0]); // 10 分比 5 分大：原本兩顆一樣
 });
 
 test('從罐口掉一顆，兩秒後落在罐底，而且落地那一幀有回報（給啵與觸覺用）', () => {

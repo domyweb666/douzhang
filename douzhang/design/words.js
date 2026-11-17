@@ -127,6 +127,18 @@ export const words = {
   restRow: '休息',
   restModeAuto: '到點提醒我',
   restModeSelf: '我自己決定',
+  // 短休息、長休息（2026-11-17 設定 A）
+  typeSub: '每種類型一個長度，番茄大小跟著長度走',
+  restShortRow: '短休息',
+  restShortAuto: '跟著長度',
+  restShortAutoSub: '跟著長度：番茄長度 ÷ 5，最少 3 分。',
+  restLongRow: '長休息', // 設定那一列，也是休息畫面輪到長休息那次的小標
+  restLongOff: '關',
+  restLongEvery: (every) => `每 ${every} 顆`,
+  restLongValue: (every, minutes) => `每 ${every} 顆・${minutes} 分`,
+  restLongSub: (every, minutes) => `今天每收下 ${every} 顆，那次休息 ${minutes} 分。`,
+  restSelfSub: '休息不倒數，按「回來了，開始下一顆」才結束。',
+  minutes: (m) => `${m} 分`,
   closeTimeRow: '收工時間',
   closeTimeSub: '過了這個時間，主畫面才會出現「收工」',
   reminders: '提醒',

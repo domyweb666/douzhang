@@ -1,7 +1,7 @@
 // 豆帳 狀態機：待機／計時中／鈴響／休息。純函式，吃 state 回新 state，不碰畫面、不存檔、不排通知。
 // 只存 endAt（幾點結束），不存剩幾秒：背景、鎖屏、殺掉再開都靠時間差重算（A3 驗邊界）。
 // 資料格式照 PWA：current、clue、days 的欄位名與 index.html 相同。
-import { blankDay, dayKey, restMinutes } from './store';
+import { blankDay, dayKey, restAfter } from './store';
 import { MS_PER_MINUTE, MS_PER_SECOND, SECONDS_PER_MINUTE, params } from '../design/params';
 import { words } from '../design/words';
 import { isTodayTask } from './settings';
@@ -101,11 +101,12 @@ export function keep(state, now, text) {
   const days = { ...state.days, [key]: { ...prev, beans: [...prev.beans, bean], closed: false } };
   const clue = line ? { text: line, at: now } : state.clue;
   // 響了沒理、拖到超過這顆的休息長度才回來收：休息早過了，直接待機（PRD S8）
-  // 測試顆的休息跟它一樣短（V3），不然看一次掉番茄要等 3 分鐘
+  // 那天第幾顆決定這次是短休息還是長休息（2026-11-17 設定 A）
+  const rest = restAfter(state.settings, c.len, days[key].beans.length);
+  // 測試顆的休息跟它一樣短（V3），不然看一次掉番茄要等 3 分鐘；輪到長休息時照樣標成長休息，數顆數才看得到
   const restMs =
-    c.typeId === DEV_TYPE.id
-      ? params.devTestSeconds * MS_PER_SECOND
-      : restMinutes(c.len) * MS_PER_MINUTE;
+    c.typeId === DEV_TYPE.id ? params.devTestSeconds * MS_PER_SECOND : rest.minutes * MS_PER_MINUTE;
+  const self = state.settings.restMode === 'self';
   if (now - c.endAt >= restMs) return { ...state, days, clue, current: null };
   const picked = pickLine(state);
   return {
@@ -119,7 +120,8 @@ export function keep(state, now, text) {
       len: c.len,
       restStart: now,
       // 「我自己決定」：沒有結束時刻，畫面數正數，只有按回來才結束
-      endAt: state.settings.restMode === 'self' ? null : now + restMs,
+      endAt: self ? null : now + restMs,
+      long: !self && rest.long, // 「我自己決定」的休息沒有長短
       rang: false,
       msg: picked.text,
     },

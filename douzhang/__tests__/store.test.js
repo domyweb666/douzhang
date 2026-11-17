@@ -13,6 +13,7 @@ import {
   dayKey,
   units,
   restMinutes,
+  restAfter,
 } from '../core/store';
 
 beforeEach(async () => {
@@ -29,12 +30,23 @@ describe('全新安裝', () => {
     expect(state.days).toEqual({});
   });
 
-  test('空的狀態檔是 PWA 的 blank() 七欄加 taskId（PWA 執行期才掛上的那欄）', () => {
+  test('空的狀態檔是 PWA 的 blank() 七欄加 taskId；設定多短休息、長休息三欄（2026-11-17 設定 A）', () => {
     expect(Object.keys(blank()).sort()).toEqual(
       ['clue', 'current', 'days', 'lastLine', 'planted', 'settings', 'taskId', 'v'].sort(),
     );
     expect(Object.keys(blank().settings).sort()).toEqual(
-      ['closeTime', 'demo', 'restMode', 'sound', 'tilt', 'typeId', 'types'].sort(),
+      [
+        'closeTime',
+        'demo',
+        'restLongEvery',
+        'restLongMinutes',
+        'restMode',
+        'restShort',
+        'sound',
+        'tilt',
+        'typeId',
+        'types',
+      ].sort(),
     );
   });
 });
@@ -250,5 +262,62 @@ describe('匯入備份：會畫上畫面的字', () => {
       }),
     ).current;
     expect(rest.msg).toBe('');
+  });
+});
+
+describe('短休息與長休息（2026-11-17 設定 A）', () => {
+  const base = blank().settings;
+
+  test('預設：短休息跟著長度，今天第 4、8 顆收下後是 15 分的長休息', () => {
+    expect(restAfter(base, 25, 1)).toEqual({ minutes: 5, long: false });
+    expect(restAfter(base, 50, 3)).toEqual({ minutes: 10, long: false });
+    expect(restAfter(base, 25, 4)).toEqual({ minutes: 15, long: true });
+    expect(restAfter(base, 25, 5)).toEqual({ minutes: 5, long: false });
+    expect(restAfter(base, 5, 8)).toEqual({ minutes: 15, long: true });
+  });
+
+  test('短休息選固定 10 分：不管番茄多長都休 10 分', () => {
+    const s = { ...base, restShort: 10 };
+    expect(restAfter(s, 5, 1).minutes).toBe(10);
+    expect(restAfter(s, 90, 2).minutes).toBe(10);
+  });
+
+  test('長休息關掉：第 4 顆也只是短休息', () => {
+    expect(restAfter({ ...base, restLongEvery: 0 }, 25, 4)).toEqual({ minutes: 5, long: false });
+  });
+
+  test('長休息改成每 3 顆 30 分', () => {
+    const s = { ...base, restLongEvery: 3, restLongMinutes: 30 };
+    expect(restAfter(s, 25, 3)).toEqual({ minutes: 30, long: true });
+    expect(restAfter(s, 25, 4).long).toBe(false);
+  });
+
+  test('舊檔與 PWA 備份沒有這三欄：讀進來補預設（跟著長度、每 4 顆、15 分）', () => {
+    const s = normalize({ v: 1, settings: { types: [] }, days: {} });
+    expect(s.settings.restShort).toBe('auto');
+    expect(s.settings.restLongEvery).toBe(4);
+    expect(s.settings.restLongMinutes).toBe(15);
+  });
+
+  test('手改過的檔塞了刻度以外的值：一律退回預設，不會算出怪的休息', () => {
+    const s = normalize({
+      v: 1,
+      settings: { types: [], restShort: '7', restLongEvery: -1, restLongMinutes: 999 },
+      days: {},
+    });
+    expect(s.settings.restShort).toBe('auto');
+    expect(s.settings.restLongEvery).toBe(4);
+    expect(s.settings.restLongMinutes).toBe(15);
+  });
+
+  test('刻度上的值存了再讀還在', () => {
+    const s = normalize({
+      v: 1,
+      settings: { types: [], restShort: 10, restLongEvery: 0, restLongMinutes: 30 },
+      days: {},
+    });
+    expect(s.settings.restShort).toBe(10);
+    expect(s.settings.restLongEvery).toBe(0);
+    expect(s.settings.restLongMinutes).toBe(30);
   });
 });

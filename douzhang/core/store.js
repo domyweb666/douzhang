@@ -23,6 +23,10 @@ export function blank() {
       demo: false, // PWA 的「試玩速度」；這裡當開發期「測試模式」開關（2026-11-02），不另開欄位，格式維持 PWA 七欄
       closeTime: '19:00',
       tilt: true,
+      // 2026-11-17 設定 A：PWA 沒有這三欄，舊檔與 PWA 備份讀進來都補這裡的預設
+      restShort: 'auto', // 短休息：'auto' 跟著番茄長度，或固定幾分（params.restShortOptions）
+      restLongEvery: 4, // 今天每收下幾顆來一次長休息；0＝關
+      restLongMinutes: 15,
     },
     current: null,
     clue: null,
@@ -40,6 +44,7 @@ export function blankDay() {
 const isObject = (x) => x !== null && typeof x === 'object' && !Array.isArray(x);
 const arrayOf = (x) => (Array.isArray(x) ? x : []);
 const pick = (value, fallback, type) => (typeof value === type ? value : fallback);
+const onScale = (scale, value, fallback) => (scale.includes(value) ? value : fallback);
 
 /** settings 這一層：每欄驗型別、不對就用預設；選到的類型不存在就退回第一個。 */
 function normalizeSettings(s) {
@@ -64,6 +69,10 @@ function normalizeSettings(s) {
     demo: __DEV__ ? pick(s.demo, base.demo, 'boolean') : false,
     closeTime: pick(s.closeTime, base.closeTime, 'string'),
     tilt: pick(s.tilt, base.tilt, 'boolean'),
+    // 會進算術（休息幾分鐘、每幾顆）：只收刻度上的值，其他一律預設（I2）
+    restShort: onScale(params.restShortOptions, s.restShort, base.restShort),
+    restLongEvery: onScale(params.restLongEveryOptions, s.restLongEvery, base.restLongEvery),
+    restLongMinutes: onScale(params.restLongMinuteOptions, s.restLongMinutes, base.restLongMinutes),
   };
   if (!settings.types.some((t) => t.id === settings.typeId)) settings.typeId = settings.types[0].id;
   return settings;
@@ -211,7 +220,20 @@ export function units(len) {
   return Math.max(1, Math.round(len / MINUTES_PER_UNIT));
 }
 
-/** 休息幾分鐘：長度 ÷ 5，最少 3。25→5、50→10、15→3。 */
+/** 「跟著長度」的休息幾分鐘：長度 ÷ 5，最少 3。25→5、50→10、15→3。 */
 export function restMinutes(len) {
   return Math.max(REST_MIN_MINUTES, Math.round(len / REST_DIVISOR));
+}
+
+/**
+ * 收下這顆之後休息多久。beansToday＝含這顆在內，那天收下第幾顆。
+ * 那天每滿 restLongEvery 顆是長休息，其他是短休息（'auto' 跟著這顆的長度，或固定幾分）。
+ * 作廢的不在 beans 裡所以不算；延長過的還是一顆；跨日從頭數。回 { minutes, long }。
+ */
+export function restAfter(settings, len, beansToday) {
+  const every = settings.restLongEvery;
+  if (every > 0 && beansToday > 0 && beansToday % every === 0)
+    return { minutes: settings.restLongMinutes, long: true };
+  const short = settings.restShort;
+  return { minutes: short === 'auto' ? restMinutes(len) : short, long: false };
 }

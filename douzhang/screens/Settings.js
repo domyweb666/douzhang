@@ -21,6 +21,18 @@ import { dayKey } from '../core/store';
 
 const LENGTHS = params.typeLengths.map((len) => ({ value: len, label: words.typeLen(len) }));
 const CLOSE_TIMES = params.closeTimes.map((t) => ({ value: t, label: t }));
+const REST_SHORTS = params.restShortOptions.map((v) => ({
+  value: v,
+  label: v === 'auto' ? words.restShortAuto : words.minutes(v),
+}));
+const REST_LONG_EVERY = params.restLongEveryOptions.map((n) => ({
+  value: n,
+  label: n ? words.restLongEvery(n) : words.restLongOff,
+}));
+const REST_LONG_MINUTES = params.restLongMinuteOptions.map((m) => ({
+  value: m,
+  label: words.minutes(m),
+}));
 const REST_MODES = [
   { value: 'auto', label: words.restModeAuto },
   { value: 'self', label: words.restModeSelf },
@@ -155,7 +167,7 @@ function TypesSection({ settings, actions }) {
   const open = settings.types.find((t) => t.id === openId);
   return (
     <View>
-      <DomySection title={words.taskType}>
+      <DomySection title={words.taskType} footer={words.typeSub}>
         {settings.types.map((t) => (
           <TypeRow key={t.id} type={t} onPress={() => setOpenId(t.id)} />
         ))}
@@ -190,20 +202,82 @@ function RestModeRow({ value, onChange }) {
   );
 }
 
+/** 節奏那區卡片下的說明：休息怎麼算（看得到那兩列時才講），最後一行是收工時間。 */
+function rhythmFooter(settings) {
+  const lines = [];
+  if (settings.restMode === 'self') lines.push(words.restSelfSub);
+  else {
+    if (settings.restShort === 'auto') lines.push(words.restShortAutoSub);
+    if (settings.restLongEvery)
+      lines.push(words.restLongSub(settings.restLongEvery, settings.restLongMinutes));
+  }
+  return [...lines, words.closeTimeSub].join('\n');
+}
+
+/** 長休息半頁：左邊每幾顆（含「關」）、右邊幾分，兩個滾輪並排。 */
+function LongRestWheels({ settings, actions }) {
+  return (
+    <View style={{ flexDirection: 'row' }}>
+      <View style={{ flex: 1 }}>
+        <Wheel
+          options={REST_LONG_EVERY}
+          value={settings.restLongEvery}
+          onChange={actions.onSetRestLongEvery}
+        />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Wheel
+          options={REST_LONG_MINUTES}
+          value={settings.restLongMinutes}
+          onChange={actions.onSetRestLongMinutes}
+        />
+      </View>
+    </View>
+  );
+}
+
+/** 「我自己決定」的休息沒有長度，短休息、長休息兩列收起來（2026-11-17 設定 A）。 */
 function RhythmSection({ settings, actions }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(null); // 'short'｜'long'｜'close'｜null
+  const close = () => setOpen(null);
+  const timed = settings.restMode !== 'self';
+  const longValue = settings.restLongEvery
+    ? words.restLongValue(settings.restLongEvery, settings.restLongMinutes)
+    : words.restLongOff;
   return (
     <View>
-      <DomySection title={words.rhythm} footer={words.closeTimeSub}>
+      <DomySection title={words.rhythm} footer={rhythmFooter(settings)}>
         <RestModeRow value={settings.restMode} onChange={actions.onSetRestMode} />
+        {timed ? (
+          <DomySettingsRow
+            label={words.restShortRow}
+            value={REST_SHORTS.find((o) => o.value === settings.restShort).label}
+            onPress={() => setOpen('short')}
+          />
+        ) : null}
+        {timed ? (
+          <DomySettingsRow
+            label={words.restLongRow}
+            value={longValue}
+            onPress={() => setOpen('long')}
+          />
+        ) : null}
         <DomySettingsRow
           label={words.closeTimeRow}
-          picker={{ value: settings.closeTime, onPress: () => setOpen(true) }}
+          picker={{ value: settings.closeTime, onPress: () => setOpen('close') }}
         />
       </DomySection>
-      <Sheet visible={open} title={words.closeTimeRow} onClose={() => setOpen(false)}>
+      <Sheet visible={open === 'short'} title={words.restShortRow} onClose={close}>
+        <Wheel options={REST_SHORTS} value={settings.restShort} onChange={actions.onSetRestShort} />
+        <BigButton label={words.ok} onPress={close} />
+      </Sheet>
+      <Sheet visible={open === 'long'} title={words.restLongRow} onClose={close}>
+        <LongRestWheels settings={settings} actions={actions} />
+        <BigButton label={words.ok} onPress={close} />
+      </Sheet>
+      <Sheet visible={open === 'close'} title={words.closeTimeRow} onClose={close}>
         <Wheel options={CLOSE_TIMES} value={settings.closeTime} onChange={actions.onSetCloseTime} />
-        <BigButton label={words.ok} onPress={() => setOpen(false)} />
+        <BigButton label={words.ok} onPress={close} />
       </Sheet>
     </View>
   );

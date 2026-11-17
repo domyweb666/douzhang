@@ -423,3 +423,73 @@ describe('收工與葉子（F1、F2）', () => {
     expect(rackTopRow(hangLeaf(withClue(), at(12)), at(12))).toBeNull();
   });
 });
+
+describe('長休息（2026-11-17 設定 A）', () => {
+  /** 連續收 n 顆 25 分的，每顆之間休息 5 分就回來；回最後一次收下後的狀態。 */
+  const keepMany = (s, n, from = T0) => {
+    let t = from;
+    for (let i = 0; i < n; i++) {
+      if (i) s = backFromRest(s);
+      s = keep(start(s, t), t + 25 * MIN, 'x');
+      t += 30 * MIN;
+    }
+    return { s, lastKeep: t - 5 * MIN };
+  };
+
+  test('今天第 3 顆收下是 5 分的短休息，第 4 顆收下是 15 分的長休息', () => {
+    const third = keepMany(withClue(), 3);
+    expect(third.s.current.long).toBe(false);
+    expect(third.s.current.endAt).toBe(third.lastKeep + 5 * MIN);
+    const fourth = keepMany(withClue(), 4);
+    expect(fourth.s.current.long).toBe(true);
+    expect(fourth.s.current.endAt).toBe(fourth.lastKeep + 15 * MIN);
+  });
+
+  test('作廢的不算顆數：三顆加一次作廢，還不是長休息', () => {
+    let { s } = keepMany(withClue(), 3);
+    s = voidBean(start(backFromRest(s), T0 + 120 * MIN), T0 + 130 * MIN, { reason: '訊息' });
+    s = keep(start(s, T0 + 140 * MIN), T0 + 165 * MIN, 'x');
+    expect(s.days['2026-11-01'].beans).toHaveLength(4);
+    expect(s.current.long).toBe(true); // 作廢那次沒佔名額，這顆才是第 4 顆
+  });
+
+  test('跨日從頭數：昨天收了 3 顆，今天第 1 顆不是長休息', () => {
+    const { s } = keepMany(withClue(), 3);
+    const tomorrow = T0 + 24 * 60 * MIN;
+    const next = keep(start(backFromRest(s), tomorrow), tomorrow + 25 * MIN, 'x');
+    expect(next.current.long).toBe(false);
+  });
+
+  test('我自己決定的休息沒有長短：第 4 顆也不標長休息、沒有結束時刻', () => {
+    const base = withClue();
+    base.settings = { ...base.settings, restMode: 'self' };
+    const { s } = keepMany(base, 4);
+    expect(s.current.long).toBe(false);
+    expect(s.current.endAt).toBeNull();
+  });
+
+  test('長休息關掉：第 4 顆照短休息', () => {
+    const base = withClue();
+    base.settings = { ...base.settings, restLongEvery: 0 };
+    const { s, lastKeep } = keepMany(base, 4);
+    expect(s.current.long).toBe(false);
+    expect(s.current.endAt).toBe(lastKeep + 5 * MIN);
+  });
+
+  test('響了沒理、拖超過長休息的 15 分才收：直接回待機', () => {
+    const { s } = keepMany(withClue(), 3);
+    const t = T0 + 120 * MIN;
+    const late = keep(start(backFromRest(s), t), t + 25 * MIN + 15 * MIN, 'x');
+    expect(late.current).toBeNull();
+    const inTime = keep(start(backFromRest(s), t), t + 25 * MIN + 14 * MIN, 'x');
+    expect(inTime.current.long).toBe(true);
+  });
+
+  test('測試顆輪到長休息：休息還是 5 秒，但標成長休息（數顆數看得到）', () => {
+    const { s } = keepMany(withClue(), 3);
+    const t = T0 + 120 * MIN;
+    const dev = keep(start(backFromRest(s), t, { typeId: DEV_TYPE.id }), t + 5000, 'x');
+    expect(dev.current.long).toBe(true);
+    expect(dev.current.endAt).toBe(t + 5000 + 5000);
+  });
+});

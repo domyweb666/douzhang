@@ -16,12 +16,18 @@ export const params = {
   importMaxBytes: 5 * 1024 * 1024, // 匯入檔大小上限 5 MB（安全標準 I3）
   closeTimes: ['17:00', '18:00', '19:00', '20:00', '21:00', '22:00'], // 收工時間的刻度（G1：不裝時間選擇器套件，整點六格）
   stopNoRecordMinutes: 5, // 開始不到這麼久就停，不留紀錄（06 結束這顆半頁）
+  // 短休息、長休息的刻度（2026-11-17 多米看比較頁選設定 A）
+  restShortOptions: ['auto', 3, 5, 10, 15], // 'auto'＝跟著番茄長度（÷5 最少 3），其餘是固定幾分
+  restLongEveryOptions: [0, 3, 4, 5], // 今天每收下幾顆來一次長休息；0＝關
+  restLongMinuteOptions: [15, 20, 30],
   // 豆罐（參數表 B）：雙豆連結。其餘物理數字在 Tokens.motion.jarPhysics
   jar: {
     // V4：番茄大小跟分鐘走，面積成正比（半徑∝√分鐘）；sizeRefMinutes 那麼長的是基準半徑，太小太大各夾住
+    // 2026-11-17 多米看比較頁選 A「放寬兩端」：原本 0.7–1.75 倍，5 分跟 10 分一樣大、80 分以上也一樣大；
+    // 放寬後 5 分直徑 28、10 分 35、90 分 106，每一格長度都分得出來
     sizeRefMinutes: 25,
-    sizeMin: 0.7,
-    sizeMax: 1.75,
+    sizeMin: 0.5,
+    sizeMax: 1.9,
     sensorIntervalMs: 16, // 加速度計更新間隔（灰盒子同值）
     lowFpsThreshold: 40, // 連續幾秒低於這個 fps 就退成靜止版（PRD S19 低電量退路）
     lowFpsSeconds: 3,

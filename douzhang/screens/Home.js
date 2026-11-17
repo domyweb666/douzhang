@@ -209,7 +209,8 @@ function CardBody({ phase, state, now, greet, wiped, firstLine, onFirstLine }) {
     // 「我自己決定」的休息沒有結束時刻：大時間數正數（休息了多久），只有按回來才結束
     const self = state.current.endAt == null; // 看資料不看設定：休息中改設定也不會卡住
     const shown = self ? now - state.current.restStart : left;
-    return <Countdown left={shown} label={words.rest} body={words.restBody} />;
+    const label = state.current.long ? words.restLongRow : words.rest; // 今天每滿幾顆那次（設定 A）
+    return <Countdown left={shown} label={label} body={words.restBody} />;
   }
   if (!state.clue) return <FirstInput value={firstLine} onChange={onFirstLine} wiped={wiped} />;
   return <ClueCard text={state.clue.text} greet={greet} task={taskOf(state, state.taskId)} />;

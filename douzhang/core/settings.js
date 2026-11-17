@@ -51,6 +51,17 @@ export function removeType(state, id) {
 
 export const setRestMode = (state, restMode) =>
   withSettings(state, { restMode: restMode === 'self' ? 'self' : 'auto' });
+/** 短休息、長休息：只准刻度上的值（下一次收下才用到，休息中改不影響這次）。 */
+export const setRestShort = (state, restShort) =>
+  params.restShortOptions.includes(restShort) ? withSettings(state, { restShort }) : state;
+export const setRestLongEvery = (state, restLongEvery) =>
+  params.restLongEveryOptions.includes(restLongEvery)
+    ? withSettings(state, { restLongEvery })
+    : state;
+export const setRestLongMinutes = (state, restLongMinutes) =>
+  params.restLongMinuteOptions.includes(restLongMinutes)
+    ? withSettings(state, { restLongMinutes })
+    : state;
 /** 收工時間只准刻度上的值（params.closeTimes）；匯入的舊檔可以是別的值，設定頁就是沒有一格亮。 */
 export const setCloseTime = (state, closeTime) =>
   params.closeTimes.includes(closeTime) ? withSettings(state, { closeTime }) : state;

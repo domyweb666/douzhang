@@ -15,6 +15,9 @@ import {
   setTestMode,
   setTypeColor,
   setTypeLen,
+  setRestShort,
+  setRestLongEvery,
+  setRestLongMinutes,
 } from '../core/settings';
 
 const MIN = 60 * 1000;
@@ -72,6 +75,16 @@ describe('節奏、提醒、手感（G1）', () => {
   test('休息怎麼算只有 auto／self 兩種', () => {
     expect(setRestMode(blank(), 'self').settings.restMode).toBe('self');
     expect(setRestMode(blank(), 'whatever').settings.restMode).toBe('auto');
+  });
+
+  test('短休息、長休息只收刻度上的值（設定 A）', () => {
+    expect(setRestShort(blank(), 10).settings.restShort).toBe(10);
+    expect(setRestShort(setRestShort(blank(), 10), 'auto').settings.restShort).toBe('auto');
+    expect(setRestShort(blank(), 7).settings.restShort).toBe('auto');
+    expect(setRestLongEvery(blank(), 0).settings.restLongEvery).toBe(0);
+    expect(setRestLongEvery(blank(), 6).settings.restLongEvery).toBe(4);
+    expect(setRestLongMinutes(blank(), 30).settings.restLongMinutes).toBe(30);
+    expect(setRestLongMinutes(blank(), 25).settings.restLongMinutes).toBe(15);
   });
 
   test('收工時間、聲音、傾斜各改各的', () => {
