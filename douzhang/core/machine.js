@@ -33,11 +33,19 @@ export function phaseOf(state, now) {
   return PHASE.idle;
 }
 
-/** 休息到點就算回待機了：把過期的 rest 收掉。每次 tick 與開機讀檔後呼叫。 */
+/**
+ * 休息到點就算回待機了：把過期的 rest 收掉。每次 tick 與開機讀檔後呼叫。
+ * 開了「休息完自動開始」（AH8）：到點先回待機 autoNextDelayMs（剛收的那顆在這段掉進番茄堆），
+ * 這段時間 current 還留著休息那筆（記得是哪個標籤）；過了就用同一個標籤開始下一顆，開始時刻照算的，
+ * app 在背景時也一樣（回來時可能已經走了一段，甚至已經到點）。
+ */
 export function settle(state, now) {
   const c = state.current;
-  if (c && c.phase === PHASE.rest && restEnded(c, now)) return { ...state, current: null };
-  return state;
+  if (!c || c.phase !== PHASE.rest || !restEnded(c, now)) return state;
+  if (!state.settings.autoNext) return { ...state, current: null };
+  const at = c.endAt + params.autoNextDelayMs;
+  if (now < at) return state;
+  return start({ ...state, current: null }, at, { typeId: c.typeId });
 }
 
 /**

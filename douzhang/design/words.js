@@ -69,6 +69,10 @@ export const words = {
 
   // 通知（A4）：文案固定，不含那句（安全 P3）
   restDone: '休息完了',
+  // 休息完自動開始（2026-11-18 AH8）：設定那一列與休息完那則通知的內文
+  autoNextRow: '休息完自動開始下一顆',
+  autoNextSub: '同一個標籤。「我自己決定」的休息不會自動開始。',
+  autoNextStarted: '下一顆自己開始了。',
   notificationOffLine: '到點通知沒開。鈴只在番茄帳打開時響。',
   openNotifications: '打開通知',
 

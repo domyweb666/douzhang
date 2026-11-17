@@ -2,8 +2,9 @@
 // 每次轉態「全部取消再排」，不做差量（藍圖危險方塊「通知排程」）。
 // 該排什麼由純函式 planned() 算，殼只負責在狀態改變後叫 sync()。核心迴圈不靠通知：前景時 app 自己切鈴響頁。
 import * as Notifications from 'expo-notifications';
-import { PHASE } from './machine';
+import { PHASE, typeOf } from './machine';
 import { words } from '../design/words';
+import { MS_PER_MINUTE, params } from '../design/params';
 
 // 前景收到通知：不跳橫幅、不進清單，只出聲（畫面那一刻已經是鈴響頁）
 Notifications.setNotificationHandler({
@@ -15,14 +16,30 @@ Notifications.setNotificationHandler({
   }),
 });
 
-/** 現在這個狀態該排哪些通知。已經過了的時刻不排（鈴響頁等人回來時沒有通知可排）。 */
+/**
+ * 現在這個狀態該排哪些通知。已經過了的時刻不排（鈴響頁等人回來時沒有通知可排）。
+ * 開了「休息完自動開始」（AH8）：休息時連下一顆的到點一起排，下一顆在背景自己開始時才有人叫；
+ * 休息完那則的內文改成下一顆自己開始了。
+ */
 export function planned(state, now) {
   const c = state.current;
-  if (!c || c.endAt <= now) return [];
-  if (c.phase === PHASE.focus) return [{ title: words.rang, body: words.bellSub, at: c.endAt }];
-  if (c.phase === PHASE.rest && state.settings.restMode === 'auto')
-    return [{ title: words.restDone, body: words.backFromRest, at: c.endAt }];
-  return [];
+  if (!c) return [];
+  const list = [];
+  if (c.phase === PHASE.focus) list.push({ title: words.rang, body: words.bellSub, at: c.endAt });
+  if (c.phase === PHASE.rest && state.settings.restMode === 'auto' && c.endAt != null) {
+    const auto = state.settings.autoNext;
+    list.push({
+      title: words.restDone,
+      body: auto ? words.autoNextStarted : words.backFromRest,
+      at: c.endAt,
+    });
+    if (auto) {
+      const nextStart = c.endAt + params.autoNextDelayMs;
+      const nextEnd = nextStart + typeOf(state, c.typeId).len * MS_PER_MINUTE;
+      list.push({ title: words.rang, body: words.bellSub, at: nextEnd });
+    }
+  }
+  return list.filter((n) => n.at > now);
 }
 
 /** 只問一次：已允許回 true；被拒且不能再問回 false、不跳框（P2）；只有還沒問過才跳系統框。 */

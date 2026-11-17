@@ -1,6 +1,7 @@
 // 狀態機測試。名稱是多米讀得懂的中文句子（標準清單 A2）。
 import { blank, blankDay, normalize } from '../core/store';
 import { words } from '../design/words';
+import { params } from '../design/params';
 import {
   DEV_TYPE,
   PHASE,
@@ -125,6 +126,45 @@ describe('休息與回來', () => {
     expect(phaseOf(resting, later)).toBe(PHASE.idle);
     expect(settle(resting, later).current).toBeNull();
     expect(settle(resting, T0 + 27 * MIN)).toBe(resting);
+  });
+
+  describe('休息完自動開始（AH8）', () => {
+    const auto = () => {
+      const base = withClue();
+      base.settings = { ...base.settings, autoNext: true };
+      return keep(start(base, T0), T0 + 25 * MIN, 'x'); // 休息到 T0+30 分
+    };
+    const restEnd = T0 + 30 * MIN;
+    const delay = params.autoNextDelayMs;
+
+    test('休息到點先回待機一下（番茄掉進堆的時間），休息那筆還留著', () => {
+      const s = auto();
+      expect(phaseOf(s, restEnd + 1)).toBe(PHASE.idle);
+      expect(settle(s, restEnd + 1)).toBe(s);
+    });
+
+    test('過了那一下：同一個標籤的下一顆開始，開始時刻是算的，不是看到的那一刻', () => {
+      const s = auto();
+      const later = settle(s, restEnd + delay + 3 * MIN);
+      expect(later.current.phase).toBe(PHASE.focus);
+      expect(later.current.typeId).toBe(s.current.typeId);
+      expect(later.current.startedAt).toBe(restEnd + delay);
+      expect(phaseOf(later, restEnd + delay + 3 * MIN)).toBe(PHASE.focus);
+    });
+
+    test('在背景待太久：下一顆也已經到點，回來就是鈴響', () => {
+      const later = settle(auto(), restEnd + delay + 40 * MIN);
+      expect(phaseOf(later, restEnd + delay + 40 * MIN)).toBe(PHASE.bell);
+    });
+
+    test('沒開、或「我自己決定」的休息：不自動開始', () => {
+      const off = keep(start(withClue(), T0), T0 + 25 * MIN, 'x');
+      expect(settle(off, restEnd + delay + MIN).current).toBeNull();
+      const base = withClue();
+      base.settings = { ...base.settings, autoNext: true, restMode: 'self' };
+      const self = keep(start(base, T0), T0 + 25 * MIN, 'x');
+      expect(settle(self, T0 + 3 * 60 * MIN)).toBe(self);
+    });
   });
 });
 

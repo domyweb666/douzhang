@@ -57,6 +57,7 @@ import {
   setShield,
   setSound,
   setTilt,
+  setAutoNext,
   setTestMode,
   setTypeColor,
   setTypeLen,
@@ -371,22 +372,25 @@ function useDouzhang() {
   // 擋 app 跟著狀態走（AF1）：開關開著且這顆還在跑才蓋，其他時候解開。答案變了才叫原生；
   // 讀完檔第一次有答案時也叫一次（開機對齊）。null＝還在讀檔，先不動。
   // 響的那一刻 app 在背景的話時鐘不走，要等回到番茄帳才會解開（第一版的取捨）。
-  const shielded = state ? shouldShield(state, now) : null;
+  // 休息到點沒按也回待機：每一拍在 render 時把過期的休息收掉，下一次動作才存回去。
+  // 擋 app 與白噪音看收過的這份（AH8）：休息完自動開始的那顆還沒存回去，也要蓋、要播。
+  // 自動開始那一刻 app 在背景的話時鐘不走，要等回到番茄帳才接上（到點通知照常，休息時就排好了）。
+  const settled = state ? settle(state, now) : null;
+  const shielded = settled ? shouldShield(settled, now) : null;
   useEffect(() => {
     if (shielded !== null) applyShield(shielded);
   }, [shielded]);
 
   // 白噪音也跟著狀態走（AG6）：這顆還在跑才播設定選的那種，響了、收下、作廢就停；計時中換種類或音量當下生效。
   // 在背景播的時候 app 還醒著、時鐘照走，所以到點那一刻聲音會自己停，上面的擋板也會跟著解開。
-  const ambience = state ? ambienceFor(state, now) : null;
-  const ambienceLevel = state ? state.settings.ambienceVolume : null;
+  const ambience = settled ? ambienceFor(settled, now) : null;
+  const ambienceLevel = settled ? settled.settings.ambienceVolume : null;
   useEffect(() => {
     if (ambience !== null) applyAmbience(ambience, ambienceLevel);
   }, [ambience, ambienceLevel]);
 
   if (!state) return null;
-  // 休息到點沒按也回待機：每一拍在 render 時把過期的休息收掉，下一次動作才存回去
-  const live = settle(state, now);
+  const live = settled;
   const actions = makeActions(live, act, commit, setNotif);
   const view = { ...live, todayKey: dayKey(now) }; // 畫面要知道「今天」是哪一天（估過的事只看今天）
   return {
@@ -435,6 +439,7 @@ function makeActions(live, act, commit, setNotif) {
     onSetRestLongMinutes: (v) => commit(setRestLongMinutes(live, v)),
     onSetSound: (on) => commit(setSound(live, on)),
     onSetTilt: (on) => commit(setTilt(live, on)),
+    onSetAutoNext: (on) => commit(setAutoNext(live, on)), // AH8
     onSetTestMode: (on) => commit(setTestMode(live, on)),
     // 白噪音（AG6）
     onSetAmbience: (kind) => commit(setAmbience(live, kind)),

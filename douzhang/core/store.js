@@ -39,6 +39,7 @@ export function blank() {
       // AG6 白噪音：播哪一種（'off' 不播）與音量三段，刻度在 params.ambience
       ambience: 'off',
       ambienceVolume: 'mid',
+      autoNext: false, // 2026-11-18 AH8：休息到點後自動開始同一個標籤的下一顆（預設關）
     },
     current: null,
     clue: null,
@@ -88,6 +89,7 @@ function normalizeSettings(s) {
     shield: pick(s.shield, base.shield, 'boolean'),
     ambience: onScale(params.ambience.kinds, s.ambience, base.ambience),
     ambienceVolume: onScale(params.ambience.levels, s.ambienceVolume, base.ambienceVolume),
+    autoNext: pick(s.autoNext, base.autoNext, 'boolean'), // 舊檔沒有這欄：關
   };
   if (!settings.types.some((t) => t.id === settings.typeId)) settings.typeId = settings.types[0].id;
   return settings;

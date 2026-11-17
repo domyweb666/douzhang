@@ -27,6 +27,8 @@ export const params = {
   monthDotsMax: 8, // 月檢視一格最多畫幾顆小圓點，再多寫「+N」（AG4）
   celebrateTomatoes: 12, // 慶祝畫面「今天收了幾顆」那排最多畫幾顆（多的只畫最後這幾顆）
   newTypeMinutes: 15, // 「加一種」新類型的長度（V1 刻度從 5 起算後明寫，維持原本 15）
+  // 休息完自動開始（2026-11-18 AH8）：休息到點後先停在待機這麼久，讓剛收的那顆從上面掉進番茄堆（AH3），再開始下一顆
+  autoNextDelayMs: 2500,
   devTestSeconds: 5, // 開發期長按「開始」的測試顆與它的休息都是這麼久（V3：看番茄掉進罐子用）
   typeNameMaxChars: 20, // 安全標準 I7
   taskNameMaxChars: 30, // 原型 maxlength

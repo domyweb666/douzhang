@@ -3,6 +3,7 @@ import * as Notifications from 'expo-notifications';
 import { blank } from '../core/store';
 import { keep, start } from '../core/machine';
 import { askPermissionOnce, notifStatus, planned, sync } from '../core/notify';
+import { params } from '../design/params';
 
 // jest 會把 mock 提到最前面，寫在 import 後面只是給 lint 看
 jest.mock('expo-notifications', () => ({
@@ -32,6 +33,21 @@ describe('該排什麼', () => {
     const s = keep(start(withClue(), T0), T0 + 25 * MIN, '下一句');
     expect(planned(s, T0 + 26 * MIN)).toEqual([
       { title: '休息完了', body: '回來了，開始下一顆', at: T0 + 30 * MIN },
+    ]);
+  });
+
+  test('開了休息完自動開始（AH8）：休息完那則改說下一顆自己開始了，連下一顆的到點一起排', () => {
+    const base = withClue();
+    base.settings = { ...base.settings, autoNext: true };
+    const s = keep(start(base, T0), T0 + 25 * MIN, 'x');
+    const nextEnd = T0 + 30 * MIN + params.autoNextDelayMs + 25 * MIN;
+    expect(planned(s, T0 + 26 * MIN)).toEqual([
+      { title: '休息完了', body: '下一顆自己開始了。', at: T0 + 30 * MIN },
+      { title: '響了。', body: '這顆熟了，回來收下。', at: nextEnd },
+    ]);
+    // 休息到點後、下一顆開始前那一下（還在待機）：只剩下一顆的到點
+    expect(planned(s, T0 + 30 * MIN + 1)).toEqual([
+      { title: '響了。', body: '這顆熟了，回來收下。', at: nextEnd },
     ]);
   });
 

@@ -68,6 +68,7 @@ export const setCloseTime = (state, closeTime) =>
 export const setSound = (state, sound) => withSettings(state, { sound: !!sound });
 export const setTilt = (state, tilt) => withSettings(state, { tilt: !!tilt });
 export const setShield = (state, shield) => withSettings(state, { shield: !!shield });
+export const setAutoNext = (state, autoNext) => withSettings(state, { autoNext: !!autoNext });
 /** 白噪音播哪一種、多大聲：只收刻度上的值（AG6）。 */
 export const setAmbience = (state, kind) =>
   params.ambience.kinds.includes(kind) ? withSettings(state, { ambience: kind }) : state;

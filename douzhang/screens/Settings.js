@@ -116,6 +116,7 @@ function rhythmFooter(settings) {
     if (settings.restShort === 'auto') lines.push(words.restShortAutoSub);
     if (settings.restLongEvery)
       lines.push(words.restLongSub(settings.restLongEvery, settings.restLongMinutes));
+    lines.push(words.autoNextSub); // AH8
   }
   return lines.join('\n');
 }
@@ -166,6 +167,12 @@ function RhythmSection({ settings, actions }) {
             label={words.restLongRow}
             value={longValue}
             onPress={() => setOpen('long')}
+          />
+        ) : null}
+        {timed ? (
+          <DomySettingsRow
+            label={words.autoNextRow}
+            toggle={{ value: !!settings.autoNext, onValueChange: actions.onSetAutoNext }}
           />
         ) : null}
       </DomySection>
