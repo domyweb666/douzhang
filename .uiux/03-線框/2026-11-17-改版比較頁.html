@@ -107,6 +107,17 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--accent); ou
 .blk b { font-weight: 700; }
 .blk .dur { float: right; opacity: .8; font-variant-numeric: tabular-nums; }
 .blk p { font-size: 10.5px; opacity: .85; margin-top: 2px; }
+.mweek { display: grid; grid-template-columns: repeat(7, 1fr); border-top: 1px solid var(--app-line); min-height: 52px; padding: 4px 0; }
+.mweek.flat { min-height: 0; }
+.mday { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.mday small { font-size: 11px; color: var(--app-sub); border-radius: 8px; padding: 0 5px; }
+.mday.on small { background: var(--app-soft); color: var(--app-strong); font-weight: 700; }
+.mdots { display: flex; flex-wrap: wrap; gap: 2px; justify-content: center; max-width: 30px; }
+.mdots i { width: 8px; height: 8px; border-radius: 50%; border: 1px solid #2B2329; }
+.vol { height: 6px; border-radius: 6px; background: #EFEAE2; overflow: hidden; }
+.vol i { display: block; height: 100%; width: 55%; background: var(--app-accent); border-radius: 6px; }
+.srow { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-top: 1px solid var(--app-line); }
+.srow:first-child { border-top: 0; }
 .card { background: var(--app-card); border-radius: 14px; padding: 10px 12px; }
 .nums { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .nums small { color: var(--app-sub); display: block; font-size: 11px; }
@@ -138,7 +149,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--accent); ou
 <div class="wrap">
   <header>
     <h1>番茄帳改版比較頁</h1>
-    <p class="lead">五題各選一個，選完把最下面那串字貼給我。標「建議」的是我會選的。手機畫面裡的紀錄都是示範資料，畫面是示意，字級與間距進 app 會照設計系統重排。</p>
+    <p class="lead">六題各選一個，選完把最下面那串字貼給我。標「建議」的是我會選的。手機畫面裡的紀錄都是示範資料，畫面是示意，字級與間距進 app 會照設計系統重排。</p>
   </header>
 
   <section class="q" id="q1">
@@ -215,14 +226,14 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--accent); ou
   <section class="q" id="q3">
     <div>
       <h2><span class="qno">3</span>番茄架的方塊樣式</h2>
-      <p class="lead">兩個選項都有日、2 日、週三種檢視，點畫面上方切換。短的番茄靠太近時改成左右並排，不再疊在一起（看星期四早上 9 點那兩顆 5 分鐘的）。</p>
+      <p class="lead">檢視照蒜日子那一套：天、3 天、週共用同一條時間軸，點畫面上方切換；時間重疊的並排、平分欄寬（看星期四早上 9 點那兩顆 5 分鐘的）。多一個月檢視：一格一天，裡面是那天收的番茄，沒番茄的週壓扁成一行。</p>
     </div>
     <div class="opts">
       <div class="opt" data-q="3" data-o="A">
         <div class="phone"><div class="scr" id="q3a"></div></div>
         <div class="opt-body">
           <h3>A　實心色塊</h3>
-          <p>整塊是標籤的顏色。週檢視最醒目，但日檢視裡字壓在濃色上，黃色那種要換深色字。</p>
+          <p>整塊是標籤的顏色。週檢視最醒目，但天檢視裡字壓在濃色上，黃色那種要換深色字。</p>
           <button type="button" class="pick">選 3A</button>
         </div>
       </div>
@@ -290,6 +301,39 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--accent); ou
           <h3>C　主畫面橫排</h3>
           <p>標籤直接排在開始鈕上面，左右滑。不用多點一下，但超過四個就要滑才看得到。</p>
           <button type="button" class="pick">選 5C</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="q" id="q6">
+    <div>
+      <h2><span class="qno">6</span>白噪音從哪裡開</h2>
+      <p class="lead">第一批兩種：雨、柴火，用捏捏史萊姆那兩條底（各 2 分鐘循環，Freesound 的 CC0 素材，授權紀錄在史萊姆專案裡）。計時中才播，響了就停。lofi 那首的來源沒有紀錄，查清楚前不放。</p>
+    </div>
+    <div class="opts">
+      <div class="opt" data-q="6" data-o="A">
+        <div class="phone"><div class="scr" id="q6a"></div></div>
+        <div class="opt-body">
+          <h3>A　計時畫面一顆鈕 <span class="rec">建議</span></h3>
+          <p>主畫面上一顆聲音鈕，點了開半頁選聲音和音量，當下就能換。記住上次選的。</p>
+          <button type="button" class="pick">選 6A</button>
+        </div>
+      </div>
+      <div class="opt" data-q="6" data-o="B">
+        <div class="phone"><div class="scr" id="q6b"></div></div>
+        <div class="opt-body">
+          <h3>B　跟著標籤</h3>
+          <p>每個標籤記自己的聲音，例如工作配雨、閱讀配柴火，開始就自動播。不用每次選，但要換得進標籤設定。</p>
+          <button type="button" class="pick">選 6B</button>
+        </div>
+      </div>
+      <div class="opt" data-q="6" data-o="C">
+        <div class="phone"><div class="scr" id="q6c"></div></div>
+        <div class="opt-body">
+          <h3>C　只放在設定</h3>
+          <p>設定裡選一種，全部番茄都用它。畫面最乾淨，但計時中想換要離開主畫面。</p>
+          <button type="button" class="pick">選 6C</button>
         </div>
       </div>
     </div>
@@ -465,8 +509,31 @@ function lanes(items, minH) {
   if (cluster.length) flush();
   return out;
 }
+/* 月檢視：2026 年 11 月，1 號是星期日，週一開頭；示範裡今天是 12 號，之後的日子還沒到 */
+function monthGrid() {
+  let html = '';
+  for (let w = 0; w < 6; w++) {
+    const days = DAYS.map((_, i) => { const d = w * 7 + i - 5; return d >= 1 && d <= 30 ? d : 0; });
+    const items = days.map((d, i) => {
+      if (!d || d > 12 || i >= 5) return [];
+      return d >= 9 ? S.filter((x) => x[0] === i) : S.filter((x) => x[0] === i % 4).filter((_, k) => (k + d) % 4 !== 0);
+    });
+    const busy = items.some((x) => x.length);
+    html += `<div class="mweek ${busy ? '' : 'flat'}">${days.map((d, i) => `<div class="mday ${d === 12 ? 'on' : ''}"><small>${d || ''}</small>${
+      busy ? `<div class="mdots">${items[i].map((x) => `<i style="background:${C[tagOf(x[3]).color]}"></i>`).join('')}</div>` : ''}</div>`).join('')}</div>`;
+  }
+  return html;
+}
+const calSeg = (view) => [['day', '天'], ['three', '3天'], ['week', '週'], ['month', '月']]
+  .map(([v, n]) => `<button type="button" data-view="${v}" class="${v === view ? 'on' : ''}" style="padding:3px 7px">${n}</button>`).join('');
 function drawCal(el, style, view) {
-  const cols = view === 'day' ? [TODAY] : view === 'two' ? [TODAY - 1, TODAY] : [0, 1, 2, 3, 4, 5, 6];
+  if (view === 'month') {
+    el.innerHTML = `<div class="row"><h4 style="font-size:14px;white-space:nowrap">2026年11月</h4><div class="seg">${calSeg(view)}</div></div>
+      <div class="week">${DAYS.map((n) => `<div>${n}</div>`).join('')}</div><div style="margin-top:6px">${monthGrid()}</div>${tabs('番茄架')}`;
+    el.querySelectorAll('[data-view]').forEach((b) => b.addEventListener('click', () => drawCal(el, style, b.dataset.view)));
+    return;
+  }
+  const cols = view === 'day' ? [TODAY] : view === 'three' ? [TODAY - 2, TODAY - 1, TODAY] : [0, 1, 2, 3, 4, 5, 6];
   const gutter = 28, W = 234 - gutter, colW = W / cols.length, minH = view === 'week' ? 7 : 20;
   let blocks = '';
   cols.forEach((d, ci) => {
@@ -479,7 +546,7 @@ function drawCal(el, style, view) {
       if (view !== 'week' && b.h >= 18) {
         const dur = view === 'day' && b.n === 1 ? `<span class="dur">${b.m} 分</span>` : '';
         inner = `${dur}<b>${b.tag.name}</b>`;
-        if (view === 'two' && b.h >= 34) inner += `<p>${b.m} 分</p>`;
+        if (view === 'three' && b.h >= 34) inner += `<p>${b.m} 分</p>`;
         if (view === 'day' && b.note && b.h >= 36) inner += `<p>${b.note}</p>`;
       }
       const pad = view === 'week' || b.h < 18 ? 'padding:0;' : '';
@@ -488,9 +555,8 @@ function drawCal(el, style, view) {
   });
   let hours = '';
   for (let h = H0; h <= H1; h++) hours += `<div class="hr" style="top:${(h - H0) * PPH}px"><span>${h}</span></div>`;
-  const title = view === 'day' ? '11月12日（四）' : view === 'two' ? '11月11–12日' : '11月9–15日';
-  const seg = [['day', '日'], ['two', '2日'], ['week', '週']].map(([v, n]) => `<button type="button" data-view="${v}" class="${v === view ? 'on' : ''}">${n}</button>`).join('');
-  el.innerHTML = `<div class="row"><h4 style="font-size:15px;white-space:nowrap">${title}</h4><div class="seg">${seg}</div></div>
+  const title = view === 'day' ? '11月12日（四）' : view === 'three' ? '11月10–12日' : '11月9–15日';
+  el.innerHTML = `<div class="row"><h4 style="font-size:14px;white-space:nowrap">${title}</h4><div class="seg">${calSeg(view)}</div></div>
     <div class="week">${DAYS.map((n, i) => `<div class="${cols.includes(i) && view !== 'week' ? 'on' : ''}">${n}<b>${FIRST + i}</b></div>`).join('')}</div>
     <div class="grid" style="height:${(H1 - H0) * PPH + 8}px;margin-top:14px">${hours}${blocks}</div>${tabs('番茄架')}`;
   el.querySelectorAll('[data-view]').forEach((b) => b.addEventListener('click', () => drawCal(el, style, b.dataset.view)));
@@ -565,12 +631,34 @@ function drawTags(id, kind, sel = 'focus') {
 }
 drawTags('q5a', 'A'); drawTags('q5b', 'B'); drawTags('q5c', 'C');
 
+/* ── 6 白噪音 ── */
+const soundCells = `<div class="cells" style="grid-template-columns:1fr 1fr 1fr">
+  <div class="cell" style="justify-content:center"><b>關</b></div>
+  <div class="cell on" style="justify-content:center"><b>雨</b></div>
+  <div class="cell" style="justify-content:center"><b>柴火</b></div></div>`;
+document.getElementById('q6a').innerHTML = `<div class="center" style="gap:6px"><span class="chip">${tomato(C.red, 14, false)}專注・25 分</span>
+  <div class="bigtime">15:30</div><span class="chip" style="background:#fff;color:#1F1A22">♪ 雨</span></div>${pile()}<div class="dim"></div>
+  <div class="sheet"><h4 style="font-size:19px">背景音</h4>${soundCells}
+  <div class="row"><span class="sub">音量</span><div class="vol" style="flex:1"><i></i></div></div><div class="btn">好</div></div>`;
+document.getElementById('q6b').innerHTML = `<h4>設定</h4><div class="dim"></div>
+  <div class="sheet"><h4 style="font-size:19px">工作</h4>
+  <div class="note" style="border-style:solid;color:#1F1A22">工作</div>
+  <div class="tomgrid" style="justify-content:space-between">${['red', 'orange', 'yellow', 'purple', 'pink'].map((c) => tomato(C[c], 30)).join('')}</div>
+  <div><div class="srow"><b>長度</b><span class="sub">50 分 ›</span></div><div class="srow"><b>背景音</b><span class="sub">雨 ›</span></div></div>
+  <div class="btn">好</div></div>`;
+document.getElementById('q6c').innerHTML = `<h4>設定</h4>
+  <div style="display:flex;flex-direction:column;gap:6px;margin-top:14px"><b>提醒</b>
+  <div class="card"><div class="srow"><span>到點通知</span><span class="sub">開著</span></div><div class="srow"><span>鈴聲</span><span class="sub">開</span></div></div>
+  <b style="margin-top:8px">背景音</b>
+  <div class="card"><div class="srow"><span>計時中播放</span><span class="sub">雨 ›</span></div>
+  <div class="srow"><span>音量</span><div class="vol" style="width:110px"><i></i></div></div></div></div>${tabs('設定')}`;
+
 /* ── 作答列 ── */
 const picks = {};
 try { Object.assign(picks, JSON.parse(localStorage.getItem('picks') || '{}')); } catch (e) {}
 function showPicks() {
   document.querySelectorAll('.opt').forEach((o) => o.classList.toggle('selected', picks[o.dataset.q] === o.dataset.o));
-  document.getElementById('ans').textContent = [1, 2, 3, 4, 5].map((q) => `${q}${picks[q] || '？'}`).join(' ');
+  document.getElementById('ans').textContent = [1, 2, 3, 4, 5, 6].map((q) => `${q}${picks[q] || '？'}`).join(' ');
 }
 document.querySelectorAll('.pick').forEach((b) => b.addEventListener('click', () => {
   const o = b.closest('.opt');
