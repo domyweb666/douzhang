@@ -322,7 +322,6 @@ function useDouzhang() {
   const [state, setState] = useState(null); // null＝還在讀檔
   const [saveFailed, setSaveFailed] = useState(false);
   const [unreadable, setUnreadable] = useState(false); // 本機檔讀不懂：先不覆蓋（I1），只有匯入或清空能換掉
-  const [moment, setMoment] = useState(null); // 'cheer'｜null：剛收下一顆，火柴人還沒演過（Y1；不存檔，重開就沒有）
   const arm = useArm();
   const stateRef = useRef(null);
   useEffect(() => {
@@ -388,13 +387,12 @@ function useDouzhang() {
   if (!state) return null;
   // 休息到點沒按也回待機：每一拍在 render 時把過期的休息收掉，下一次動作才存回去
   const live = settle(state, now);
-  const actions = makeActions(live, act, commit, { setNotif, setMoment });
+  const actions = makeActions(live, act, commit, setNotif);
   const view = { ...live, todayKey: dayKey(now) }; // 畫面要知道「今天」是哪一天（估過的事只看今天）
   return {
     live: view,
     now,
     phase: phaseOf(live, now),
-    moment,
     saveFailed,
     unreadable,
     notif,
@@ -404,7 +402,7 @@ function useDouzhang() {
 }
 
 /** 畫面拿到的動作：純函式算新狀態，act 會先看按下那一刻的時鐘，commit 不需要時鐘。 */
-function makeActions(live, act, commit, { setNotif, setMoment }) {
+function makeActions(live, act, commit, setNotif) {
   return {
     onStart: async (opts) => {
       // 只有第一次（還沒問過）才會真的跳框；問不到也照樣開始（核心不靠通知）
@@ -415,13 +413,9 @@ function makeActions(live, act, commit, { setNotif, setMoment }) {
         ok = false;
       }
       setNotif(ok ? 'granted' : 'denied');
-      setMoment(null); // 沒演到的慶祝不留到下一顆
       act((t) => start(live, t, opts));
     },
-    onKeep: (text) => {
-      setMoment('cheer');
-      act((t) => keep(live, t, text));
-    },
+    onKeep: (text) => act((t) => keep(live, t, text)),
     onBackFromRest: () => commit(backFromRest(live)),
     onFlow: (minutes) => act((t) => flow(live, t, minutes)),
     onDraft: (text) => commit(setDraft(live, text)), // 每個字都存：殺掉再開草稿才在
@@ -458,7 +452,6 @@ function makeActions(live, act, commit, { setNotif, setMoment }) {
       return true;
     },
     onSetTypeColor: (id, color) => commit(setTypeColor(live, id, color)),
-    onMascotDone: () => setMoment(null), // 火柴人演完了（Y1）
   };
 }
 
@@ -491,7 +484,7 @@ function Main() {
   const zen = useZen(zenKeyOf(dz));
   const handoff = useZenHandoff(zen, () => setPage(PAGE.home));
   if (!dz) return <View style={{ flex: 1, backgroundColor: T.color.background }} />;
-  const { live, now, phase, moment, saveFailed, unreadable, notif, actions, backup } = dz;
+  const { live, now, phase, saveFailed, unreadable, notif, actions, backup } = dz;
   const zenType = zen.on ? typeOf(live, live.current.typeId) : null;
   if (zen.on)
     return (
@@ -523,7 +516,6 @@ function Main() {
               state={live}
               now={now}
               wiped={backup.wiped}
-              active={page === PAGE.rack}
               onSettings={() => setPage(PAGE.settings)}
               onBack={() => setPage(PAGE.home)}
             />
@@ -531,7 +523,6 @@ function Main() {
               state={live}
               phase={phase}
               now={now}
-              moment={page === PAGE.home ? moment : null} // 火柴人只在主畫面是眼前那頁時演（Y1）
               jarSeen={jarSeen}
               actions={actions}
               zen={handoff.forHome}

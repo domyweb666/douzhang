@@ -35,20 +35,10 @@ export const CharacterColors = {
     unripe: '#9CC25A', // 計時中還沒熟的青番茄（2026-11-17 AG2）；2026-11-18 AH1 起直接變成標籤色，不經過黃
     vine: '#4E8B3A', // 掛著它的那段藤
     leaf: '#6FAE52',
-    ink: '#2B2329', // 外框、蒂、眼睛、嘴（跟火柴人的 ink 同色）
+    ink: '#2B2329', // 外框、蒂、眼睛、嘴
     shine: '#FFFFFF', // 左上那道亮面與兩頰，透明度是圖的一部分，在 ui/Tomato.js
   },
-  // 番茄火柴人的頭套（2026-11-15 Y1）：紅與綠取自當時的 tomato-red.webp，淺深色同一組。
-  // 身體線條不在這裡：用介面的主要文字色，深色模式才看得到。
-  mascot: {
-    tomato: '#E33734',
-    tomatoShine: '#F0665E', // 左上那道亮面
-    tomatoRim: '#B32A28', // 臉外面那一圈
-    calyx: '#98C345',
-    stem: '#7BA637',
-    face: '#FFFFFF',
-    ink: '#2B2329', // 眼睛、眉毛、嘴、臉的框（畫在白臉上，不隨深淺色變）
-  },
+  // 番茄火柴人（2026-11-15 Y1）的頭套色已刪：2026-11-18 AH4 多米「火柴人整個拿掉」
 };
 
 /** 在元件裡用：const T = useTokens(); 然後 T.color.accent …（要在 DomyThemeProvider 裡面） */
@@ -193,7 +183,6 @@ export function makeTokens(c, dark = false, reduceMotion = false) {
       blockIcon: 16, // 時間軸裡的小番茄圖
       colorSwatch: 36, // 設定選番茄色的那五顆（W1）
       selectRing: 2, // 選中那顆外面的圈
-      mascotHeight: 148, // 番茄火柴人畫多高（Y1）
       zenSeam: 2, // 聚焦模式每張牌中間那道橫縫
       // 計時中長大的番茄（AG2）與慶祝畫面（AG3）
       growSize: 132, // 全熟那一刻畫多大
@@ -203,7 +192,6 @@ export function makeTokens(c, dark = false, reduceMotion = false) {
       celebrateTomato: 132, // 慶祝畫面那顆
       celebrateDot: 26, // 「今天收了幾顆」那排的小番茄
       celebrateDotNew: 34, // 那排最後、剛收的這顆
-      mascotMin: 88, // 位置不到這麼高就不畫（小手機、最大字級），縮太小看起來像壞掉
       // 計時中與休息「番茄就是時鐘」（2026-11-18 AH2，比較頁 C）：一圈進度環圍著那顆番茄
       ringSize: 264, // 進度環最大直徑
       ringStroke: 10, // 環多粗
@@ -248,17 +236,6 @@ export function makeTokens(c, dark = false, reduceMotion = false) {
       sheetInReduced: { durationMs: 150, fromY: 0 }, // 只淡入
       cardPress: { scale: 0.985, durationMs: 150 }, // 按下卡片
       cardPressReduced: { scale: 1, durationMs: 0 },
-      // 番茄火柴人（Y1）：每個動作播一次多久；blendMs 是從站姿帶進動作、再帶回站姿各花多久（動作庫 0.28 秒）。
-      // 慶祝是兩跳（一跳 0.72 秒，要是整數倍才會停在地上）。減少動態時不播，只畫站姿。
-      // landWaitMs：慶祝等番茄落地；今天滿 40 顆不再掉新的時等不到，過這麼久就直接慶祝。
-      mascot: {
-        blendMs: 280,
-        cheerMs: 1440,
-        bowMs: 2000,
-        waveMs: 1600,
-        landWaitMs: 1800,
-        shadowOpacity: 0.16,
-      },
       pageSwitch: { durationMs: 380 }, // 原型左右滑的時長；導覽改按鈕後若用推進，交系統動畫
     },
     // 觸覺：事件命名，一事件一觸覺。expo-haptics API 查證 2026-10-31

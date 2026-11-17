@@ -33,7 +33,7 @@ jest.mock(
   () => require('react-native-safe-area-context/jest/mock').default,
 );
 
-// 火柴人的動畫、落地的等待都用假時鐘：畫完就丟，不讓它們在測試結束後還在跑
+// 畫面裡的計時器（罐子、提示）用假時鐘：畫完就丟，不讓它們在測試結束後還在跑
 jest.useFakeTimers();
 afterEach(() => jest.clearAllTimers());
 
@@ -140,13 +140,11 @@ describe('番茄架', () => {
 
   test('整頁：有紀錄時有行事曆／分析的切換；完全沒紀錄時是空狀態', async () => {
     const s = sample();
-    const page = await draw(<Rack state={s} now={NOW} active onSettings={noop} onBack={noop} />);
+    const page = await draw(<Rack state={s} now={NOW} onSettings={noop} onBack={noop} />);
     expect(page).toContain('行事曆');
     expect(page).toContain('3 天');
     const empty = { ...blank(), todayKey: dayKey(NOW) };
-    const none = await draw(
-      <Rack state={empty} now={NOW} active onSettings={noop} onBack={noop} />,
-    );
+    const none = await draw(<Rack state={empty} now={NOW} onSettings={noop} onBack={noop} />);
     expect(none).toContain('第一顆響完');
     expect(none).not.toContain('行事曆');
   });

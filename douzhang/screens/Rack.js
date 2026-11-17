@@ -14,7 +14,6 @@ import { RANGE } from '../core/stats';
 import { TextButton } from '../ui/TextButton';
 import { PageTitle } from '../ui/PageTitle';
 import { Segmented } from '../ui/Segmented';
-import { Mascot } from '../ui/Mascot';
 import { Timeline } from '../ui/Timeline';
 import { MonthGrid } from '../ui/MonthGrid';
 import { StatsView } from '../ui/Stats';
@@ -39,10 +38,9 @@ const RANGES = [
 
 /**
  * 空狀態：第一次是「第一顆響完…」＋回去開始一顆；剛清空是「全部清掉了…」＋去設定匯入（06 豆棚）。
- * Y1：上面站著番茄火柴人，滑到這頁時揮一次手（剛清空時只站著，不揮）。
- * 排版照 DomyEmptyState（它的圖示位是固定大小的圓，放不下一整個人，所以這裡自己排）。
+ * 2026-11-18 AH4：上面的番茄火柴人拿掉（多米「火柴人整個拿掉」），只剩一句話與一顆鈕。
  */
-function Empty({ wiped, active, onBack, onSettings }) {
+function Empty({ wiped, onBack, onSettings }) {
   const T = useTokens();
   return (
     <View
@@ -53,7 +51,6 @@ function Empty({ wiped, active, onBack, onSettings }) {
         paddingHorizontal: T.space.section,
       }}
     >
-      <Mascot action="wave" play={active && !wiped} height={T.shape.mascotHeight} />
       <Text style={{ ...T.font.title3, color: T.color.textPrimary, textAlign: 'center' }}>
         {wiped ? words.wipedLine : words.rackEmpty}
       </Text>
@@ -215,7 +212,7 @@ function CalendarBody({ state, now, view, selected, onPickDay, onOpenDay }) {
   );
 }
 
-export function Rack({ state, now, wiped, active, onSettings, onBack }) {
+export function Rack({ state, now, wiped, onSettings, onBack }) {
   const T = useTokens();
   const clearance = useTabBarClearance(); // 內容停在分頁列上面
   const [mode, setMode] = useState(MODE.calendar);
@@ -240,7 +237,7 @@ export function Rack({ state, now, wiped, active, onSettings, onBack }) {
         {empty ? null : <Segmented options={MODES} value={mode} onChange={setMode} />}
       </View>
       {empty ? (
-        <Empty wiped={wiped} active={active} onBack={onBack} onSettings={onSettings} />
+        <Empty wiped={wiped} onBack={onBack} onSettings={onSettings} />
       ) : (
         <>
           <Segmented
