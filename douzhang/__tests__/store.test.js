@@ -36,12 +36,14 @@ describe('全新安裝', () => {
     expect(state.days).toEqual({});
   });
 
-  test('空的狀態檔是 PWA 的 blank() 七欄加 taskId；設定多短休息、長休息三欄（2026-11-17 設定 A）與擋 app 開關（AF1）', () => {
+  test('空的狀態檔是 PWA 的 blank() 七欄加 taskId；設定多短休息、長休息三欄（設定 A）、擋 app 開關（AF1）、白噪音兩欄（AG6）', () => {
     expect(Object.keys(blank()).sort()).toEqual(
       ['clue', 'current', 'days', 'lastLine', 'planted', 'settings', 'taskId', 'v'].sort(),
     );
     expect(Object.keys(blank().settings).sort()).toEqual(
       [
+        'ambience',
+        'ambienceVolume',
         'closeTime',
         'demo',
         'restLongEvery',

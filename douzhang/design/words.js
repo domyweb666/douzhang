@@ -203,6 +203,13 @@ export const words = {
   rackLeafTitle: '今天不適合番茄？',
   rackLeafSub: '整天在回訊息、開會，掛一片葉子',
 
+  // 白噪音（2026-11-17 AG6）：主畫面那顆鈕與它開的半頁
+  ambienceTitle: '背景音',
+  ambienceKinds: { off: '關', rain: '雨', fire: '柴火' },
+  ambienceChip: (kind) => `♪ ${kind === 'off' ? '背景音' : words.ambienceKinds[kind]}`,
+  ambienceVolumeCap: '音量',
+  ambienceLevels: { low: '小', mid: '中', high: '大' },
+  ambienceSub: '計時中才播，響了就停。鎖屏、切到別的 app 也會繼續播。',
   // 番茄架改版（2026-11-17 AG4、AG5）：上方切行事曆｜分析；行事曆有天／3 天／週／月，分析有日／週／月
   rackModeCalendar: '行事曆',
   rackModeStats: '分析',

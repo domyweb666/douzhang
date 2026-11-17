@@ -68,6 +68,11 @@ export const setCloseTime = (state, closeTime) =>
 export const setSound = (state, sound) => withSettings(state, { sound: !!sound });
 export const setTilt = (state, tilt) => withSettings(state, { tilt: !!tilt });
 export const setShield = (state, shield) => withSettings(state, { shield: !!shield });
+/** 白噪音播哪一種、多大聲：只收刻度上的值（AG6）。 */
+export const setAmbience = (state, kind) =>
+  params.ambience.kinds.includes(kind) ? withSettings(state, { ambience: kind }) : state;
+export const setAmbienceVolume = (state, level) =>
+  params.ambience.levels.includes(level) ? withSettings(state, { ambienceVolume: level }) : state;
 
 /** 換這種類型的番茄色（W1）；不是五色之一就不換。 */
 export function setTypeColor(state, id, color) {

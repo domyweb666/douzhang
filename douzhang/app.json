@@ -10,7 +10,8 @@
       "supportsTablet": false,
       "bundleIdentifier": "org.domyweb.douzhang",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIBackgroundModes": ["audio"]
       },
       "entitlements": {
         "com.apple.developer.family-controls": true

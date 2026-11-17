@@ -15,6 +15,7 @@ import { Clock } from '../ui/Clock';
 import { mmss } from '../ui/useNow';
 import { EndSheet, NoteSheet, VoidSheet } from '../ui/FocusSheets';
 import { TagPickSheet } from '../ui/TagSheets';
+import { SoundSheet } from '../ui/SoundSheet';
 import { Jar } from '../ui/Jar';
 import { TextButton } from '../ui/TextButton';
 import { Mascot } from '../ui/Mascot';
@@ -92,17 +93,18 @@ function TimeBlock({ phase, current, now, type }) {
 
 /**
  * 計時中大時間下面那兩顆：「記一筆」（U6：念頭與有人找合成一顆，半頁裡再選；記過幾筆就在後面帶數字）
- * 與「聚焦模式」（2026-11-17：換成橫向的整頁時鐘）。
+ * 與「聚焦模式」（2026-11-17：換成橫向的整頁時鐘），再加白噪音那顆（AG6）。放不下會換行。
  */
-function FocusChips({ current, onNote, onZen }) {
+function FocusChips({ current, sound, onNote, onZen, onSound }) {
   const T = useTokens();
   const count = (current.notes?.length || 0) + (current.pings?.length || 0);
   return (
     <View
       style={{
         flexDirection: 'row',
+        flexWrap: 'wrap',
         justifyContent: 'center',
-        gap: T.space.m,
+        gap: T.space.s,
         marginTop: T.space.m,
       }}
     >
@@ -113,6 +115,7 @@ function FocusChips({ current, onNote, onZen }) {
         onPress={onNote}
       />
       <DomyButton variant="secondary" size="compact" title={words.zenEnter} onPress={onZen} />
+      <DomyButton variant="secondary" size="compact" title={sound} onPress={onSound} />
     </View>
   );
 }
@@ -200,7 +203,7 @@ function MiddleSpot({ phase, current, now, color, moment, landed, onMascotDone }
 }
 
 /**
- * 主畫面現在開著哪張半頁：null｜'note'｜'end'｜'void'｜'tag'。
+ * 主畫面現在開著哪張半頁：null｜'note'｜'end'｜'void'｜'tag'｜'sound'。
  * initial：從聚焦模式按「記一筆」「結束這顆」回來時是 'note'｜'end'，掛上來就直接開那張；
  * 開了就告訴殼（onOpened）把它清掉，下一顆不會自己跳出來。
  * endEarly：打開「結束這顆」那一刻固定的判斷——那時開始不到五分鐘嗎。
@@ -244,6 +247,7 @@ export function Home({ state, phase, now, moment, jarSeen, actions, zen }) {
   const focus = phase === PHASE.focus;
   // 待機看的是選中的標籤；計時中、休息看的是這顆開始時的標籤（中途去設定改選別的也不會變）
   const type = typeOf(state, idle ? state.settings.typeId : state.current.typeId);
+  const sound = words.ambienceChip(state.settings.ambience); // 白噪音那顆鈕上的字：選了哪一種（AG6）
 
   // 前景層 box-none：空白處的點擊穿過去給罐子（點了番茄會彈），按鈕照常按。
   return (
@@ -252,8 +256,23 @@ export function Home({ state, phase, now, moment, jarSeen, actions, zen }) {
       <View style={{ flex: 1 }} pointerEvents="box-none">
         <TagChip type={type} onPress={idle ? () => setSheet('tag') : undefined} />
         <TimeBlock phase={phase} current={state.current} now={now} type={type} />
+        {idle ? (
+          <DomyButton
+            variant="secondary"
+            size="compact"
+            title={sound}
+            onPress={() => setSheet('sound')}
+            style={{ alignSelf: 'center', marginTop: T.space.m }}
+          />
+        ) : null}
         {focus ? (
-          <FocusChips current={state.current} onNote={() => setSheet('note')} onZen={zen.onEnter} />
+          <FocusChips
+            current={state.current}
+            sound={sound}
+            onNote={() => setSheet('note')}
+            onZen={zen.onEnter}
+            onSound={() => setSheet('sound')}
+          />
         ) : null}
         <MiddleSpot
           phase={phase}
@@ -274,12 +293,31 @@ export function Home({ state, phase, now, moment, jarSeen, actions, zen }) {
         />
         <View style={{ height: T.shape.pileRoom + clearance }} pointerEvents="none" />
       </View>
+      <HomeSheets
+        phase={phase}
+        sheet={sheet}
+        setSheet={setSheet}
+        state={state}
+        early={endEarly}
+        actions={actions}
+      />
+    </View>
+  );
+}
+
+/** 主畫面的半頁都掛在這裡：計時中的三張（記一筆、結束、作廢）、待機的標籤、兩邊都有的白噪音。休息時沒有半頁。 */
+function HomeSheets({ phase, sheet, setSheet, state, early, actions }) {
+  const idle = phase === PHASE.idle;
+  const focus = phase === PHASE.focus;
+  const close = () => setSheet(null);
+  return (
+    <>
       {focus ? (
         <FocusSheetHost
           sheet={sheet}
           setSheet={setSheet}
           current={state.current}
-          early={endEarly}
+          early={early}
           onJot={actions.onJot}
           onDoneEarly={actions.onDoneEarly}
           onVoid={actions.onVoid}
@@ -291,10 +329,19 @@ export function Home({ state, phase, now, moment, jarSeen, actions, zen }) {
           visible={sheet === 'tag'}
           settings={state.settings}
           actions={actions}
-          onClose={() => setSheet(null)}
+          onClose={close}
         />
       ) : null}
-    </View>
+      {idle || focus ? (
+        <SoundSheet
+          visible={sheet === 'sound'}
+          preview={idle} // 待機時邊選邊聽；計時中本來就在播
+          settings={state.settings}
+          actions={actions}
+          onClose={close}
+        />
+      ) : null}
+    </>
   );
 }
 

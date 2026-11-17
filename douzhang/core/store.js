@@ -36,6 +36,9 @@ export function blank() {
       restLongEvery: 4, // 今天每收下幾顆來一次長休息；0＝關
       restLongMinutes: 15,
       shield: false, // AF1 計時中擋住其他 app；選了哪些 app 存在原生那邊，不在這個檔
+      // AG6 白噪音：播哪一種（'off' 不播）與音量三段，刻度在 params.ambience
+      ambience: 'off',
+      ambienceVolume: 'mid',
     },
     current: null,
     clue: null,
@@ -83,6 +86,8 @@ function normalizeSettings(s) {
     restLongEvery: onScale(params.restLongEveryOptions, s.restLongEvery, base.restLongEvery),
     restLongMinutes: onScale(params.restLongMinuteOptions, s.restLongMinutes, base.restLongMinutes),
     shield: pick(s.shield, base.shield, 'boolean'),
+    ambience: onScale(params.ambience.kinds, s.ambience, base.ambience),
+    ambienceVolume: onScale(params.ambience.levels, s.ambienceVolume, base.ambienceVolume),
   };
   if (!settings.types.some((t) => t.id === settings.typeId)) settings.typeId = settings.types[0].id;
   return settings;

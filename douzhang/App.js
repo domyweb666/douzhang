@@ -35,6 +35,7 @@ import {
   pickImport,
   removeAutoBackups,
 } from './core/backup';
+import { ambienceFor, applyAmbience } from './core/ambience';
 import {
   applyShield,
   authorizeShield,
@@ -45,6 +46,8 @@ import {
 import {
   addType,
   pickType,
+  setAmbience,
+  setAmbienceVolume,
   removeType,
   renameType,
   setRestLongEvery,
@@ -374,6 +377,14 @@ function useDouzhang() {
     if (shielded !== null) applyShield(shielded);
   }, [shielded]);
 
+  // 白噪音也跟著狀態走（AG6）：這顆還在跑才播設定選的那種，響了、收下、作廢就停；計時中換種類或音量當下生效。
+  // 在背景播的時候 app 還醒著、時鐘照走，所以到點那一刻聲音會自己停，上面的擋板也會跟著解開。
+  const ambience = state ? ambienceFor(state, now) : null;
+  const ambienceLevel = state ? state.settings.ambienceVolume : null;
+  useEffect(() => {
+    if (ambience !== null) applyAmbience(ambience, ambienceLevel);
+  }, [ambience, ambienceLevel]);
+
   if (!state) return null;
   // 休息到點沒按也回待機：每一拍在 render 時把過期的休息收掉，下一次動作才存回去
   const live = settle(state, now);
@@ -431,6 +442,9 @@ function makeActions(live, act, commit, { setNotif, setMoment }) {
     onSetSound: (on) => commit(setSound(live, on)),
     onSetTilt: (on) => commit(setTilt(live, on)),
     onSetTestMode: (on) => commit(setTestMode(live, on)),
+    // 白噪音（AG6）
+    onSetAmbience: (kind) => commit(setAmbience(live, kind)),
+    onSetAmbienceVolume: (level) => commit(setAmbienceVolume(live, level)),
     // 擋 app（AF1）：兩個都回「有沒有授權」，設定頁靠它決定要不要寫那一行
     onSetShield: async (on) => {
       if (on && !(await authorizeShield())) return false; // 要打開才問；不允許就不開

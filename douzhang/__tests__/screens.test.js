@@ -22,6 +22,11 @@ import { Home } from '../screens/Home';
 
 // 罐子要加速度計、音效與每幀重畫，跟這裡要驗的無關；鍵盤與安全區在測試環境沒有原生那一半
 jest.mock('../ui/Jar', () => ({ Jar: () => null }));
+// 白噪音半頁會帶進 expo-audio，測試環境沒有原生那一半
+jest.mock('expo-audio', () => ({
+  createAudioPlayer: jest.fn(),
+  setAudioModeAsync: jest.fn(() => Promise.resolve()),
+}));
 jest.mock(
   'react-native-safe-area-context',
   () => require('react-native-safe-area-context/jest/mock').default,
@@ -164,6 +169,7 @@ describe('主畫面與慶祝畫面', () => {
     expect(out).toContain('專注・25 分 ›');
     expect(out).toContain('25:00');
     expect(out).toContain('開始・25 分');
+    expect(out).toContain('♪ 背景音');
   });
 
   test('計時中：倒數、記一筆、聚焦模式、結束這顆；休息：回來了', async () => {

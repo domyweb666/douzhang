@@ -6,11 +6,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, Pressable, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { DeviceMotion } from 'expo-sensors';
-import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
+import { createAudioPlayer } from 'expo-audio';
 import { Token } from '../design/Tokens';
 import { MS_PER_SECOND, jarParams, params } from '../design/params';
 import { words } from '../design/words';
 import { addBody, makeWorld, radiusFor, randomLean, seed, step, tapAt } from '../core/jarPhysics';
+import { sfxAudioMode } from '../core/ambience';
 import { Tomato } from './Tomato';
 
 const SFX = {
@@ -48,7 +49,7 @@ function useAudio() {
   const players = useRef(null);
   useEffect(() => {
     try {
-      setAudioModeAsync({ playsInSilentMode: false }).catch(() => {});
+      sfxAudioMode(); // 音訊模式全 app 一份，由 core/ambience.js 管：白噪音在播時不能被這裡蓋掉
       players.current = { pop: createAudioPlayer(SFX.pop), hits: SFX.hits.map(createAudioPlayer) };
     } catch {
       players.current = null;
