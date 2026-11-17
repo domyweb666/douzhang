@@ -1,46 +1,67 @@
-# HANDOFF（2026-11-01 深夜，正式版 22 片機器層全部做完，等多米整 app 實測）
+# HANDOFF（2026-11-17 18:46）：四樣做完等多米實測；下一件是「計時中擋住其他 app」，還沒動工
 
 > 給下一個新會話的交接便條。先向多米摘要「上次做完什麼、卡在哪」，等他點頭再動工。
-> 真相源：`.vibe/切片帳本.md`（進度、每片覆誦、四次審查員退回與修法）、`.vibe/state.json`、`.vibe/規矩檔.md`、`.vibe/黃金行為.md`（1–66 條）、`.vibe/操作清單-待驗.md`（最上面「整 app 批次驗收」）。
+> 真相源：`.vibe/切片帳本.md`「進行中」最上面三節（2026-11-17 的四樣、螢幕使用時間 API）、`.vibe/規矩檔.md`、`.vibe/操作清單-待驗.md` 最上面那節、`.vibe/FamilyControls-申請稿.md`。
+> 上一份 HANDOFF 是 11-01 的，中間 U～AB 各輪沒更新過便條，那段歷史看帳本。
 
 ## 一句話現況
-豆帳正式版（Expo SDK 58／RN，`douzhang/`）A 到 H 共 22 片，機器層全部做完。分支 `uiux-graybox`，工作樹乾淨，main 未動、未 push。測試 125 條（124 過、1 跳過）、eslint 0 錯、prettier 全過、token-check 全放行。B＋C、D＋E、F、G 四次乾淨審查員都退回、都修了。**A4 以後的畫面沒有一個在手機上開過**，電腦渲染不了 RN。
+番茄帳（原豆帳，`douzhang/`，Expo SDK 58／RN 0.88）分支 `uiux-graybox`，工作樹乾淨，**比遠端多 9 筆 commit，沒推**。TestFlight 上是 1.0.0 (3)，今天做的都不在裡面。jest 176 過 1 跳過、eslint 0 錯、prettier 過、`npx expo export --platform ios` 打包過。
 
-## 現在在等什麼
-多米照 `.vibe/操作清單-待驗.md` 最上面那節走一遍（A→H，約 50 步；G6–G10 是 🔴 匯入與清空，要先用測試資料、PWA 備份檔先複製一份再拿複製的匯入）。他回報哪一步怪，新會話就從那一步修。清單最後有五個「要你決定的」：番茄這個字要不要統一、收工時間只有 17–22 六個整點夠不夠、週收據要不要加兩區、要不要現在裝 expo-splash-screen、收工草稿要不要存。
+## 這次完成了什麼（2026-11-17）
+- 出比較頁（https://claude.ai/artifact/6QWSeuPSno9rypGYqZpH1q），多米選：體型 A、聚焦 A、設定 A、強制接管用螢幕使用時間 API。
+- 新 icon：`douzhang/assets/icon.png` 換成多米給的番茄鬧鐘，原始檔 `assets/icon.svg`（2182f9c）。
+- AC1 體型 A：番茄大小上下限 0.7–1.75 倍 → 0.5–1.9 倍（3874e36）。
+- AD1 設定 A：節奏區多「短休息」「長休息」兩列；`store.restAfter` 依那天第幾顆算短或長（3874e36）。
+- AE1 聚焦模式 A：計時中按鈕或橫放手機，整頁轉橫向翻牌時鐘（a4bfaea）。新檔 `screens/Focus.js`、`core/posture.js`；新套件 `expo-screen-orientation`、`expo-keep-awake`；`app.json` 的 orientation 改 default。
+- 帳本、黃金行為 98–109、驗收清單、詞彙表、錯誤日誌兩條都補了（33e1511）。
+- Family Controls 權限：多米按了 Apple 的「Get Entitlement」。表單已改版成整個帳號按一次，沒有 bundle ID 與用途說明。多米截圖 `org.domyweb.douzhang` 的 Capabilities，「Family Controls (Distribution)」已在清單裡、可以勾。
 
-## 新會話第一件事
-1. 讀這份與帳本「進行中」最上面幾節。向多米摘要一句：「機器層 22 片都做完了，等你照清單實測；你回報哪裡怪我就從那裡修。」
-2. 多米回報後：每個「不過」當一個小修，修完跑 `npm test`、`npx eslint .`、token-check，commit `[機器存檔點] 實測修正：…`，錯誤日誌記一條。
-3. 全部過了才進下一站：vibe-security-gate 階段 C（`.vibe/安全標準.md` 全面自查，S3、I1、P4 任一紅就是未通過）→ ship-check。
+## 還沒做完／待決定
+- **今天四樣（icon、體型、休息設定、聚焦模式）在手機與模擬器上一次都沒開過。** 驗收步驟在 `.vibe/操作清單-待驗.md` 最上面（AC1–AC2、AD1–AD6、AE1–AE12、IC1）。Expo Go 能看聚焦模式；icon 要新 build。橫放偵測只有真機能看。
+- 三個要多米決定的（清單那節最下面）：長休息預設開還是關（現在開，每 4 顆・15 分）；新 icon 深藍綠配紅、app 內還是茄紫，要不要動配色；橫放自動進聚焦要不要加開關。
+- 多米有沒有在 App ID 那頁勾「Family Controls (Distribution)」並按 Save：**不知道**，最後一次是我請他勾，他接著說要開新對話。開場先問。
+- 權限是不是真的生效：只看到清單可勾，沒有用 build 驗過簽章。
+- 「計時中擋住其他 app」：只查了做法，一行程式都沒寫。
 
-## 這個會話做了什麼（commit 由舊到新）
-- 96f343a B+C 審查員六點：任務只掛今天、作廢早停判斷在打開半頁那刻固定、`ui/SheetRow`、`Tokens.shape.hairline`。
-- 0478910 F1+F2 收工與葉子；4c375d4 F 審查員五點（招呼每次叫回來重算、只在待機）。
-- 42033ba D+E 審查員十點：最重要的是鈴響時豆罐卸載，收下後豆子不會掉；App 用 `jarSeen` ref 記住豆罐上次看到幾顆。
-- f6b25a7 G1 設定頁；30d1c90 G2–G4 匯出、匯入、清空（`core/backup.js`）；3841b6e H1+H2；最後一筆 G 審查員五點（`readRaw` 讀不到就不匯、通知三態、主畫面清空後那句）。
+## 關鍵決策（定下來的，別再爭論）
+- 體型 A、聚焦 A（翻牌）、設定 A（長度留在類型，不做全域番茄長度）。
+- 強制接管走螢幕使用時間 API，不做「離開 app 就作廢」，引導使用模式的教學半頁也不做了。
+- 擋 app 第一版的方向（多米看過建議、沒反對，但也沒逐條點頭，動工前覆誦一次）：設定加一列開關與選 app 的入口，預設關；開始一顆時蓋擋板；到點回到番茄帳、或結束／作廢時解開；擋板用系統預設的樣子；先只用主 app、不加擴充。
+- Family Controls 不用逐個 bundle ID 申請了（新版表單給整個帳號）。帳本裡「每個 bundle ID 填一次」是舊版做法。
+- 只 commit，不推、不打包。要出 TestFlight build 先問多米。
+
+## 下個會話最重要的檔案
+- `.vibe/規矩檔.md` ← 動工前必讀（AI 憲法、踩過的坑）
+- `.vibe/安全標準.md` ← **下一個會話必讀**。擋 app 會新增一個系統權限、一個社群原生套件，P1（只申請用得到的權限）、P4（第三方 SDK）要對一次
+- `.vibe/切片帳本.md` ← 「進行中」底下「螢幕使用時間 API」那節：查到的做法、還沒查清楚的、建議四步
+- `.vibe/FamilyControls-申請稿.md` ← 權限申請的紀錄與生效後要做的事
+- `.vibe/TestFlight-打包步驟.md`、`.github/workflows/testflight.yml` ← 打包流程（已用過 tf-1～tf-3，下一個 tag 是 tf-4）
+- `douzhang/App.js`（`useZen`、`makeActions`）、`douzhang/screens/Settings.js`、`douzhang/core/machine.js`（`start`、`keep`、`voidBean`）← 擋 app 要接的地方
+- `douzhang/app.json` ← 外掛與權限設定
+
+## 下一步從哪繼續
+1. 向多米摘要一句：「今天四樣做完沒驗；擋 app 還沒動工。」然後問兩件事：App ID 那頁勾了 Family Controls (Distribution) 並存檔了嗎；要先驗今天四樣，還是直接做擋 app。
+2. 多米說做擋 app：先不要寫功能，先確認四件事再覆誦計畫。
+   - `react-native-device-activity`（kingstinct，社群套件）在 Expo SDK 58／RN 0.88 上裝得起來、`npx expo prebuild --platform ios` 過不過。這台是 Windows，prebuild 可能要在 GitHub Actions 上才知道。
+   - 外掛能不能只加主 app、不加三個擴充（`.ActivityMonitor`、`.ShieldAction`、`.ShieldConfiguration`）；不行的話三個擴充的 App ID 都要請多米登記並勾同一個能力。
+   - 要不要 App Group。要的話請多米去 Identifiers 建一個（例如 `group.org.domyweb.douzhang`）並掛到 App ID。
+   - DeviceActivity 排程是不是最短 15 分鐘（我的印象，沒查證）。第一版的設計刻意不靠排程，就是為了避開它。
+3. 把這片寫進切片帳本（片名、套件名、要動的檔、覆誦），多米點頭後再裝套件。裝套件走 `npx expo install`，裝完重跑 `npm test` 與 `npx eslint .`。
+4. 這個功能 Expo Go 跑不了、多米沒有 Mac，**只能出 TestFlight build 在手機上驗**。打包前先問；打包流程要加 Family Controls 的 entitlement，簽章過了才算權限真的生效，過了去 `.vibe/FamilyControls-申請稿.md` 補一筆。
+5. 多米說先驗今天四樣：他回報哪一步怪就從那一步修，修完跑測試、eslint、token-check，commit `[機器存檔點] 實測修正：…`，錯誤日誌記一條。
 
 ## 踩到、下一個會話要知道的
-- `npx expo install` 這次直接成功（沒用 `--legacy-peer-deps`），裝完照樣重跑 test 與 eslint。
-- expo-file-system 58 是新版 API：`new File(Paths.cache, name)`、`file.create()`（已存在會丟錯）、`await file.write(text)`、`file.text()`、`Paths.document.list()`。舊的 `FileSystem.documentDirectory` 在 `expo-file-system/legacy`，不要混用。
-- App.js 結構：`useDouzhang()` 管狀態；動作在模組層 `makeActions(live, act, commit, { setNotif, setGreet })`；另有 `useGreeting`、`useNotificationStatus`、`useBackup`、`useArm` 四個 hook，都在 App.js 模組層。`replaceAll` 是匯入與清空專用（唯一准蓋掉讀不懂本機檔的路）。
-- 用 python 腳本改檔時：bash heredoc 裡的 python 有時會被 bash 解析壞，改成先把腳本寫到 scratchpad 再 `python 檔名` 跑比較穩；替換前先 assert 次數，子字串重複會中斷（腳本前半已寫入，要接著跑後半）。
-- 審查員一律派 general-purpose、背景跑，叫它用 `git show <commit>:<path>` 讀、不准動工作樹；要跑測試就自己開 `git worktree`。
+- 改檔腳本不要用 bash heredoc 跑 python（字串裡的反斜線會被吃掉，這次又中一次）。用 Write 把腳本寫到 scratchpad 再 `python 檔名`，替換前 assert 次數。
+- eslint 開了 React Compiler 那組規則：render 時不能讀 ref、不能改 props 傳進來的 ref。動畫值用 `useAnimatedValue()`；「只用一次的初始值」用一般 state 加回呼清掉。
+- 函式超過 80 行 eslint 會警告。`Main`、`Home` 現在都貼著上限，再加東西要先拆。
+- Team ID 不要寫進 repo（多米要求過不留個資）；要用時從記憶檔或請多米貼。
+- 聚焦模式的橫向鎖的是「兩邊都可以」；開著直向鎖定的人可能看到倒的時鐘，轉 180 度就正。這是代決，多米實測後可能要改。
+- `npx expo export --platform ios --output-dir <scratchpad>` 可以在 Windows 上確認 JS 打包得過，抓得到匯入錯誤，抓不到原生問題。
 
-## 沒做、記在帳本等多米的
-- 啟動畫面：SDK 58 iOS 要 `expo-splash-screen`（不在任何一片的套件清單）；Expo Go 用不到，上架前再裝。icon 還是範本。
-- Expo 打包時用 bundleIdentifier 自動加的 URL scheme，security-gate 階段 C 再看。
-- 收工半頁草稿不存；週收據沒有「每件事估 N／做 M」「再做一下次數」（PWA 也沒有）；減少動態時豆子沒有淡入（`beanDropReduced.fadeMs` 沒用到）、被點的豆不會亮一下。
-- `saveFailed` 會被下一次成功寫入蓋掉（審查員 A 的建議 3，還沒處理）。
-
-## 已定案、不要重問
-- 核心動詞「接」；方向 A／A；導覽是左右滑三頁（左番茄架、中主畫面、右設定，上面三個圓點；多米 2026-11-01 改，取代原本左上右上兩個字）；留白要多按「這顆不留話」；第一次寫完直接「開始這顆」。
-- 資料格式同 PWA 七欄加 `taskId`；AsyncStorage key `douzhang.v1`；匯入時 PWA 的 flow／bell／self 休息由 `store.normalizeCurrent` 轉。
-- 通知只問一次、只在第一次按開始；被拒只顯示一行；設定頁照三態。
-- 休息＝長度÷5 最少 3；拖超過休息長度直接待機；「我自己決定」的休息 `endAt: null`。
-- 物理數字從 Tokens.motion 讀；收工時間六個整點（`params.closeTimes`）。
-- 沒有 toast；沒有插圖。
-- 開發期長按「開始」1 秒＝測試顆 1 分；正式 build 沒有。
+## 這次會話的雜訊（別重新討論）
+- 舊版 Family Controls 表單的欄位、英文用途說明稿、「三個擴充要不要一起送」：表單改版後都用不到了。
+- 體型 B（分四級）、聚焦 B／C、設定 B：多米沒選。
+- 引導使用模式的教學半頁：被螢幕使用時間 API 取代。
 
 ## 怎麼跑
-開發：`cd E:\豆帳\douzhang; npx expo start --tunnel`（多米沒 Wi-Fi，手機走 4G 掃 QR）。測試：`npm test`。lint：`npx eslint .`。寫死檢查：在 `E:\豆帳` 跑 `node .vibe/hooks/token-check.js douzhang/<檔>`。
+開發：`cd E:\豆帳\douzhang; npx expo start --tunnel`（多米手機走 4G 掃 QR）。測試：`npm test`。lint：`npx eslint .`。寫死檢查：在 `E:\豆帳` 跑 `node .vibe/hooks/token-check.js douzhang/<檔>`。
