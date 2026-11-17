@@ -1,11 +1,11 @@
-# HANDOFF（2026-11-17 深夜）：換核心 AG1–AG5 機器層做完、手機沒看過；白噪音還沒做；擋 app 做完沒打包
+# HANDOFF（2026-11-17 深夜）：換核心 AG1–AG6 機器層全做完、手機一次都沒看過；擋 app 做完沒打包
 
 > 給下一個新會話的交接便條。先向多米摘要「上次做完什麼、卡在哪」，等他點頭再動工。
 > 真相源：`.vibe/產品定稿.md` 最上面「2026-11-17 改版」、`.vibe/切片帳本.md`「進行中」最上面兩節（AG 換核心、螢幕使用時間 API 裡的 AF1）、`.vibe/規矩檔.md`、`.vibe/操作清單-待驗.md` 最上面兩節。
 > 上一份便條（疊了三段補充的那份）備份在 `.vibe/handoff/archive/HANDOFF-2026-11-17-2350-replaced.md`。
 
 ## 一句話現況
-番茄帳（`douzhang/`，Expo SDK 58／RN 0.88）分支 `uiux-graybox`，工作樹乾淨，**從 2182f9c 起的 commit 都沒推**。TestFlight 上還是 1.0.0 (3)，2026-11-17 做的全部不在裡面。jest 228 過 1 跳過、eslint 0 錯、prettier 過、`npx expo export --platform ios` 打包過。
+番茄帳（`douzhang/`，Expo SDK 58／RN 0.88）分支 `uiux-graybox`，工作樹乾淨，**從 2182f9c 起的 commit 都沒推**。TestFlight 上還是 1.0.0 (3)，2026-11-17 做的全部不在裡面。jest 238 過 1 跳過、eslint 0 錯、prettier 過、`npx expo export --platform ios` 打包過。
 
 ## 2026-11-17 這一天發生的事（依序）
 1. 白天：新 icon、體型 A、短休息與長休息、聚焦模式（翻牌時鐘）。手機上沒看過。
@@ -19,8 +19,10 @@
    - AG5 分析：番茄架上方切「行事曆｜分析」，日／週／月。
 
 ## 還沒做完／待決定
-- **AG6 白噪音還沒動工。** 多米選了 6A（計時畫面一顆鈕、半頁選雨／柴火／關與音量）。素材在 `E:\捏捏史萊姆\nienie-slime\ios\NieNie\Resources\amb-rain-bed.m4a`、`amb-fire-bed.m4a`（各 122 秒、CC0，授權紀錄在同專案 `.uiux/04-手感/素材授權紀錄.md`）；`bgm-lofi.caf` 來源不明不要用。**動工前要多米回一件事：鎖屏或切到別的 app 時要不要繼續播**（要的話得開背景音訊模式 `UIBackgroundModes: audio`，送審要說明用途；我的建議是要，不然螢幕一鎖就沒聲音）。沒有滑桿套件，音量打算做三段（小／中／大）。
-- **AG1–AG5 的畫面在手機與模擬器上一次都沒開過。** 冒煙測試只證明畫得出來。這一輪沒有新的原生模組，**Expo Go 就能看**。驗收步驟 AG1–AG17 在 `.vibe/操作清單-待驗.md` 最上面。
+- **AG6 白噪音機器層做完（多米回「要，繼續播」），聲音一次都沒真的播過。** `core/ambience.js`、`ui/SoundSheet.js`、`app.json` 的 `UIBackgroundModes: audio`、音檔在 `douzhang/assets/ambience/`。沒驗到的：好不好聽、122 秒循環的接縫、鎖屏後有沒有繼續、到點會不會自己停。前景的部分 Expo Go 可以聽，背景以 TestFlight build 為準。驗收 AG18–AG25。
+- 白噪音會改變擋 app 的行為（預期，沒驗）：在背景播的時候 app 醒著，到點那一刻擋板會自己解開。黃金 115 要等實測後改寫。
+- 送審稿要補一句背景音訊的用途說明，還沒寫。
+- **AG1–AG6 的畫面在手機與模擬器上一次都沒開過。** 冒煙測試只證明畫得出來。這一輪沒有新的原生模組，**Expo Go 就能看**。驗收步驟 AG1–AG25 在 `.vibe/操作清單-待驗.md` 最上面。
 - 多米還沒回：跟 FocusPomo 拉開的核心要不要定成「計時中的那一段」（產品定稿裡標了還沒點頭）。
 - 代決清單十五條在切片帳本「AG 換核心」那節，三條特別請多米看的在驗收清單那節最下面（預設標籤、實心方塊的字色、換一段用 ‹ › 不是滑）。
 - 擋 app（AF1）：多米有沒有在 App ID 勾 Family Controls (Distribution) 並 Save，**還是不知道**。說「打包」才推 tag `tf-4`（先推分支再推 tag）。第一次很可能紅在 Swift 編譯或簽章。驗收 AF1–AF12。
@@ -42,9 +44,9 @@
 - 白噪音要接的地方：`douzhang/App.js` 的 `useDouzhang`（照擋 app 那個 effect 的寫法：答案變了才叫）、`screens/Home.js` 的 `FocusChips`、`core/store.js` 的設定欄位、`ui/Jar.js`（現有的 expo-audio 用法）
 
 ## 下一步從哪繼續
-1. 摘要一句：「換核心前五片做完沒驗、白噪音沒做、擋 app 沒打包。」問：白噪音要不要在鎖屏繼續播；要先用 Expo Go 驗前五片，還是先把白噪音做完。
+1. 摘要一句：「換核心六片做完沒驗、擋 app 沒打包。」問多米要先用 Expo Go 驗，還是直接打包一起驗（打包前要先確認 App ID 勾了 Family Controls）。
 2. 多米回報哪一步怪：從那一步修，修完跑測試、eslint、token-check，commit `[機器存檔點] 實測修正：…`，錯誤日誌記一條。同一個 bug 修兩次沒好就停下來量測，不要再推理。
-3. 做白噪音：音檔複製到 `douzhang/assets/ambience/`，設定加欄位，寫進切片帳本再動工。
+3. 還欠的：清舊東西（清單在切片帳本）、送審稿補背景音訊用途、黃金行為舊條目逐條標作廢、多米還沒回的核心方向。
 
 ## 踩到、下一個會話要知道的
 - 改檔腳本**不要**用 bash heredoc 跑 python（今天中了三次）。用 Write 把腳本寫到 scratchpad 再 `python 檔名`；同一個檔的多處修改全部比對完才寫入。
