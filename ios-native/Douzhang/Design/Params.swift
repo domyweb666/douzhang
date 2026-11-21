@@ -6,6 +6,7 @@ enum Params {
     static let msPerSecond = 1000.0
     static let secondsPerMinute = 60.0
     static let msPerMinute = secondsPerMinute * msPerSecond
+    static let msPerHour = 60 * msPerMinute
 
     /// 標籤長度的刻度：5–90 分每 5 分一格
     static let typeLengths = Array(stride(from: 5.0, through: 90.0, by: 5.0))

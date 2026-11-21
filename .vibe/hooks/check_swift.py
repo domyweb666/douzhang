@@ -25,7 +25,7 @@ for path in sorted(root.rglob("*.swift")):
         if stripped.startswith("//"):
             continue
         for name in re.findall(r"\b(?:let|var|case let|for)\s+([A-Za-z_][A-Za-z0-9_]*)\b", line):
-            if len(name) < 3 and name not in {"id", "x", "y", "z", "ms"}:
+            if len(name) < 3 and name not in {"id", "x", "y", "z", "ms", "_"}:
                 print(f"{path}:{number}: 識別字太短 {name}")
                 problems += 1
         if re.search(r"[A-Za-z0-9_\)\]]!(?!=)", stripped) and '"' not in stripped:
