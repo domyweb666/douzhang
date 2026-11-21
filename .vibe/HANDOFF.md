@@ -1,93 +1,94 @@
-# HANDOFF（2026-11-21 23:34）：番茄帳 SwiftUI 版整個搬完、雲端全綠、手機沒開過；手感指南對照完，七處要補，等多米點頭
+# HANDOFF（2026-11-22 01:35）：SwiftUI 版補了手感七處與資料格式 v2，雲端全綠、手機沒開過；分析頁走到問題清單，等多米過閘門 1
 
 > 給下一個新會話的交接便條。先向多米摘要「上次做完什麼、卡在哪」，等他點頭再動工。
-> 真相源：根目錄 `OVERNIGHT.md`（早上摘要、待確認八條）、`.vibe/切片帳本.md`「AI 轉 SwiftUI」那節（切片與代決二十二條）、`.vibe/規矩檔.md`。
-> 上一份便條（Expo 版 AG、AH、AF 的細節都在裡面）備份在 `.vibe/handoff/archive/HANDOFF-2026-11-21-2334-replaced.md`。
+> 真相源：`.vibe/切片帳本.md`「AI 轉 SwiftUI」那節（AI11、AI12、代決 23–34）、`.analytics/`（分析頁的設計檔與閘門紀錄）、根目錄 `OVERNIGHT.md`（待確認八條，都還沒回）。
+> 上一份便條備份在 `.vibe/handoff/archive/HANDOFF-2026-11-21-2334.md`。
 
 ## 一句話現況
-番茄帳從 Expo 轉成 SwiftUI，新程式在 `ios-native/`，分支 `overnight-20261121-2033`。雲端 `ios-native-ci.yml` 全綠（格式、規矩、編譯、186 條測試、15 張模擬器截圖），最後一輪 run 44914577723。**手機上一次都沒開過。** Expo 版 `douzhang/` 一行沒動，還在 TestFlight 上（1.0.0 build 6）。
+番茄帳 SwiftUI 版（`ios-native/`，分支 `overnight-20261121-2033`）這次多了兩批：手感七處（AI11）、資料格式 v2（AI12）。雲端 run 44926513503 一輪全綠：格式、規矩、編譯、205 條測試、15 張截圖。**手機上一次都沒開過**，真機待驗累積 21 條。分析頁照《分析頁設計》那本書重新規劃，閘門 0、2 過了，停在閘門 1。
 
-分支位置：`origin/overnight-20261121-2033` 在 a381599；這份便條的 commit 只在本機、還沒推。`uiux-graybox` 本機在 e2bd12d、遠端在 5891d11。都還沒合併。
+分支位置：`origin/overnight-20261121-2033` 在 `127bbfd`（程式都在上面）；本機多的只有截圖、帳本紀錄與這份便條，沒動程式。`main`、`uiux-graybox` 沒動，都還沒合併。
 
-## 這次完成了什麼（2026-11-21 一天）
-- 白天：多米說「我要轉成 SwiftUI」「直接開始轉」（沒先驗 Expo 版的 AH1–AH15）。做完 AI1：骨架、狀態機、狀態檔讀寫、約 110 條測試。
-- 晚上：多米說「先一次全做好再推，然後熬夜做」。做完 AI2–AI9：算法、設計代號、殼、主畫面四態、番茄堆、番茄架、設定與備份、聚焦模式、白噪音、擋 app、icon、隱私清單、新的 TestFlight 流程。
-- 推上 GitHub 三輪到全綠（第一輪編譯就過，紅的是排版格式與一條寫錯的測試）。
-- 加了模擬器截圖走查：雲端每次把 15 個畫面截圖存成 `screens` 那一包。逐張看過，修掉一個版面問題（番茄架空狀態標題掉到中間）。這次的圖在 `.vibe/overnight-screens/`。
-- 讀了多米給的《SwiftUI 蘋果風格手感指南》，對照現在的程式，列出七處不合與四處定案（見下一節）。**只盤點，沒改程式。**
+## 這次完成了什麼（2026-11-21 深夜到 11-22 凌晨）
+- AI11 手感七處：多米「照建議做」。`Tokens.Motion` 四個動作代號、`UI/Feel.swift`、lint 規則 `no_hardcoded_curve`；數字會滾、震動只留收下／拿掉東西／出錯、資料變化帶動畫、鈴響頁番茄彈一下、空狀態換系統元件。四條定案沒動。
+- 分析頁第一次審查：多米給了書的 repo，問要不要重新規劃。13 條問題寫在 `.analytics/審查紀錄.md`。
+- 分析頁閘門 0：多米選「先補資料再規劃」。
+- 分析頁閘門 2：規格 `.analytics/04-資料結構.md`，四個待決定多米都選了，然後回「可以，動工」。
+- AI12 資料格式 v2：每顆與每筆作廢有編號與時區、提早做完的時刻、作廢留下念頭與原訂長度、刪掉的標籤不丟也不併進第一個、「哪一天」讀檔時才算。新檔 `Core/StateUpgrade.swift`，測試加 19 條。Expo 版沒動。
+- 推上去（多米說「推上去跑雲端」），一輪全綠。截圖在 `.vibe/screens-2026-11-22/`。
 
 ## 還沒做完／待決定
 
-### A. 手感指南的七處（多米看完清單後說「先寫 handoff」，還沒回要不要做）
-指南原檔在 `C:\Users\fcharlie\Downloads\SwiftUI-蘋果風格手感指南.md`，還沒搬進任何 repo。多米還沒說要放哪（我提議 `E:\domy-design`）。動工前先重讀它，特別是第四節的動作代號表。
+### A. 分析頁閘門 1（問題清單）：等多米
+`.analytics/01-問題清單.md` v0.1 是我從核心動作卡與決策點推的，**沒問過任何人**。多米要做三件事：
+1. 改行為目標。特別是「沒有『做更多顆』」這一句對不對。
+2. 決定兩處：現在分析頁的大字「總共專注幾小時」要不要降成配角；「你平常一天 4 到 6 顆」這種基準（Q7）要不要做。
+3. 拿清單問兩三個真的在用番茄鐘的人。核心動作卡本來就排了要觀察三到五個人，可以同一趟。
 
-不合、建議補的七處（我建議一批做完跑一輪雲端）：
-1. 數字直接跳：倒數時間、番茄架那行小計、分析的數字，加 `.contentTransition(.numericText)`。
-2. 每顆主要按鈕都震（`UI/Buttons.swift` 的 `BigButton`）：改成只在有意義的時刻。收下 `.success`；作廢、刪標籤、清空用輕的 `.impact`；存不進去、匯入讀不懂 `.error`。切換選項的 `.selection` 留著。
-3. 資料變化沒動畫：換檢視、加刪標籤、設定列出現消失、鈴響頁選填輸入框展開。
-4. 動畫寫死秒數：`UI/Buttons.swift` 按壓、`Screens/FocusScreen.swift` 翻牌與三顆鈕淡入，換成 `.snappy`／`.smooth`。`Screens/HomeRings.swift` 進度環的線性補間留著（時鐘該等速）。
-5. 動作代號表：在 `Design/Tokens.swift` 的 `Motion` 加按壓、變化、轉場、慶祝四個代號，畫面只准從這裡拿；`.swiftlint.yml` 加規則擋寫死的曲線。
-6. 收下那一刻沒有慶祝：`Screens/BellScreen.swift` 那顆番茄出現時 `.bouncy` 一下，只在那一瞬間。
-7. 空狀態是自己排的：番茄架與分析的空狀態改用 `ContentUnavailableView`，字照舊。
+閘門 1 過了才往下：3-2 紀錄規格 → 3-3 → 3-5 指標字典 → 3-6 → 3-7 → 3-8 → 3-9。畫面最後才動，現在的分析頁留著不重畫。
 
-跟指南不同、但是多米定案過的四處（**不要自己動**，他說要改才改）：
-- 三頁左右滑加懸浮分頁列（指南說 `TabView` 別自訂；11-01、11-14 定的）。
-- 設定頁是自己排的白卡不是 `List`（Domy 設計系統的樣子）；標籤沒有左滑刪除、拖曳排序。
-- 按壓縮到 0.97、變淡到 0.6（指南是 0.96、0.85；數字來自 `domy-design`，改了會影響其他 app）。
-- 懸浮分頁列是實心白底加影子，不是毛玻璃。
+### B. 真機驗收：21 條，一條都沒驗
+清單在 `.vibe/操作清單-待驗.md` 最上面兩節：手感 14 條、資料格式 7 條。動畫、震動、數字滾動截圖都看不出來。
+要上手機就是推 tag `tfn-1`（`testflight-native.yml`，**這條流程沒跑過**，預期要修幾輪；build 號 101 起跳）。裝上去會直接換掉 Expo 版，**裝之前先請多米在 Expo 版匯出備份**。多米開口才推。
 
-下一步框裡問的是「要照指南把這七處手感補上嗎」，兩顆鈕是「照建議做」「連定案一起改」。多米沒按。
+### C. 等多米看一眼的小事
+- 番茄架空狀態換成系統元件後，那句話在畫面正中間，跟按鈕貼得比原本緊。圖：`.vibe/screens-2026-11-22/06-rack-empty.png`。要不要拉開。
+- 作廢那顆記過的念頭現在會存，但收據上沒顯示。要不要顯示。
+- 分析裡兩句暫定的字：「原名（已刪除）」「已刪除的標籤」。
+- 「開始」不再震（照指南）。真機按了覺得少了什麼再加回來。
+- 翻牌、三顆鈕淡入、按壓三個動畫的速度都變了，要真機看。
 
-### B. `OVERNIGHT.md` 的待確認八條（都還沒回）
-最要緊的三條：
-- 要不要打一包上 TestFlight 真機驗（推 tag `tfn-1` 就會打包，build 號 101 起跳）。裝上去會直接換掉 Expo 版，裝之前請多米先在 Expo 版匯出備份。
-- 已拿掉的功能留在存檔裡的舊欄位要不要留（現在不讀也不寫回去）。
+### D. 上一份便條留下、還是沒回的
+- `OVERNIGHT.md` 待確認八條。其中「已拿掉的功能留在存檔裡的舊欄位要不要留」：我在 `.analytics/04-資料結構.md` 建議原樣帶著不丟，還是多米定。
 - `.vibe/規矩檔.md` 的憲法寫的是 Expo，要補 SwiftUI 那段。改之前要先給多米看現況。
-
-### C. 完全沒驗到的（截圖拍不到）
-所有半頁、聚焦模式、番茄堆的掉落傾斜點彈與聲音、到點通知、白噪音在背景、擋 app、匯出匯入的系統畫面、從 Expo 版搬舊資料（只用假造的檔測過）、`testflight-native.yml`（沒跑過）。
-
-### D. Expo 版留下的
-AG1–AG25、AH1–AH15、AF1–AF12 的手機驗收都沒做。現在轉 SwiftUI 了，這些清單要不要改成對 SwiftUI 版驗，還沒跟多米談。清單在 `.vibe/操作清單-待驗.md`。
+- 手感指南原檔還在 `C:\Users\fcharlie\Downloads\SwiftUI-蘋果風格手感指南.md`，沒搬進任何 repo。
+- Expo 版的 AG、AH、AF 手機驗收清單要不要改成對 SwiftUI 版驗，沒談。
+- 完全沒驗到的：所有半頁、聚焦模式、番茄堆的掉落與聲音、到點通知、白噪音在背景、擋 app、匯出匯入、從 Expo 版搬舊資料（只在測試與模擬器的假資料上過）。
 
 ## 關鍵決策（定下來的，別再爭論）
-- 番茄帳改走 SwiftUI，新功能寫在 `ios-native/`，不再往 Expo 版加東西。Expo 版留著當對照，功能在真機上驗過才退場。
-- Bundle ID 沿用 `org.domyweb.douzhang`，狀態檔格式沿用，第一次打開從 Expo 的存檔把資料搬過來、舊檔不刪。
-- 工具鏈照米說：XcodeGen、SwiftFormat 0.64.0、SwiftLint 0.65.1 `--strict`、最低 iOS 17、不裝第三方套件。
-- 原本編 Expo 版的 `testflight.yml` 不動；SwiftUI 版另一條 `testflight-native.yml`，tag `tfn-*`。
-- 只 commit。推上去、打包 TestFlight 都要多米開口（昨晚的推是他說「全做好再推」）。
-- 核心、產品面的定案沒變：種番茄＋時間帳本、不做正計時、不做連續天數、不製造罪惡感。
+- 手感：四條定案不動（三頁滑動＋懸浮分頁列、設定白卡、按壓 0.97／0.6、實心分頁列）。動畫曲線只准從 `Tokens.Motion` 拿。
+- 分析頁走「分析頁 Agent」（`domi-analytics-control`），順序不准倒：問題清單 → 紀錄 → 指標 → 分層 → 圖與字。
+- 換日時間維持午夜（書的起點是凌晨 4 點，多米沒用）；做成 `Params.dayStartHour`，讀檔時才套。
+- 開始不到五分鐘的「停下來」維持整筆不記。
+- 提早做完的時刻現在就存（題目還沒過閘門 1，算破例；3-2 做完要回頭確認對得到題號）。
+- 升級前就刪掉的標籤：番茄沿用第一個標籤的顏色，數字獨立一列。
+- 格式 v2 之後**不要把 SwiftUI 版的備份匯進 Expo 版再存**：Expo 版不認得新欄位，存一次就全沒了。
+- 沒有試用者，分析頁的閘門 4（行為有沒有變）驗不了，只能當故事。這點已經跟多米講明。
+- 只 commit。推、打包 TestFlight 都要多米開口（這次的推是他說的）。
 
 ## 下個會話最重要的檔案
-- `OVERNIGHT.md` ← 早上摘要與待確認
-- `.vibe/切片帳本.md` ←「AI 轉 SwiftUI」那節
-- `C:\Users\fcharlie\Downloads\SwiftUI-蘋果風格手感指南.md` ← 做 A 之前重讀
-- `ios-native/.swiftlint.yml`、`ios-native/.swiftformat` ← 寫 Swift 之前看
-- `ios-native/Douzhang/Design/Tokens.swift`（`Motion` 在這）、`UI/Buttons.swift`、`Screens/HomeRings.swift`、`Screens/BellScreen.swift`、`Screens/RackScreen.swift`、`UI/StatsPanel.swift`、`App/AppModel+Actions.swift` ← 手感七處會動到的
-- `.vibe/overnight-screens/` ← 15 張截圖
+- `.analytics/01-問題清單.md` ← 閘門 1 要改的那份
+- `.analytics/閘門紀錄.md`、`.analytics/lessons.md` ← 分析頁走到哪、踩過什麼
+- `.analytics/04-資料結構.md` ← v2 的規格與實作對照
+- `.vibe/切片帳本.md` ←「AI 轉 SwiftUI」那節的 AI11、AI12 與代決 23–34
+- `.vibe/操作清單-待驗.md` ← 最上面兩節
+- `ios-native/Douzhang/Core/StateUpgrade.swift`、`Core/Machine.swift`（最下面那個 extension）、`UI/Feel.swift`、`Design/Tokens.swift` 的 `Motion` ← 這次新寫的
+- `.github/workflows/testflight-native.yml` ← 要上手機時先讀
 
 ## 下一步從哪繼續
-1. 摘要一句給多米：「SwiftUI 版搬完、雲端全綠、有截圖，手機沒開過；手感指南對出七處要補，等你說做不做。」然後問 A：照建議做七處，還是連四條定案一起改。
-2. 多米說做：重讀指南 → 先在 `Tokens.Motion` 定代號 → 照 1 到 7 改 → 跑 `python .vibe/hooks/check_swift.py ios-native` 與 `check_refs.py` 到 0 問題 → commit → 問能不能推 → 推上去等雲端，格式紅就抓 `swiftformat-patch` 套上，再下載 `screens` 看版面有沒有壞。這批是動畫與震動，截圖看不出來，最後要真機。
-3. 多米說要真機驗：先確認他在 Expo 版匯出過備份，再推 tag `tfn-1`。第一次跑這條流程，預期要修幾輪。
-4. 多米回 B 的其他條：照他說的做。規矩檔要先 `cat` 現況給他看。
+1. 摘要給多米：「手感七處與資料格式 v2 都上雲端全綠，手機沒開過；分析頁停在問題清單，等你改。」然後問他要先做哪一件：
+   - **過閘門 1**：他改完 `.analytics/01-問題清單.md`、說了真人問到什麼 → 記進 `.analytics/閘門紀錄.md` → 走 `domi-analytics-design` 的 3-2 紀錄規格（要回頭對 `04-資料結構.md` 有沒有漏欄位）。書的原文要重新抓：`gh repo clone domyweb666/analytics-book` 到暫存資料夾。
+   - **上手機**：先確認他在 Expo 版匯出過備份 → 讀 `testflight-native.yml` → 推 tag `tfn-1` → 修到綠。
+   - **回 C、D 的小事**：照他說的做。規矩檔要先 `cat` 現況給他看。
+2. 動 `ios-native/` 之前：先 `git log` 看有沒有別的會話動過；寫 Swift 之前看 `ios-native/.swiftlint.yml` 與 `.swiftformat`。
+3. 改完推之前（多米點頭才推）跑下面「怎麼跑」那幾支。
 
 ## 踩到、下一個會話要知道的
-- 本機沒有 Swift 工具。改了 `ios-native/` 要推上去才知道編不編得過；一輪約 10 分鐘，含截圖約 15 分鐘。
-- SwiftFormat 不准單行的 `if x { ... }`、單行的計算屬性，連續兩個結尾一樣的 `guard` 會被要求合併。直接寫成多行。格式不合時 CI 會存 `swiftformat-patch`：`gh run download <run> --name swiftformat-patch` 抓回來 `git apply`。
-- SwiftLint：識別字與型別名最少 3 字、不准強制解包、函式 40 行、檔案 300 行、型別 200 行、行寬 100（照字數算，中文一個字算一格）。畫面不准寫死色碼、字級、間距、秒數，只能從 `Tokens` 拿。
-- 宣告前的 `//` 會被格式工具改成 `///`；要當分節用就寫 `// MARK:`。
-- 改檔的 python 寫成檔再跑；bash heredoc 遇到反斜線會吃掉（今晚又中一次）。
-- 寫紀錄的時間先看時鐘。今晚 `OVERNIGHT.md` 的時間我憑感覺寫錯兩次，都更正過了。
-- 測試裡不要造兩次會抽亂數的狀態再比（收下後那句是抽的）。
-- 截圖走查靠 `App/LaunchOptions.swift`（只有開發版讀得到）與 `ios-native/scripts/screens.sh`。要多截一張就在腳本的清單加一行。
+- 本機沒有 Swift 工具，編不了。這次靠「新欄位都給預設值、函式新參數都給預設值」讓舊的呼叫與舊測試不用改，一輪就綠。之後加欄位照這個做法。
+- `Machine` 的型別本體一度到 198 行（上限 200，超過就紅）。新東西放檔案下面的 `extension Machine`，extension 不算在上限裡。`Tokens` 現在 188 行，也快了。
+- `Machine.typeOf` 是「看歷史」用的（已刪的標籤照原樣回）；開新的一顆、排下一顆要用 `Machine.liveType`。別混用。
+- 兩個版本的讀檔程式都只留認得的欄位。之後再加欄位，先想資料回舊版會怎樣。
+- lint 的自訂規則是用正規表示式比對整行，註解也算。寫註解別出現被擋的寫法（例如動畫曲線的名字前面加點）。
+- 一次改很多處用「Python 寫成檔再跑、每處剛好命中一次才寫入」。這次的帶引號 heredoc 沒吃反斜線，但還是先比對再寫。
+- 雲端一輪約 9 分鐘（含截圖）。等的時候用 `gh run watch <run> --exit-status` 丟背景，不要輪詢。
+- 寫紀錄的時間先看時鐘（`date`）。
 
 ## 怎麼跑
-- 粗檢查：`python .vibe/hooks/check_swift.py ios-native`、`python .vibe/hooks/check_refs.py ios-native`（Windows 上前面加 `PYTHONIOENCODING=utf-8`）。
-- 雲端：推分支，`gh run list --repo domyweb666/douzhang --branch <分支> --limit 1` 看 run，`gh run download <run> --name screens --dir .vibe/overnight-screens` 抓截圖。
+- 粗檢查：`PYTHONIOENCODING=utf-8 python .vibe/hooks/check_swift.py ios-native`（要 0 問題）、`python .vibe/hooks/check_refs.py ios-native`（只剩 `Tokens.ZenLayout.self` 那條誤報才對）。
+- 雲端：推分支 → `gh run list --repo domyweb666/douzhang --branch <分支> --limit 1` → `gh run download <run> --repo domyweb666/douzhang --name screens --dir <資料夾>` 抓截圖。格式紅就 `gh run download <run> --name swiftformat-patch` 抓回來 `git apply`。
 - Expo 版照舊：`cd E:\豆帳\douzhang; npx expo start --tunnel`。
 
 ## 這次會話的雜訊（下次別重新討論）
-- 轉之前我建議先用 Expo Go 驗完 AH 再轉，多米選直接轉。已定，不用再提。
-- 截圖用的起始分頁一開始沒生效，改成畫面排好再換頁就好了，沒有別的含意。
-- 計時中番茄半路是土黃色：算法跟 Expo 版一樣，已寫進 `OVERNIGHT.md` 請多米看，等他回。
+- 手感七處做到一半多米丟分析頁的書進來。兩件事是分開的，各自 commit。
+- 規格寫了「轉 v2 之前自動備份」，實作時發現沒有任何手機上有要轉的檔，沒做。理由在 `04-資料結構.md`，不用再提。
+- lint 新規則第一版誤擋了番茄堆物理裡一個叫 `smooth` 的參數，改成要有動畫的上下文才擋。已修。
