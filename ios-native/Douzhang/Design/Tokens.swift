@@ -155,11 +155,20 @@ enum Tokens {
         static let transition = DomyTokens.Motion.transition
         static let pressScale = DomyTokens.Motion.pressScale
         static let pressDuration = DomyTokens.Motion.pressDuration
-        /// 收下這顆 → 番茄掉進來：往上的初速、左右散開多少
+        /// 收下這顆 → 番茄掉進來：等多久才掉（秒）、往上的初速、左右散開多少
+        static let dropDelay = 0.18
         static let dropVelY = -160.0
         static let dropVelXSpread = 40.0
         /// 傾斜：重力乘多少、每一幀往新方向靠多少、每幀分幾個子步、一幀最長算多久
         static let tiltScale = 115.0
+        /// 加速度計給的單位是 g：乘上每個 g 多少 m/s² 再乘 tiltScale
+        static let tiltPerG = 9.80665 * tiltScale
+        /// 睡著時，重力要偏掉這麼多才醒來（大約傾斜一兩度）
+        static let tiltWake = 25.0
+        /// 每顆一幀移動不到這麼多（pt、弧度）、連續這麼多幀，就當作都躺好了
+        static let quietDistance = 0.5
+        static let quietAngle = 0.01
+        static let quietFrames = 30
         static let tiltSmooth = 0.15
         static let substeps = 2
         static let frameMax = 0.033

@@ -44,7 +44,27 @@ struct HomeScreen: View {
         } else {
             let type = Machine.typeOf(state, state.settings.typeId)
             HomeIdle(type: type, onTag: { sheet = .tag }, onSound: { sheet = .sound })
+                .background { jar }
         }
+    }
+
+    /// 番茄在整個畫面後面掉、滾、堆在最下面（頁面左右有內距，這層往外撐到螢幕邊），停在分頁列上面。
+    /// 只在待機掛上：剛收的那顆休息完回到待機才從上面掉進去。空白處的點擊會穿過前景落到這裡。
+    private var jar: some View {
+        @Bindable var model = model
+        let state = model.state
+        let today = state.days[model.todayKey]?.beans ?? []
+        let beans = today.stableSorted { $0.keptAt }.map { bean in
+            JarBean(len: bean.len, color: Machine.typeOf(state, bean.typeId).color)
+        }
+        return JarView(
+            beans: beans,
+            sound: state.settings.sound,
+            tilt: state.settings.tilt,
+            seen: $model.jarSeen
+        )
+        .padding(.horizontal, -Tokens.Space.screen)
+        .padding(.bottom, Tokens.Shape.tabClearance - Tokens.Space.card)
     }
 
     /// 計時中與休息最上面那條：左邊標籤，右邊「⋯」（只有計時中有；休息時沒有半頁）。

@@ -18,6 +18,9 @@ enum Params {
     static let flowMinutes = [15, 30]
     /// 慶祝畫面「今天收了幾顆」那排最多畫幾顆（多的只畫最後這幾顆）
     static let celebrateTomatoes = 12
+    /// 番茄堆：每秒不到這麼多幀、連續這麼多秒，就退成靜止版
+    static let jarLowFps = 40
+    static let jarLowFpsSeconds = 3
     /// 月檢視一格最多畫幾顆小圓點，再多寫「+N」
     static let monthDotsMax = 8
     /// 匯入檔大小上限 5 MB

@@ -123,17 +123,20 @@ struct TodayRow: View {
         }
         .frame(maxWidth: .infinity)
         .padding(Tokens.Space.card)
-        .background(Tokens.Colors.card, in: RoundedRectangle(cornerRadius: Tokens.Shape.radiusCard))
+        .background(Tokens.Colors.card, in: cardShape)
         .padding(.top, Tokens.Space.l)
     }
 }
+
+private let cardShape = RoundedRectangle(cornerRadius: Tokens.Shape.radiusCard)
 
 /// 計時中記的念頭與有人找。清單空就什麼都不畫，不寫「沒有紀錄」。
 struct Jotted: View {
     var run: FocusRun
 
     var body: some View {
-        let rows = run.notes.map { (Words.noteThought, $0) } + run.pings.map { (Words.notePing, $0) }
+        let thoughts = run.notes.map { (Words.noteThought, $0) }
+        let rows = thoughts + run.pings.map { (Words.notePing, $0) }
         VStack(alignment: .leading, spacing: Tokens.Space.xs) {
             ForEach(Array(rows.enumerated()), id: \.offset) { row in
                 HStack(alignment: .top, spacing: Tokens.Space.m) {
