@@ -22,16 +22,6 @@ enum Machine {
         color: .red
     )
 
-    /// 標籤被刪掉的舊番茄算在第一個標籤上。
-    static func typeOf(_ state: AppState, _ typeId: String) -> TagType {
-        if typeId == devTypeId {
-            return devType
-        }
-        let types = state.settings.types
-        let found = types.first { $0.id == typeId }
-        return found ?? types.first ?? Store.defaultType
-    }
-
     /// 現在該顯示哪一態：由 current 與時鐘算出來，不另外存。
     static func phaseOf(_ state: AppState, now: Millis) -> Phase {
         guard let current = state.current else { return .idle }
@@ -57,7 +47,7 @@ enum Machine {
     /// 開了「休息完自動開始」：到點先回待機 autoNextDelayMs（剛收的那顆在這段掉進番茄堆），
     /// 這段時間 current 還留著休息那筆（記得是哪個標籤）；過了就用同一個標籤開始下一顆。
     /// 開始時刻是算的，不是看到的那一刻：app 在背景時也一樣，回來時可能已經走了一段，甚至已經到點。
-    static func settle(_ state: AppState, now: Millis) -> AppState {
+    static func settle(_ state: AppState, now: Millis, zone: String? = nil) -> AppState {
         guard case let .rest(run)? = state.current, let endAt = run.endAt,
               now >= endAt else { return state }
         let idle = with(state, current: nil)
@@ -66,17 +56,25 @@ enum Machine {
         if now < startAt {
             return state
         }
-        return start(idle, now: startAt, typeId: run.typeId)
+        return start(idle, now: startAt, typeId: run.typeId, zone: zone)
     }
 
     /// 開始一顆。不用先寫一句：按了就開始。typeId 沒給就用設定選中的那個標籤。
-    static func start(_ state: AppState, now: Millis, typeId: String? = nil) -> AppState {
-        let type = typeOf(state, typeId ?? state.settings.typeId)
+    /// 這顆的編號在這裡定；zone 是手機這一刻的時區名，殼給的（這裡是純函式，不自己看系統）。
+    static func start(
+        _ state: AppState,
+        now: Millis,
+        typeId: String? = nil,
+        zone: String? = nil
+    ) -> AppState {
+        let type = liveType(state, typeId ?? state.settings.typeId)
         let run = FocusRun(
             typeId: type.id,
             len: type.len,
             startedAt: now,
-            endAt: now + type.len * Params.msPerMinute
+            endAt: now + type.len * Params.msPerMinute,
+            id: Store.recordId(now),
+            zone: zone
         )
         return with(state, current: .focus(run))
     }
@@ -89,19 +87,9 @@ enum Machine {
     /// 收下這顆：番茄進「開始那天」的帳、進休息。空白也收。
     static func keep(_ state: AppState, now: Millis, text: String) -> AppState {
         guard let run = state.focusRun else { return state }
-        let bean = Bean(
-            keptAt: now,
-            typeId: run.typeId,
-            len: run.len,
-            clue: text.trimmingCharacters(in: .whitespacesAndNewlines),
-            notes: run.notes,
-            pings: run.pings,
-            flow: run.flowMin,
-            start: run.startedAt
-        )
-        let key = Store.dayKey(run.startedAt)
+        let key = dayKey(of: run)
         var next = with(state, current: nil)
-        next.days[key, default: DayRecord()].beans.append(bean)
+        next.days[key, default: DayRecord()].beans.append(bean(from: run, now: now, text: text))
         // 那天第幾顆決定這次是短休息還是長休息
         let count = next.days[key]?.beans.count ?? 0
         let plan = Store.restAfter(state.settings, len: run.len, beansToday: count)
@@ -143,8 +131,12 @@ enum Machine {
     }
 
     /// 提早做完了：剩下的時間繼續倒數，鈴響再停；畫面多一行提醒。
-    static func markDone(_ state: AppState) -> AppState {
+    /// now 是按下的時刻，只記第一次；之後用來看這個長度是不是太長。
+    static func markDone(_ state: AppState, now: Millis? = nil) -> AppState {
         guard var run = state.focusRun else { return state }
+        if !run.done {
+            run.doneAt = now
+        }
         run.done = true
         return with(state, current: .focus(run))
     }
@@ -168,14 +160,21 @@ enum Machine {
         if early {
             return next
         }
+        // 這顆記過的念頭與有人找跟著留下來，不然作廢就一起不見
         let entry = VoidEntry(
             voidedAt: now,
             typeId: run.typeId,
             minute: Int((now - run.startedAt) / Params.msPerMinute),
             reason: reason,
-            text: text.trimmingCharacters(in: .whitespacesAndNewlines)
+            text: text.trimmingCharacters(in: .whitespacesAndNewlines),
+            id: run.id,
+            start: run.startedAt,
+            zone: run.zone,
+            len: run.len,
+            notes: run.notes,
+            pings: run.pings
         )
-        next.days[Store.dayKey(run.startedAt), default: DayRecord()].voids.append(entry)
+        next.days[dayKey(of: run), default: DayRecord()].voids.append(entry)
         return next
     }
 
@@ -211,5 +210,61 @@ enum Machine {
         guard var run = state.focusRun else { return state }
         run.draft = text
         return with(state, current: .focus(run))
+    }
+}
+
+// MARK: 標籤與紀錄的對應
+
+extension Machine {
+    /// 升級前就刪掉的標籤：名字已經沒了，那些舊番茄都掛在這個編號下。
+    static let goneTypeId = "gone"
+
+    /// 現在還在的標籤裡找；找不到就退回第一個。開始一顆、排下一顆用這個：不會開出一顆已刪標籤的番茄。
+    static func liveType(_ state: AppState, _ typeId: String) -> TagType {
+        if typeId == devTypeId {
+            return devType
+        }
+        let types = state.settings.types
+        let found = types.first { $0.id == typeId }
+        return found ?? types.first ?? Store.defaultType
+    }
+
+    /// 一筆紀錄掛在哪個標籤（畫面與分析用）。刪掉的標籤照原本的名字與顏色，不併進別的標籤。
+    /// 升級前就刪掉的（名字沒留下來）：叫「已刪除的標籤」，顏色沿用第一個標籤（多米 2026-11-22 定）。
+    /// 很舊的資料沒有標籤（空字串）：那是沒分類，不是被刪，照舊算在第一個。
+    static func typeOf(_ state: AppState, _ typeId: String) -> TagType {
+        let settings = state.settings
+        let isLive = settings.types.contains { $0.id == typeId }
+        if isLive || typeId.isEmpty || typeId == devTypeId {
+            return liveType(state, typeId)
+        }
+        if let removed = settings.removedTypes.first(where: { $0.type.id == typeId }) {
+            return removed.type
+        }
+        let first = liveType(state, typeId)
+        return TagType(id: goneTypeId, name: Words.removedTag, len: first.len, color: first.color)
+    }
+
+    /// 這顆算哪一天：開始那一刻、照開始時的時區。
+    static func dayKey(of run: FocusRun) -> String {
+        Store.dayKey(run.startedAt, zone: run.zone)
+    }
+
+    /// 進行中那顆身上帶的東西，收下時全部抄進番茄：編號、時區、有沒有提早做完與幾點按的。
+    private static func bean(from run: FocusRun, now: Millis, text: String) -> Bean {
+        Bean(
+            keptAt: now,
+            typeId: run.typeId,
+            len: run.len,
+            clue: text.trimmingCharacters(in: .whitespacesAndNewlines),
+            notes: run.notes,
+            pings: run.pings,
+            flow: run.flowMin,
+            start: run.startedAt,
+            id: run.id,
+            zone: run.zone,
+            done: run.done,
+            doneAt: run.doneAt
+        )
     }
 }

@@ -31,10 +31,11 @@ enum StateDecoding {
                 days[key] = readDay(rawDay)
             }
         }
+        // 補編號、把每筆放回它「開始那天」的格子：哪一天是讀的時候算的（StateUpgrade）
         return AppState(
             settings: settings,
-            current: readCurrent(object["current"], settings: settings),
-            days: days,
+            current: StateUpgrade.numbered(readCurrent(object["current"], settings: settings)),
+            days: StateUpgrade.regrouped(StateUpgrade.numbered(days)),
             lastLine: JSONRead.int(object["lastLine"]) ?? -1
         )
     }
@@ -49,8 +50,9 @@ enum StateDecoding {
         let ambience = JSONRead.string(raw["ambience"]).flatMap(AmbienceKind.init(rawValue:))
         let volume = JSONRead.string(raw["ambienceVolume"]).flatMap(AmbienceLevel.init(rawValue:))
         let isOwn = JSONRead.string(raw["restMode"]) == RestMode.own.rawValue
+        let live = types.isEmpty ? base.types : types
         var settings = AppSettings(
-            types: types.isEmpty ? base.types : types,
+            types: live,
             typeId: JSONRead.string(raw["typeId"]) ?? base.typeId,
             restMode: isOwn ? .own : .auto,
             sound: JSONRead.bool(raw["sound"], or: base.sound),
@@ -62,7 +64,8 @@ enum StateDecoding {
             shield: JSONRead.bool(raw["shield"], or: base.shield),
             ambience: ambience ?? base.ambience,
             ambienceVolume: volume ?? base.ambienceVolume,
-            autoNext: JSONRead.bool(raw["autoNext"], or: base.autoNext)
+            autoNext: JSONRead.bool(raw["autoNext"], or: base.autoNext),
+            removedTypes: StateUpgrade.readRemoved(raw["removedTypes"], live: live)
         )
         if !settings.types.contains(where: { $0.id == settings.typeId }) {
             settings.typeId = settings.types[0].id
@@ -127,7 +130,11 @@ enum StateDecoding {
             notes: JSONRead.strings(raw["notes"]),
             pings: JSONRead.strings(raw["pings"]),
             flow: JSONRead.number(raw["flow"]) ?? 0,
-            start: start == 0 ? nil : start
+            start: start == 0 ? nil : start,
+            id: JSONRead.string(raw["id"]) ?? "",
+            zone: JSONRead.string(raw["tz"]),
+            done: JSONRead.bool(raw["done"], or: false),
+            doneAt: JSONRead.number(raw["doneAt"])
         )
     }
 
@@ -137,7 +144,13 @@ enum StateDecoding {
             typeId: JSONRead.string(raw["typeId"]) ?? "",
             minute: JSONRead.int(raw["minute"]) ?? 0,
             reason: JSONRead.string(raw["reason"]) ?? "",
-            text: JSONRead.string(raw["text"]) ?? ""
+            text: JSONRead.string(raw["text"]) ?? "",
+            id: JSONRead.string(raw["id"]) ?? "",
+            start: JSONRead.number(raw["start"]),
+            zone: JSONRead.string(raw["tz"]),
+            len: JSONRead.number(raw["len"]),
+            notes: JSONRead.strings(raw["notes"]),
+            pings: JSONRead.strings(raw["pings"])
         )
     }
 
@@ -167,7 +180,10 @@ enum StateDecoding {
             flowed: wasFlow || JSONRead.bool(raw["flowed"], or: false),
             flowMin: JSONRead.number(raw["flowMin"]) ?? 0,
             done: JSONRead.bool(raw["done"], or: false),
-            draft: JSONRead.string(raw["draft"]) ?? ""
+            draft: JSONRead.string(raw["draft"]) ?? "",
+            id: JSONRead.string(raw["id"]) ?? "",
+            zone: JSONRead.string(raw["tz"]),
+            doneAt: JSONRead.number(raw["doneAt"])
         )
     }
 

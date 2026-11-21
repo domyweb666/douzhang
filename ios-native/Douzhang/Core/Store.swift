@@ -8,7 +8,8 @@ struct RestPlan: Equatable {
 
 /// 番茄帳 資料層的算法：空白狀態、日期鍵、一顆幾單位、休息多久。純函式，不碰檔案。
 enum Store {
-    static let formatVersion = 1
+    /// 2＝每筆有編號與時區、刪掉的標籤另外留著（.analytics/04-資料結構.md）。舊版讀得進去，只是不認得新欄位
+    static let formatVersion = 2
     /// 一顆＝25 分；50 分的顆算兩單位
     static let minutesPerUnit = 25.0
     /// 「跟著長度」的休息＝長度 ÷ 5，最少 3 分
@@ -63,9 +64,26 @@ enum Store {
     }
 
     /// 本地日期鍵 YYYY-MM-DD（本地時區，不是 UTC）。
-    static func dayKey(_ time: Millis) -> String {
-        let parts = localCalendar().dateComponents([.year, .month, .day], from: date(time))
+    /// zone 是那筆紀錄開始時的時區名：有就照它算（出國那幾天不會歪），沒有就照手機現在的時區。
+    /// 一天從 Params.dayStartHour 點開始；「哪一天」每次讀檔都重算，改了這個數字不用動資料。
+    static func dayKey(_ time: Millis, zone: String? = nil) -> String {
+        var calendar = localCalendar()
+        if let zone, let known = TimeZone(identifier: zone) {
+            calendar.timeZone = known
+        }
+        let shifted = time - Params.dayStartHour * Params.msPerHour
+        let parts = calendar.dateComponents([.year, .month, .day], from: date(shifted))
         return String(format: "%04d-%02d-%02d", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0)
+    }
+
+    /// 一顆番茄自己的編號：從開始時刻來，同一支手機上不會撞。收下或作廢時跟著那筆紀錄走。
+    static func recordId(_ start: Millis) -> String {
+        "r" + String(format: "%.0f", start)
+    }
+
+    /// 手機現在的時區名（例如 Asia/Taipei）。開始一顆時記下來。
+    static func zoneNow() -> String {
+        TimeZone.current.identifier
     }
 
     /// 一顆占幾個單位：25→1、50→2、15→1（四捨五入，最少 1）。

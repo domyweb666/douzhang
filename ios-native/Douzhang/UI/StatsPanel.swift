@@ -106,9 +106,10 @@ struct StatsPanel: View {
     private func tagRow(_ tag: StatsTag) -> some View {
         let fill = Tokens.Tomato.body(tag.type.color).color
         let time = Words.duration(tag.minutes)
+        let name = tag.removed ? Words.removedName(tag.type.name) : tag.type.name
         return HStack(spacing: Tokens.Space.s) {
             TomatoView(color: tag.type.color, size: Tokens.Shape.blockIcon * 1.5)
-            Text(tag.type.name)
+            Text(name)
                 .font(Tokens.Fonts.sub)
                 .foregroundStyle(Tokens.Colors.textPrimary)
                 .lineLimit(1)
@@ -124,7 +125,7 @@ struct StatsPanel: View {
         }
         .frame(minHeight: Tokens.Shape.buttonCompact)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(tag.type.name)，\(time)，\(Words.beansCount(tag.beans))")
+        .accessibilityLabel("\(name)，\(time)，\(Words.beansCount(tag.beans))")
     }
 }
 

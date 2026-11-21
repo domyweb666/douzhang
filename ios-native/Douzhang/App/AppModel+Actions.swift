@@ -10,7 +10,8 @@ extension AppModel {
         Task {
             let granted = await notifier.askOnce()
             notif = granted ? .granted : .denied
-            commit(Machine.start(settled(), now: TimeText.nowMillis(), typeId: typeId))
+            let zone = Store.zoneNow()
+            commit(Machine.start(settled(), now: TimeText.nowMillis(), typeId: typeId, zone: zone))
         }
     }
 
@@ -37,7 +38,7 @@ extension AppModel {
     }
 
     func markDone() {
-        commit(Machine.markDone(settled()))
+        commit(Machine.markDone(settled(), now: TimeText.nowMillis()))
     }
 
     /// 作廢這顆，記原因與那一行。
@@ -79,7 +80,7 @@ extension AppModel {
     }
 
     func removeType(_ id: String) {
-        commit(SettingsLogic.removeType(settled(), id: id))
+        commit(SettingsLogic.removeType(settled(), id: id, now: TimeText.nowMillis()))
         pulses.removed += 1
     }
 

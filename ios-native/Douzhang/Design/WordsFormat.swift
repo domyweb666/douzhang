@@ -7,6 +7,14 @@ extension Words {
     private static let noon = 12
     private static let evening = 18
 
+    /// 升級前就刪掉的標籤，名字沒留下來：番茄架與分析都這樣叫。
+    static let removedTag = "已刪除的標籤"
+
+    /// 刪掉的標籤在分析裡的名字：原本的名字後面註明。
+    static func removedName(_ name: String) -> String {
+        "\(name)（已刪除）"
+    }
+
     /// 數字照原樣寫：25 寫成 25，12.5 寫成 12.5。
     static func number(_ value: Double) -> String {
         value == value.rounded() ? String(Int(value)) : String(value)

@@ -35,6 +35,12 @@ struct TagType: Equatable, Identifiable {
     var color: TomatoColor
 }
 
+/// 刪掉的標籤：不丟，留著名字與顏色，舊番茄才不會被算到別的標籤上。
+struct RemovedTag: Equatable {
+    var type: TagType
+    var removedAt: Millis
+}
+
 struct AppSettings: Equatable {
     var types: [TagType]
     var typeId: String
@@ -50,9 +56,12 @@ struct AppSettings: Equatable {
     var ambience: AmbienceKind
     var ambienceVolume: AmbienceLevel
     var autoNext: Bool
+    /// 刪掉的標籤（格式 v2 起）
+    var removedTypes: [RemovedTag] = []
 }
 
 /// 正在跑的那一顆。只存幾點結束，不存剩幾秒：背景、鎖屏、殺掉再開都靠時間差重算。
+/// id、zone、doneAt 是格式 v2 加的：這顆自己的編號、開始那一刻的時區名、按「提早做完」的時刻。
 struct FocusRun: Equatable {
     var typeId: String
     var len: Double
@@ -64,6 +73,9 @@ struct FocusRun: Equatable {
     var flowMin = 0.0
     var done = false
     var draft = ""
+    var id = ""
+    var zone: String?
+    var doneAt: Millis?
 }
 
 /// 收下之後的休息。endAt 是 nil 代表「我自己決定」：不倒數，按回來才結束。
@@ -82,6 +94,7 @@ enum Current: Equatable {
 }
 
 /// 收下的一顆。start 是開始時刻；很舊的資料沒有這欄，畫時間軸時用收下時刻倒推。
+/// id、zone、done、doneAt 是格式 v2 加的；舊資料沒有時區就留空，不猜。
 struct Bean: Equatable {
     var keptAt: Millis
     var typeId: String
@@ -91,15 +104,26 @@ struct Bean: Equatable {
     var pings: [String]
     var flow: Double
     var start: Millis?
+    var id = ""
+    var zone: String?
+    var done = false
+    var doneAt: Millis?
 }
 
 /// 作廢的一筆：只記第幾分鐘、原因、選填那一行，什麼都不扣。
+/// 格式 v2 加：編號、開始時刻、時區、這顆原訂多長、作廢前記的念頭與有人找（以前會跟著消失）。
 struct VoidEntry: Equatable {
     var voidedAt: Millis
     var typeId: String
     var minute: Int
     var reason: String
     var text: String
+    var id = ""
+    var start: Millis?
+    var zone: String?
+    var len: Double?
+    var notes: [String] = []
+    var pings: [String] = []
 }
 
 struct DayRecord: Equatable {

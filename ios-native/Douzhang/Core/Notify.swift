@@ -32,7 +32,7 @@ enum Notify {
         var list = [PlannedNotice(title: Words.restDone, body: body, fireAt: endAt)]
         if isAuto {
             let nextStart = endAt + Params.autoNextDelayMs
-            let nextLen = Machine.typeOf(state, run.typeId).len
+            let nextLen = Machine.liveType(state, run.typeId).len
             let nextEnd = nextStart + nextLen * Params.msPerMinute
             list.append(PlannedNotice(title: Words.rang, body: Words.bellSub, fireAt: nextEnd))
         }

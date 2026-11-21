@@ -90,7 +90,7 @@ final class AppModel {
     private func load() {
         let found = file.load()
         unreadable = found.unreadable
-        state = Machine.settle(found.state, now: TimeText.nowMillis())
+        state = Machine.settle(found.state, now: TimeText.nowMillis(), zone: Store.zoneNow())
         loaded = true
         lastBackup = backups.lastAutoBackupAt()
         shieldCount = shield.count()
@@ -103,7 +103,7 @@ final class AppModel {
     func tick() {
         let time = TimeText.nowMillis()
         if loaded {
-            let settled = Machine.settle(state, now: time)
+            let settled = Machine.settle(state, now: time, zone: Store.zoneNow())
             if settled.current != state.current {
                 commit(settled)
             }
@@ -139,7 +139,7 @@ final class AppModel {
 
     /// 現在這一態（過期的休息先收掉）。動作都從這份算新狀態。
     func settled() -> AppState {
-        Machine.settle(state, now: TimeText.nowMillis())
+        Machine.settle(state, now: TimeText.nowMillis(), zone: Store.zoneNow())
     }
 
     /// 換上新狀態並存檔。本機檔讀不懂時不存（壞檔不蓋）。

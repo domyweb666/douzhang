@@ -111,10 +111,10 @@ final class StatsTests: XCTestCase {
         XCTAssertTrue(result.days[2].parts.isEmpty)
     }
 
-    func test標籤被刪掉的舊番茄算在第一個標籤() {
+    func test標籤被刪掉的舊番茄不併進第一個標籤() {
         var gone = Store.blank()
         gone.days[key] = November.day(November.bean(17, 9, 0, len: 25, typeId: "deleted"))
-        XCTAssertEqual(Stats.stats(gone, keys: [key]).tags.first?.type.id, "t1")
+        XCTAssertEqual(Stats.stats(gone, keys: [key]).tags.first?.type.id, Machine.goneTypeId)
     }
 
     func test整段都沒番茄時全部是零不會除以零() {

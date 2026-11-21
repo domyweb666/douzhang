@@ -62,11 +62,15 @@ enum SettingsLogic {
     }
 
     /// 刪到剩一個就不能再刪；刪掉的是選中的就退回第一個。
-    static func removeType(_ state: AppState, id: String) -> AppState {
+    /// 刪掉的那個不丟，搬到 removedTypes：舊番茄照原本的名字與顏色算，不會併進別的標籤。
+    static func removeType(_ state: AppState, id: String, now: Millis = 0) -> AppState {
         let types = state.settings.types.filter { $0.id != id }
         guard !types.isEmpty, types.count != state.settings.types.count else { return state }
         var next = state
         next.settings.types = types
+        for gone in state.settings.types where gone.id == id {
+            next.settings.removedTypes.append(RemovedTag(type: gone, removedAt: now))
+        }
         if !types.contains(where: { $0.id == state.settings.typeId }) {
             next.settings.typeId = types[0].id
         }

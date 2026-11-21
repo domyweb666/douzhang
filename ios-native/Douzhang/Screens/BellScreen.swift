@@ -123,7 +123,7 @@ struct TodayRow: View {
     var type: TagType
 
     var body: some View {
-        let kept = state.days[Store.dayKey(run.startedAt)]?.beans ?? []
+        let kept = state.days[Machine.dayKey(of: run)]?.beans ?? []
         let shown = kept.stableSorted { $0.keptAt }.suffix(Params.celebrateTomatoes - 1)
         VStack(spacing: Tokens.Space.s) {
             Text(Words.todayKept(kept.count + 1))

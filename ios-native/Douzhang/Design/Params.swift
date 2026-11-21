@@ -7,6 +7,8 @@ enum Params {
     static let secondsPerMinute = 60.0
     static let msPerMinute = secondsPerMinute * msPerSecond
     static let msPerHour = 60 * msPerMinute
+    /// 一天從幾點開始算。0＝午夜（多米 2026-11-22 定：先維持午夜）。
+    static let dayStartHour = 0.0
 
     /// 畫面時鐘多久刷新一次（毫秒）
     static let tickMs = 250

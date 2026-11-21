@@ -72,7 +72,7 @@ extension AppModel {
         pendingImport = nil
         wiped = false
         jarSeen = nil
-        replaceAll(Machine.settle(imported, now: TimeText.nowMillis()))
+        replaceAll(Machine.settle(imported, now: TimeText.nowMillis(), zone: Store.zoneNow()))
     }
 
     func cancelImport() {

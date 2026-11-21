@@ -27,12 +27,13 @@ struct StatsDay: Equatable {
     var parts: [StatsPart]
 }
 
-/// 每個有番茄的標籤一筆。share 是占總分鐘的幾成。
+/// 每個有番茄的標籤一筆。share 是占總分鐘的幾成。removed＝這個標籤已經刪掉了（名字還留著）。
 struct StatsTag: Equatable {
     var type: TagType
     var minutes: Double
     var beans: Int
     var share: Double
+    var removed = false
 }
 
 /// 這幾天的每一顆。
@@ -76,7 +77,7 @@ enum Stats {
         }
     }
 
-    /// 這幾天的小計。標籤被刪掉的舊番茄算在第一個標籤上（跟番茄架、番茄堆同一條規則）。
+    /// 這幾天的小計。刪掉的標籤自己一列、不併進別的標籤（跟番茄架、番茄堆同一條規則，Machine.typeOf）。
     static func stats(_ state: AppState, keys: [String]) -> StatsResult {
         var tags: [StatsTag] = []
         var list: [StatsBean] = []
@@ -89,15 +90,17 @@ enum Stats {
                 add(&tags, type: type, minutes: minutes)
                 list.append(StatsBean(keptAt: bean.keptAt, type: type, len: bean.len))
             }
-            let parts = state.settings.types.compactMap { type in
+            let parts = tagOrder(state).compactMap { type in
                 perTag[type.id].map { StatsPart(type: type, minutes: $0) }
             }
             let minutes = parts.reduce(0) { $0 + $1.minutes }
             return StatsDay(key: key, minutes: minutes, parts: parts)
         }
         let total = days.reduce(0) { $0 + $1.minutes }
+        let removedIds = Set(state.settings.removedTypes.map(\.type.id))
         for index in tags.indices {
             tags[index].share = total > 0 ? tags[index].minutes / total : 0
+            tags[index].removed = removedIds.contains(tags[index].type.id)
         }
         return StatsResult(
             minutes: total,
@@ -106,6 +109,13 @@ enum Stats {
             tags: tags.stableSorted { -$0.minutes },
             list: list.stableSorted { $0.keptAt }
         )
+    }
+
+    /// 一天那根長條由下往上疊的順序：現有標籤照設定裡的順序，再來是刪掉的，最後是名字沒留下來的。
+    private static func tagOrder(_ state: AppState) -> [TagType] {
+        let settings = state.settings
+        let gone = Machine.typeOf(state, Machine.goneTypeId)
+        return settings.types + settings.removedTypes.map(\.type) + [gone]
     }
 
     private static func add(_ tags: inout [StatsTag], type: TagType, minutes: Double) {
