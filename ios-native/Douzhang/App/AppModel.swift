@@ -8,6 +8,7 @@ enum Page: Hashable, CaseIterable {
 
 /// 殼：開機讀檔、每一拍看時鐘、到點換畫面、每次改動就存、狀態變了就重排通知。
 /// 狀態機在 Core/Machine.swift，畫面在 Screens/。每個動作先算新狀態（純函式），再 commit。
+/// 動作在 AppModel+Actions，備份在 AppModel+Backup，白噪音、擋 app、聚焦模式在 AppModel+Gates。
 @MainActor
 @Observable
 final class AppModel {
@@ -28,12 +29,37 @@ final class AppModel {
     /// 番茄堆上次看到幾顆：鈴響時番茄堆不在畫面上，回來時要知道哪顆是新的
     var jarSeen: Int?
 
+    // MARK: 備份（AppModel+Backup）
+
+    /// 設定頁備份區下面那一行；沒事是 nil
+    var backupProblem: BackupProblem?
+    var lastBackup: Millis?
+    /// 選好、讀得懂、也備份過現在的資料了，等使用者按「覆蓋」
+    var pendingImport: AppState?
+    /// 匯出寫好的暫存檔：有值就開系統的分享選單
+    var exportFile: ExportFile?
+
+    // MARK: 白噪音、擋 app、聚焦模式（AppModel+Gates）
+
+    /// 聚焦模式跟著哪一顆開著；那顆響了、結束、再做一下，就自動回直向
+    var zenFor: String?
+    /// 離開聚焦模式時，主畫面要直接開的那張半頁
+    var homeSheetRequest: HomeSheet?
+    /// 待機時開著背景音半頁：邊選邊聽
+    var previewing = false
+    var shieldCount = 0
+
     @ObservationIgnored let file: StateFile
+    @ObservationIgnored let backups: BackupFiles
     @ObservationIgnored let notifier = Notifier()
+    @ObservationIgnored let soundscape = Soundscape()
+    @ObservationIgnored let shield = AppShield()
+    @ObservationIgnored let poseWatch = PoseWatch()
     @ObservationIgnored private var notifWasOff = false
 
-    init(file: StateFile = .standard) {
+    init(file: StateFile = .standard, backups: BackupFiles = .standard) {
         self.file = file
+        self.backups = backups
     }
 
     var todayKey: String {
@@ -52,10 +78,11 @@ final class AppModel {
     private func load() {
         let found = file.load()
         unreadable = found.unreadable
-        let time = TimeText.nowMillis()
-        state = Machine.settle(found.state, now: time)
+        state = Machine.settle(found.state, now: TimeText.nowMillis())
         loaded = true
-        // 開機對齊：系統裡排的通知要跟現在的狀態一致
+        lastBackup = backups.lastAutoBackupAt()
+        shieldCount = shield.count()
+        // 開機對齊：系統裡排的通知、擋板、白噪音都要跟現在的狀態一致
         follow(force: true)
         refreshNotif()
     }
@@ -76,14 +103,15 @@ final class AppModel {
     private func enter(_ next: Phase) {
         phase = next
         if next == .focus || next == .bell { page = .home }
+        syncGates()
     }
 
-    /// 狀態改了之後：算現在哪一態、對齊通知。
+    /// 狀態改了之後：算現在哪一態、對齊通知與那幾個跟著狀態走的開關。
     private func follow(force: Bool = false) {
         let time = TimeText.nowMillis()
         let next = Machine.phaseOf(state, now: time)
-        if next != phase { enter(next) }
         now = time
+        if next != phase { enter(next) } else { syncGates() }
         notifier.sync(state, now: time, force: force)
     }
 

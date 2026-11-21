@@ -14,7 +14,7 @@ enum RestMode: String {
 }
 
 /// 短休息：跟著番茄長度（÷5 最少 3 分），或固定幾分。
-enum RestShort: Equatable {
+enum RestShort: Hashable {
     case auto
     case minutes(Int)
 }

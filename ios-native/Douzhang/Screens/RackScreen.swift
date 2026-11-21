@@ -132,7 +132,8 @@ struct RackScreen: View {
 
     /// ‹ 這一段 ›。畫面上已經有今天就沒有 ›（不往還沒到的日子翻）。
     private var periodNav: some View {
-        let atToday = RackCalendar.reachesToday(period, selected: selected, todayKey: model.todayKey)
+        let today = model.todayKey
+        let atToday = RackCalendar.reachesToday(period, selected: selected, todayKey: today)
         return HStack {
             TextButton(label: Words.prevPeriod, a11yLabel: Words.prevPeriodA11y) { shift(-1) }
             Text(periodTitle)
