@@ -40,4 +40,4 @@
 - 21:01 第 7 項做完：`Screens/SettingsScreen`、`SettingsRhythm`（節奏與兩張滾輪半頁）、`UI/SettingsParts`（區塊、列、開關、分享選單）、`App/BackupFiles`、`AppModel+Backup`（匯出走系統分享選單、匯入先自動備份再問、清空連自動備份一起刪）。測試加備份檔案處理 7 條。粗檢查 0 問題。「專注」那一區（擋 app）在第 8 項。
 - 21:04 第 8 項做完：`Screens/FocusScreen`（翻牌時鐘、在長的番茄、點一下才出現的三顆鈕）、`App/PoseWatch`（橫放進聚焦、直拿離開；鎖畫面方向）、`Soundscape`（白噪音循環播、背景也播）、`AppShield`（螢幕使用時間 API，直接用，不再經過 Expo 模組）、`AppModel+Gates`（三樣跟著狀態對齊）、`Screens/SettingsShield`。`project.yml` 加橫向、背景音訊、Family Controls 權限。粗檢查 0 問題。到這裡 app 的每個畫面都搬完了。
 - 21:05 更正：上面第 1–8 項的時間原本是我憑感覺寫的（寫成半夜兩點），不是真的。已經改成每次存檔的實際時間（`git log` 查得到）。之後的時間都先看時鐘再寫。
-- 21:08 第 9 項做完：`Douzhang/Assets.xcassets`（icon 用 Expo 版同一張 1024，沒有透明通道）、`PrivacyInfo.xcprivacy`（不追蹤、不收集；宣告讀檔案大小與 UserDefaults 的理由）、`.github/workflows/testflight-native.yml`（tag `tfn-*` 才會跑，build 號往上墊 100 避開 Expo 版用過的 1–6）。原本的 `testflight.yml` 沒動。沒有觸發任何打包。
+- 21:05 第 9 項做完：`Douzhang/Assets.xcassets`（icon 用 Expo 版同一張 1024，沒有透明通道）、`PrivacyInfo.xcprivacy`（不追蹤、不收集；宣告讀檔案大小與 UserDefaults 的理由）、`.github/workflows/testflight-native.yml`（tag `tfn-*` 才會跑，build 號往上墊 100 避開 Expo 版用過的 1–6）。原本的 `testflight.yml` 沒動。沒有觸發任何打包。

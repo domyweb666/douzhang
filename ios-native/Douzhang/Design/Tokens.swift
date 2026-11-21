@@ -102,7 +102,6 @@ enum Tokens {
 
     enum Opacity {
         static let pressed = DomyTokens.Motion.pressedOpacity
-        static let scrim = 0.32
         /// 番茄左上那道亮面與兩頰
         static let tomatoShine = 0.6
         static let tomatoCheek = 0.3
@@ -111,7 +110,6 @@ enum Tokens {
     enum Shape {
         static let radiusCard = DomyTokens.Radius.xl
         static let radiusButton = DomyTokens.Radius.md
-        static let radiusPill = DomyTokens.Radius.pill
         static let radiusSheet = DomyTokens.Radius.xxl
         static let tapMin = DomyTokens.Size.touch
         static let tapPrimary = DomyTokens.Size.button
@@ -175,7 +173,6 @@ enum Tokens {
     }
 
     enum Motion {
-        static let transition = DomyTokens.Motion.transition
         static let pressScale = DomyTokens.Motion.pressScale
         static let pressDuration = DomyTokens.Motion.pressDuration
         /// 收下這顆 → 番茄掉進來：等多久才掉（秒）、往上的初速、左右散開多少
