@@ -11,8 +11,8 @@ struct OpenDay: Identifiable {
 }
 
 /// 番茄架（左右滑三頁的左邊那頁）：時間帳本。
-/// 標題右邊切「行事曆｜分析」。行事曆有天／3 天／週／月四種檢視，分析有日／週／月。
-/// 兩邊共用同一個選中的日子與同一列 ‹ 這一段 ›。
+/// 標題右邊切「行事曆｜分析」。行事曆有天／3 天／週／月四種檢視；分析看這週或這個月（某一天做了什麼看行事曆）。
+/// 兩邊共用同一個選中的日子與同一列 ‹ 這一段 ›；分析的那一列放在第一張卡片下面。
 /// 換一段用 ‹ › 不用左右滑：這頁本身在左右滑的分頁裡，再滑一層會搶手勢。
 /// 沒番茄的日子不寫 0、沒有連續數字。
 struct RackScreen: View {
@@ -37,7 +37,6 @@ struct RackScreen: View {
     ]
 
     private let ranges = [
-        SegmentOption(value: StatsRange.day, label: Words.rangeDay),
         SegmentOption(value: StatsRange.week, label: Words.viewWeek),
         SegmentOption(value: StatsRange.month, label: Words.viewMonth),
     ]
@@ -46,7 +45,7 @@ struct RackScreen: View {
         picked.isEmpty ? model.todayKey : picked
     }
 
-    /// 日／週／月跟天／週／月是同一組，換一段的算法共用
+    /// 週、月跟行事曆的週、月是同一組，換一段的算法共用
     private var period: RackView {
         mode == .calendar ? view : range.view
     }
@@ -95,29 +94,43 @@ struct RackScreen: View {
 
     private var filled: some View {
         VStack(spacing: .zero) {
-            Group {
-                if mode == .calendar {
-                    Segmented(options: views, value: view) { view = $0 }
-                } else {
-                    Segmented(options: ranges, value: range) { range = $0 }
-                }
+            if mode == .calendar {
+                Segmented(options: views, value: view) { view = $0 }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top, Tokens.Space.m)
+                periodNav
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.top, Tokens.Space.m)
-            periodNav
             ScrollView {
                 // 換檢視是整塊淡出淡入（id 換了就當成另一塊），方塊不會滿場飛
                 Group {
                     if mode == .calendar {
                         calendar.id(view)
                     } else {
-                        StatsPanel(state: model.state, range: range, selected: selected).id(range)
+                        stats.id(range)
                     }
                 }
                 .padding(.bottom, Tokens.Space.l)
             }
             .scrollIndicators(.hidden)
         }
+    }
+
+    /// 分析那一半。換這週、這個月的分段鈕與 ‹ 這一段 › 放在第一張卡片下面：先看到答案，要換一段再往下找。
+    private var stats: some View {
+        StatsPanel(state: model.state, range: range, selected: selected, period: statsPeriod) {
+            VStack(spacing: .zero) {
+                Segmented(options: ranges, value: range) { range = $0 }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                periodNav
+            }
+        }
+    }
+
+    /// 分析卡片標題與那行事實開頭的那一段：這週、這個月，翻到以前就是那一段的名字。
+    private var statsPeriod: String {
+        let month = DayKeys.shiftMonth(selected, months: 0)
+        let isThisMonth = month == DayKeys.shiftMonth(model.todayKey, months: 0)
+        return range == .month && isThisMonth ? Words.thisMonth : periodTitle
     }
 
     /// 這一段叫什麼：天＝11月17日 星期二；3 天＝起訖；週＝這週或某月某日那週；月＝2026年11月。

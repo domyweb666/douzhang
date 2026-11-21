@@ -69,6 +69,26 @@ enum Params {
         }
     }
 
+    /// 分析頁的視窗與門檻（.analytics/05-指標字典.md）。都是起點數字，用真資料量過再調
+    enum Insight {
+        /// 「這個長度的結果」看最近幾天、至少幾筆才列；作廢不超過幾筆就把分鐘一個個列出來
+        static let lengthDays = 28.0
+        static let lengthMin = 5
+        static let lengthListMax = 3
+        /// 「記了什麼、作廢的原因」看最近幾天；至少幾筆才分種類、分原因講
+        static let jotDays = 14.0
+        static let splitMin = 5
+        /// 「你平常幾顆」看今天之前幾天、至少要幾個有開始番茄的日子、取中間哪一段
+        static let usualDays = 21
+        static let usualMinDays = 10
+        static let usualLow = 0.25
+        static let usualHigh = 0.75
+        /// 斷了一陣子：用不到幾天不判斷、間隔看最近幾天、至少隔幾天才算
+        static let backMinUse = 14
+        static let backWindow = 28
+        static let backMinGap = 4
+    }
+
     /// 聚焦模式：看重力落在哪一軸判斷直拿或橫放
     enum Zen {
         /// 重力有這麼多成落在同一軸才算直拿或橫放；斜拿、平放都不算

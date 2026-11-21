@@ -168,7 +168,6 @@ enum Tokens {
         static let monthDot: CGFloat = 10
         static let monthWeek: CGFloat = 60
         static let monthWeekFlat: CGFloat = 30
-        static let statsBars: CGFloat = 112
         static let statsShare: CGFloat = 6
         static let statsName: CGFloat = 64
         /// 月檢視的葉子斜放的角度

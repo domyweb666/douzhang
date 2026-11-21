@@ -116,6 +116,7 @@ struct RipeTomato: View {
 }
 
 /// 「今天收了 N 顆」：開始那天已經收下的，加上這一顆排在最後、比較大。看得到累積，不跟昨天比。
+/// 有開始番茄的日子夠多之後，下面多一行「你平常 4 到 6 顆」；斷了一陣子回來的第一天不放。
 /// 太多顆時只畫最後幾顆，數字照實寫。
 struct TodayRow: View {
     var state: AppState
@@ -129,6 +130,12 @@ struct TodayRow: View {
             Text(Words.todayKept(kept.count + 1))
                 .font(Tokens.Fonts.sub)
                 .foregroundStyle(Tokens.Colors.textSecondary)
+            // 第二行比較小：她自己平常的範圍。只給範圍，不寫今天多了還是少了
+            if let usual = Insights.usualShown(state, todayKey: Machine.dayKey(of: run)) {
+                Text(Words.usual(usual))
+                    .font(Tokens.Fonts.caption)
+                    .foregroundStyle(Tokens.Colors.textSecondary)
+            }
             FlowRow(spacing: Tokens.Space.xs, centered: true) {
                 ForEach(Array(shown.enumerated()), id: \.offset) { item in
                     TomatoView(
@@ -150,13 +157,12 @@ struct TodayRow: View {
 
 private let cardShape = RoundedRectangle(cornerRadius: Tokens.Shape.radiusCard)
 
-/// 計時中記的念頭與有人找。清單空就什麼都不畫，不寫「沒有紀錄」。
+/// 計時中記的念頭與有人找。清單空就什麼都不畫，不寫「沒有紀錄」。沒寫字的不列空行。
 struct Jotted: View {
     var run: FocusRun
 
     var body: some View {
-        let thoughts = run.notes.map { (Words.noteThought, $0) }
-        let rows = thoughts + run.pings.map { (Words.notePing, $0) }
+        let rows = Self.rows(.notes, run.notes) + Self.rows(.pings, run.pings)
         VStack(alignment: .leading, spacing: Tokens.Space.xs) {
             ForEach(Array(rows.enumerated()), id: \.offset) { row in
                 HStack(alignment: .top, spacing: Tokens.Space.m) {
@@ -168,5 +174,13 @@ struct Jotted: View {
             }
         }
         .padding(.top, rows.isEmpty ? .zero : Tokens.Space.m)
+    }
+
+    /// 有寫字的一筆一列（左邊種類、右邊那一行）；沒寫字的那幾筆合成最後一列「有人找 2 次」。
+    private static func rows(_ kind: JotKind, _ all: [String]) -> [(String, String)] {
+        let label = kind == .notes ? Words.noteThought : Words.notePing
+        let written = all.filter { !$0.isEmpty }.map { (label, $0) }
+        let blank = all.count - written.count
+        return blank > 0 ? written + [(Words.jotTimes(kind, blank), "")] : written
     }
 }

@@ -82,11 +82,34 @@ final class MachineMidwayTests: XCTestCase {
         XCTAssertEqual(run.notes, ["x"])
     }
 
-    func test空白不記不在計時中也不記() {
-        let state = started()
-        XCTAssertEqual(Machine.jot(state, kind: .notes, text: "   "), state)
+    func test點了種類沒寫字也算一筆不在計時中不記() {
+        XCTAssertEqual(Machine.jot(started(), kind: .pings).focusRun?.pings, [""])
+        XCTAssertEqual(Machine.jot(started(), kind: .notes, text: "   ").focusRun?.notes, [""])
         let idle = Store.blank()
         XCTAssertEqual(Machine.jot(idle, kind: .notes, text: "x"), idle)
+    }
+
+    func test改點另一種是改種類不會記成兩筆() throws {
+        let picked = Machine.jot(started(), kind: .notes)
+        let run = try XCTUnwrap(
+            Machine.amendJot(picked, from: .notes, into: .pings, text: "").focusRun
+        )
+        XCTAssertEqual(run.notes, [])
+        XCTAssertEqual(run.pings, [""])
+    }
+
+    func test補上那一行是改剛記的那一筆前面的不動() throws {
+        let first = Machine.jot(started(), kind: .notes, text: "a")
+        let picked = Machine.jot(first, kind: .notes)
+        let run = try XCTUnwrap(
+            Machine.amendJot(picked, from: .notes, into: .notes, text: " 回信 ").focusRun
+        )
+        XCTAssertEqual(run.notes, ["a", "回信"])
+    }
+
+    func test沒有剛記的那一筆可改就什麼都不變() {
+        let state = started()
+        XCTAssertEqual(Machine.amendJot(state, from: .pings, into: .notes, text: "x"), state)
     }
 
     func test記的念頭跟著番茄進帳() throws {

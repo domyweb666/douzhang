@@ -93,12 +93,19 @@ struct HomeScreen: View {
     private func sheetBody(_ which: HomeSheet) -> some View {
         switch which {
         case .more: moreSheet
-        case .note: NoteSheet { kind, text in model.jot(kind, text: text) }
+        case .note: noteSheet
         case let .end(early): endSheet(early: early)
         case .voidReason: VoidSheet { reason, text in model.voidBean(reason: reason, text: text) }
         case .tag: TagPickSheet()
         case .sound: SoundSheet()
         }
+    }
+
+    private var noteSheet: some View {
+        NoteSheet(
+            onJot: { model.jot($0) },
+            onAmend: { from, into, text in model.amendJot(from: from, into: into, text: text) }
+        )
     }
 
     private var moreSheet: some View {

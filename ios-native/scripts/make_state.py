@@ -24,7 +24,7 @@ def day_key(ms):
     return time.strftime("%Y-%m-%d", time.localtime(ms / 1000))
 
 
-def bean(start, length, type_id, clue="", flow=0, notes=()):
+def bean(start, length, type_id, clue="", flow=0, notes=(), pings=()):
     return {
         "t": start + (length + flow) * MIN,
         "start": start,
@@ -32,7 +32,7 @@ def bean(start, length, type_id, clue="", flow=0, notes=()):
         "len": length,
         "clue": clue,
         "notes": list(notes),
-        "pings": [],
+        "pings": list(pings),
         "flow": flow,
     }
 
@@ -48,7 +48,8 @@ def add(start, length, type_id, **more):
 
 # 今天：往回推，三顆加一次作廢，都在現在以前
 add(now - 4 * HOUR, 25, "t1", clue="把第二節寫完")
-add(now - 3 * HOUR, 50, "t2", flow=15, notes=["要回信給出版社"])
+# 記一筆：一筆有寫字的念頭，兩筆沒寫字的有人找（分析第二張會合成「有人找 2 次」）
+add(now - 3 * HOUR, 50, "t2", flow=15, notes=["要回信給出版社"], pings=["", ""])
 add(now - 100 * MIN, 30, "t3")
 days[day_key(now)]["voids"].append(
     {"t": now - 60 * MIN, "typeId": "t1", "minute": 7, "reason": "訊息", "text": "去看留言"}

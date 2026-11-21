@@ -11,6 +11,7 @@ extension AppModel {
             let granted = await notifier.askOnce()
             notif = granted ? .granted : .denied
             let zone = Store.zoneNow()
+            idleLine = nil
             commit(Machine.start(settled(), now: TimeText.nowMillis(), typeId: typeId, zone: zone))
         }
     }
@@ -33,18 +34,29 @@ extension AppModel {
         commit(Machine.setDraft(settled(), text: text))
     }
 
-    func jot(_ kind: JotKind, text: String) {
-        commit(Machine.jot(settled(), kind: kind, text: text))
+    /// 計時中記一筆：點種類那一下先記一筆沒寫字的。
+    func jot(_ kind: JotKind) {
+        commit(Machine.jot(settled(), kind: kind))
+    }
+
+    /// 剛記的那一筆改種類，或補上那一行。
+    func amendJot(from: JotKind, into: JotKind, text: String) {
+        commit(Machine.amendJot(settled(), from: from, into: into, text: text))
     }
 
     func markDone() {
         commit(Machine.markDone(settled(), now: TimeText.nowMillis()))
     }
 
-    /// 作廢這顆，記原因與那一行。
+    /// 作廢這顆，記原因與那一行。回待機後開始鈕上面多一行：這週同一個原因第幾顆。
+    /// 沒留紀錄（開始不到五分鐘）或沒選原因就沒有那一行。
     func voidBean(reason: String, text: String) {
         let now = TimeText.nowMillis()
-        commit(Machine.voidBean(settled(), now: now, reason: reason, text: text))
+        let next = Machine.voidBean(settled(), now: now, reason: reason, text: text)
+        let recorded = next.days != state.days
+        commit(next)
+        let nth = Insights.voidsThisWeek(next, reason: reason, todayKey: Store.dayKey(now))
+        idleLine = recorded ? nth.map { Words.voidedThisWeek($0, reason: reason) } : nil
         pulses.removed += 1
     }
 

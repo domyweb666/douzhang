@@ -33,7 +33,8 @@ struct TomatoColorRow: View {
     }
 }
 
-/// 一個標籤的編輯：改名、番茄色、滾輪選長度、最下面刪除（只剩一個時沒有）。改了立刻存，「好」只是關。
+/// 一個標籤的編輯：改名、番茄色、滾輪選長度、這個長度最近怎麼結束的那一行、最下面刪除（只剩一個時沒有）。
+/// 改了立刻存，「好」只是關。
 /// 主畫面的標籤半頁與設定頁共用。
 struct TagEditor: View {
     @Environment(AppModel.self) private var model
@@ -59,6 +60,7 @@ struct TagEditor: View {
             TomatoColorRow(value: type.color) { model.setTypeColor(type.id, color: $0) }
                 .padding(.top, Tokens.Space.m)
             lengthWheel
+            lengthNote
             BigButton(label: Words.confirm) {
                 saveName()
                 onClose()
@@ -90,6 +92,16 @@ struct TagEditor: View {
         }
         .pickerStyle(.wheel)
         .labelsHidden()
+    }
+
+    /// 這個長度最近幾顆怎麼結束的。只列計數，長度要不要調她自己看；換了長度就從新長度重新數。
+    private var lengthNote: some View {
+        let outcome = Insights.lengthOutcome(model.state, type: type, now: TimeText.nowMillis())
+        return Text(Words.lengthLine(outcome, len: type.len))
+            .font(Tokens.Fonts.caption)
+            .foregroundStyle(Tokens.Colors.textSecondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.bottom, Tokens.Space.m)
     }
 
     private func saveName() {

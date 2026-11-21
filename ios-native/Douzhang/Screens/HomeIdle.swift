@@ -40,6 +40,7 @@ struct HomeCaption: View {
 }
 
 /// 待機：標籤膠囊、大時間、背景音、開始鈕；最下面留給番茄堆。
+/// 剛作廢並選了原因回來時，開始鈕上面多一行事實（這週同一個原因第幾顆），不接建議。
 /// 開發版在設定開了「測試模式」，開始鈕就直接開一顆 5 秒的測試番茄。
 struct HomeIdle: View {
     @Environment(AppModel.self) private var model
@@ -59,6 +60,10 @@ struct HomeIdle: View {
             CompactButton(label: Words.ambienceChip(model.state.settings.ambience), action: onSound)
                 .padding(.top, Tokens.Space.m)
             Spacer(minLength: .zero)
+            if let line = model.idleLine {
+                HomeCaption(text: line)
+                    .padding(.bottom, Tokens.Space.m)
+            }
             if model.state.settings.demo {
                 BigButton(label: Words.startTest(Machine.devType.len)) {
                     model.start(typeId: Machine.devTypeId)
@@ -68,6 +73,12 @@ struct HomeIdle: View {
             }
             Spacer()
                 .frame(height: Tokens.Shape.pileRoom + Tokens.Shape.tabClearance)
+        }
+        // 滑到別頁就收掉作廢後那一行，回來不會還在
+        .onChange(of: model.page) { _, page in
+            if page != .home {
+                model.idleLine = nil
+            }
         }
     }
 }

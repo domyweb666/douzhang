@@ -34,6 +34,8 @@ final class AppModel {
     var page: Page? = Page.home
     /// 剛清空過：番茄架的空狀態換一句話
     var wiped = false
+    /// 作廢答完回待機，開始鈕上面那一行（這週同一個原因第幾顆）。按開始或滑到別頁就收掉，不存檔
+    var idleLine: String?
     /// 番茄堆上次看到幾顆：鈴響時番茄堆不在畫面上，回來時要知道哪顆是新的
     var jarSeen: Int?
     /// 收下、拿掉東西各數一次：RootView 看到數字變了就震一下

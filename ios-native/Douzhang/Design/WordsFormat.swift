@@ -129,7 +129,7 @@ extension Words {
     }
 
     static func daySumLine(_ beans: Int, _ minutes: Double) -> String {
-        "\(beans) 顆・\(Int(minutes.rounded())) 分"
+        "\(beans) 顆・\(duration(minutes))"
     }
 
     static func blockTitle(_ name: String, len: Double, flow: Double) -> String {
@@ -203,7 +203,7 @@ extension Words {
     }
 
     static func voidLine(minute: Int, reason: String, text: String) -> String {
-        let why = reason.isEmpty ? "" : "・\(reason)"
+        let why = reason.isEmpty ? "" : "・\(voidReason(reason))"
         let note = text.isEmpty ? "" : "：\(text)"
         return "作廢，第 \(minute) 分鐘" + why + note
     }

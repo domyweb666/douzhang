@@ -24,7 +24,7 @@ enum Words {
     static let notePing = "有人找"
     static let noteTitleThought = "冒出什麼念頭？"
     static let noteTitlePing = "誰找你、什麼事？"
-    static let noteSub = "寫一行就好，休息時再處理。"
+    static let noteSub = "點一下就記下。想寫一行也可以，休息時再處理。"
     static let jotDown = "記下"
     static let tapNoteHint = "點一下畫面記一筆"
     static let more = "⋯"
@@ -40,7 +40,8 @@ enum Words {
     static let stopNow = "停下來"
     static let voidThis = "作廢這顆"
     static let voidSub = "原因寫事實就好。"
-    static let voidReasons = ["念頭", "訊息", "卡住", "其他"]
+    /// 第二個跟計時中記一筆的「有人找」同名：同一件事只有一個名字。以前叫「訊息」，見 WordsInsight
+    static let voidReasons = ["念頭", "有人找", "卡住", "其他"]
     static let voidTextPlaceholder = "例：去看留言（分鐘數會自動記）"
     static let keepGoing = "繼續做"
 
@@ -150,15 +151,12 @@ enum Words {
     static let viewThree = "3 天"
     static let viewWeek = "週"
     static let viewMonth = "月"
-    static let rangeDay = "日"
     static let prevPeriod = "‹"
     static let nextPeriod = "›"
     static let prevPeriodA11y = "上一段"
     static let nextPeriodA11y = "下一段"
     /// 月檢視與長條圖下面那排，週一開頭
     static let weekdayShort = ["一", "二", "三", "四", "五", "六", "日"]
-    static let statsFocus = "專注"
-    static let statsKept = "收下"
     static let statsEmpty = "這段時間還沒有番茄。"
     static let thisWeek = "這週"
     static let rackEmpty = "第一顆響完，這裡就會掛上今天的番茄串。"

@@ -4,7 +4,7 @@ enum Phase {
     case idle, focus, bell, rest
 }
 
-/// 計時中記一筆的兩種：冒出念頭、有人找。
+/// 計時中記一筆的兩種：冒出念頭、有人找。記一筆的函式在 MachineJot.swift。
 enum JotKind {
     case notes, pings
 }
@@ -117,17 +117,6 @@ enum Machine {
         )
         next.current = .rest(rest)
         return next
-    }
-
-    /// 計時中記一筆。倒數不停，只是往這顆裡推一行。
-    static func jot(_ state: AppState, kind: JotKind, text: String) -> AppState {
-        let line = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard var run = state.focusRun, !line.isEmpty else { return state }
-        switch kind {
-        case .notes: run.notes.append(line)
-        case .pings: run.pings.append(line)
-        }
-        return with(state, current: .focus(run))
     }
 
     /// 提早做完了：剩下的時間繼續倒數，鈴響再停；畫面多一行提醒。
