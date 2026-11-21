@@ -45,11 +45,6 @@ enum Machine {
         return now >= endAt
     }
 
-    static func focusRun(_ state: AppState) -> FocusRun? {
-        if case let .focus(run)? = state.current { return run }
-        return nil
-    }
-
     private static func with(_ state: AppState, current: Current?) -> AppState {
         var next = state
         next.current = current
@@ -89,7 +84,7 @@ enum Machine {
 
     /// 收下這顆：番茄進「開始那天」的帳、進休息。空白也收。
     static func keep(_ state: AppState, now: Millis, text: String) -> AppState {
-        guard let run = focusRun(state) else { return state }
+        guard let run = state.focusRun else { return state }
         let bean = Bean(
             keptAt: now,
             typeId: run.typeId,
@@ -131,7 +126,7 @@ enum Machine {
     /// 計時中記一筆。倒數不停，只是往這顆裡推一行。
     static func jot(_ state: AppState, kind: JotKind, text: String) -> AppState {
         let line = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard var run = focusRun(state), !line.isEmpty else { return state }
+        guard var run = state.focusRun, !line.isEmpty else { return state }
         switch kind {
         case .notes: run.notes.append(line)
         case .pings: run.pings.append(line)
@@ -141,7 +136,7 @@ enum Machine {
 
     /// 提早做完了：剩下的時間繼續倒數，鈴響再停；畫面多一行提醒。
     static func markDone(_ state: AppState) -> AppState {
-        guard var run = focusRun(state) else { return state }
+        guard var run = state.focusRun else { return state }
         run.done = true
         return with(state, current: .focus(run))
     }
@@ -160,7 +155,7 @@ enum Machine {
         text: String = "",
         early: Bool
     ) -> AppState {
-        guard let run = focusRun(state) else { return state }
+        guard let run = state.focusRun else { return state }
         var next = with(state, current: nil)
         if early { return next }
         let entry = VoidEntry(
@@ -181,14 +176,14 @@ enum Machine {
         reason: String = "",
         text: String = ""
     ) -> AppState {
-        guard let run = focusRun(state) else { return state }
+        guard let run = state.focusRun else { return state }
         let early = stoppedEarly(run, now: now)
         return voidBean(state, now: now, reason: reason, text: text, early: early)
     }
 
     /// 鈴響後再做 15／30 分：一顆只能一次。到點再響，收下時 flow 記總延長分鐘。
     static func flow(_ state: AppState, now: Millis, minutes: Double) -> AppState {
-        guard var run = focusRun(state), now >= run.endAt, !run.flowed else { return state }
+        guard var run = state.focusRun, now >= run.endAt, !run.flowed else { return state }
         run.endAt = now + minutes * Params.msPerMinute
         run.flowed = true
         run.flowMin += minutes
@@ -203,7 +198,7 @@ enum Machine {
 
     /// 鈴響頁打到一半的字：存進這顆，切走或殺掉再開還在；收下時隨這顆一起消失。
     static func setDraft(_ state: AppState, text: String) -> AppState {
-        guard var run = focusRun(state) else { return state }
+        guard var run = state.focusRun else { return state }
         run.draft = text
         return with(state, current: .focus(run))
     }

@@ -113,4 +113,16 @@ struct AppState: Equatable {
     var current: Current?
     var days: [String: DayRecord]
     var lastLine: Int
+
+    /// 正在跑（或已經響了還沒收）的那一顆；不在計時中是 nil。
+    var focusRun: FocusRun? {
+        if case let .focus(run)? = current { return run }
+        return nil
+    }
+
+    /// 正在休息的那一段；不在休息是 nil。
+    var restRun: RestRun? {
+        if case let .rest(run)? = current { return run }
+        return nil
+    }
 }

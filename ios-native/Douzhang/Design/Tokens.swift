@@ -93,6 +93,7 @@ enum Tokens {
         static let radiusCard = DomyTokens.Radius.xl
         static let radiusButton = DomyTokens.Radius.md
         static let radiusPill = DomyTokens.Radius.pill
+        static let radiusSheet = DomyTokens.Radius.xxl
         static let tapMin = DomyTokens.Size.touch
         static let tapPrimary = DomyTokens.Size.button
         static let buttonCompact = DomyTokens.Size.buttonCompact
@@ -103,6 +104,9 @@ enum Tokens {
         static let tabBarWidth = DomyTokens.Size.tabBarWidth
         static let tabBarBottom = DomyTokens.Size.tabBarBottom
         static let tabIcon: CGFloat = 24
+        /// 有懸浮分頁列的畫面，內容底部要留這麼多空間，最後一筆才不會被蓋住
+        static let tabClearance = tabBarBottom + tabBar + DomyTokens.Space.s4
+        static let tabShadow = DomyTokens.Elevation.level2
         static let tabIconLine: CGFloat = 2
         /// 番茄串上的小圓點
         static let podDot: CGFloat = 12
@@ -159,6 +163,9 @@ enum Tokens {
         static let tiltSmooth = 0.15
         static let substeps = 2
         static let frameMax = 0.033
+        /// 進度環從正上方開始走；每一拍（畫面時鐘刷新的間隔）之間用動畫補上
+        static let ringStart = -90.0
+        static let tick = Double(Params.tickMs) / Params.msPerSecond
         /// 聚焦模式翻牌：牌先往後倒、換數字、再立回來，各這麼久；三顆鈕淡入淡出
         static let zenFlipHalf = 0.15
         static let zenFlipFold = -88.0

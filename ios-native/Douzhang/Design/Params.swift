@@ -8,6 +8,21 @@ enum Params {
     static let msPerMinute = secondsPerMinute * msPerSecond
     static let msPerHour = 60 * msPerMinute
 
+    /// 畫面時鐘多久刷新一次（毫秒）
+    static let tickMs = 250
+    /// 選填的那一句、記一筆一行、作廢原因那一行最多幾個字
+    static let noteMaxChars = 120
+    static let jotMaxChars = 60
+    static let voidTextMaxChars = 40
+    /// 鈴響後「再做一下」的兩個選項
+    static let flowMinutes = [15, 30]
+    /// 慶祝畫面「今天收了幾顆」那排最多畫幾顆（多的只畫最後這幾顆）
+    static let celebrateTomatoes = 12
+    /// 月檢視一格最多畫幾顆小圓點，再多寫「+N」
+    static let monthDotsMax = 8
+    /// 匯入檔大小上限 5 MB
+    static let importMaxBytes = 5 * 1024 * 1024
+
     /// 標籤長度的刻度：5–90 分每 5 分一格
     static let typeLengths = Array(stride(from: 5.0, through: 90.0, by: 5.0))
 

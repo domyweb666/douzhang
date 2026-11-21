@@ -18,14 +18,3 @@ enum Moment {
         return date.timeIntervalSince1970 * Params.msPerSecond
     }
 }
-
-extension AppState {
-    var focusRun: FocusRun? {
-        Machine.focusRun(self)
-    }
-
-    var restRun: RestRun? {
-        if case let .rest(run)? = current { return run }
-        return nil
-    }
-}
