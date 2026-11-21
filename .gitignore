@@ -3,3 +3,4 @@
 ios-native/*.xcodeproj/
 ios-native/Douzhang/Info.plist
 ios-native/DerivedData/
+ios-native/Douzhang/Douzhang.entitlements

@@ -38,6 +38,25 @@ enum Tokens {
         static let pill = Color(domyLight: 0x2C2C2E, domyDark: 0x2C2C2E)
     }
 
+    /// 聚焦模式的版面：都是「佔畫面寬度的幾成」。四張牌加冒號大約佔 78% 寬；
+    /// 時鐘縮成 clockScale 倍讓出位子給番茄，番茄的位子固定是全熟大小，長大時時鐘不會被推動。
+    enum ZenLayout {
+        static let cardWidth: CGFloat = 0.16
+        static let cardHeight: CGFloat = 0.24
+        static let digitSize: CGFloat = 0.19
+        static let cardRadius: CGFloat = 0.024
+        static let gap: CGFloat = 0.014
+        static let colonDot: CGFloat = 0.018
+        static let colonGap: CGFloat = 0.03
+        /// 時鐘跟下面那句的距離
+        static let lineGap: CGFloat = 0.026
+        static let clockScale: CGFloat = 0.78
+        static let tomato: CGFloat = 0.17
+        static let tomatoGap: CGFloat = 0.03
+        /// 點一下畫面，底下三顆鈕出現這麼久（秒）
+        static let controlsSeconds = 3
+    }
+
     /// 文字：Domy 的字級（iOS 系統文字樣式），跟著系統字級縮放。
     enum Fonts {
         static let largeTitle = DomyTokens.TypeScale.largeTitle.font

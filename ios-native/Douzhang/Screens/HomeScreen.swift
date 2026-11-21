@@ -22,6 +22,12 @@ struct HomeScreen: View {
             .sheet(item: $sheet) { which in sheetBody(which) }
             // 換態（響了、作廢、休息到點）時，開著的半頁跟著收掉
             .onChange(of: model.phase) { _, _ in sheet = nil }
+            // 從聚焦模式按「記一筆」「結束這顆」回來：直接開那張，開了就清掉，下一顆不會自己跳出來
+            .onChange(of: model.homeSheetRequest, initial: true) { _, request in
+                guard let request else { return }
+                sheet = request
+                model.homeSheetRequest = nil
+            }
     }
 
     @ViewBuilder private var content: some View {
@@ -105,7 +111,9 @@ struct HomeScreen: View {
             switch pick {
             case .note: sheet = .note
             case .sound: sheet = .sound
-            case .zen: sheet = nil
+            case .zen:
+                sheet = nil
+                model.enterZen()
             case .end: openEnd()
             }
         }

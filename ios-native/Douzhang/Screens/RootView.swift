@@ -2,14 +2,16 @@ import SwiftUI
 import UIKit
 
 /// 最外層：畫布色鋪滿，上面是狀態那幾行，下面依現在哪一態換畫面。
-/// 鈴響是另一整頁；其他時候是左右滑的三頁加懸浮分頁列。
+/// 鈴響是另一整頁；聚焦模式是橫放的整頁時鐘；其他時候是左右滑的三頁加懸浮分頁列。
 struct RootView: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
         ZStack {
             Tokens.Colors.background.ignoresSafeArea()
-            if model.loaded {
+            if model.zenOn, let run = model.state.focusRun {
+                FocusScreen(run: run, type: Machine.typeOf(model.state, run.typeId))
+            } else if model.loaded {
                 VStack(spacing: .zero) {
                     StatusLines()
                     if model.phase == .bell {
