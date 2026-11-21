@@ -5,6 +5,8 @@ included:
 excluded:
   - .build
   - DerivedData
+  # 從 domy-design 複製來的代號檔，由它的 build-swift 產生、不手改
+  - Douzhang/Design/DomyTokens.swift
 
 opt_in_rules:
   - cyclomatic_complexity
@@ -47,6 +49,12 @@ identifier_name:
     - y
     - z
     - ms
+    # Tokens.swift 的間距刻度（設計代號，沿用 Expo 版的名字）
+    - xs
+    - s
+    - m
+    - l
+    - xl
 
 # SwiftFormat 的 trailingCommas 會在多行集合結尾加逗號，SwiftLint 預設禁；兩邊要一致，以 SwiftFormat 為準
 trailing_comma:

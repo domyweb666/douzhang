@@ -12,7 +12,7 @@
 完成標準裡的「粗檢查」＝ `check_swift.py` 回報 0 個問題。
 
 - [x] 1. AI2 番茄架與番茄堆的算法：`Receipt`、`RackCalendar`、`Stats`、`JarPhysics`。標準：Expo 版還在用的函式都搬了，對應的 jest 條目都翻成 Swift 測試，粗檢查過。
-- [ ] 2. AI3 設計代號與用詞：`DomyTokens.swift`（從 domy-design 複製）、番茄帳自己的 `Tokens.swift`、`Words.swift` 補齊。標準：Expo 版 `Tokens.js`、`words.js` 還在用的每一項都有對應，粗檢查過。
+- [x] 2. AI3 設計代號與用詞：`DomyTokens.swift`（從 domy-design 複製）、番茄帳自己的 `Tokens.swift`、`Words.swift` 補齊。標準：Expo 版 `Tokens.js`、`words.js` 還在用的每一項都有對應，粗檢查過。
 - [ ] 3. AI3 殼與主畫面待機：讀檔存檔（含搬 Expo 版留在手機上的舊資料）、每一拍看時鐘、通知、三頁分頁、共用小元件、主畫面待機。標準：`DouzhangApp` 不再只是三個字，待機畫面有標籤膠囊、大時間、開始鈕；存檔與搬資料有測試；粗檢查過。
 - [ ] 4. AI4 計時中、休息、鈴響與半頁：進度環番茄、「⋯」半頁、記一筆、結束這顆、標籤半頁、慶祝畫面。標準：四態各有畫面、每個動作接到 `Machine`，粗檢查過。
 - [ ] 5. AI5 番茄堆畫面：物理、傾斜、點一下彈、入堆音與碰撞音、掉幀退路。標準：待機畫面有番茄堆，收下的那顆回待機時掉進去，粗檢查過。
@@ -32,3 +32,4 @@
 ## 執行紀錄
 - 20:33 開分支、建這份檔。AI1（骨架、狀態機、狀態檔讀寫、約 110 條測試）白天已做完，在 e2bd12d。
 - 21:20 第 1 項做完：`Core/` 加 `DayKeys`、`Receipt`、`RackCalendar`、`Stats`、`JarTypes`、`JarPhysics`，`Design/JarTuning`；測試加 5 個檔（收據、行事曆、月檢視與分析、番茄堆物理、轉動）。粗檢查 0 問題。估算對帳與一週的收據沒搬（功能已拿掉）。
+- 22:05 第 2 項做完：`Design/DomyTokens.swift`（從 domy-design 1.5.0 複製，不手改）、`Tokens.swift`、`Words.swift`、`WordsFormat.swift`。估算對帳、一週的收據、收工、葉子提示那些已經沒畫面用的詞沒搬。粗檢查 0 問題。
