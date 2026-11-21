@@ -23,7 +23,7 @@ struct RingTomato: View {
                 .stroke(ringColor, style: line)
                 .rotationEffect(.degrees(Tokens.Motion.ringStart))
                 .animation(.linear(duration: Tokens.Motion.tick), value: done)
-            TomatoView(fill: fill, size: size * Tokens.Shape.ringTomato * scale)
+            TomatoView(fill: fill, size: size * Tokens.Shape.ringTomato * CGFloat(scale))
         }
         .padding(Tokens.Shape.ringStroke / 2)
         .frame(width: size, height: size)

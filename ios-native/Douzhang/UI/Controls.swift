@@ -89,8 +89,8 @@ struct FlowRow: Layout {
         let sizes = subviews.map { $0.sizeThatFits(.unspecified) }
         let rows = lines(sizes, maxWidth: proposal.width ?? .infinity)
         let height = rows.reduce(0) { $0 + $1.height } + spacing * CGFloat(max(0, rows.count - 1))
-        let width = rows.map(\.width).max() ?? 0
-        return CGSize(width: proposal.width ?? width, height: height)
+        // 回報內容實際的寬：要撐滿的由呼叫端自己加 frame
+        return CGSize(width: rows.map(\.width).max() ?? 0, height: height)
     }
 
     func placeSubviews(

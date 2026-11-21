@@ -11,7 +11,8 @@ enum TomatoArt {
     private static let leafSize = CGSize(width: 24, height: 11)
     private static let leafY: CGFloat = 10
     private static let leafOffset: CGFloat = 13
-    private static let leafTurn = 14.0
+    private static let leafTurn: CGFloat = 14
+    private static let sides: [CGFloat] = [-1, 1]
     private static let leafLine: CGFloat = 3.5
     private static let stemLine: CGFloat = 4
     private static let eyeRadius: CGFloat = 3.8
@@ -41,7 +42,7 @@ enum TomatoArt {
         layer.fill(bodyPath, with: .color(fill))
         layer.stroke(bodyPath, with: ink, lineWidth: bodyLine)
         drawShine(&layer)
-        for side in [-1.0, 1.0] {
+        for side in sides {
             let leaf = leafPath(side: side)
             layer.fill(leaf, with: .color(Tokens.Tomato.leaf.color))
             layer.stroke(leaf, with: ink, lineWidth: leafLine)
@@ -64,7 +65,7 @@ enum TomatoArt {
     }
 
     /// side −1 左、1 右。兩片葉子以中線對稱，各往外轉一點。
-    private static func leafPath(side: Double) -> Path {
+    private static func leafPath(side: CGFloat) -> Path {
         let centerX = middle + side * leafOffset
         let rect = CGRect(
             x: centerX - leafSize.width / 2,
@@ -87,7 +88,7 @@ enum TomatoArt {
 
     private static func drawFace(_ layer: inout GraphicsContext, ink: GraphicsContext.Shading) {
         let cheek = Tokens.Tomato.shine.color.opacity(Tokens.Opacity.tomatoCheek)
-        for side in [-1.0, 1.0] {
+        for side in sides {
             let eyeX = middle + side * eyeOffset
             let eye = CGRect(
                 x: eyeX - eyeRadius,

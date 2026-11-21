@@ -149,6 +149,10 @@ enum Tokens {
         static let statsBars: CGFloat = 112
         static let statsShare: CGFloat = 6
         static let statsName: CGFloat = 64
+        /// 月檢視的葉子斜放的角度
+        static let leafTilt = -30.0
+        /// 作廢的虛線框
+        static let voidStroke = StrokeStyle(lineWidth: DomyTokens.Size.hairline, dash: [4, 3])
     }
 
     enum Motion {

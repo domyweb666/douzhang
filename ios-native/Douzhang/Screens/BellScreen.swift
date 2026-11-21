@@ -119,6 +119,7 @@ struct TodayRow: View {
                 }
                 TomatoView(color: type.color, size: Tokens.Shape.celebrateDotNew)
             }
+            .frame(maxWidth: .infinity)
             .accessibilityHidden(true)
         }
         .frame(maxWidth: .infinity)
