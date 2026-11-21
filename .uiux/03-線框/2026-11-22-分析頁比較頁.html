@@ -1,0 +1,462 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>番茄帳分析頁比較頁</title>
+<style>
+/* 版面：三段由上往下。第一段三支手機並排（記一筆半頁：現況、A、B，可以真的點）；第二段兩支長截圖並排（番茄架的分析：現況、新的）；第三段三張小卡（不動版面的三行新字）；最下面固定作答列 */
+:root {
+  --bg: #F0ECF3; --panel: #FFFFFF; --fg: #231A2A; --muted: #675C70; --line: #DAD1E1;
+  --accent: #4A2F5A; --on-accent: #FFFFFF; --soft: #E6DAEE; --pick: #2B7A4B; --phone-edge: #2B2329;
+  /* 手機畫面裡是 app 的淺色模式，固定不跟著頁面深淺變 */
+  --app-bg: #F6F3EC; --app-card: #FFFFFF; --app-fg: #1F1A22; --app-sub: #6E6872; --app-line: #E4DFD6;
+  --app-accent: #3B2547; --app-strong: #4A2F5A; --app-soft: #ECE3F1; --app-fill: #EEE9E0; --app-ink: #2B2329;
+  --app-on-accent: #FFFFFF; --app-dim: rgba(31, 26, 34, .32); --app-new: #B4541A;
+  --font: -apple-system, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #18131C; --panel: #221B28; --fg: #EEE7F3; --muted: #AC9FB6; --line: #3A3042;
+    --accent: #D9C2E8; --on-accent: #2A1A33; --soft: #3A2B45; --pick: #7FD19B; --phone-edge: #4D4356;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #18131C; --panel: #221B28; --fg: #EEE7F3; --muted: #AC9FB6; --line: #3A3042;
+  --accent: #D9C2E8; --on-accent: #2A1A33; --soft: #3A2B45; --pick: #7FD19B; --phone-edge: #4D4356;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 16px; line-height: 1.6;
+  padding-block: 28px 130px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 1060px; margin: 0 auto; display: flex; flex-direction: column; gap: 44px; }
+section { display: flex; flex-direction: column; gap: 16px; }
+h1 { font-size: 30px; line-height: 1.25; margin: 0 0 8px; text-wrap: balance; }
+h2 { font-size: 22px; line-height: 1.3; margin: 0; text-wrap: balance; }
+h3 { font-size: 17px; margin: 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+p { margin: 0; }
+.lead { color: var(--muted); max-width: 42em; }
+.lead + .lead { margin-top: 6px; }
+.qno { color: var(--accent); font-variant-numeric: tabular-nums; margin-right: 4px; }
+.rec { font-size: 12px; font-weight: 700; background: var(--accent); color: var(--on-accent); padding: 1px 8px; border-radius: 99px; }
+.ref { font-size: 12px; font-weight: 700; border: 1px solid var(--muted); color: var(--muted); padding: 0 8px; border-radius: 99px; }
+button { font: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.opts { display: flex; flex-wrap: wrap; gap: 26px 22px; }
+.opt { flex: 0 1 262px; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.opt-body { display: flex; flex-direction: column; gap: 6px; }
+.opt-body p { font-size: 14.5px; color: var(--muted); }
+.opt-body p b { color: var(--fg); }
+.tally { font-size: 14px; font-variant-numeric: tabular-nums; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.tally button { margin-left: auto; border: 0; background: transparent; color: var(--accent); font-weight: 700; font-size: 14px; padding: 2px 0; }
+.pick { align-self: flex-start; border: 1.5px solid var(--accent); background: transparent; color: var(--accent); border-radius: 99px; padding: 6px 16px; font-weight: 700; font-size: 14.5px; }
+.opt.selected .pick { background: var(--pick); border-color: var(--pick); color: var(--bg); }
+.opt.selected .phone { outline: 4px solid var(--pick); outline-offset: 3px; }
+
+/* 手機 */
+.phone {
+  width: 100%; max-width: 262px; aspect-ratio: 393 / 852; border: 6px solid var(--phone-edge); border-radius: 34px; overflow: hidden;
+  background: var(--app-bg); color: var(--app-fg); font-size: 12.5px; line-height: 1.4; position: relative;
+}
+.phone.long { aspect-ratio: auto; }
+.scr { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; padding: 30px 12px 0; }
+.chip { display: inline-flex; align-items: center; gap: 5px; background: var(--app-soft); color: var(--app-strong); border-radius: 99px; padding: 6px 12px; font-weight: 700; font-size: 12px; line-height: 1; align-self: flex-start; }
+.more { position: absolute; top: 28px; right: 12px; width: 30px; height: 30px; border-radius: 50%; background: var(--app-fill); display: grid; place-items: center; font-weight: 800; letter-spacing: 1px; }
+.time { font-weight: 800; font-variant-numeric: tabular-nums; font-size: 40px; line-height: 1.1; margin-top: 10px; }
+.ringbox { flex: 1; display: grid; place-items: center; width: 100%; min-height: 0; }
+.tap { border: 0; background: transparent; color: inherit; position: absolute; inset: 0; width: 100%; }
+.taphint { position: absolute; left: 0; right: 0; bottom: 26px; text-align: center; color: var(--app-sub); font-size: 11.5px; pointer-events: none; }
+.dim { position: absolute; inset: 0; background: var(--app-dim); }
+
+/* 半頁 */
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--app-card); border-radius: 20px 20px 0 0; padding: 8px 13px 16px; display: flex; flex-direction: column; }
+.grab { align-self: center; width: 28px; height: 4px; border-radius: 4px; background: #CFC8D4; border: 0; padding: 0; margin-bottom: 14px; }
+.sheet h4 { margin: 0; font-size: 15px; line-height: 1.3; }
+.sheet .ssub { color: var(--app-sub); font-size: 11px; margin-top: 2px; }
+.segs { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+.seg { border: 0; background: var(--app-fill); color: var(--app-fg); border-radius: 99px; padding: 7px 13px; font-size: 12px; font-weight: 600; line-height: 1.2; }
+.seg.on { background: var(--app-soft); color: var(--app-strong); font-weight: 700; }
+.row { border: 0; border-bottom: 1px solid var(--app-line); background: transparent; color: var(--app-fg); display: flex; align-items: center; gap: 8px; text-align: left; padding: 11px 2px; font-size: 13px; font-weight: 600; width: 100%; }
+.row:first-of-type { margin-top: 6px; }
+.row span { margin-left: auto; color: var(--app-strong); font-weight: 700; font-size: 11.5px; }
+.field { margin-top: 9px; width: 100%; border: 1px solid #CFC8D4; border-radius: 9px; background: var(--app-card); color: var(--app-fg); font: inherit; font-size: 12px; padding: 8px 9px; }
+.field::placeholder { color: #9A93A0; }
+.big { margin-top: 9px; border: 0; background: var(--app-accent); color: var(--app-on-accent); border-radius: 9px; padding: 9px 0; font-weight: 700; font-size: 12.5px; width: 100%; }
+.big:disabled { opacity: .35; cursor: default; }
+.big.second { background: var(--app-fill); color: var(--app-fg); }
+
+/* 番茄架 */
+.rack { padding: 30px 12px 14px; display: flex; flex-direction: column; gap: 9px; }
+.rack-top { display: flex; align-items: center; gap: 6px; }
+.rack-top b { font-size: 21px; font-weight: 800; margin-right: auto; }
+.pill { background: var(--app-fill); border-radius: 99px; padding: 6px 12px; font-size: 11.5px; font-weight: 600; line-height: 1.2; white-space: nowrap; }
+.pill.on { background: var(--app-soft); color: var(--app-strong); font-weight: 700; }
+.pills { display: flex; gap: 6px; flex-wrap: wrap; }
+.nav { display: flex; align-items: center; color: var(--app-strong); font-weight: 700; padding: 2px 6px; }
+.nav i { font-style: normal; flex: 1; text-align: center; color: var(--app-fg); font-size: 12.5px; }
+.card { background: var(--app-card); border-radius: 15px; padding: 12px 11px; display: flex; flex-direction: column; gap: 8px; }
+.card h5 { margin: 0; font-size: 13.5px; line-height: 1.35; }
+.two { display: flex; }
+.two div { flex: 1; }
+.two small { color: var(--app-sub); font-size: 10px; display: block; }
+.two b { font-size: 14.5px; }
+.bars { display: flex; align-items: flex-end; gap: 4px; height: 78px; }
+.bars div { flex: 1; display: flex; flex-direction: column-reverse; border-radius: 4px; overflow: hidden; }
+.bars div span { display: block; }
+.days { display: flex; gap: 4px; color: var(--app-sub); font-size: 10px; }
+.days span { flex: 1; text-align: center; }
+.trow { display: grid; grid-template-columns: 18px 34px 1fr auto; align-items: center; gap: 6px; font-size: 11.5px; }
+.trow .track { height: 4px; background: var(--app-fill); border-radius: 4px; overflow: hidden; }
+.trow .track span { display: block; height: 100%; border-radius: 4px; }
+.trow em { font-style: normal; color: var(--app-sub); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.nrow { display: grid; grid-template-columns: 18px 1fr auto; align-items: center; gap: 2px 6px; font-size: 11.5px; }
+.nrow .name { font-weight: 600; }
+.nrow em { font-style: normal; color: var(--app-sub); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.nrow .bar { grid-column: 2 / 4; height: 7px; border-radius: 4px; }
+.fact { color: var(--app-sub); font-size: 11.5px; border-top: 1px solid var(--app-line); padding-top: 8px; }
+.say { font-size: 12px; }
+.bean { border-top: 1px solid var(--app-line); padding-top: 7px; font-size: 11.5px; display: flex; flex-direction: column; gap: 2px; }
+.bean b { font-weight: 700; }
+.bean span { color: var(--app-sub); }
+.fold { position: absolute; left: 0; right: 0; border-top: 1.5px dashed var(--app-new); pointer-events: none; }
+.fold span { position: absolute; right: 6px; top: 2px; font-size: 10px; color: var(--app-new); background: var(--app-bg); padding: 0 4px; border-radius: 4px; }
+.tabs { align-self: center; display: flex; background: var(--app-card); border-radius: 99px; padding: 3px; box-shadow: 0 4px 14px rgba(40, 25, 50, .14); font-size: 10px; font-weight: 700; white-space: nowrap; margin-top: 6px; }
+.tabs i { font-style: normal; padding: 5px 10px; border-radius: 99px; }
+.tabs i.on { background: var(--app-soft); color: var(--app-strong); }
+
+/* 狀態切換、小卡、表 */
+.ctrl { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 10px 14px; font-size: 14.5px; color: var(--muted); }
+.ctrl-seg { display: inline-flex; background: var(--soft); border-radius: 99px; padding: 3px; flex-wrap: wrap; }
+.ctrl-seg button { border: 0; background: transparent; color: var(--fg); border-radius: 99px; padding: 6px 16px; font-weight: 700; font-size: 15px; }
+.ctrl-seg button.on { background: var(--accent); color: var(--on-accent); }
+.minis { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.mini { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.mini > p { font-size: 14px; color: var(--muted); }
+.shot { background: var(--app-bg); color: var(--app-fg); border-radius: 12px; padding: 14px 12px; font-size: 13px; line-height: 1.45; display: flex; flex-direction: column; gap: 6px; }
+.shot .old { color: var(--app-sub); }
+.shot .new { color: var(--app-sub); border-left: 3px solid var(--app-new); padding-left: 8px; }
+.shot .btn { background: var(--app-accent); color: var(--app-on-accent); border-radius: 10px; padding: 9px 0; text-align: center; font-weight: 700; }
+.shot .line { display: flex; justify-content: space-between; gap: 8px; border-bottom: 1px solid var(--app-line); padding-bottom: 6px; }
+.choices { display: flex; flex-direction: column; gap: 6px; }
+.choices button { text-align: left; border: 1.5px solid var(--line); background: transparent; color: var(--fg); border-radius: 10px; padding: 8px 12px; font-size: 14.5px; display: flex; gap: 8px; align-items: baseline; }
+.choices button b { color: var(--accent); }
+.choices button.on { border-color: var(--pick); background: var(--soft); }
+.choices button.on b { color: var(--pick); }
+.choices .rec { margin-left: auto; flex: none; }
+
+/* 作答列 */
+.answer {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; background: var(--panel); border-top: 1px solid var(--line);
+  padding-top: 10px; padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.answer-in { max-width: 1060px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; }
+.answer-in small { color: var(--muted); font-size: 13px; }
+#ans { font-weight: 800; font-size: 17px; user-select: all; overflow-wrap: anywhere; }
+#copy { margin-left: auto; border: 0; background: var(--accent); color: var(--on-accent); border-radius: 99px; padding: 7px 18px; font-weight: 700; }
+@media (prefers-reduced-motion: no-preference) { .opt .phone { transition: outline-color .15s; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>番茄帳分析頁比較頁</h1>
+    <p class="lead">2026-11-22。分析頁的規格寫到 3-8，這頁是動程式之前要你用看的確認的兩處：計時中的「記一筆」半頁，還有番茄架的「分析」。</p>
+    <p class="lead">手機畫面是示意，比例照 iPhone 縮小，顏色照現在的 SwiftUI 版，字級與間距不是最後的值。第一段的三支手機可以真的點。選完按最下面的「複製」，把那一行貼回對話。</p>
+  </header>
+
+  <section>
+    <h2><span class="qno">1</span>記一筆半頁選哪個排法</h2>
+    <p class="lead">已經定的：點種類那一下就記下，字變選填，不預選。這裡只比怎麼排。半頁上面那條小橫槓點下去是「下滑關掉」；關掉之後點手機畫面可以再開一次。</p>
+    <div class="opts" id="jots"></div>
+  </section>
+
+  <section>
+    <h2><span class="qno">2</span>番茄架的分析</h2>
+    <p class="lead">已經定的方向：從「日、週、月」三個切換改成兩題各一張。右邊比一支手機長，橘色虛線是一個螢幕的高度，虛線以下要往下捲才看得到。</p>
+    <div class="ctrl">
+      <span>新的那支看哪種狀況</span>
+      <div class="ctrl-seg" role="group" aria-label="資料狀況" id="stateSeg">
+        <button type="button" data-st="usual">平常</button>
+        <button type="button" data-st="few">資料不夠</button>
+        <button type="button" data-st="none">這週沒有番茄</button>
+      </div>
+    </div>
+    <div class="opts" id="racks"></div>
+    <div class="choices" id="q2" role="group" aria-label="番茄架的分析">
+      <button type="button" data-v="新的"><b>新的</b>兩題各一張；每天那排疊色長條拿掉<span class="rec">建議</span></button>
+      <button type="button" data-v="新的＋留長條"><b>新的，但留長條</b>每天那排疊色長條放在第一張的標籤列下面</button>
+      <button type="button" data-v="維持現況"><b>維持現況</b>分析的版面不動，只把「記了什麼、作廢的原因」加在最下面</button>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="qno">3</span>另外三行新的字</h2>
+    <p class="lead">這三處只是多一行字，不動版面，不用選。橘色直線標的是新加的那一行。有哪一行不想要，直接在對話裡跟我說。</p>
+    <div class="minis">
+      <div class="mini">
+        <h3>鈴響頁</h3>
+        <div class="shot">
+          <b>熟了，又收下一顆</b>
+          <span class="old">今天收了 5 顆</span>
+          <span class="new">你平常 4 到 6 顆</span>
+          <div class="btn">收下，休息一下</div>
+        </div>
+        <p>有開始番茄的日子滿 10 個才出現。斷了一陣子回來的第一天不出現。不寫今天多了還是少了。</p>
+      </div>
+      <div class="mini">
+        <h3>標籤編輯半頁</h3>
+        <div class="shot">
+          <div class="line"><b>寫稿</b><span class="old">紫番茄</span></div>
+          <div class="line"><span>長度</span><b>25 分</b></div>
+          <span class="new">25 分鐘，最近 14 顆：響了就收 9、延長 2、提早做完 1、作廢 2。作廢的停在第 12、18 分鐘</span>
+        </div>
+        <p>不到 5 顆時寫「這個長度再 3 顆，這裡會列出它們怎麼結束的」。長度要不要調，她自己看。</p>
+      </div>
+      <div class="mini">
+        <h3>主畫面，作廢答完回來</h3>
+        <div class="shot">
+          <b style="font-size:26px;font-variant-numeric:tabular-nums">25:00</b>
+          <span class="new">這週第 2 顆因為有人找作廢。</span>
+          <div class="btn">開始・25 分</div>
+        </div>
+        <p>沒選原因就不出現。按開始或滑到別頁就消失。後面不接任何建議。</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="answer">
+  <div class="answer-in">
+    <small>你的選擇</small>
+    <span id="ans">還沒選</span>
+    <button type="button" id="copy">複製</button>
+  </div>
+</div>
+
+<script>
+const INK = '#2B2329';
+const C = { red: '#E4472F', orange: '#F0892B', yellow: '#F2BC2F', purple: '#8C5BA9', pink: '#EE7E9D' };
+
+/* app 裡那顆番茄（描邊表情） */
+function tomato(fill, size) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 100 100" aria-hidden="true">
+    <circle cx="50" cy="53" r="44" fill="${fill}" stroke="${INK}" stroke-width="4"/>
+    <ellipse cx="37" cy="10" rx="12" ry="5.5" transform="rotate(-14 37 10)" fill="#6FAE52" stroke="${INK}" stroke-width="3.5"/>
+    <ellipse cx="63" cy="10" rx="12" ry="5.5" transform="rotate(14 63 10)" fill="#6FAE52" stroke="${INK}" stroke-width="3.5"/>
+    <circle cx="37" cy="55" r="3.8" fill="${INK}"/><circle cx="63" cy="55" r="3.8" fill="${INK}"/>
+    <path d="M43.5 63 Q50 69.5 56.5 63" fill="none" stroke="${INK}" stroke-width="3.2" stroke-linecap="round"/></svg>`;
+}
+const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+/* ---------- 第一段：記一筆 ---------- */
+const KIND = { notes: { name: '冒出念頭', ask: '冒出什麼念頭？' }, pings: { name: '有人找', ask: '誰找你、什麼事？' } };
+const JOTS = [
+  { id: 'now', title: '現況', badge: '<span class="ref">對照</span>',
+    body: '<p><b>預選「冒出念頭」，一定要打字。</b>空白時「記下」按不下去。</p><p>點畫面、（換種類）、打字、記下：2 到 3 下再加打字。</p>' },
+  { id: 'A', title: 'A　兩列直排', badge: '<span class="rec">建議</span>',
+    body: '<p><b>兩列大的，點哪一列就記哪一種。</b>跟「結束這顆？」半頁同一種列，手指好點。</p><p>點完才出現選填的那一行。點另一列是改種類，不會記成兩筆。</p>' },
+  { id: 'B', title: 'B　沿用分段鈕', badge: '',
+    body: '<p><b>樣子跟現在最像，只是不預選。</b>點分段鈕就記下。</p><p>顧慮：分段鈕平常的意思是「選一個、等下再確認」，在這裡點了就生效，跟 app 其他地方的分段鈕不一樣。</p>' },
+];
+const jotState = {};
+JOTS.forEach((j) => { jotState[j.id] = { open: true, kind: j.id === 'now' ? 'notes' : null, text: '', notes: 0, pings: 0, saved: false }; });
+
+function focusScreen() {
+  return `<div class="scr"><span class="chip">${tomato(C.red, 13)}專注・25 分</span><div class="more">⋯</div>
+    <div class="ringbox"><svg width="150" height="150" viewBox="0 0 200 200" aria-hidden="true">
+      <circle cx="100" cy="100" r="85" fill="none" stroke="#E4DFD6" stroke-width="8"/>
+      <circle cx="100" cy="100" r="85" fill="none" stroke="${C.red}" stroke-width="8" stroke-linecap="round" stroke-dasharray="196 534" transform="rotate(-90 100 100)"/></svg></div>
+    <div class="time">15:51</div><div style="height:120px;flex:none"></div></div>`;
+}
+
+function sheetHTML(id) {
+  const s = jotState[id];
+  const sub = id === 'now' ? '寫一行就好，休息時再處理。' : '點一下就記下。想寫一行也可以，休息時再處理。';
+  const field = (k) => `<input class="field" id="f-${id}" data-id="${id}" type="text" maxlength="40" placeholder="${KIND[k].ask}" value="${esc(s.text)}" autocomplete="off">`;
+  let mid = '';
+  if (id === 'now') {
+    mid = `<div class="segs">${['notes', 'pings'].map((k) => `<button type="button" class="seg ${s.kind === k ? 'on' : ''}" data-act="kind" data-id="${id}" data-k="${k}">${KIND[k].name}</button>`).join('')}</div>
+      ${field(s.kind)}<button type="button" class="big" data-act="save" data-id="${id}" ${s.text.trim() ? '' : 'disabled'}>記下</button>`;
+  } else {
+    const pick = (k) => id === 'A'
+      ? `<button type="button" class="row" data-act="kind" data-id="${id}" data-k="${k}">${KIND[k].name}${s.kind === k ? '<span>✓ 記下了</span>' : ''}</button>`
+      : `<button type="button" class="seg ${s.kind === k ? 'on' : ''}" data-act="kind" data-id="${id}" data-k="${k}">${KIND[k].name}${s.kind === k ? ' ✓' : ''}</button>`;
+    const picks = ['notes', 'pings'].map(pick).join('');
+    mid = (id === 'A' ? picks : `<div class="segs">${picks}</div>`)
+      + (s.kind ? `${field(s.kind)}<button type="button" class="big ${s.text.trim() ? '' : 'second'}" data-act="save" data-id="${id}">${s.text.trim() ? '記下' : '好'}</button>` : '');
+  }
+  return `<div class="dim"></div><div class="sheet"><button type="button" class="grab" data-act="close" data-id="${id}" aria-label="下滑關掉"></button>
+    <h4>記一筆</h4><div class="ssub">${sub}</div>${mid}</div>`;
+}
+
+function drawJot(id) {
+  const s = jotState[id];
+  const el = document.getElementById('ph-' + id);
+  el.innerHTML = focusScreen() + (s.open ? sheetHTML(id) : `<button type="button" class="tap" data-act="open" data-id="${id}" aria-label="點一下畫面記一筆"></button><div class="taphint">點一下畫面記一筆</div>`);
+  document.getElementById('tl-' + id).textContent = `這顆記了：念頭 ${s.notes}、有人找 ${s.pings}`;
+}
+
+document.getElementById('jots').innerHTML = JOTS.map((j) => `
+  <div class="opt" data-opt="${j.id}">
+    <h3>${j.title}${j.badge}</h3>
+    <div class="phone" id="ph-${j.id}"></div>
+    <div class="tally"><span id="tl-${j.id}"></span><button type="button" data-act="reset" data-id="${j.id}">重來</button></div>
+    <div class="opt-body">${j.body}</div>
+    ${j.id === 'now' ? '' : `<button type="button" class="pick" data-pick="${j.id}">選 ${j.id}</button>`}
+  </div>`).join('');
+JOTS.forEach((j) => drawJot(j.id));
+
+function jotAct(act, id, k) {
+  const s = jotState[id];
+  if (act === 'open') { s.open = true; s.kind = id === 'now' ? 'notes' : null; s.text = ''; s.saved = false; }
+  if (act === 'close') s.open = false;
+  if (act === 'reset') Object.assign(s, { open: true, kind: id === 'now' ? 'notes' : null, text: '', notes: 0, pings: 0, saved: false });
+  if (act === 'kind') {
+    if (id !== 'now') {
+      // 點種類那一下就記下；改點另一個是換種類，不多記一筆
+      if (s.kind) s[s.kind] -= 1;
+      s[k] += 1;
+    }
+    s.kind = k;
+  }
+  if (act === 'save') {
+    if (id === 'now') { if (!s.text.trim()) return; s[s.kind] += 1; }
+    s.open = false;
+  }
+  drawJot(id);
+  if (act === 'kind') { const f = document.getElementById('f-' + id); if (f && id !== 'now') f.focus({ preventScroll: true }); }
+}
+document.getElementById('jots').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-act]');
+  if (b) jotAct(b.dataset.act, b.dataset.id, b.dataset.k);
+});
+document.getElementById('jots').addEventListener('input', (e) => {
+  if (!e.target.classList.contains('field')) return;
+  const id = e.target.dataset.id;
+  const s = jotState[id];
+  const was = !!s.text.trim();
+  s.text = e.target.value;
+  if (was !== !!s.text.trim()) { // 只在「有字／沒字」切換時重畫按鈕，免得輸入框失去游標
+    const pos = e.target.selectionStart;
+    drawJot(id);
+    const f = document.getElementById('f-' + id);
+    f.focus({ preventScroll: true });
+    f.setSelectionRange(pos, pos);
+  }
+});
+document.getElementById('jots').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && e.target.classList.contains('field')) jotAct('save', e.target.dataset.id);
+});
+
+/* ---------- 第二段：番茄架的分析 ---------- */
+const TAGS = [
+  { name: '工作', color: C.purple, min: 115, n: 3 }, { name: '專注', color: C.red, min: 100, n: 3 },
+  { name: '學習', color: C.yellow, min: 45, n: 1 }, { name: '閱讀', color: C.orange, min: 30, n: 1 }, { name: '運動', color: C.pink, min: 10, n: 1 },
+];
+const dur = (m) => (m < 60 ? `${m} 分` : `${Math.floor(m / 60)} 小時${m % 60 ? ` ${m % 60} 分` : ''}`);
+const TOTAL = TAGS.reduce((a, t) => a + t.min, 0);
+const DAYS = [[], [], [['red', 25], ['purple', 50], ['yellow', 45], ['pink', 10]], [], [['red', 50]], [['red', 25], ['purple', 65], ['orange', 30]], []];
+const head = (stats) => `<div class="rack-top"><b>番茄架</b><span class="pill">行事曆</span><span class="pill on">分析</span></div>${stats}`;
+const tabs = '<div class="tabs"><i class="on">番茄架</i><i>主畫面</i><i>設定</i></div>';
+const dayBars = () => `<div class="bars">${DAYS.map((d) => `<div style="height:${d.reduce((a, x) => a + x[1], 0) / 1.3}%">${d.map(([c, m]) => `<span style="background:${C[c]};flex:${m}"></span>`).join('')}</div>`).join('')}</div>
+  <div class="days">${'一二三四五六日'.split('').map((d) => `<span>${d}</span>`).join('')}</div>`;
+
+function rackNow() {
+  return `<div class="rack">${head('<div class="pills"><span class="pill">日</span><span class="pill on">週</span><span class="pill">月</span></div>')}
+    <div class="nav">‹<i>這週</i></div>
+    <div class="card"><div class="two"><div><small>專注</small><b>${dur(TOTAL)}</b></div><div><small>收下</small><b>9 顆</b></div></div></div>
+    <div class="card">${dayBars()}</div>
+    <div class="card">${TAGS.map((t) => `<div class="trow">${tomato(t.color, 18)}<span>${t.name}</span><div class="track"><span style="width:${(t.min / TOTAL) * 100}%;background:${t.color}"></span></div><em>${dur(t.min)}</em></div>`).join('')}</div>
+    <div style="height:70px"></div>${tabs}</div>`;
+}
+
+const BEANS = {
+  usual: [
+    ['星期六 下午 2:10・工作', ['有人找：客戶問報價', '有人找 1 次']],
+    ['星期六 上午 10:05・專注', ['念頭：晚上要訂車票']],
+    ['星期五 下午 4:30・專注', ['念頭 2 次', '作廢，第 12 分鐘・有人找：去看留言']],
+    ['星期三 下午 3:20・學習', ['作廢，第 18 分鐘・卡住']],
+  ],
+  few: [
+    ['星期六 下午 2:10・工作', ['有人找：客戶問報價']],
+    ['星期五 下午 4:30・專注', ['念頭 1 次', '作廢，第 12 分鐘・有人找']],
+  ],
+};
+function rackNew(st, keepBars) {
+  const max = TAGS[0].min;
+  const first = st === 'none'
+    ? '<div class="card"><h5>這週時間花在哪</h5><div class="say" style="color:var(--app-sub)">這段時間還沒有番茄。</div><div class="pills"><span class="pill on">這週</span><span class="pill">這個月</span></div></div>'
+    : `<div class="card"><h5>這週時間花在哪</h5>
+        ${TAGS.map((t) => `<div class="nrow">${tomato(t.color, 18)}<span class="name">${t.name}</span><em>${dur(t.min)}・${t.n} 顆</em><div class="bar" style="width:${(t.min / max) * 100}%;background:${t.color}"></div></div>`).join('')}
+        ${keepBars ? dayBars() : ''}
+        <div class="fact">這週專注 ${dur(TOTAL)}，收了 9 顆</div>
+        <div class="nav" style="padding:0">‹<i><span class="pill on">這週</span> <span class="pill">這個月</span></i>›</div></div>`;
+  const says = {
+    usual: ['這兩週記了 9 筆：念頭 6、有人找 3。', '作廢 5 顆：有人找 3、念頭 1、卡住 1。'],
+    few: ['這兩週記了 2 筆。', '作廢 1 顆。'],
+    none: ['這兩週沒有記一筆，也沒有作廢。'],
+  }[st];
+  const list = (BEANS[st] || []).map(([t, lines]) => `<div class="bean"><b>${t}</b>${lines.map((l) => `<span>${l}</span>`).join('')}</div>`).join('');
+  const more = st === 'usual' ? '<div class="bean"><span>再往下還有 6 顆</span></div>' : '';
+  const second = `<div class="card"><h5>這兩週記了什麼、作廢的原因</h5>${says.map((x) => `<div class="say">${x}</div>`).join('')}${list}${more}</div>`;
+  return `<div class="rack">${head('')}${first}${second}${tabs}</div>`;
+}
+
+let rackSt = 'usual';
+const picked = { jot: '', rack: '' };
+function drawRacks() {
+  const keep = picked.rack === '新的＋留長條';
+  document.getElementById('racks').innerHTML = `
+    <div class="opt"><h3>現況<span class="ref">對照</span></h3><div class="phone long">${rackNow()}</div>
+      <div class="opt-body"><p><b>最上面是日、週、月，再來兩個大字、每天的疊色長條、各標籤一列。</b></p><p>疊色長條每一段不在同一條底線上，比不出哪個標籤多。標籤列的灰色底條看起來像「要填滿的進度」。記一筆與作廢的原因這裡看不到。</p></div></div>
+    <div class="opt"><h3>新的<span class="rec">建議</span></h3><div class="phone long" id="ph-rack">${rackNew(rackSt, keep)}<div class="fold" id="fold"><span>一個螢幕到這裡</span></div></div>
+      <div class="opt-body"><p><b>一張回答一題，標題就是那一題。</b>「日」拿掉，某一天做了什麼看行事曆。</p><p>各標籤的橫條從同一條左邊線開始，最長的那條頂到底，沒有灰色底條。兩個大字降成一行。這週、這個月的切換放在卡片下面。第二張固定看最近 14 天，一顆一段。</p></div></div>`;
+  const ph = document.getElementById('ph-rack');
+  document.getElementById('fold').style.top = `${(ph.clientWidth * 852) / 393}px`;
+  document.getElementById('fold').hidden = ph.clientHeight <= (ph.clientWidth * 852) / 393 + 8;
+  document.querySelectorAll('#stateSeg button').forEach((b) => b.classList.toggle('on', b.dataset.st === rackSt));
+}
+document.getElementById('stateSeg').addEventListener('click', (e) => {
+  const b = e.target.closest('button');
+  if (b) { rackSt = b.dataset.st; drawRacks(); }
+});
+window.addEventListener('resize', drawRacks);
+
+/* ---------- 作答 ---------- */
+function showAnswer() {
+  document.querySelectorAll('#jots .opt').forEach((o) => o.classList.toggle('selected', o.dataset.opt === picked.jot));
+  document.querySelectorAll('#q2 button').forEach((b) => b.classList.toggle('on', b.dataset.v === picked.rack));
+  const parts = [];
+  if (picked.jot) parts.push(`記一筆 ${picked.jot}`);
+  if (picked.rack) parts.push(`分析：${picked.rack}`);
+  document.getElementById('ans').textContent = parts.length ? parts.join('／') : '還沒選';
+}
+document.getElementById('jots').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-pick]');
+  if (b) { picked.jot = b.dataset.pick; showAnswer(); }
+});
+document.getElementById('q2').addEventListener('click', (e) => {
+  const b = e.target.closest('button');
+  if (b) { picked.rack = b.dataset.v; showAnswer(); drawRacks(); }
+});
+document.getElementById('copy').addEventListener('click', async () => {
+  const el = document.getElementById('ans');
+  const btn = document.getElementById('copy');
+  try {
+    await navigator.clipboard.writeText(el.textContent);
+    btn.textContent = '複製了';
+  } catch (err) {
+    const r = document.createRange();
+    r.selectNodeContents(el);
+    const sel = getSelection();
+    sel.removeAllRanges();
+    sel.addRange(r);
+    btn.textContent = '已選取，按複製';
+  }
+  setTimeout(() => { btn.textContent = '複製'; }, 1600);
+});
+drawRacks();
+showAnswer();
+</script>
