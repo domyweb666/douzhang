@@ -130,8 +130,10 @@ final class StateFileTests: XCTestCase {
 
     func test已經有新檔就不再看舊資料() throws {
         let file = StateFile(folder: folder) { "{壞掉的舊資料" }
-        XCTAssertTrue(file.save(sampleState()))
-        XCTAssertEqual(file.load().state, sampleState())
+        // 收下後那句是抽的：同一份狀態存了再比，不能造兩次
+        let state = sampleState()
+        XCTAssertTrue(file.save(state))
+        XCTAssertEqual(file.load().state, state)
     }
 
     func test舊資料讀不懂就從空的開始() {
