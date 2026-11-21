@@ -125,3 +125,18 @@ jobs:
             -destination "${SIMULATOR}" \
             -derivedDataPath DerivedData \
             CODE_SIGN_IDENTITY=-
+
+      # 沒有 Mac 也看得到畫面：把開發版裝進模擬器，每個畫面截一張存起來（下載 screens 那一包）。
+      # 只看版面，手感與動畫還是要真機。
+      - name: 模擬器截圖走查
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: |
+          APP="$(find DerivedData/Build/Products -maxdepth 2 -name Douzhang.app | head -1)"
+          bash scripts/screens.sh "$APP" "$RUNNER_TEMP/screens"
+
+      - name: 上傳截圖
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: screens
+          path: ${{ runner.temp }}/screens

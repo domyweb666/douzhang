@@ -42,6 +42,10 @@ struct StateFile {
     var legacy: () -> String? = { nil }
 
     static var standard: StateFile {
+        // 開發版截圖走查：讀指定資料夾裡擺好的那一態（正式 build 這裡一律是 nil）
+        if let staged = LaunchOptions.dataFolder {
+            return StateFile(folder: staged)
+        }
         let folder = URL.applicationSupportDirectory
         let bundleId = Bundle.main.bundleIdentifier ?? ""
         return StateFile(folder: folder) {

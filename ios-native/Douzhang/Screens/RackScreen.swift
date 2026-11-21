@@ -17,8 +17,8 @@ struct OpenDay: Identifiable {
 /// 沒番茄的日子不寫 0、沒有連續數字。
 struct RackScreen: View {
     @Environment(AppModel.self) private var model
-    @State private var mode = RackMode.calendar
-    @State private var view = RackView.day
+    @State private var mode = LaunchOptions.rackMode
+    @State private var view = LaunchOptions.rackView
     @State private var range = StatsRange.week
     /// 選中的日子；空的＝還沒選過，就是今天
     @State private var picked = ""
