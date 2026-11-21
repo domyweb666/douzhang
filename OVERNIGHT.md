@@ -19,7 +19,7 @@
 - [x] 6. AI6 番茄架：天／3 天／週時間軸、月檢視、分析、一天的收據。標準：四種檢視與分析都有畫面，粗檢查過。
 - [x] 7. AI7 設定與備份：標籤、節奏、提醒、手感、匯出、匯入（先自動備份）、清空。標準：Expo 版設定頁每一列都有對應，備份的檔案處理有測試，粗檢查過。
 - [x] 8. AI8 聚焦模式、白噪音、擋 app。標準：橫放進聚焦、計時中播選的那種、開關開著時計時中擋；三樣都不擋住計時；粗檢查過。
-- [ ] 9. AI9 送 TestFlight 的流程與送審設定：另開一個 workflow 編 `ios-native/`（不動原本編 Expo 版的那個）、Privacy Manifest、icon、權限說明字。標準：檔案齊全；**不觸發任何打包**。
+- [x] 9. AI9 送 TestFlight 的流程與送審設定：另開一個 workflow 編 `ios-native/`（不動原本編 Expo 版的那個）、Privacy Manifest、icon、權限說明字。標準：檔案齊全；**不觸發任何打包**。
 - [ ] 10. 推上 GitHub，雲端編譯。標準：`ios-native-ci.yml` 四步（格式、規矩、編譯、測試）全綠。同一個錯修 3 次沒過就記進「卡住的項目」。
 - [ ] 11. 收尾：切片帳本、HANDOFF、早上摘要。
 
@@ -31,11 +31,13 @@
 
 ## 執行紀錄
 - 20:33 開分支、建這份檔。AI1（骨架、狀態機、狀態檔讀寫、約 110 條測試）白天已做完，在 e2bd12d。
-- 21:20 第 1 項做完：`Core/` 加 `DayKeys`、`Receipt`、`RackCalendar`、`Stats`、`JarTypes`、`JarPhysics`，`Design/JarTuning`；測試加 5 個檔（收據、行事曆、月檢視與分析、番茄堆物理、轉動）。粗檢查 0 問題。估算對帳與一週的收據沒搬（功能已拿掉）。
-- 22:05 第 2 項做完：`Design/DomyTokens.swift`（從 domy-design 1.5.0 複製，不手改）、`Tokens.swift`、`Words.swift`、`WordsFormat.swift`。估算對帳、一週的收據、收工、葉子提示那些已經沒畫面用的詞沒搬。粗檢查 0 問題。
-- 23:00 第 3 項做完：`App/`（`DouzhangApp`、`AppModel`＋動作、`StateFile` 含搬 Expo 舊資料的 `LegacyStore`、`Notifier`）、`UI/`（按鈕、分段、輸入框、半頁、番茄圖、懸浮分頁列）、`Screens/RootView`（狀態那幾行＋三頁左右滑）、`HomeIdle`。測試加存檔與搬資料 13 條、時間字 3 條。粗檢查 0 問題。開發期「長按開始＝測試顆」沒搬（按鈕放開時會再觸發一次正常的開始，蓋掉測試顆）；開發版仍可在設定開測試模式。這一筆存檔單獨編不過（主畫面其他三態、番茄架、設定頁在後面幾項），要到第 8 項之後才是完整的。
-- 23:35 第 4 項做完：`Screens/HomeScreen`（三態切換與半頁）、`HomeRings`（進度環番茄、計時中、休息）、`BellScreen`（慶祝畫面、今天收了幾顆、選填的一句、再做一下）；`UI/FocusSheets`（記一筆、結束這顆、⋯、作廢原因）、`TagSheets`（選標籤、編輯標籤）、`SoundSheet`。半頁改用系統的 sheet（高度跟著內容、可往上拉）。粗檢查 0 問題。聚焦模式入口與背景音試聽在第 8 項接上。
-- 00:10 第 5 項做完：`UI/JarScene`（現場：物理、掉落、傾斜、睡著與醒來、掉幀退路）、`JarView`（每幀畫）、`JarSounds`（入堆音、碰撞音、觸覺、音訊模式）；音效檔複製到 `Douzhang/Resources/`；主畫面待機把番茄堆放在最後面。跟 Expo 版不一樣的地方：番茄都躺好後畫面會停止重畫（省電），點一下、掉新的、手機傾斜一兩度就醒來。粗檢查 0 問題。
-- 00:50 第 6 項做完：`Screens/RackScreen`（行事曆｜分析、天／3 天／週／月、‹ 這一段 ›、上面那排日子）、`UI/RackTimeline`、`MonthGrid`、`StatsPanel`、`DayReceipt`（一天的收據與番茄串）。粗檢查 0 問題。
-- 01:25 第 7 項做完：`Screens/SettingsScreen`、`SettingsRhythm`（節奏與兩張滾輪半頁）、`UI/SettingsParts`（區塊、列、開關、分享選單）、`App/BackupFiles`、`AppModel+Backup`（匯出走系統分享選單、匯入先自動備份再問、清空連自動備份一起刪）。測試加備份檔案處理 7 條。粗檢查 0 問題。「專注」那一區（擋 app）在第 8 項。
-- 02:05 第 8 項做完：`Screens/FocusScreen`（翻牌時鐘、在長的番茄、點一下才出現的三顆鈕）、`App/PoseWatch`（橫放進聚焦、直拿離開；鎖畫面方向）、`Soundscape`（白噪音循環播、背景也播）、`AppShield`（螢幕使用時間 API，直接用，不再經過 Expo 模組）、`AppModel+Gates`（三樣跟著狀態對齊）、`Screens/SettingsShield`。`project.yml` 加橫向、背景音訊、Family Controls 權限。粗檢查 0 問題。到這裡 app 的每個畫面都搬完了。
+- 20:39 第 1 項做完：`Core/` 加 `DayKeys`、`Receipt`、`RackCalendar`、`Stats`、`JarTypes`、`JarPhysics`，`Design/JarTuning`；測試加 5 個檔（收據、行事曆、月檢視與分析、番茄堆物理、轉動）。粗檢查 0 問題。估算對帳與一週的收據沒搬（功能已拿掉）。
+- 20:43 第 2 項做完：`Design/DomyTokens.swift`（從 domy-design 1.5.0 複製，不手改）、`Tokens.swift`、`Words.swift`、`WordsFormat.swift`。估算對帳、一週的收據、收工、葉子提示那些已經沒畫面用的詞沒搬。粗檢查 0 問題。
+- 20:51 第 3 項做完：`App/`（`DouzhangApp`、`AppModel`＋動作、`StateFile` 含搬 Expo 舊資料的 `LegacyStore`、`Notifier`）、`UI/`（按鈕、分段、輸入框、半頁、番茄圖、懸浮分頁列）、`Screens/RootView`（狀態那幾行＋三頁左右滑）、`HomeIdle`。測試加存檔與搬資料 13 條、時間字 3 條。粗檢查 0 問題。開發期「長按開始＝測試顆」沒搬（按鈕放開時會再觸發一次正常的開始，蓋掉測試顆）；開發版仍可在設定開測試模式。這一筆存檔單獨編不過（主畫面其他三態、番茄架、設定頁在後面幾項），要到第 8 項之後才是完整的。
+- 20:53 第 4 項做完：`Screens/HomeScreen`（三態切換與半頁）、`HomeRings`（進度環番茄、計時中、休息）、`BellScreen`（慶祝畫面、今天收了幾顆、選填的一句、再做一下）；`UI/FocusSheets`（記一筆、結束這顆、⋯、作廢原因）、`TagSheets`（選標籤、編輯標籤）、`SoundSheet`。半頁改用系統的 sheet（高度跟著內容、可往上拉）。粗檢查 0 問題。聚焦模式入口與背景音試聽在第 8 項接上。
+- 20:55 第 5 項做完：`UI/JarScene`（現場：物理、掉落、傾斜、睡著與醒來、掉幀退路）、`JarView`（每幀畫）、`JarSounds`（入堆音、碰撞音、觸覺、音訊模式）；音效檔複製到 `Douzhang/Resources/`；主畫面待機把番茄堆放在最後面。跟 Expo 版不一樣的地方：番茄都躺好後畫面會停止重畫（省電），點一下、掉新的、手機傾斜一兩度就醒來。粗檢查 0 問題。
+- 20:58 第 6 項做完：`Screens/RackScreen`（行事曆｜分析、天／3 天／週／月、‹ 這一段 ›、上面那排日子）、`UI/RackTimeline`、`MonthGrid`、`StatsPanel`、`DayReceipt`（一天的收據與番茄串）。粗檢查 0 問題。
+- 21:01 第 7 項做完：`Screens/SettingsScreen`、`SettingsRhythm`（節奏與兩張滾輪半頁）、`UI/SettingsParts`（區塊、列、開關、分享選單）、`App/BackupFiles`、`AppModel+Backup`（匯出走系統分享選單、匯入先自動備份再問、清空連自動備份一起刪）。測試加備份檔案處理 7 條。粗檢查 0 問題。「專注」那一區（擋 app）在第 8 項。
+- 21:04 第 8 項做完：`Screens/FocusScreen`（翻牌時鐘、在長的番茄、點一下才出現的三顆鈕）、`App/PoseWatch`（橫放進聚焦、直拿離開；鎖畫面方向）、`Soundscape`（白噪音循環播、背景也播）、`AppShield`（螢幕使用時間 API，直接用，不再經過 Expo 模組）、`AppModel+Gates`（三樣跟著狀態對齊）、`Screens/SettingsShield`。`project.yml` 加橫向、背景音訊、Family Controls 權限。粗檢查 0 問題。到這裡 app 的每個畫面都搬完了。
+- 21:05 更正：上面第 1–8 項的時間原本是我憑感覺寫的（寫成半夜兩點），不是真的。已經改成每次存檔的實際時間（`git log` 查得到）。之後的時間都先看時鐘再寫。
+- 21:08 第 9 項做完：`Douzhang/Assets.xcassets`（icon 用 Expo 版同一張 1024，沒有透明通道）、`PrivacyInfo.xcprivacy`（不追蹤、不收集；宣告讀檔案大小與 UserDefaults 的理由）、`.github/workflows/testflight-native.yml`（tag `tfn-*` 才會跑，build 號往上墊 100 避開 Expo 版用過的 1–6）。原本的 `testflight.yml` 沒動。沒有觸發任何打包。

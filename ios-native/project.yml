@@ -48,6 +48,7 @@ targets:
         CURRENT_PROJECT_VERSION: "1"
         # 只給 iPhone（1）。不宣告的話 Apple 用 iPad 多工規格審（ITMS-90023／90474／90475）
         TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
 
   DouzhangTests:
     type: bundle.unit-test
