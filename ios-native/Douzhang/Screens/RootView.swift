@@ -94,6 +94,14 @@ struct PagerView: View {
         .defaultScrollAnchor(.center)
         .scrollIndicators(.hidden)
         .scrollDisabled(focusing)
+        .task {
+            // 開發版截圖走查指定了別頁：第一次排版一律停在中間，排好之後再換過去（跟點分頁列同一條路）
+            let target = LaunchOptions.page
+            if target != .home {
+                try? await Task.sleep(for: .milliseconds(Params.tickMs))
+                model.page = target
+            }
+        }
         .overlay(alignment: .bottom) {
             if !focusing {
                 TabBar(page: $model.page)

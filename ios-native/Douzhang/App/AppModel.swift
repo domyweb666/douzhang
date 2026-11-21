@@ -23,7 +23,7 @@ final class AppModel {
     /// 本機檔讀不懂：先不覆蓋，只有匯入或清空能換掉
     private(set) var unreadable = false
     var notif = NotifStatus.undetermined
-    var page: Page? = LaunchOptions.page
+    var page: Page? = Page.home
     /// 剛清空過：番茄架的空狀態換一句話
     var wiped = false
     /// 番茄堆上次看到幾顆：鈴響時番茄堆不在畫面上，回來時要知道哪顆是新的
