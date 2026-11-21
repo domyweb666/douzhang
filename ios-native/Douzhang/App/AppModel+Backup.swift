@@ -87,6 +87,7 @@ extension AppModel {
         backupProblem = removed ? nil : .backupsLeft
         wiped = true
         jarSeen = nil
+        pulses.removed += 1
         replaceAll(Store.blank())
         page = .home
     }

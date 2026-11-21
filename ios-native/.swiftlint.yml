@@ -108,3 +108,10 @@ custom_rules:
     excluded: "Design/Tokens\\.swift$"
     message: "動畫只准用 Tokens"
     severity: error
+  # 動作代號表：曲線只准從 Tokens.Motion 拿（按壓、變化、轉場、慶祝），畫面不准自己挑，也不准用沒指定曲線的 withAnimation
+  no_hardcoded_curve:
+    name: "畫面不准自己挑動畫曲線"
+    regex: '(Animation|[(:=,?]\s*)\.(easeIn|easeOut|easeInOut|linear|spring|interactiveSpring|interpolatingSpring|snappy|smooth|bouncy|timingCurve)\b|withAnimation *\{'
+    excluded: "Design/Tokens\\.swift$"
+    message: "動畫只准用 Tokens.Motion 的代號"
+    severity: error

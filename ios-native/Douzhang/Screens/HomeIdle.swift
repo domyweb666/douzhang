@@ -54,6 +54,8 @@ struct HomeIdle: View {
             Text(TimeText.mmss(type.len * Params.msPerMinute))
                 .font(Tokens.Fonts.clockFocus)
                 .foregroundStyle(Tokens.Colors.textPrimary)
+                // 換標籤時長度的數字滾過去
+                .modifier(NumberChange(value: type.len))
             CompactButton(label: Words.ambienceChip(model.state.settings.ambience), action: onSound)
                 .padding(.top, Tokens.Space.m)
             Spacer(minLength: .zero)

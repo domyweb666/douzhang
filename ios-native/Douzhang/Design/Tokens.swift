@@ -177,9 +177,19 @@ enum Tokens {
         static let voidStroke = StrokeStyle(lineWidth: DomyTokens.Size.hairline, dash: [4, 3])
     }
 
+    /// 前四個是動作代號表（照《SwiftUI 蘋果風格手感指南》第四節）：畫面的動畫只准從這裡拿，
+    /// 不准自己挑曲線、寫秒數（.swiftlint.yml 的 no_hardcoded_curve 會擋）。
     enum Motion {
+        /// 按壓可點的東西
+        static let press: Animation = .snappy
+        /// 資料變了：切換選項、加刪、展開收合、換檢視、數字換值
+        static let change: Animation = .snappy
+        /// 換頁、浮層淡入淡出
+        static let transition: Animation = .smooth
+        /// 完成的那一瞬間：熟了的那顆彈一下，從 celebrateFrom 這麼小彈出來
+        static let celebrate: Animation = .bouncy
+        static let celebrateFrom: CGFloat = 0.6
         static let pressScale = DomyTokens.Motion.pressScale
-        static let pressDuration = DomyTokens.Motion.pressDuration
         /// 收下這顆 → 番茄掉進來：等多久才掉（秒）、往上的初速、左右散開多少
         static let dropDelay = 0.18
         static let dropVelY = -160.0
@@ -200,10 +210,12 @@ enum Tokens {
         /// 進度環從正上方開始走；每一拍（畫面時鐘刷新的間隔）之間用動畫補上
         static let ringStart = -90.0
         static let tick = Double(Params.tickMs) / Params.msPerSecond
-        /// 聚焦模式翻牌：牌先往後倒、換數字、再立回來，各這麼久；三顆鈕淡入淡出
+        /// 時鐘該等速：進度環不用彈簧，一拍一拍直線補上
+        static let ringSweep = Animation.linear(duration: tick)
+        /// 聚焦模式翻牌：牌先往後倒、換數字、再立回來，各這麼久
         static let zenFlipHalf = 0.15
         static let zenFlipFold = -88.0
-        static let zenControlsFade = 0.2
+        static let zenFlip = Animation.snappy(duration: zenFlipHalf)
     }
 
     enum Sound {

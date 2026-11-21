@@ -12,12 +12,13 @@ struct StatsPanel: View {
     var body: some View {
         let result = Stats.stats(state, keys: Stats.rangeDays(range, selected: selected))
         if result.beans == 0 {
-            // 這一段沒有番茄就只寫一句
-            Text(Words.statsEmpty)
-                .font(Tokens.Fonts.sub)
-                .foregroundStyle(Tokens.Colors.textSecondary)
-                .frame(maxWidth: .infinity)
-                .padding(.top, Tokens.Space.xl)
+            // 這一段沒有番茄就只寫一句（系統的空狀態，字照舊）
+            ContentUnavailableView {
+                Text(Words.statsEmpty)
+                    .font(Tokens.Fonts.sub)
+                    .foregroundStyle(Tokens.Colors.textSecondary)
+            }
+            .padding(.top, Tokens.Space.xl)
         } else {
             VStack(spacing: Tokens.Space.m) {
                 numbers(result).modifier(StatsCard())
@@ -47,6 +48,7 @@ struct StatsPanel: View {
             Text(value)
                 .font(Tokens.Fonts.title3)
                 .foregroundStyle(Tokens.Colors.textPrimary)
+                .modifier(NumberChange(value: value))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }

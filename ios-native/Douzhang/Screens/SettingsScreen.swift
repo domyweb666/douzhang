@@ -82,8 +82,10 @@ struct SettingsScreen: View {
                 typeRow(type)
                 SettingsDivider()
             }
-            TextButton(label: Words.addType, flush: true) { _ = model.addType() }
-                .frame(maxWidth: .infinity, minHeight: Tokens.Shape.row, alignment: .leading)
+            TextButton(label: Words.addType, flush: true) {
+                Feel.change { _ = model.addType() }
+            }
+            .frame(maxWidth: .infinity, minHeight: Tokens.Shape.row, alignment: .leading)
         }
     }
 

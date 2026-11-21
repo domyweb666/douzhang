@@ -22,7 +22,7 @@ struct RingTomato: View {
                 .trim(from: 0, to: done)
                 .stroke(ringColor, style: line)
                 .rotationEffect(.degrees(Tokens.Motion.ringStart))
-                .animation(.linear(duration: Tokens.Motion.tick), value: done)
+                .animation(Tokens.Motion.ringSweep, value: done)
             TomatoView(fill: fill, size: size * Tokens.Shape.ringTomato * CGFloat(scale))
         }
         .padding(Tokens.Shape.ringStroke / 2)
@@ -39,6 +39,8 @@ struct RingBlock<Below: View>: View {
     var fill: Color
     var scale: Double
     var time: String
+    /// 時間是往下數的（「我自己決定」的休息往上數）：數字換值時往哪邊滾
+    var countsDown = true
     @ViewBuilder var below: Below
 
     var body: some View {
@@ -56,6 +58,7 @@ struct RingBlock<Below: View>: View {
                 Text(time)
                     .font(Tokens.Fonts.clockRing)
                     .foregroundStyle(Tokens.Colors.textPrimary)
+                    .modifier(NumberChange(value: time, countsDown: countsDown))
                     .padding(.top, Tokens.Space.m)
                 below
             }
@@ -117,7 +120,8 @@ struct RestRing: View {
             ringColor: Tokens.Tomato.vine.color,
             fill: Tokens.Tomato.unripe.color,
             scale: Params.growMinScale,
-            time: time
+            time: time,
+            countsDown: run.endAt != nil
         ) {
             HomeCaption(text: run.long ? Words.restLongRow : Words.rest)
             HomeCaption(text: Words.restBody)

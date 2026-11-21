@@ -9,7 +9,7 @@ struct PressStyle: ButtonStyle {
         return configuration.label
             .scaleEffect(pressed && !reduceMotion ? Tokens.Motion.pressScale : 1)
             .opacity(pressed && reduceMotion ? Tokens.Opacity.pressed : 1)
-            .animation(.easeOut(duration: Tokens.Motion.pressDuration), value: pressed)
+            .animation(Tokens.Motion.press, value: pressed)
     }
 }
 
@@ -21,13 +21,12 @@ struct FadeStyle: ButtonStyle {
 }
 
 /// 滿版膠囊按鈕。主要的＝茄紫底，每個畫面只出現一次；second＝中性填色底。
+/// 按了不震：震動只留給有意義的那幾刻（收下、拿掉東西、出錯），由 RootView 統一發。
 struct BigButton: View {
     var label: String
     var second = false
     var disabled = false
     var action: () -> Void
-
-    @State private var taps = 0
 
     private var background: Color {
         disabled || second ? Tokens.Colors.fillButton : Tokens.Colors.accent
@@ -41,10 +40,7 @@ struct BigButton: View {
     }
 
     var body: some View {
-        Button {
-            taps += 1
-            action()
-        } label: {
+        Button(action: action) {
             Text(label)
                 .font(Tokens.Fonts.button)
                 .lineLimit(1)
@@ -56,8 +52,6 @@ struct BigButton: View {
         }
         .buttonStyle(PressStyle())
         .disabled(disabled)
-        // 主要按鈕輕觸一下（同 Domy 的按鈕）
-        .sensoryFeedback(.selection, trigger: taps) { _, _ in !second }
     }
 }
 

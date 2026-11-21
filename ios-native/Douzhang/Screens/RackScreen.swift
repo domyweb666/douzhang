@@ -66,7 +66,7 @@ struct RackScreen: View {
                 filled
             }
         }
-        // 空狀態時裡面沒有會撐滿的東西：整塊貼齊最上面，不然標題會掉到畫面中間
+        // 整塊貼齊最上面：標題不能掉到畫面中間（空狀態自己會在剩下的空間置中）
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .padding(.bottom, Tokens.Shape.tabClearance)
         .sheet(item: $openDay) { day in
@@ -74,23 +74,23 @@ struct RackScreen: View {
         }
     }
 
-    /// 空狀態：第一次是「第一顆響完…」＋回去開始一顆；剛清空是「全部清掉了…」＋去設定匯入。
+    /// 空狀態（系統的 ContentUnavailableView，字照舊）：
+    /// 第一次是「第一顆響完…」＋回去開始一顆；剛清空是「全部清掉了…」＋去設定匯入。
     private var empty: some View {
-        VStack(spacing: Tokens.Space.m) {
+        ContentUnavailableView {
             Text(model.wiped ? Words.wipedLine : Words.rackEmpty)
                 .font(Tokens.Fonts.title3)
                 .foregroundStyle(Tokens.Colors.textPrimary)
-                .multilineTextAlignment(.center)
+        } actions: {
             CompactButton(
                 label: model.wiped ? Words.wipedAction : Words.rackEmptyAction,
                 primary: true
             ) {
-                withAnimation { model.page = model.wiped ? .settings : .home }
+                withAnimation(Tokens.Motion.transition) {
+                    model.page = model.wiped ? .settings : .home
+                }
             }
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, Tokens.Space.xl)
-        .padding(.horizontal, Tokens.Space.section)
     }
 
     private var filled: some View {
@@ -106,11 +106,12 @@ struct RackScreen: View {
             .padding(.top, Tokens.Space.m)
             periodNav
             ScrollView {
+                // 換檢視是整塊淡出淡入（id 換了就當成另一塊），方塊不會滿場飛
                 Group {
                     if mode == .calendar {
-                        calendar
+                        calendar.id(view)
                     } else {
-                        StatsPanel(state: model.state, range: range, selected: selected)
+                        StatsPanel(state: model.state, range: range, selected: selected).id(range)
                     }
                 }
                 .padding(.bottom, Tokens.Space.l)
@@ -183,9 +184,11 @@ struct RackScreen: View {
             )
             if view == .day, let sum = Receipt.daySum(state.days[selected]) {
                 // 天檢視右上那行小計：幾顆、幾分鐘。沒番茄就不寫
-                Text(Words.daySumLine(sum.beans, sum.minutes))
+                let line = Words.daySumLine(sum.beans, sum.minutes)
+                Text(line)
                     .font(Tokens.Fonts.sub)
                     .foregroundStyle(Tokens.Colors.textSecondary)
+                    .modifier(NumberChange(value: line))
                     .frame(maxWidth: .infinity, alignment: .trailing)
                     .padding(.top, Tokens.Space.s)
             }

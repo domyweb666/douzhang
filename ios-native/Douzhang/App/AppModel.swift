@@ -6,6 +6,14 @@ enum Page: Hashable, CaseIterable {
     case rack, home, settings
 }
 
+/// 有意義的那幾刻各數一次，RootView 照著震一下。只活在記憶體裡，不存檔。
+struct Pulses: Equatable {
+    /// 收下一顆
+    var kept = 0
+    /// 拿掉東西：作廢、停下來、刪標籤、清空
+    var removed = 0
+}
+
 /// 殼：開機讀檔、每一拍看時鐘、到點換畫面、每次改動就存、狀態變了就重排通知。
 /// 狀態機在 Core/Machine.swift，畫面在 Screens/。每個動作先算新狀態（純函式），再 commit。
 /// 動作在 AppModel+Actions，備份在 AppModel+Backup，白噪音、擋 app、聚焦模式在 AppModel+Gates。
@@ -28,6 +36,8 @@ final class AppModel {
     var wiped = false
     /// 番茄堆上次看到幾顆：鈴響時番茄堆不在畫面上，回來時要知道哪顆是新的
     var jarSeen: Int?
+    /// 收下、拿掉東西各數一次：RootView 看到數字變了就震一下
+    var pulses = Pulses()
 
     // MARK: 備份（AppModel+Backup）
 

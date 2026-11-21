@@ -66,7 +66,7 @@ struct TagEditor: View {
             if canDelete {
                 TextButton(label: Words.deleteThisType, tone: .danger) {
                     onClose()
-                    model.removeType(type.id)
+                    Feel.change { model.removeType(type.id) }
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.top, Tokens.Space.s)
@@ -177,7 +177,7 @@ struct TagPickSheet: View {
                         }
                     }
                     Button {
-                        editingId = model.addType()
+                        Feel.change { editingId = model.addType() }
                     } label: {
                         Text(Words.newTag)
                             .font(Tokens.Fonts.bodyStrong)

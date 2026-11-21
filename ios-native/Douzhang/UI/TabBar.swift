@@ -70,7 +70,7 @@ struct TabBar: View {
             ForEach(tabs, id: \.page) { tab in
                 let isOn = tab.page == page
                 Button {
-                    withAnimation { page = tab.page }
+                    withAnimation(Tokens.Motion.transition) { page = tab.page }
                 } label: {
                     VStack(spacing: Tokens.Space.xs / 2) {
                         TabIcon(page: tab.page)

@@ -16,6 +16,7 @@ extension AppModel {
 
     func keep(text: String) {
         commit(Machine.keep(settled(), now: TimeText.nowMillis(), text: text))
+        pulses.kept += 1
     }
 
     func backFromRest() {
@@ -43,11 +44,13 @@ extension AppModel {
     func voidBean(reason: String, text: String) {
         let now = TimeText.nowMillis()
         commit(Machine.voidBean(settled(), now: now, reason: reason, text: text))
+        pulses.removed += 1
     }
 
     /// 停下來：開始不到五分鐘，什麼都不記。
     func stopEarly() {
         commit(Machine.voidBean(settled(), now: TimeText.nowMillis(), early: true))
+        pulses.removed += 1
     }
 
     // MARK: 標籤
@@ -77,6 +80,7 @@ extension AppModel {
 
     func removeType(_ id: String) {
         commit(SettingsLogic.removeType(settled(), id: id))
+        pulses.removed += 1
     }
 
     // MARK: 設定

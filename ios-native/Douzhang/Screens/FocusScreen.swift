@@ -33,7 +33,7 @@ struct FlipCard: View {
             shown = next
             return
         }
-        let half = Animation.linear(duration: Tokens.Motion.zenFlipHalf)
+        let half = Tokens.Motion.zenFlip
         withAnimation(half) {
             fold = 1
         } completion: {
@@ -134,7 +134,7 @@ struct FocusScreen: View {
         .opacity(controls ? 1 : 0)
         .allowsHitTesting(controls)
         .accessibilityHidden(!controls)
-        .animation(.easeInOut(duration: Tokens.Motion.zenControlsFade), value: controls)
+        .animation(Tokens.Motion.transition, value: controls)
     }
 
     private func pill(_ label: String, action: @escaping () -> Void) -> some View {

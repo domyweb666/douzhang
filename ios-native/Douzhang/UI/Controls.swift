@@ -26,6 +26,7 @@ struct SegmentOption<Value: Hashable>: Identifiable {
 
 /// 分段選擇：幾個並排的膠囊，一次只能選一個。
 /// 選中＝產品色淡底＋產品色字，另外加粗，不只靠顏色。
+/// 換選項帶著動畫：跟著出現、消失、換掉的東西（設定的列、番茄架的檢視）看得出去哪了。
 struct Segmented<Value: Hashable>: View {
     var options: [SegmentOption<Value>]
     var value: Value?
@@ -37,7 +38,7 @@ struct Segmented<Value: Hashable>: View {
                 let isOn = option.value == value
                 let ink = isOn ? Tokens.Colors.accentText : Tokens.Colors.textPrimary
                 Button {
-                    onChange(option.value)
+                    Feel.change { onChange(option.value) }
                 } label: {
                     Text(option.label)
                         .font(isOn ? Tokens.Fonts.chip : Tokens.Fonts.sub)

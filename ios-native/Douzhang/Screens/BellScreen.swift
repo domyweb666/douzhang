@@ -48,7 +48,7 @@ struct BellScreen: View {
 
     private func header(_ type: TagType, late: Int) -> some View {
         VStack(spacing: Tokens.Space.xs) {
-            TomatoView(color: type.color, size: Tokens.Shape.celebrateTomato)
+            RipeTomato(color: type.color)
             Text(Words.ripeTitle)
                 .font(Tokens.Fonts.title)
                 .foregroundStyle(Tokens.Colors.textPrimary)
@@ -76,7 +76,7 @@ struct BellScreen: View {
                 .padding(.top, Tokens.Space.m)
         } else {
             TextButton(label: Words.noteOptional, tone: .secondary) {
-                noteOpen = true
+                Feel.change { noteOpen = true }
                 noteFocused = true
             }
             .padding(.top, Tokens.Space.m)
@@ -95,6 +95,23 @@ struct BellScreen: View {
             }
             .padding(.top, Tokens.Space.xs)
         }
+    }
+}
+
+/// 熟了的那顆：畫面出現的那一瞬間彈出來一下，只這一次，不擋操作。減少動態時只淡入。
+struct RipeTomato: View {
+    var color: TomatoColor
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var shown = false
+
+    var body: some View {
+        TomatoView(color: color, size: Tokens.Shape.celebrateTomato)
+            .scaleEffect(shown || reduceMotion ? 1 : Tokens.Motion.celebrateFrom)
+            .opacity(shown ? 1 : 0)
+            .onAppear {
+                withAnimation(Tokens.Motion.celebrate) { shown = true }
+            }
     }
 }
 
