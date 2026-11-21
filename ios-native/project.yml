@@ -1,0 +1,64 @@
+# 番茄帳 iOS（SwiftUI）的專案描述檔。Xcode 專案不進 repo，CI 用 XcodeGen 照這份產生。
+# 2026-11-21 多米決定從 Expo 轉 SwiftUI；做法照米說（E:\VoiceType\ios-native）跑通的那套。
+# Bundle ID 跟 Expo 版同一個：功能追平後直接接手 TestFlight 上那個 app，資料留在原地。
+name: Douzhang
+
+options:
+  bundleIdPrefix: org.domyweb
+  deploymentTarget:
+    iOS: "17.0" # 跟米說一樣：@Observable、彈簧動畫、觸覺回饋都是 iOS 17 的寫法
+
+targets:
+  Douzhang:
+    type: application
+    platform: iOS
+    sources:
+      - Douzhang
+    # Info.plist 由 XcodeGen 每次產生（不進 repo）。
+    info:
+      path: Douzhang/Info.plist
+      properties:
+        CFBundleDisplayName: 番茄帳
+        # 沒宣告語言時 App 用英文的日期格式與系統按鈕字（米說 2026-11-02 踩過）
+        CFBundleDevelopmentRegion: zh-Hant
+        CFBundleLocalizations:
+          - zh-Hant
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        # 離線、不連網，出口合規免申報；沒這行每個 build 都要進 App Store Connect 手動回答
+        ITSAppUsesNonExemptEncryption: false
+        # 骨架先只有直向；聚焦模式（橫放的翻牌時鐘）搬過來那片再加橫向
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UILaunchScreen: {}
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.domyweb.douzhang
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+        # 只給 iPhone（1）。不宣告的話 Apple 用 iPad 多工規格審（ITMS-90023／90474／90475）
+        TARGETED_DEVICE_FAMILY: "1"
+
+  DouzhangTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - DouzhangTests
+    dependencies:
+      - target: Douzhang
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.domyweb.douzhang.DouzhangTests
+        # 模擬器版用 ad-hoc 自簽，測試套件也要有 Info.plist 才簽得了；讓 Xcode 自己產
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  Douzhang:
+    build:
+      targets:
+        Douzhang: all
+        DouzhangTests: [test]
+    test:
+      config: Debug
+      targets:
+        - DouzhangTests
