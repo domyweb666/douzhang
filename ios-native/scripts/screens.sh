@@ -42,11 +42,24 @@ shots=(
   "13-home-idle-dark  idle   home      day    dark"
   "14-home-focus-dark focus  home      day    dark"
   "15-rack-day-dark   idle   rack      day    dark"
+  # 分析頁驗證用的三份假使用者（make_users.py）：第 5 天、第 3 週、斷了一陣子回來。各拍鈴響頁與分析
+  "16-day5-bell       user-day5-bell   home  day    light"
+  "17-day5-stats      user-day5        rack  stats  light"
+  "18-week3-bell      user-week3-bell  home  day    light"
+  "19-week3-stats     user-week3       rack  stats  light"
+  "20-back-bell       user-back-bell   home  day    light"
+  "21-back-stats      user-back        rack  stats  light"
 )
 
 for shot in "${shots[@]}"; do
   read -r name scenario page rack look <<<"$shot"
-  python3 "$HERE/make_state.py" "$scenario" "$WORK/$name"
+  if [[ "$scenario" == user-* ]]; then
+    # 假使用者：順便把這一份該出現的字（標準答案）跟截圖放在一起
+    python3 "$HERE/make_users.py" "${scenario#user-}" "$WORK/$name" >/dev/null
+    cp "$WORK/$name/expected.json" "$OUT/$name.expected.json"
+  else
+    python3 "$HERE/make_state.py" "$scenario" "$WORK/$name"
+  fi
   xcrun simctl ui "$UDID" appearance "$look"
   SIMCTL_CHILD_DOUZHANG_DATA_DIR="$WORK/$name" \
     SIMCTL_CHILD_DOUZHANG_PAGE="$page" \
