@@ -60,7 +60,11 @@ struct RackScreen: View {
                     Segmented(options: modes, value: mode) { mode = $0 }.fixedSize()
                 }
             }
-            if isEmpty { empty } else { filled }
+            if isEmpty {
+                empty
+            } else {
+                filled
+            }
         }
         .padding(.bottom, Tokens.Shape.tabClearance)
         .sheet(item: $openDay) { day in

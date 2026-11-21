@@ -9,7 +9,9 @@ enum AudioMode {
     static var ambiencePlaying = false
 
     static func useEffects() {
-        if ambiencePlaying { return }
+        if ambiencePlaying {
+            return
+        }
         apply(.ambient)
     }
 
@@ -56,7 +58,9 @@ final class JarSounds {
 
     /// 落地那一刻的視聽觸：同一事件同一幀。
     func land(sound: Bool) {
-        if sound { play(pop) }
+        if sound {
+            play(pop)
+        }
         landTap.impactOccurred()
     }
 

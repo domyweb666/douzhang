@@ -65,8 +65,12 @@ struct MonthGrid: View {
                     .foregroundStyle(isToday ? Tokens.Colors.accentText : ink)
                     .padding(.horizontal, Tokens.Space.s)
                     .background(isToday ? Tokens.Colors.soft : .clear, in: Capsule())
-                if busy, !day.beans.isEmpty { dots(day.beans) }
-                if busy, day.leaf { LeafMark() }
+                if busy, !day.beans.isEmpty {
+                    dots(day.beans)
+                }
+                if busy, day.leaf {
+                    LeafMark()
+                }
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, Tokens.Space.xs)

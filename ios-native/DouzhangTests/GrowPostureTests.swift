@@ -72,7 +72,9 @@ final class PostureTests: XCTestCase {
         while held.clock <= start + span {
             let step = Posture.track(held.tracker, sample: reading, now: held.clock)
             held.tracker = step.tracker
-            if let changed = step.changed { held.changes.append(changed) }
+            if let changed = step.changed {
+                held.changes.append(changed)
+            }
             held.clock += sample
         }
         return held

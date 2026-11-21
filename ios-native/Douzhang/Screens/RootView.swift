@@ -31,9 +31,15 @@ struct StatusLines: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Tokens.Space.s) {
-            if model.unreadable { dangerLine(Words.importUnreadable) }
-            if model.saveFailed { dangerLine(Words.saveFailed) }
-            if model.notif == .denied, model.phase == .focus { notificationOff }
+            if model.unreadable {
+                dangerLine(Words.importUnreadable)
+            }
+            if model.saveFailed {
+                dangerLine(Words.saveFailed)
+            }
+            if model.notif == .denied, model.phase == .focus {
+                notificationOff
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, Tokens.Space.screen)
@@ -89,7 +95,9 @@ struct PagerView: View {
         .scrollIndicators(.hidden)
         .scrollDisabled(focusing)
         .overlay(alignment: .bottom) {
-            if !focusing { TabBar(page: $model.page) }
+            if !focusing {
+                TabBar(page: $model.page)
+            }
         }
     }
 

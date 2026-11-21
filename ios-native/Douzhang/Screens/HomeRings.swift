@@ -84,7 +84,9 @@ struct FocusRing: View {
                 scale: Grow.scale(progress),
                 time: TimeText.mmss(run.endAt - now)
             ) {
-                if run.done { HomeCaption(text: Words.doneEarlyLine) }
+                if run.done {
+                    HomeCaption(text: Words.doneEarlyLine)
+                }
             }
         }
         .buttonStyle(.plain)
@@ -119,7 +121,9 @@ struct RestRing: View {
         ) {
             HomeCaption(text: run.long ? Words.restLongRow : Words.rest)
             HomeCaption(text: Words.restBody)
-            if !run.msg.isEmpty { HomeCaption(text: run.msg) }
+            if !run.msg.isEmpty {
+                HomeCaption(text: run.msg)
+            }
         }
     }
 }

@@ -35,7 +35,9 @@ struct DaySheet: View {
     var body: some View {
         let rows = day.map(Receipt.rows) ?? []
         SheetCard(title: Words.dayReceiptTitle(dayKey)) {
-            if let day { PodRow(items: Receipt.podItems(day)) }
+            if let day {
+                PodRow(items: Receipt.podItems(day))
+            }
             VStack(alignment: .leading, spacing: .zero) {
                 if rows.isEmpty {
                     line(time: nil, text: Words.leafDay, muted: true)
@@ -63,8 +65,12 @@ struct DaySheet: View {
     /// 那句（沒寫就是「沒留話」），後面帶雙番茄、延長、記過幾筆的標記。
     private func beanLine(_ row: ReceiptRow) -> String {
         var marks: [String] = []
-        if row.isDouble { marks.append(Words.doublePea) }
-        if row.flow > 0 { marks.append(Words.flowMark(row.flow)) }
+        if row.isDouble {
+            marks.append(Words.doublePea)
+        }
+        if row.flow > 0 {
+            marks.append(Words.flowMark(row.flow))
+        }
         if row.notes > 0 || row.pings > 0 {
             marks.append(Words.jotMark(notes: row.notes, pings: row.pings))
         }

@@ -60,13 +60,19 @@ struct JarWorld {
     /// 還在掉的那顆撞到下面已經落定的番茄，也算落地。
     /// 兩顆都還在掉的互撞不算；落定的那顆要在下面（點一下彈上來撞到的不算）。
     private mutating func landOnPile(_ one: inout JarBody, _ two: inout JarBody) {
-        if one.fresh == two.fresh { return }
+        if one.fresh == two.fresh {
+            return
+        }
         if one.fresh {
-            if two.y <= one.y { return }
+            if two.y <= one.y {
+                return
+            }
             one.fresh = false
             landed.append(one.id)
         } else {
-            if one.y <= two.y { return }
+            if one.y <= two.y {
+                return
+            }
             two.fresh = false
             landed.append(two.id)
         }
@@ -79,7 +85,9 @@ struct JarWorld {
         let deltaX = two.x - one.x
         let deltaY = two.y - one.y
         let squared = deltaX * deltaX + deltaY * deltaY
-        if squared >= reach * reach || squared <= JarWorld.minGapSquared { return }
+        if squared >= reach * reach || squared <= JarWorld.minGapSquared {
+            return
+        }
         let distance = squared.squareRoot()
         let normalX = deltaX / distance
         let normalY = deltaY / distance
@@ -196,7 +204,9 @@ struct JarWorld {
         for index in bodies.indices {
             let body = bodies[index]
             let distance = hypot(body.x - x, body.y - y)
-            if distance >= tuning.tapRadius { continue }
+            if distance >= tuning.tapRadius {
+                continue
+            }
             let strength = 1 - distance / tuning.tapRadius
             bodies[index].velY -= tuning.tapUp * strength
             bodies[index].velX += (body.x - x) * tuning.tapSide * strength
@@ -228,7 +238,9 @@ extension JarWorld {
         }
         for index in bodies.indices {
             var turning = bodies[index].spin * spin.air
-            if abs(turning) < spin.sleep { turning = 0 }
+            if abs(turning) < spin.sleep {
+                turning = 0
+            }
             bodies[index].spin = turning
             bodies[index].angle += turning * seconds
         }
@@ -248,7 +260,9 @@ extension JarWorld {
         let deltaY = two.y - one.y
         let distance = hypot(deltaX, deltaY)
         let reach = one.radius + two.radius + tuning.spin.touch
-        if distance > reach || distance <= JarWorld.minTouchGap { return }
+        if distance > reach || distance <= JarWorld.minTouchGap {
+            return
+        }
         let relative = (two.easedX - one.easedX) * -deltaY + (two.easedY - one.easedY) * deltaX
         let along = relative / distance
         let carried = one.spin * one.radius + two.spin * two.radius

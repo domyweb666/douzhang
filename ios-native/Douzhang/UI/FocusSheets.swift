@@ -33,7 +33,9 @@ struct NoteSheet: View {
     }
 
     private func submit() {
-        if !isBlank { onJot(kind, text) }
+        if !isBlank {
+            onJot(kind, text)
+        }
         dismiss()
     }
 }

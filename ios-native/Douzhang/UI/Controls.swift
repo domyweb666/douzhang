@@ -129,7 +129,9 @@ struct LineInput: View {
             .focused($focused)
             .onSubmit(onSubmit)
             .onChange(of: text) { _, next in
-                if next.count > maxLength { text = String(next.prefix(maxLength)) }
+                if next.count > maxLength {
+                    text = String(next.prefix(maxLength))
+                }
             }
             .modifier(FieldChrome(focused: focused))
             .onAppear { focused = true }

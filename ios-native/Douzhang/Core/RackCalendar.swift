@@ -44,7 +44,9 @@ enum RackCalendar {
 
     /// 這個檢視畫哪幾天：天＝選中那天；3 天＝選中那天與前兩天；週＝那一週七天。月不走這裡。
     static func viewDays(_ view: RackView, selected: String) -> [String] {
-        if view == .week { return DayKeys.weekDays(DayKeys.weekStart(selected)) }
+        if view == .week {
+            return DayKeys.weekDays(DayKeys.weekStart(selected))
+        }
         let count = view == .three ? threeDays : 1
         return (0 ..< count).map { DayKeys.shift(selected, days: $0 - (count - 1)) }
     }
@@ -61,7 +63,9 @@ enum RackCalendar {
 
     /// 畫面上這一段有沒有包含今天或更晚的日子（有的話不給往後翻）。
     static func reachesToday(_ view: RackView, selected: String, todayKey: String) -> Bool {
-        if view == .month { return DayKeys.shiftMonth(selected, months: 1) > todayKey }
+        if view == .month {
+            return DayKeys.shiftMonth(selected, months: 1) > todayKey
+        }
         let last = viewDays(view, selected: selected).last ?? selected
         return last >= todayKey
     }

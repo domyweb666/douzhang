@@ -32,8 +32,12 @@ enum Posture {
         let squared = sample.x * sample.x + sample.y * sample.y + sample.z * sample.z
         let gravity = squared.squareRoot()
         guard gravity > 0 else { return nil }
-        if abs(sample.x) / gravity >= Params.Zen.ratio { return .landscape }
-        if abs(sample.y) / gravity >= Params.Zen.ratio { return .portrait }
+        if abs(sample.x) / gravity >= Params.Zen.ratio {
+            return .landscape
+        }
+        if abs(sample.y) / gravity >= Params.Zen.ratio {
+            return .portrait
+        }
         return nil
     }
 

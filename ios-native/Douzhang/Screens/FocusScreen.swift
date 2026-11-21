@@ -153,10 +153,14 @@ struct FocusScreen: View {
     private func reveal() {
         controls = true
         hiding?.cancel()
-        if voiceOver { return }
+        if voiceOver {
+            return
+        }
         hiding = Task {
             try? await Task.sleep(for: .seconds(Tokens.ZenLayout.controlsSeconds))
-            if !Task.isCancelled { controls = false }
+            if !Task.isCancelled {
+                controls = false
+            }
         }
     }
 }

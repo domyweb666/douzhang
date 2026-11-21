@@ -113,7 +113,9 @@ extension Words {
     /// 多久：不到一小時寫分，滿一小時寫「幾小時 幾分」。
     static func duration(_ minutes: Double) -> String {
         let whole = Int(minutes.rounded())
-        if whole < minutesPerHour { return "\(whole) 分" }
+        if whole < minutesPerHour {
+            return "\(whole) 分"
+        }
         let rest = whole % minutesPerHour
         return "\(whole / minutesPerHour) 小時" + (rest > 0 ? " \(rest) 分" : "")
     }
@@ -128,9 +130,15 @@ extension Words {
 
     /// 時間軸左邊的整點：半夜 12、上午 9、中午 12、下午 3、晚上 8。
     static func hourLabel(_ hour: Int) -> String {
-        if hour == 0 { return "半夜 12" }
-        if hour < noon { return "上午 \(hour)" }
-        if hour == noon { return "中午 12" }
+        if hour == 0 {
+            return "半夜 12"
+        }
+        if hour < noon {
+            return "上午 \(hour)"
+        }
+        if hour == noon {
+            return "中午 12"
+        }
         return hour < evening ? "下午 \(hour - noon)" : "晚上 \(hour - noon)"
     }
 

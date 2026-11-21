@@ -13,7 +13,9 @@ struct DouzhangApp: App {
                 .task { await model.run() }
         }
         .onChange(of: scenePhase) { _, next in
-            if next == .active { model.becameActive() }
+            if next == .active {
+                model.becameActive()
+            }
         }
     }
 }

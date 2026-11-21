@@ -34,7 +34,9 @@ struct BigButton: View {
     }
 
     private var foreground: Color {
-        if disabled { return Tokens.Colors.disabledText }
+        if disabled {
+            return Tokens.Colors.disabledText
+        }
         return second ? Tokens.Colors.textPrimary : Tokens.Colors.onAccent
     }
 

@@ -59,16 +59,19 @@ struct BackupFiles {
         // 從檔案選取器來的檔要先借權限才讀得到；自己資料夾裡的檔借不到也沒關係
         let scoped = url.startAccessingSecurityScopedResource()
         defer {
-            if scoped { url.stopAccessingSecurityScopedResource() }
+            if scoped {
+                url.stopAccessingSecurityScopedResource()
+            }
         }
         guard let size = try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize else {
             return .failure(.unreadable)
         }
-        if size > Params.importMaxBytes { return .failure(.tooBig) }
-        guard let text = try? String(contentsOf: url, encoding: .utf8) else {
-            return .failure(.unreadable)
+        if size > Params.importMaxBytes {
+            return .failure(.tooBig)
         }
-        guard let state = try? StateDecoding.parseBackup(text) else {
+        guard let text = try? String(contentsOf: url, encoding: .utf8),
+              let state = try? StateDecoding.parseBackup(text)
+        else {
             return .failure(.unreadable)
         }
         return .success(state)

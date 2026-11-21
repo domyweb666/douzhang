@@ -23,7 +23,9 @@ final class MachineRestTests: XCTestCase {
         var state = from
         var clock = base
         for index in 0 ..< count {
-            if index > 0 { state = Machine.backFromRest(state) }
+            if index > 0 {
+                state = Machine.backFromRest(state)
+            }
             let focusing = Machine.start(state, now: clock)
             state = Machine.keep(focusing, now: clock + 25 * minute, text: "x")
             clock += 30 * minute

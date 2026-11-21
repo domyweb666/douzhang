@@ -23,7 +23,9 @@ final class BackupFilesTests: XCTestCase {
     }
 
     private func problem(_ result: Result<AppState, BackupProblem>) -> BackupProblem? {
-        if case let .failure(problem) = result { return problem }
+        if case let .failure(problem) = result {
+            return problem
+        }
         return nil
     }
 

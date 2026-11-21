@@ -17,7 +17,9 @@ enum ScreenTurn {
     private(set) static var allowed = UIInterfaceOrientationMask.portrait
 
     static func lock(_ mask: UIInterfaceOrientationMask) {
-        if mask == allowed { return }
+        if mask == allowed {
+            return
+        }
         allowed = mask
         for case let scene as UIWindowScene in UIApplication.shared.connectedScenes {
             scene.requestGeometryUpdate(.iOS(interfaceOrientations: mask))
@@ -36,7 +38,9 @@ final class PoseWatch {
 
     /// 開始看這一顆。同一顆已經在看就不重來（重來會把「已經橫放」忘掉）。
     func start(for key: String, onChange: @escaping (Pose) -> Void) {
-        if watching == key { return }
+        if watching == key {
+            return
+        }
         stop()
         watching = key
         tracker = PoseTracker()
@@ -54,11 +58,15 @@ final class PoseWatch {
         let sample = Acceleration(x: reading.x, y: reading.y, z: reading.z)
         let step = Posture.track(tracker, sample: sample, now: TimeText.nowMillis())
         tracker = step.tracker
-        if let changed = step.changed { onChange(changed) }
+        if let changed = step.changed {
+            onChange(changed)
+        }
     }
 
     func stop() {
-        if watching == nil { return }
+        if watching == nil {
+            return
+        }
         motion.stopAccelerometerUpdates()
         watching = nil
     }

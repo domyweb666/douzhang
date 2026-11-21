@@ -68,7 +68,9 @@ final class AppModel {
 
     /// 開機讀檔，然後每一拍看一次時鐘，直到畫面收掉。
     func run() async {
-        if !loaded { load() }
+        if !loaded {
+            load()
+        }
         while !Task.isCancelled {
             tick()
             try? await Task.sleep(for: .milliseconds(Params.tickMs))
@@ -92,9 +94,13 @@ final class AppModel {
         let time = TimeText.nowMillis()
         if loaded {
             let settled = Machine.settle(state, now: time)
-            if settled.current != state.current { commit(settled) }
+            if settled.current != state.current {
+                commit(settled)
+            }
             let next = Machine.phaseOf(state, now: time)
-            if next != phase { enter(next) }
+            if next != phase {
+                enter(next)
+            }
         }
         now = time
     }
@@ -102,7 +108,9 @@ final class AppModel {
     /// 換態：計時中鎖在主畫面，人可能在別頁（休息完自動開始），一樣拉回來。
     private func enter(_ next: Phase) {
         phase = next
-        if next == .focus || next == .bell { page = .home }
+        if next == .focus || next == .bell {
+            page = .home
+        }
         syncGates()
     }
 
@@ -111,7 +119,11 @@ final class AppModel {
         let time = TimeText.nowMillis()
         let next = Machine.phaseOf(state, now: time)
         now = time
-        if next != phase { enter(next) } else { syncGates() }
+        if next != phase {
+            enter(next)
+        } else {
+            syncGates()
+        }
         notifier.sync(state, now: time, force: force)
     }
 
@@ -123,7 +135,9 @@ final class AppModel {
     /// 換上新狀態並存檔。本機檔讀不懂時不存（壞檔不蓋）。
     func commit(_ next: AppState) {
         state = next
-        if !unreadable { saveFailed = !file.save(next) }
+        if !unreadable {
+            saveFailed = !file.save(next)
+        }
         follow()
     }
 
@@ -147,7 +161,9 @@ final class AppModel {
             let status = await notifier.status()
             notif = status
             let isOff = status != .granted
-            if !isOff, notifWasOff { notifier.sync(state, now: TimeText.nowMillis(), force: true) }
+            if !isOff, notifWasOff {
+                notifier.sync(state, now: TimeText.nowMillis(), force: true)
+            }
             notifWasOff = isOff
         }
     }

@@ -25,7 +25,9 @@ struct TomatoColorRow: View {
                 .buttonStyle(FadeStyle())
                 .accessibilityLabel(Words.tomatoColorName(color))
                 .accessibilityAddTraits(isOn ? .isSelected : [])
-                if color != TomatoColor.allCases.last { Spacer(minLength: .zero) }
+                if color != TomatoColor.allCases.last {
+                    Spacer(minLength: .zero)
+                }
             }
         }
     }
@@ -50,7 +52,9 @@ struct TagEditor: View {
                 .modifier(FieldChrome(focused: nameFocused))
                 .onSubmit(saveName)
                 .onChange(of: nameFocused) { _, focused in
-                    if !focused { saveName() }
+                    if !focused {
+                        saveName()
+                    }
                 }
             TomatoColorRow(value: type.color) { model.setTypeColor(type.id, color: $0) }
                 .padding(.top, Tokens.Space.m)
@@ -89,7 +93,9 @@ struct TagEditor: View {
     }
 
     private func saveName() {
-        if name != type.name { model.renameType(type.id, name: name) }
+        if name != type.name {
+            model.renameType(type.id, name: name)
+        }
     }
 }
 

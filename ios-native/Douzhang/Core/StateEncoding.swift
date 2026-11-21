@@ -48,7 +48,9 @@ enum StateEncoding {
     }
 
     private static func writeRestShort(_ value: RestShort) -> Any {
-        if case let .minutes(fixed) = value { return fixed }
+        if case let .minutes(fixed) = value {
+            return fixed
+        }
         return "auto"
     }
 
@@ -106,7 +108,9 @@ enum StateEncoding {
             "pings": bean.pings,
             "flow": bean.flow,
         ]
-        if let start = bean.start { object["start"] = start }
+        if let start = bean.start {
+            object["start"] = start
+        }
         return object
     }
 

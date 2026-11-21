@@ -16,7 +16,9 @@ enum Grow {
     /// 這顆走了幾成（0–1）。再做一下的那段番茄已經熟了，維持 1，不倒回去變青。
     static func progress(_ current: Current?, now: Millis) -> Double {
         guard case let .focus(run)? = current else { return 0 }
-        if run.flowed { return 1 }
+        if run.flowed {
+            return 1
+        }
         let span = run.endAt - run.startedAt
         return span > 0 ? clamp((now - run.startedAt) / span) : 1
     }

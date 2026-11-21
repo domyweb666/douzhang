@@ -128,7 +128,7 @@ final class StateFileTests: XCTestCase {
         XCTAssertEqual(LegacyStore.read(appSupport: folder, bundleId: bundleId), text)
     }
 
-    func test已經有新檔就不再看舊資料() throws {
+    func test已經有新檔就不再看舊資料() {
         let file = StateFile(folder: folder) { "{壞掉的舊資料" }
         // 收下後那句是抽的：同一份狀態存了再比，不能造兩次
         let state = sampleState()

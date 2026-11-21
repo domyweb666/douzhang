@@ -15,16 +15,18 @@ final class Soundscape {
             stop()
             return
         }
-        if playing != kind { stop() }
-        if player == nil { start(kind) }
+        if playing != kind {
+            stop()
+        }
+        if player == nil {
+            start(kind)
+        }
         player?.volume = Float(Params.ambienceVolume(level))
     }
 
     private func start(_ kind: AmbienceKind) {
-        guard let url = Bundle.main.url(forResource: kind.rawValue, withExtension: "m4a") else {
-            return
-        }
-        guard let made = try? AVAudioPlayer(contentsOf: url) else { return }
+        guard let url = Bundle.main.url(forResource: kind.rawValue, withExtension: "m4a"),
+              let made = try? AVAudioPlayer(contentsOf: url) else { return }
         AudioMode.ambiencePlaying = true
         AudioMode.useBackground()
         made.numberOfLoops = -1

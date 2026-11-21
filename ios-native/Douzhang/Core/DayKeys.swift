@@ -37,8 +37,11 @@ enum DayKeys {
 
     /// 往前或往後幾天的日期鍵。
     static func shift(_ key: String, days: Int) -> String {
-        guard let found = dateOf(key) else { return key }
-        guard let moved = Store.localCalendar().date(byAdding: .day, value: days, to: found) else {
+        guard let found = dateOf(key), let moved = Store.localCalendar().date(
+            byAdding: .day,
+            value: days,
+            to: found
+        ) else {
             return key
         }
         return keyOf(moved)
@@ -50,8 +53,11 @@ enum DayKeys {
         let calendar = Store.localCalendar()
         var parts = calendar.dateComponents([.year, .month], from: found)
         parts.day = 1
-        guard let first = calendar.date(from: parts) else { return key }
-        guard let moved = calendar.date(byAdding: .month, value: months, to: first) else {
+        guard let first = calendar.date(from: parts), let moved = calendar.date(
+            byAdding: .month,
+            value: months,
+            to: first
+        ) else {
             return key
         }
         return keyOf(moved)

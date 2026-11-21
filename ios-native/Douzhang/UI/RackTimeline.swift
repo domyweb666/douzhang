@@ -71,7 +71,9 @@ struct RackTimeline: View {
                         y: (block.top - Double(from)) * hourHeight
                     )
                 }
-                if key == todayKey { nowLine(from: from) }
+                if key == todayKey {
+                    nowLine(from: from)
+                }
             }
         }
     }
@@ -167,7 +169,9 @@ struct TimelineBlock: View {
 
     /// 讀屏念的那一句：番茄是「專注・25 分，那句」，作廢是「作廢，第幾分鐘…」。
     private var a11yLabel: String {
-        if isVoid { return voidLine }
+        if isVoid {
+            return voidLine
+        }
         return title + (block.item.clue.isEmpty ? "" : "，\(block.item.clue)")
     }
 }

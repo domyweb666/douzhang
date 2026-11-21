@@ -24,7 +24,9 @@ enum Machine {
 
     /// 標籤被刪掉的舊番茄算在第一個標籤上。
     static func typeOf(_ state: AppState, _ typeId: String) -> TagType {
-        if typeId == devTypeId { return devType }
+        if typeId == devTypeId {
+            return devType
+        }
         let types = state.settings.types
         let found = types.first { $0.id == typeId }
         return found ?? types.first ?? Store.defaultType
@@ -56,12 +58,14 @@ enum Machine {
     /// 這段時間 current 還留著休息那筆（記得是哪個標籤）；過了就用同一個標籤開始下一顆。
     /// 開始時刻是算的，不是看到的那一刻：app 在背景時也一樣，回來時可能已經走了一段，甚至已經到點。
     static func settle(_ state: AppState, now: Millis) -> AppState {
-        guard case let .rest(run)? = state.current else { return state }
-        guard let endAt = run.endAt, now >= endAt else { return state }
+        guard case let .rest(run)? = state.current, let endAt = run.endAt,
+              now >= endAt else { return state }
         let idle = with(state, current: nil)
         guard state.settings.autoNext else { return idle }
         let startAt = endAt + Params.autoNextDelayMs
-        if now < startAt { return state }
+        if now < startAt {
+            return state
+        }
         return start(idle, now: startAt, typeId: run.typeId)
     }
 
@@ -103,9 +107,13 @@ enum Machine {
         let plan = Store.restAfter(state.settings, len: run.len, beansToday: count)
         var restMs = Double(plan.minutes) * Params.msPerMinute
         // 測試顆的休息跟它一樣短，不然看一次掉番茄要等好幾分鐘；輪到長休息時照樣標成長休息
-        if run.typeId == devTypeId { restMs = Params.devTestSeconds * Params.msPerSecond }
+        if run.typeId == devTypeId {
+            restMs = Params.devTestSeconds * Params.msPerSecond
+        }
         // 響了沒理、拖到超過這顆的休息長度才回來收：休息早過了，直接待機
-        if now - run.endAt >= restMs { return next }
+        if now - run.endAt >= restMs {
+            return next
+        }
         let isOwn = state.settings.restMode == .own
         next.lastLine = pickLine(
             after: state.lastLine,
@@ -157,7 +165,9 @@ enum Machine {
     ) -> AppState {
         guard let run = state.focusRun else { return state }
         var next = with(state, current: nil)
-        if early { return next }
+        if early {
+            return next
+        }
         let entry = VoidEntry(
             voidedAt: now,
             typeId: run.typeId,

@@ -50,7 +50,9 @@ final class AppShield {
     /// 蓋上或解開。答案跟上次一樣就不叫系統；開機第一次一定叫（上次被殺掉時可能還蓋著）。
     func apply(_ isOn: Bool) {
         let next = isOn ? Applied.blocked : Applied.clear
-        if next == applied { return }
+        if next == applied {
+            return
+        }
         reapply(isOn)
     }
 

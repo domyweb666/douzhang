@@ -98,7 +98,9 @@ final class JarScene {
             body.fresh = true
             world.addBody(body)
         }
-        if let added = world.bodies.last { colors[added.id] = bean.color }
+        if let added = world.bodies.last {
+            colors[added.id] = bean.color
+        }
     }
 
     // MARK: 每一幀
@@ -117,11 +119,15 @@ final class JarScene {
         }
         let elapsed = lastFrame > 0 ? now - lastFrame : Tokens.Motion.frameMax / 2
         // 同一個時刻被畫兩次（畫面停著時重畫）：時間沒走就不算，不然會除以零
-        if elapsed <= 0 { return }
+        if elapsed <= 0 {
+            return
+        }
         lastFrame = now
         let before = world.bodies
         stepWorld(min(Tokens.Motion.frameMax, elapsed))
-        if !world.landed.isEmpty { sounds.land(sound: soundOn) }
+        if !world.landed.isEmpty {
+            sounds.land(sound: soundOn)
+        }
         if world.impact > Tokens.Sound.hitThreshold, now - lastHit > Tokens.Sound.hitGap {
             lastHit = now
             sounds.hit(sound: soundOn, impact: world.impact)
@@ -143,8 +149,12 @@ final class JarScene {
 
     /// 靜止版沒有東西在動：感測器關掉，畫完這一幀就睡。
     private func settleQuietly() {
-        if motion.isAccelerometerActive { motion.stopAccelerometerUpdates() }
-        if pending.isEmpty { sleepSoon() }
+        if motion.isAccelerometerActive {
+            motion.stopAccelerometerUpdates()
+        }
+        if pending.isEmpty {
+            sleepSoon()
+        }
     }
 
     /// 每顆移動都小於門檻、也沒有還在掉的，連續這麼多幀就睡。
@@ -158,27 +168,35 @@ final class JarScene {
         quietFrames = moving || !pending.isEmpty || before.count != world.bodies.count
             ? 0
             : quietFrames + 1
-        if quietFrames >= Tokens.Motion.quietFrames { sleepSoon() }
+        if quietFrames >= Tokens.Motion.quietFrames {
+            sleepSoon()
+        }
     }
 
     /// 現在正在畫，不能當場改畫面會讀的狀態：排到這一幀之後。
     private func sleepSoon() {
         Task { @MainActor in
-            if self.pending.isEmpty { self.asleep = true }
+            if self.pending.isEmpty {
+                self.asleep = true
+            }
         }
     }
 
     private func wake() {
         quietFrames = 0
         lastFrame = 0
-        if asleep { asleep = false }
+        if asleep {
+            asleep = false
+        }
     }
 
     // MARK: 點一下、傾斜
 
     /// 點一下：附近的番茄往上彈。靜止版不彈。
     func tap(x: Double, y: Double) {
-        if isStill { return }
+        if isStill {
+            return
+        }
         world.tap(x: x, y: y)
         wake()
     }
@@ -204,7 +222,9 @@ final class JarScene {
         // 跟睡著時的重力比（睡著時它停著不動）：慢慢傾斜也會累積到門檻；
         // 放在桌上不動時，感測器的小雜訊不會讓畫面一直重畫
         let shift = abs(targetX - world.gravityX) + abs(targetY - world.gravityY)
-        if asleep, shift > Tokens.Motion.tiltWake { wake() }
+        if asleep, shift > Tokens.Motion.tiltWake {
+            wake()
+        }
     }
 
     func stop() {
@@ -221,11 +241,15 @@ struct SlowWatch {
 
     mutating func count(now: TimeInterval) {
         frames += 1
-        if since == 0 { since = now }
+        if since == 0 {
+            since = now
+        }
         guard now - since > 1 else { return }
         lowSeconds = frames < Params.jarLowFps ? lowSeconds + 1 : 0
         frames = 0
         since = now
-        if lowSeconds >= Params.jarLowFpsSeconds { tooSlow = true }
+        if lowSeconds >= Params.jarLowFpsSeconds {
+            tooSlow = true
+        }
     }
 }

@@ -31,7 +31,9 @@ extension AppModel {
     func setShield(_ isOn: Bool) async -> Bool {
         if isOn {
             let allowed = await shield.authorize()
-            if !allowed { return false }
+            if !allowed {
+                return false
+            }
         }
         update { $0.shield = isOn }
         return true

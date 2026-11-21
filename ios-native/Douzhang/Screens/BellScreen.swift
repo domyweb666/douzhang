@@ -55,7 +55,9 @@ struct BellScreen: View {
                 .multilineTextAlignment(.center)
                 .accessibilityAddTraits(.isHeader)
             HomeCaption(text: Words.tagLabel(type))
-            if late > 0 { HomeCaption(text: Words.rangAgo(late)) }
+            if late > 0 {
+                HomeCaption(text: Words.rangAgo(late))
+            }
         }
         .padding(.top, Tokens.Space.l)
     }

@@ -43,9 +43,13 @@ struct SettingsRhythm: View {
 
     /// 卡片下的說明：休息怎麼算（看得到那幾列時才講）。
     private func footer(_ settings: AppSettings) -> String {
-        if settings.restMode == .own { return Words.restSelfSub }
+        if settings.restMode == .own {
+            return Words.restSelfSub
+        }
         var lines: [String] = []
-        if settings.restShort == .auto { lines.append(Words.restShortAutoSub) }
+        if settings.restShort == .auto {
+            lines.append(Words.restShortAutoSub)
+        }
         if settings.restLongEvery > 0 {
             lines.append(Words.restLongSub(settings.restLongEvery, settings.restLongMinutes))
         }

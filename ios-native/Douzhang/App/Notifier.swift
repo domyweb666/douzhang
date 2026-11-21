@@ -56,7 +56,9 @@ final class Notifier {
     /// 連續兩次轉態時，後一次要等前一次「取消＋排」做完，不然會排出兩則。
     func sync(_ state: AppState, now: Millis, force: Bool = false) {
         let plan = Notify.planned(state, now: now)
-        if !force, plan == lastPlan { return }
+        if !force, plan == lastPlan {
+            return
+        }
         lastPlan = plan
         let sound = state.settings.sound
         let previous = queue
@@ -72,7 +74,9 @@ final class Notifier {
             let content = UNMutableNotificationContent()
             content.title = notice.title
             content.body = notice.body
-            if sound { content.sound = .default }
+            if sound {
+                content.sound = .default
+            }
             let wait = max(1, (notice.fireAt - TimeText.nowMillis()) / Params.msPerSecond)
             let trigger = UNTimeIntervalNotificationTrigger(timeInterval: wait, repeats: false)
             let request = UNNotificationRequest(

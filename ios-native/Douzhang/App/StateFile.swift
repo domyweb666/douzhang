@@ -12,14 +12,12 @@ enum LegacyStore {
     /// 檔名是鍵的 MD5，manifest 裡那一欄是 null。
     static func read(appSupport: URL, bundleId: String) -> String? {
         let folder = appSupport.appendingPathComponent(bundleId).appendingPathComponent(folderName)
-        guard let data = try? Data(contentsOf: folder.appendingPathComponent(manifestName)) else {
-            return nil
+        guard let data = try? Data(contentsOf: folder.appendingPathComponent(manifestName)),
+              let manifest = (try? JSONSerialization.jsonObject(with: data)) as? JSONObject,
+              let value = manifest[key] else { return nil }
+        if let inline = value as? String {
+            return inline
         }
-        guard let manifest = (try? JSONSerialization.jsonObject(with: data)) as? JSONObject else {
-            return nil
-        }
-        guard let value = manifest[key] else { return nil }
-        if let inline = value as? String { return inline }
         return try? String(contentsOf: folder.appendingPathComponent(md5(key)), encoding: .utf8)
     }
 

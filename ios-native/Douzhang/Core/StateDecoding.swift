@@ -14,19 +14,22 @@ enum StateDecoding {
     /// 讀備份檔的字（匯入）：多要求有數字的 v。讀不懂就丟例外，資料不動。
     static func parseBackup(_ text: String) throws -> AppState {
         let raw = try JSONSerialization.jsonObject(with: Data(text.utf8))
-        guard let object = raw as? JSONObject else { throw NotAState() }
-        guard JSONRead.number(object["v"]) != nil else { throw NotAState() }
+        guard let object = raw as? JSONObject,
+              JSONRead.number(object["v"]) != nil else { throw NotAState() }
         return try normalize(object)
     }
 
     static func normalize(_ raw: Any) throws -> AppState {
-        guard let object = raw as? JSONObject else { throw NotAState() }
-        guard let rawSettings = JSONRead.object(object["settings"]) else { throw NotAState() }
-        guard let rawDays = JSONRead.object(object["days"]) else { throw NotAState() }
+        guard let object = raw as? JSONObject, let rawSettings = JSONRead.object(
+            object["settings"]
+        ),
+            let rawDays = JSONRead.object(object["days"]) else { throw NotAState() }
         let settings = readSettings(rawSettings)
         var days: [String: DayRecord] = [:]
         for (key, value) in rawDays {
-            if let rawDay = JSONRead.object(value) { days[key] = readDay(rawDay) }
+            if let rawDay = JSONRead.object(value) {
+                days[key] = readDay(rawDay)
+            }
         }
         return AppState(
             settings: settings,
@@ -72,8 +75,8 @@ enum StateDecoding {
         let colors = TomatoColor.allCases
         var types: [TagType] = []
         for raw in JSONRead.objects(value) {
-            guard let id = JSONRead.string(raw["id"]) else { continue }
-            guard let name = JSONRead.string(raw["name"]) else { continue }
+            guard let id = JSONRead.string(raw["id"]),
+                  let name = JSONRead.string(raw["name"]) else { continue }
             let named = JSONRead.string(raw["color"]).flatMap(TomatoColor.init(rawValue:))
             let type = TagType(
                 id: id,
@@ -150,9 +153,9 @@ enum StateDecoding {
 
     /// 會進算術的欄位（開始、結束時刻、長度）不是數字就整顆不要，回待機。
     private static func readFocus(_ raw: JSONObject) -> FocusRun? {
-        guard let startedAt = JSONRead.number(raw["startedAt"]) else { return nil }
-        guard let endAt = JSONRead.number(raw["endAt"]) else { return nil }
-        guard let len = JSONRead.number(raw["len"]) else { return nil }
+        guard let startedAt = JSONRead.number(raw["startedAt"]),
+              let endAt = JSONRead.number(raw["endAt"]),
+              let len = JSONRead.number(raw["len"]) else { return nil }
         let wasFlow = JSONRead.string(raw["phase"]) == "flow"
         return FocusRun(
             typeId: JSONRead.string(raw["typeId"]) ?? "",
@@ -173,7 +176,9 @@ enum StateDecoding {
         guard let restStart = JSONRead.number(raw["restStart"]) else { return nil }
         let endAt = JSONRead.number(raw["endAt"])
         let isOwn = settings.restMode == .own
-        if !isOwn, endAt == nil { return nil }
+        if !isOwn, endAt == nil {
+            return nil
+        }
         return RestRun(
             typeId: JSONRead.string(raw["typeId"]) ?? "",
             len: JSONRead.number(raw["len"]) ?? Store.defaultType.len,

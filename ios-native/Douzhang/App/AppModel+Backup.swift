@@ -4,7 +4,9 @@ import Foundation
 extension AppModel {
     /// 要匯出的字。本機檔讀不懂時，匯出的是那份讀不懂的原文，不是空白。
     private func savedText() -> String? {
-        if unreadable { return try? file.readRaw() }
+        if unreadable {
+            return try? file.readRaw()
+        }
         return try? StateEncoding.text(state)
     }
 
@@ -13,11 +15,9 @@ extension AppModel {
         backupProblem = nil
         let folder = FileManager.default.temporaryDirectory
         let now = TimeText.nowMillis()
-        guard let text = savedText() else {
-            backupProblem = .exportFailed
-            return
-        }
-        guard let url = BackupFiles.writeExport(text, now: now, into: folder) else {
+        guard let text = savedText(),
+              let url = BackupFiles.writeExport(text, now: now, into: folder)
+        else {
             backupProblem = .exportFailed
             return
         }
@@ -26,7 +26,9 @@ extension AppModel {
 
     /// 分享選單關掉之後：刪掉暫存檔。刪不掉也沒關係，系統清暫存時會清。
     func exportFinished() {
-        if let done = exportFile { try? FileManager.default.removeItem(at: done.url) }
+        if let done = exportFile {
+            try? FileManager.default.removeItem(at: done.url)
+        }
         exportFile = nil
     }
 
@@ -39,7 +41,9 @@ extension AppModel {
         case let .failure(problem):
             backupProblem = problem
         case let .success(imported):
-            if backUpCurrent() { pendingImport = imported }
+            if backUpCurrent() {
+                pendingImport = imported
+            }
         }
     }
 

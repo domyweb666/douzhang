@@ -66,7 +66,9 @@ struct SettingsScreen: View {
         Binding(
             get: { model.pendingImport != nil },
             set: { isOn in
-                if !isOn { model.cancelImport() }
+                if !isOn {
+                    model.cancelImport()
+                }
             }
         )
     }

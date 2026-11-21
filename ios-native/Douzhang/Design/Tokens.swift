@@ -78,9 +78,14 @@ enum Tokens {
         }
 
         /// 待機的大時間
-        static var clockFocus: Font { clock(72, cap: 1.6) }
+        static var clockFocus: Font {
+            clock(72, cap: 1.6)
+        }
+
         /// 進度環下面的時間：環已經是主角，比待機的小一階
-        static var clockRing: Font { clock(56, cap: 1.4) }
+        static var clockRing: Font {
+            clock(56, cap: 1.4)
+        }
 
         /// 聚焦模式牌上的數字：大小跟著畫面寬，不跟系統字級放大，不然會撐出牌子
         static func zenDigit(_ size: CGFloat) -> Font {
