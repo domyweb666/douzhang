@@ -66,6 +66,8 @@ struct RackScreen: View {
                 filled
             }
         }
+        // 空狀態時裡面沒有會撐滿的東西：整塊貼齊最上面，不然標題會掉到畫面中間
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .padding(.bottom, Tokens.Shape.tabClearance)
         .sheet(item: $openDay) { day in
             DaySheet(dayKey: day.id, day: model.state.days[day.id])
