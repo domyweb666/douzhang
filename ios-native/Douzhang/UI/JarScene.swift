@@ -34,6 +34,8 @@ final class JarScene {
     /// 靜止版（減少動態、或連續掉幀）：不傾斜、不彈，新的一顆直接出現在底，啵與觸覺照樣。
     @ObservationIgnored var reduceMotion = false
     @ObservationIgnored var soundOn = true
+    /// 這頁看得到嗎：看不到就關感測器、不醒來
+    @ObservationIgnored var active = true
     @ObservationIgnored var onKnown: (Int) -> Void = { _ in }
 
     var isStill: Bool {
@@ -185,6 +187,8 @@ final class JarScene {
     private func wake() {
         quietFrames = 0
         lastFrame = 0
+        // 停著的那段不算掉幀：不然停停醒醒幾次就會被當成太慢，退成靜止版
+        slow.restart()
         if asleep {
             asleep = false
         }
@@ -206,7 +210,7 @@ final class JarScene {
         motion.stopAccelerometerUpdates()
         targetX = 0
         targetY = world.tuning.gravity
-        guard isOn, !isStill, motion.isAccelerometerAvailable else { return }
+        guard isOn, active, !isStill, motion.isAccelerometerAvailable else { return }
         motion.accelerometerUpdateInterval = JarWorld.frame
         motion.startAccelerometerUpdates(to: .main) { [weak self] data, _ in
             guard let self, let reading = data?.acceleration else { return }
@@ -223,6 +227,15 @@ final class JarScene {
         // 放在桌上不動時，感測器的小雜訊不會讓畫面一直重畫
         let shift = abs(targetX - world.gravityX) + abs(targetY - world.gravityY)
         if asleep, shift > Tokens.Motion.tiltWake {
+            wake()
+        }
+    }
+
+    /// 滑走時停下（感測器關掉）；滑回來時接上傾斜、醒來走幾幀再睡。
+    func setActive(_ isOn: Bool, tilt isTiltOn: Bool) {
+        active = isOn
+        setTilt(isTiltOn)
+        if isOn {
             wake()
         }
     }
@@ -251,5 +264,11 @@ struct SlowWatch {
         if lowSeconds >= Params.jarLowFpsSeconds {
             tooSlow = true
         }
+    }
+
+    /// 停過一陣子再開始畫：從下一幀重新數，停著的時間不算進這一秒
+    mutating func restart() {
+        frames = 0
+        since = 0
     }
 }

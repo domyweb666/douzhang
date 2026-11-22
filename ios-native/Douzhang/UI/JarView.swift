@@ -8,6 +8,8 @@ struct JarView: View {
     var beans: [JarBean]
     var sound: Bool
     var tilt: Bool
+    /// 看得到才動：滑到番茄架或設定時，這頁其實還掛著，要停下來，不然一直跟滑頁搶手
+    var active: Bool
     /// 殼保管的「番茄堆上次看到幾顆」：鈴響時番茄堆不在畫面上，回來要知道哪顆是新的
     @Binding var seen: Int?
 
@@ -15,7 +17,7 @@ struct JarView: View {
     @State private var scene = JarScene()
 
     var body: some View {
-        TimelineView(.animation(paused: scene.asleep)) { timeline in
+        TimelineView(.animation(paused: scene.asleep || !active)) { timeline in
             Canvas { context, size in
                 scene.layout(
                     width: size.width,
@@ -48,6 +50,7 @@ struct JarView: View {
         .onChange(of: beans) { _, next in scene.follow(next) }
         .onChange(of: sound) { _, next in scene.soundOn = next }
         .onChange(of: tilt) { _, next in scene.setTilt(next) }
+        .onChange(of: active) { _, next in scene.setActive(next, tilt: tilt) }
         .onChange(of: reduceMotion) { _, next in
             scene.reduceMotion = next
             scene.setTilt(tilt)
@@ -61,6 +64,7 @@ struct JarView: View {
     private func start() {
         scene.soundOn = sound
         scene.reduceMotion = reduceMotion
+        scene.active = active
         scene.onKnown = { count in
             // 番茄堆是在畫的過程中回報的：排到這一幀之後再記，不在畫到一半時改狀態
             Task { @MainActor in seen = count }

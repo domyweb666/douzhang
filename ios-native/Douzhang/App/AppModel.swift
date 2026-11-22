@@ -24,7 +24,12 @@ final class AppModel {
     private(set) var state = Store.blank()
     /// 還在讀檔時是 false，畫面先空著
     private(set) var loaded = false
+    /// 每一拍都換。只給計時中、休息、鈴響那幾個畫面讀：別的畫面讀它會跟著一秒重算四次（11-22 卡頓的原因之一）
     private(set) var now = TimeText.nowMillis()
+    /// 今天是哪一天：換日那一拍才換。番茄架、待機主畫面讀這個，不讀 now
+    private(set) var todayKey = Store.dayKey(TimeText.nowMillis())
+    /// 現在，只到分鐘：番茄架時間軸那條「現在」的線用，一分鐘才動一次（讀檔那一拍就對上）
+    private(set) var minuteNow: Millis = 0
     private(set) var phase = Phase.idle
     /// 存不進去：畫面最上面顯示那一行
     private(set) var saveFailed = false
@@ -74,10 +79,6 @@ final class AppModel {
         self.backups = backups
     }
 
-    var todayKey: String {
-        Store.dayKey(now)
-    }
-
     /// 開機讀檔，然後每一拍看一次時鐘，直到畫面收掉。
     func run() async {
         if !loaded {
@@ -114,7 +115,24 @@ final class AppModel {
                 enter(next)
             }
         }
+        setClock(time)
+    }
+
+    /// 換時鐘：now 每次換；今天、分鐘只有真的變了才寫，沒變就不吵讀它們的畫面。
+    private func setClock(_ time: Millis) {
         now = time
+        let day = Store.dayKey(time)
+        if day != todayKey {
+            todayKey = day
+        }
+        let minute = Self.minuteOf(time)
+        if minute != minuteNow {
+            minuteNow = minute
+        }
+    }
+
+    private static func minuteOf(_ time: Millis) -> Millis {
+        (time / Params.msPerMinute).rounded(.down) * Params.msPerMinute
     }
 
     /// 換態：計時中鎖在主畫面，人可能在別頁（休息完自動開始），一樣拉回來。
@@ -130,7 +148,7 @@ final class AppModel {
     private func follow(force: Bool = false) {
         let time = TimeText.nowMillis()
         let next = Machine.phaseOf(state, now: time)
-        now = time
+        setClock(time)
         if next != phase {
             enter(next)
         } else {

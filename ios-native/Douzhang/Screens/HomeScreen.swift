@@ -67,6 +67,7 @@ struct HomeScreen: View {
             beans: beans,
             sound: state.settings.sound,
             tilt: state.settings.tilt,
+            active: model.page == .home,
             seen: $model.jarSeen
         )
         .padding(.horizontal, -Tokens.Space.screen)

@@ -209,7 +209,7 @@ struct RackScreen: View {
                 state: state,
                 keys: RackCalendar.viewDays(view, selected: selected),
                 view: view,
-                now: model.now,
+                now: model.minuteNow,
                 todayKey: model.todayKey
             ) { key in
                 openDay = OpenDay(id: key)
