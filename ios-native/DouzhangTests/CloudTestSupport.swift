@@ -165,9 +165,10 @@ final class CloudStage {
         }
     }
 
-    /// 等到成立，最多五秒。讓出主執行緒，接頭從背景回來的事才輪得到。
+    /// 等到成立，最多六十秒。讓出主執行緒，接頭從背景回來的事才輪得到。
+    /// 平常零點幾秒；接頭的工作排在最低的優先，剛開機的模擬器忙起來五秒輪不到（tfn-3 兩次都紅在這）。
     static func until(_ what: String, _ isDone: () -> Bool) async {
-        let end = ContinuousClock.now + .seconds(5)
+        let end = ContinuousClock.now + .seconds(60)
         while !isDone() {
             if ContinuousClock.now > end {
                 XCTFail("等不到：\(what)")
