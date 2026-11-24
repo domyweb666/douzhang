@@ -62,10 +62,17 @@ final class JarScene {
     }
 
     /// 多一顆就掉一顆；數目對不上（換日、匯入、清空）就重新安置。
-    func follow(_ next: [JarBean]) {
+    /// drops 是 false：整份換過了（同步、匯入、清空），多的是別台收的，直接躺好。
+    /// 顆數一樣也可能是別的番茄，所以看內容有沒有變。
+    func follow(_ next: [JarBean], drops: Bool = true) {
+        let before = beans
         beans = next
         guard let seenCount = known else { return }
-        if next.count == seenCount + 1, let last = next.last {
+        if !drops {
+            if next != before {
+                join(next)
+            }
+        } else if next.count == seenCount + 1, let last = next.last {
             let delay = isStill ? 0 : Tokens.Motion.dropDelay
             pending.append((dueAt: Date().timeIntervalSinceReferenceDate + delay, bean: last))
         } else if next.count != seenCount {
@@ -84,6 +91,27 @@ final class JarScene {
             colors[body.id] = bean.color
         }
         known = list.count
+    }
+
+    /// 別台的直接躺好。這台剛收的那顆（排最後）還沒掉、正在掉，就讓它照樣掉完。
+    /// 新清單的最後一顆不是它（清空、匯入換掉了）就整份躺好：不准掉一顆已經不在的。
+    private func join(_ next: [JarBean]) {
+        let waiting = pending.last?.bean
+        let falling = world.bodies.last(where: \.fresh)
+        let color = falling.flatMap { colors[$0.id] }
+        guard let mine = next.last,
+              waiting == mine || (waiting == nil && color == mine.color)
+        else {
+            pending = []
+            seed(next)
+            return
+        }
+        seed(Array(next.dropLast()))
+        guard waiting == nil, let falling else { return }
+        world.addBody(falling)
+        if let added = world.bodies.last {
+            colors[added.id] = mine.color
+        }
     }
 
     private func drop(_ bean: JarBean) {

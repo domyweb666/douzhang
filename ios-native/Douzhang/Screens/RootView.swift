@@ -5,6 +5,7 @@ import UIKit
 /// 鈴響是另一整頁；聚焦模式是橫放的整頁時鐘；其他時候是左右滑的三頁加懸浮分頁列。
 struct RootView: View {
     @Environment(AppModel.self) private var model
+    @Environment(Purchases.self) private var shop
 
     var body: some View {
         ZStack {
@@ -27,6 +28,11 @@ struct RootView: View {
         .haptic(.impact(weight: .light), trigger: model.pulses.removed)
         .haptic(.error, trigger: model.saveFailed) { $0 }
         .haptic(.error, trigger: model.backupProblem) { $0 != nil }
+        // 買了才准同步；退款只停同步，番茄與開關都不動
+        .onChange(of: shop.status, initial: true) {
+            model.cloud.setPaid(shop.allows(.cloud))
+        }
+        .modifier(CloudAsk())
     }
 }
 

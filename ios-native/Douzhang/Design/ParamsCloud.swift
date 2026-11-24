@@ -17,7 +17,7 @@ extension Params {
     static let cloudStepSeconds = 10.0
     /// 第一份清單最多等幾秒
     static let cloudListSeconds = 15.0
-    /// 整次拉取最多幾秒，到了就先合已經讀到的
+    /// 整次拉取最多幾秒，到了就先合已經讀到的，剩的下一趟接著讀
     static let cloudPullSeconds = 60.0
     /// 讀不到的檔隔多久再讀
     static let cloudRestSeconds = 180.0
@@ -27,6 +27,8 @@ extension Params {
     static let cloudNoticeSeconds = 1.5
     /// iCloud 沒開持續多久才說
     static let cloudOffSeconds = 10.0
+    /// 看過東西的雲端空了：隔多久再看一次，還是空的才問
+    static let cloudEmptySeconds = 10.0
     /// 在背景合併時本機又變了，重合幾次後改在主執行緒合
     static let cloudMergeTries = 2
 }

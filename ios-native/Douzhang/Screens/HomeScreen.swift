@@ -80,8 +80,7 @@ struct HomeScreen: View {
     private var jar: some View {
         @Bindable var model = model
         let state = model.state
-        let today = state.days[model.todayKey]?.beans ?? []
-        let beans = today.stableSorted { $0.keptAt }.map { bean in
+        let beans = model.jarBeans.map { bean in
             JarBean(len: bean.len, color: Machine.typeOf(state, bean.typeId).color)
         }
         return JarView(

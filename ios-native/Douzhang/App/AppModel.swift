@@ -16,7 +16,8 @@ struct Pulses: Equatable {
 
 /// 殼：開機讀檔、每一拍看時鐘、到點換畫面、每次改動就存、狀態變了就重排通知。
 /// 狀態機在 Core/Machine.swift，畫面在 Screens/。每個動作先算新狀態（純函式），再 commit。
-/// 動作在 AppModel+Actions，備份在 AppModel+Backup，白噪音、擋 app、聚焦模式在 AppModel+Gates。
+/// 動作在 AppModel+Actions，備份在 AppModel+Backup，白噪音、擋 app、聚焦模式在 AppModel+Gates，
+/// iCloud 同步的接頭在 AppModel+Cloud。
 @MainActor
 @Observable
 final class AppModel {
@@ -41,6 +42,8 @@ final class AppModel {
     var idleLine: String?
     /// 番茄堆上次看到幾顆：鈴響時番茄堆不在畫面上，回來時要知道哪顆是新的
     var jarSeen: Int?
+    /// 這台最近收下的那顆的編號：番茄堆把它排最後，從上面掉下來的才是它
+    var jarFresh: String?
     /// 收下、拿掉東西各數一次：RootView 看到數字變了就震一下
     var pulses = Pulses()
 
@@ -66,15 +69,22 @@ final class AppModel {
 
     @ObservationIgnored let file: StateFile
     @ObservationIgnored let backups: BackupFiles
+    @ObservationIgnored let cloud: CloudLink
     @ObservationIgnored let notifier = Notifier()
     @ObservationIgnored let soundscape = Soundscape()
     @ObservationIgnored let shield = AppShield()
     @ObservationIgnored let poseWatch = PoseWatch()
     @ObservationIgnored private var notifWasOff = false
 
-    init(file: StateFile = .standard, backups: BackupFiles = .standard) {
+    init(
+        file: StateFile = .standard,
+        backups: BackupFiles = .standard,
+        cloud: CloudLink? = nil
+    ) {
         self.file = file
         self.backups = backups
+        // 預設參數不准用主執行緒的靜態值（Swift 5 模式），所以在這裡補
+        self.cloud = cloud ?? CloudLink.standard
     }
 
     /// 開機讀檔，然後每一拍看一次時鐘，直到畫面收掉。
@@ -98,6 +108,7 @@ final class AppModel {
         // 開機對齊：系統裡排的通知、擋板、白噪音都要跟現在的狀態一致
         follow(force: true)
         refreshNotif()
+        cloud.start(self)
     }
 
     /// 每一拍：休息到點沒按也回待機（或自動開始下一顆）；到點那一刻換成鈴響。
@@ -158,6 +169,7 @@ final class AppModel {
         if !unreadable {
             saveFailed = !file.save(next)
         }
+        cloud.saved()
         follow()
     }
 
@@ -166,6 +178,7 @@ final class AppModel {
         unreadable = false
         state = next
         saveFailed = !file.save(next)
+        cloud.saved()
         follow(force: true)
     }
 
@@ -173,6 +186,7 @@ final class AppModel {
     func becameActive() {
         tick()
         refreshNotif()
+        cloud.becameActive()
     }
 
     /// 權限從沒允許翻成允許時，要重排一次通知。

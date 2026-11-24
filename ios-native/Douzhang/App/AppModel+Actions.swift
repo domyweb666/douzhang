@@ -17,6 +17,7 @@ extension AppModel {
     }
 
     func keep(text: String) {
+        jarFresh = state.focusRun?.id
         commit(Machine.keep(settled(), now: TimeText.nowMillis(), text: text))
         pulses.kept += 1
     }

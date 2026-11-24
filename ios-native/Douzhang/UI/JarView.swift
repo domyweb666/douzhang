@@ -40,7 +40,14 @@ struct JarView: View {
         .accessibilityLabel(a11yLabel)
         .onAppear(perform: start)
         .onDisappear { scene?.stop() }
-        .onChange(of: beans) { _, next in scene?.follow(next) }
+        .onChange(of: beans) { _, next in scene?.follow(next, drops: seen != nil) }
+        // 殼說整份換過了（同步、匯入）：照現在的躺好，再回報看到幾顆，
+        // 不然下次收下的那顆會被當成早就看過，不掉下來
+        .onChange(of: seen) { _, next in
+            if next == nil {
+                scene?.follow(beans, drops: false)
+            }
+        }
         .onChange(of: sound) { _, next in scene?.soundOn = next }
         .onChange(of: tilt) { _, next in scene?.setTilt(next) }
         .onChange(of: frozen) { _, next in scene?.setFrozen(next) }

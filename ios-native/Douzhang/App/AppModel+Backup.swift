@@ -48,22 +48,27 @@ extension AppModel {
         }
     }
 
-    /// 匯入前的自動備份。什麼都還沒存過（剛裝好）就沒有東西要備份。
-    /// 讀不到現在的資料就不知道要備份什麼：不匯。
+    /// 匯入前的自動備份。備份不成就不匯，設定頁寫那一句。
     private func backUpCurrent() -> Bool {
+        let isDone = backUpSaved()
+        if !isDone {
+            backupProblem = .backupFailed
+        }
+        return isDone
+    }
+
+    /// 把現在存著的原文自動備份一份（匯入前、第一次同步前）。什麼都還沒存過就沒有東西要備份。
+    /// 讀不到現在的資料就不知道要備份什麼：算沒備份成。
+    func backUpSaved() -> Bool {
         let raw: String?
         do {
             raw = try file.readRaw()
         } catch {
-            backupProblem = .backupFailed
             return false
         }
         guard let raw else { return true }
         let now = TimeText.nowMillis()
-        guard backups.autoBackup(raw, now: now) else {
-            backupProblem = .backupFailed
-            return false
-        }
+        guard backups.autoBackup(raw, now: now) else { return false }
         lastBackup = now
         return true
     }
@@ -81,8 +86,13 @@ extension AppModel {
     }
 
     /// 清除所有資料：清乾淨，含自動備份；擋板解開，選過要擋的 app 也忘掉；
-    /// 外觀立刻回跟隨系統，觸覺回饋回到預設的開。
-    func wipeAll() {
+    /// 外觀立刻回跟隨系統，觸覺回饋回到預設的開。不動購買。
+    /// 開著、或雲端可能有一份的，先關同步再清：不然下一次拉，資料又全部回來（準則 5-26）。
+    /// erasingCloud 是當場問到的答案；雲端沒有這台的就不碰 iCloud。
+    func wipeAll(erasingCloud: Bool = false) {
+        if cloud.isOn || cloud.hasCopy {
+            cloud.wipe(erasing: erasingCloud)
+        }
         let removed = backups.removeAutoBackups()
         forgetShield()
         lastBackup = backups.lastAutoBackupAt()
