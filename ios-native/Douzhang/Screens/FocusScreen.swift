@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// 聚焦模式：計時中橫放的整頁時鐘。黑底、分與秒兩個大數字，中間那顆在變色的番茄就是冒號，
+/// 聚焦模式：計時中橫放的整頁時鐘。黑底、分與秒兩個大數字，中間那顆在長的番茄就是冒號，
 /// 下面一行在做什麼（沒填就是標籤名）。淺色深色都是這一組。
 /// 平常只有時鐘；點一下畫面，那一行收起來換成一排按鈕，過幾秒自己換回來。
 /// 背景音、記一筆與結束都要打字或選，橫向時放不下也會被鍵盤蓋掉，所以按了先回直向的主畫面再開那張半頁。
@@ -56,7 +56,7 @@ struct FocusScreen: View {
         return HStack(spacing: Tokens.Layout.section) {
             number(parts.minutes, size: size)
                 .frame(width: room, alignment: .trailing)
-            TomatoView(fill: ripeness, size: tomato)
+            GrowingTomato(run: run, fill: ripeness, size: tomato, now: model.now)
             number(parts.seconds, size: size)
                 .frame(width: room, alignment: .leading)
         }
@@ -71,7 +71,7 @@ struct FocusScreen: View {
             .frame(height: size * Tokens.ZenLayout.digitRow)
     }
 
-    /// 番茄大小固定，只從青變成標籤色。
+    /// 番茄的顏色：從青變成標籤色。
     private var ripeness: Color {
         let progress = Grow.progress(.focus(run), now: model.now)
         let ripe = Tokens.Tomato.body(type.color)

@@ -130,9 +130,11 @@ final class InsightWordsTests: XCTestCase {
         XCTAssertEqual(Words.voidSum(JotTally(reasons: few, unfilled: 1)), "作廢 2 顆。")
     }
 
-    func test鈴響收據第十三顆起才寫總數() {
+    func test鈴響收據第八顆起才寫總數() {
         XCTAssertNil(Words.todayTotal(1))
-        XCTAssertNil(Words.todayTotal(12))
+        XCTAssertNil(Words.todayTotal(7))
+        XCTAssertEqual(Words.todayTotal(8), "8 顆")
+        XCTAssertEqual(Words.todayTotal(12), "12 顆")
         XCTAssertEqual(Words.todayTotal(13), "13 顆")
         XCTAssertEqual(Words.todayTotal(30), "30 顆")
     }

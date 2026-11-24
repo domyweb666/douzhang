@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// 番茄就是時鐘：一圈進度環圍著那顆番茄，走完一圈就熟。
-/// 什麼顏色由 Core/Grow.swift 算；這裡只畫。純裝飾，讀屏略過（剩多久在下面的時間）。
+/// 多大、什麼顏色由 Core/Grow.swift 算；這裡只畫。純裝飾，讀屏略過（剩多久在下面的時間）。
 struct RingTomato: View {
     /// 環的直徑
     var size: CGFloat
@@ -9,13 +9,17 @@ struct RingTomato: View {
     var progress: Double
     /// 走過那段的顏色
     var ringColor: Color
-    /// 裡面那顆的顏色，以及它是全熟大小的幾成
+    /// 裡面那顆的顏色
     var fill: Color
-    var scale: Double
+    /// 裡面在長的是哪一顆；休息是 nil，畫一顆還沒長的
+    var growing: FocusRun?
+    /// 畫面時鐘
+    var now: Millis
 
     var body: some View {
         let done = min(1, max(0, progress))
         let line = StrokeStyle(lineWidth: Tokens.Shape.ringStroke, lineCap: .round)
+        let full = size * Tokens.Shape.ringTomato
         ZStack {
             Circle().stroke(Tokens.Colors.separator, lineWidth: Tokens.Shape.ringStroke)
             Circle()
@@ -23,7 +27,11 @@ struct RingTomato: View {
                 .stroke(ringColor, style: line)
                 .rotationEffect(.degrees(Tokens.Motion.ringStart))
                 .animation(Tokens.Motion.ringSweep, value: done)
-            TomatoView(fill: fill, size: size * Tokens.Shape.ringTomato * CGFloat(scale))
+            if let growing {
+                GrowingTomato(run: growing, fill: fill, size: full, now: now)
+            } else {
+                TomatoView(fill: fill, size: full * CGFloat(Params.restTomatoScale))
+            }
         }
         .padding(Tokens.Shape.ringStroke / 2)
         .frame(width: size, height: size)
@@ -37,7 +45,8 @@ struct RingBlock<Below: View>: View {
     var progress: Double
     var ringColor: Color
     var fill: Color
-    var scale = 1.0
+    var growing: FocusRun?
+    var now: Millis
     var time: String
     /// 時間是往下數的（「我自己決定」的休息往上數）：數字換值時往哪邊滾
     var countsDown = true
@@ -53,7 +62,8 @@ struct RingBlock<Below: View>: View {
                     progress: progress,
                     ringColor: ringColor,
                     fill: fill,
-                    scale: scale
+                    growing: growing,
+                    now: now
                 )
                 Text(time)
                     .font(Tokens.Fonts.clockRing)
@@ -68,7 +78,7 @@ struct RingBlock<Below: View>: View {
     }
 }
 
-/// 計時中：環是標籤的番茄色，裡面那顆大小固定、從青變成標籤色；整塊點一下開記一筆。
+/// 計時中：環是標籤的番茄色，裡面那顆從青長成標籤色；整塊點一下開記一筆。
 struct FocusRing: View {
     var run: FocusRun
     var type: TagType
@@ -84,6 +94,8 @@ struct FocusRing: View {
                 progress: progress,
                 ringColor: ripe.color,
                 fill: fill.color,
+                growing: run,
+                now: now,
                 time: TimeText.mmss(run.endAt - now)
             ) {
                 if run.done {
@@ -118,7 +130,7 @@ struct RestRing: View {
             progress: progress,
             ringColor: Tokens.Tomato.vine.color,
             fill: Tokens.Tomato.unripe.color,
-            scale: Params.restTomatoScale,
+            now: now,
             time: time,
             countsDown: run.endAt != nil
         ) {

@@ -143,3 +143,34 @@ struct TomatoView: View {
         .accessibilityHidden(true)
     }
 }
+
+/// 計時中在長的那顆：每一格直接從時間算大小，不用動畫補，所以回前景、換到聚焦模式都不會追一段。
+/// 位子固定是全熟大小、整顆等比縮放：改 frame 會每次對到像素，一格一格跳。
+/// 再做一下的那段已經熟了，減少動態時也不長：都固定全熟大小，不必每格重算。
+struct GrowingTomato: View {
+    var run: FocusRun
+    var fill: Color
+    /// 全熟大小
+    var size: CGFloat
+    /// 畫面時鐘
+    var now: Millis
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.scenePhase) private var scenePhase
+
+    var body: some View {
+        let still = reduceMotion || run.flowed
+        // 只在背景停：回前景的過場（inactive）就要開始算，露出來的第一格才是對的大小
+        let paused = still || scenePhase == .background
+        TimelineView(.animation(minimumInterval: Grow.redraw(run), paused: paused)) { timeline in
+            TomatoView(fill: fill, size: size)
+                .scaleEffect(still ? 1 : scale(at: timeline.date))
+        }
+    }
+
+    /// 兩個時刻取晚的：TimelineView 停著的時候它的時刻會留在過去，番茄不能縮回去。
+    private func scale(at frame: Date) -> CGFloat {
+        let time = max(now, frame.timeIntervalSince1970 * Params.msPerSecond)
+        return CGFloat(Grow.scale(Grow.progress(.focus(run), now: time)))
+    }
+}

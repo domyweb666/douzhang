@@ -119,7 +119,7 @@ struct ReceiptLine: View {
 }
 
 /// 收據的「今天」那列：開始那天已經收下的，加上這一顆排在最後、比較大。看得到累積，不跟昨天比。
-/// 太多顆時只畫最後幾顆，「今天」下面寫出總數；畫得下就不寫。讀屏念的數字照實。
+/// 番茄排到第二行起，「今天」下面寫出總數；太多顆時只畫最後幾顆。讀屏念的數字照實。
 /// 有開始番茄的日子夠多之後，下面多一行「你平常 4 到 6 顆」；斷了一陣子回來的第一天不放。
 struct TodayRow: View {
     var state: AppState
@@ -128,11 +128,13 @@ struct TodayRow: View {
 
     var body: some View {
         let kept = state.days[Machine.dayKey(of: run)]?.beans ?? []
+        let total = Words.todayTotal(kept.count + 1)
         VStack(alignment: .leading, spacing: Tokens.Layout.tight) {
-            HStack(spacing: Tokens.Layout.group) {
+            // 只有「今天」時對齊那一行番茄的中線；下面有總數時兩邊都從上面排起
+            HStack(alignment: total == nil ? .center : .top, spacing: Tokens.Layout.group) {
                 VStack(alignment: .leading, spacing: Tokens.Layout.tight) {
                     Text(Words.today)
-                    if let total = Words.todayTotal(kept.count + 1) {
+                    if let total {
                         Text(total).monospacedDigit()
                     }
                 }

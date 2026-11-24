@@ -24,6 +24,8 @@ enum Params {
     static let flowMinutes = [15, 30]
     /// 慶祝畫面「今天收了幾顆」那排最多畫幾顆（多的只畫最後這幾顆）
     static let celebrateTomatoes = 12
+    /// 那排從第幾顆起寫總數：第 8 顆起番茄折成兩行，「今天」下面剛好有空位
+    static let todayTotalFrom = 8
     /// 番茄堆：每秒不到這麼多幀、連續這麼多秒，就退成靜止版
     static let jarLowFps = 40
     static let jarLowFpsSeconds = 3
@@ -43,6 +45,12 @@ enum Params {
     static let presetLengths: [Double] = [25, 50, 30, 45, 10]
     static let presetColors: [TomatoColor] = [.red, .purple, .orange, .yellow, .pink]
 
+    /// 計時中長大的番茄：一開始是全熟大小的幾成
+    static let growMinScale = 0.4
+    /// 從開始長到全熟分幾步：全熟 164 時一步邊緣只動 0.008 點，看不出階梯
+    static let growSteps = 6000.0
+    /// 一步最短幾秒：120Hz 螢幕的一格再少一點，剛好一格時螢幕時刻差一點點就會多等一格
+    static let growFastest = 0.9 / 120
     /// 休息時那顆還沒長的小青番茄：全熟大小的幾成
     static let restTomatoScale = 0.4
 

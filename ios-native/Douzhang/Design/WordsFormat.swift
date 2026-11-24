@@ -53,7 +53,7 @@ extension Words {
     }
 
     static func rangAgo(_ minutes: Int) -> String {
-        "響了 \(minutes) 分鐘前。收下後直接回待機。"
+        "響了 \(minutes) 分鐘前"
     }
 
     static func zenScreenA11y(_ time: String) -> String {
@@ -126,9 +126,9 @@ extension Words {
         "\(count) 顆"
     }
 
-    /// 鈴響收據「今天」下面的總數：小番茄畫得下全部就不寫。
+    /// 鈴響收據「今天」下面的總數：番茄還排一行時不寫。
     static func todayTotal(_ count: Int) -> String? {
-        count > Params.celebrateTomatoes ? beansCount(count) : nil
+        count >= Params.todayTotalFrom ? beansCount(count) : nil
     }
 
     /// 多久：不到一小時寫分，滿一小時寫「幾小時 幾分」。

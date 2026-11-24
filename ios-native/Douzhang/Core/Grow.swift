@@ -7,7 +7,7 @@ struct RGB: Equatable {
     var blue: Double
 }
 
-/// 計時中變熟的番茄：這顆走了幾成、什麼顏色。大小固定，只變色。純函式，只看這顆與時鐘。
+/// 計時中長大的番茄：這顆走了幾成、畫多大、多久重算一次、什麼顏色。純函式，只看這顆與時鐘。
 enum Grow {
     private static func clamp(_ value: Double) -> Double {
         min(1, max(0, value))
@@ -21,6 +21,17 @@ enum Grow {
         }
         let span = run.endAt - run.startedAt
         return span > 0 ? clamp((now - run.startedAt) / span) : 1
+    }
+
+    /// 畫多大：全熟大小的幾成。跟著進度等速長。
+    static func scale(_ progress: Double) -> Double {
+        Params.growMinScale + (1 - Params.growMinScale) * clamp(progress)
+    }
+
+    /// 大小多久重算一次（秒）：照總長分成 growSteps 步。長的顆少算省電，短的顆每一格都算。
+    static func redraw(_ run: FocusRun) -> Double {
+        let span = (run.endAt - run.startedAt) / Params.msPerSecond
+        return max(Params.growFastest, span / Params.growSteps)
     }
 
     /// 什麼顏色：青一路變成這個標籤的番茄色，中間不經過黃。

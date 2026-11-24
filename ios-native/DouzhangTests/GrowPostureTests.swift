@@ -1,7 +1,7 @@
 @testable import Douzhang
 import XCTest
 
-/// 計時中變熟的番茄：走了幾成、什麼顏色。翻自 Expo 版 grow.test.js。
+/// 計時中長大的番茄：走了幾成、多大、多久重算一次、什麼顏色。翻自 Expo 版 grow.test.js。
 final class GrowTests: XCTestCase {
     private let base = Moment.local(2026, 11, 17, 9)
     private let minute = Moment.minute
@@ -21,6 +21,42 @@ final class GrowTests: XCTestCase {
         let focusing = Machine.start(Store.blank(), now: base)
         let more = Machine.flow(focusing, now: rang + minute, minutes: 15).current
         XCTAssertEqual(Grow.progress(more, now: rang + 2 * minute), 1)
+        XCTAssertEqual(Grow.scale(Grow.progress(more, now: rang + 2 * minute)), 1)
+    }
+
+    func test大小從零點四等速長到一超出的夾住() {
+        XCTAssertEqual(Grow.scale(0), 0.4)
+        XCTAssertEqual(Grow.scale(0.5), 0.7, accuracy: 1e-9)
+        XCTAssertEqual(Grow.scale(1), 1)
+        XCTAssertEqual(Grow.scale(3), 1)
+        XCTAssertEqual(Grow.scale(-1), 0.4)
+    }
+
+    private func focus(seconds: Double) -> FocusRun {
+        FocusRun(
+            typeId: "t1",
+            len: seconds / Params.secondsPerMinute,
+            startedAt: base,
+            endAt: base + seconds * Params.msPerSecond
+        )
+    }
+
+    func test多久重算一次照總長分步短的每一格都算() {
+        XCTAssertEqual(Grow.redraw(focus(seconds: 25 * 60)), 0.25, accuracy: 1e-9)
+        XCTAssertEqual(Grow.redraw(focus(seconds: 90 * 60)), 0.9, accuracy: 1e-9)
+        XCTAssertEqual(Grow.redraw(focus(seconds: Params.devTestSeconds)), Params.growFastest)
+        XCTAssertEqual(Grow.redraw(focus(seconds: 0)), Params.growFastest)
+    }
+
+    func test一步小到看不出階梯() {
+        // 1 分鐘到 90 分鐘：一步直徑不到 3 倍螢幕的二十分之一像素
+        let full = Double(Tokens.Shape.ringSize * Tokens.Shape.ringTomato)
+        for minutes in Params.typeLengths {
+            let seconds = minutes * Params.secondsPerMinute
+            let step = Grow.redraw(focus(seconds: seconds)) / seconds
+            let wider = (Grow.scale(0.5 + step) - Grow.scale(0.5)) * full
+            XCTAssertLessThan(wider * 3, 0.05)
+        }
     }
 
     func test沒在計時是零() {

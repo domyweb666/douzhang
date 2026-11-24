@@ -22,7 +22,7 @@ struct BellScreen: View {
         }
     }
 
-    /// 很久才回來（超過這顆的休息長度）：多一行「響了 N 分鐘前。收下後直接回待機。」
+    /// 很久才回來（超過這顆的休息長度）：多一行「響了 N 分鐘前」
     /// 智能調節的休息跟著今天的累計走，跟收下時用同一個算法；其他模式照舊用番茄長度。
     private func lateMinutes(_ run: FocusRun) -> Int {
         let ago = model.now - run.endAt
