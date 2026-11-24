@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+<title>鈴響 13 顆以上與番茄變大</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* 版面：一欄，收據與動畫放不下就折行 */
+:root{--bg:#F7F4EC;--ink:#1D1D1F;--sub:#5F5F66;--card:#FFFFFF;--line:#E5E1D8;--accent:#3B2547;--soft:#ECE3F1;--softInk:#4A2F5A;--fill:#E5E1D8}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/26px -apple-system,'SF Pro Text',Inter,'PingFang TC','Noto Sans TC','Microsoft JhengHei',sans-serif;padding-block:32px 64px;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
+main{max-width:1784px;margin:0 auto;display:flex;flex-direction:column;gap:48px}
+h1{margin:0;font-size:34px;line-height:41px;font-weight:700;text-wrap:balance}
+h2{margin:0;font-size:22px;line-height:28px;font-weight:700}
+p{margin:0}
+section{display:flex;flex-direction:column;gap:24px;min-width:0}
+.head{display:flex;flex-direction:column;gap:8px}
+.sub{color:var(--sub);max-width:65ch}
+.row{display:flex;flex-wrap:wrap;gap:36px;align-items:flex-start;overflow-x:auto;padding-bottom:12px}
+.row>*{flex:none}
+.receipt{position:relative;width:312px;line-height:22px}
+.paper{position:absolute;left:0;top:62px;display:block}
+.big{position:absolute;left:94px;top:0}
+.body{position:absolute;left:24px;top:148px;width:264px;display:flex;flex-direction:column;gap:24px}
+.ripe{text-align:center;font-size:28px;line-height:34px;font-weight:700}
+.lines{position:relative;padding:12px 0;display:flex;flex-direction:column;gap:12px}
+.lines>div.kv{display:flex;justify-content:space-between;gap:12px;font-variant-numeric:tabular-nums}
+.dash{position:absolute;left:0}
+.today{position:relative}
+.today>*{position:absolute;font-variant-numeric:tabular-nums;white-space:nowrap}
+.usual{margin-top:-8px;font-size:13px;line-height:18px;color:#66666D}
+.write{position:relative;height:64px;line-height:32px;color:#66666D;background:repeating-linear-gradient(to bottom,transparent 0 31px,var(--line) 31px 32px)}
+.write svg{position:absolute;right:0;top:6px}
+.se{position:relative;width:375px;height:667px;overflow:hidden;background:var(--bg);outline:1px solid #CFCAC0;outline-offset:-1px}
+.se .scroll{position:absolute;left:0;top:20px;width:375px;height:479px;overflow-y:auto;scrollbar-width:none}
+.se .scroll>div{margin:12px 31px}
+.se .btns{position:absolute;left:55px;top:511px;width:264px;display:flex;flex-wrap:wrap;gap:12px}
+.se .btns span{display:flex;align-items:center;justify-content:center;border-radius:999px;font-weight:600}
+.keep{width:264px;height:52px;background:var(--accent);color:#FFF}
+.more{width:126px;height:44px;background:#EFEBE3;font-size:15px}
+.phone{display:flex;flex-direction:column;gap:12px}
+.phone b{font-weight:600}
+.grow{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(150px,100%),1fr));gap:24px}
+.cell{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;min-width:0}
+.cell svg{max-width:100%;height:auto}
+.clock{font-size:56px;line-height:67px;font-weight:700;font-variant-numeric:tabular-nums}
+.ctl{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+button{border:0;height:44px;padding:0 24px;border-radius:999px;background:var(--card);color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
+button.main{background:var(--accent);color:#FFF}
+button.quiet{background:var(--fill)}
+button[aria-pressed=true]{background:var(--soft);color:var(--softInk)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--softInk);outline-offset:2px}
+label{display:flex;align-items:center;gap:12px}
+input[type=range]{width:min(260px,50vw);height:44px;accent-color:var(--accent)}
+@media(max-width:700px){.clock{font-size:36px;line-height:44px}.cell h2{font-size:17px;line-height:22px}.cell .sub{font-size:15px;line-height:20px}}
+</style>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><symbol id="tom" viewBox="0 0 100 100" overflow="visible"><circle cx="50" cy="53" r="44" stroke="#2B2329" stroke-width="4"></circle><path d="M19 44C21 33 28 25 38 21" fill="none" stroke="#FFFFFF" stroke-opacity="0.6" stroke-width="5" stroke-linecap="round"></path><ellipse cx="37" cy="10" rx="12" ry="5.5" transform="rotate(-14 37 10)" fill="#6FAE52" stroke="#2B2329" stroke-width="3.5"></ellipse><ellipse cx="63" cy="10" rx="12" ry="5.5" transform="rotate(14 63 10)" fill="#6FAE52" stroke="#2B2329" stroke-width="3.5"></ellipse><path d="M50 11V3.5" fill="none" stroke="#2B2329" stroke-width="4" stroke-linecap="round"></path><circle cx="37" cy="55" r="3.8" fill="#2B2329"></circle><circle cx="63" cy="55" r="3.8" fill="#2B2329"></circle><ellipse cx="27" cy="64" rx="5.5" ry="3.2" fill="#FFFFFF" fill-opacity="0.3"></ellipse><ellipse cx="73" cy="64" rx="5.5" ry="3.2" fill="#FFFFFF" fill-opacity="0.3"></ellipse><path d="M43.5 63Q50 69.5 56.5 63" fill="none" stroke="#2B2329" stroke-width="3.2" stroke-linecap="round"></path></symbol></defs></svg>
+<main>
+<h1>鈴響 13 顆以上與番茄變大</h1>
+<section id="grow">
+<div class="head"><h2>B 計時中，環裡那顆番茄</h2><p class="sub">四個同時跑。20 秒看得出差別；選「25 分」就是手機上真的速度。</p></div>
+<div class="grow" id="cells"></div>
+<div class="ctl"><button class="main" id="replay">重播</button><button class="quiet" id="pause">暫停</button><button class="sp" id="sp20" data-d="20">20 秒</button><button class="sp" id="sp60" data-d="60">1 分</button><button class="sp" id="sp1500" data-d="1500">25 分</button><label>拉到哪裡<input id="pos" type="range" min="0" max="1000" value="0"></label></div>
+</section>
+<div id="opts" style="display:contents"></div>
+<section>
+<div class="head"><h2>SE 上 30 顆，最擠的時候</h2><p class="sub">SE 375×667，多一行「你平常」。按鈕固定在底下，收據可以捲。只有 5 顆、有那一行，也要捲 23。</p></div>
+<div class="row" id="se"></div>
+</section>
+</main>
+<script>
+var COL = { r: '#E4472F', o: '#F0892B', y: '#F2BC2F', p: '#8C5BA9', k: '#EE7E9D' };
+var SEQ = 'yypyrroyyppkyyrrryoyypyrrykyyoprryyk'.split('');
+var SMALL = 26, NEWEST = 34, GAP = 4, INNER = 264, LABEL = 34;
+
+function digits(n) { return String(n).length * 10.6 + 5 + 17; }
+
+// 跟 FlowRow 一樣：放不下就換行，同一行下緣對齊；整塊靠右
+function flow(items, left, width) {
+  var rows = [[]], w = 0;
+  items.forEach(function (it) {
+    var next = rows[rows.length - 1].length ? w + it.gap + it.w : it.w;
+    if (rows[rows.length - 1].length && next > width) { rows.push([]); next = it.w; }
+    rows[rows.length - 1].push(it);
+    w = next;
+  });
+  var widths = rows.map(function (r) { return r.reduce(function (a, it, i) { return a + it.w + (i ? it.gap : 0); }, 0); });
+  var block = Math.max.apply(null, widths), x0 = left + width - block, y = 0;
+  rows.forEach(function (r) {
+    var h = Math.max.apply(null, r.map(function (it) { return it.h; })), x = x0;
+    r.forEach(function (it, i) { if (i) x += it.gap; it.x = x; it.y = y + h - it.h; x += it.w; });
+    y += h + r[0].gap;
+  });
+  return { rows: rows.length, h: y - rows[0][0].gap };
+}
+
+function today(mode, n) {
+  var kept = [];
+  for (var i = 0; i < n - 1; i++) kept.push(COL[SEQ[i % SEQ.length]]);
+  var one = function (c, s, gap) { return { w: s, h: s, gap: gap, dots: [{ dx: 0, dy: 0, s: s, c: c }] }; };
+  var under = LABEL + 0, items, out, left, stems = [];
+  if (mode === 'd') {
+    left = LABEL + 8 + digits(n) + 12;
+    kept = kept.slice(-11);
+    var m = kept.length;
+    var step = m ? Math.min(SMALL + GAP, (INNER - left - NEWEST) / m) : 0;
+    var x0 = INNER - NEWEST - step * m, dots = [];
+    kept.forEach(function (c, k) { dots.push({ x: x0 + step * k, y: NEWEST - SMALL, s: SMALL, c: c }); });
+    dots.push({ x: INNER - NEWEST, y: 0, s: NEWEST, c: COL.y });
+    return { dots: dots, stems: [], h: NEWEST, beside: true, under: false, labelTop: 6 };
+  }
+  left = (n >= 8 ? Math.max(LABEL, digits(n)) : LABEL) + 12;
+  var width = INNER - left;
+  if (mode === 'a') {
+    items = kept.slice(-11).map(function (c) { return one(c, SMALL, GAP); });
+    items.push(one(COL.y, NEWEST, GAP));
+  } else if (mode === 'b') {
+    items = [];
+    var tens = n > 12 ? Math.floor(kept.length / 10) : 0;
+    for (var t = 0; t < tens; t++) {
+      var ten = kept.slice(t * 10, t * 10 + 10), by = {};
+      ten.forEach(function (c) { by[c] = (by[c] || 0) + 1; });
+      var top = Object.keys(by).sort(function (a, b) { return by[b] - by[a]; });
+      items.push({ w: 40, h: 34, gap: GAP, bunch: true, dots: [
+        { dx: 0, dy: 7, s: 20, c: top[1] || top[0] }, { dx: 20, dy: 7, s: 20, c: top[2] || top[0] }, { dx: 10, dy: 14, s: 20, c: top[0] }] });
+    }
+    kept.slice(tens * 10).forEach(function (c) { items.push(one(c, SMALL, GAP)); });
+    items.push(one(COL.y, NEWEST, GAP));
+  } else {
+    var s = SMALL, test;
+    kept = kept.slice(-39);
+    for (;;) {
+      var g = s >= 18 ? GAP : 3, big = s * NEWEST / SMALL;
+      items = kept.map(function (c) { return one(c, s, g); });
+      items.push(one(COL.y, big, g));
+      test = flow(items, left, width);
+      if (test.h <= 64 || s < 9) break;
+      s -= 0.5;
+    }
+  }
+  out = flow(items, left, width);
+  var all = [];
+  items.forEach(function (it) {
+    it.dots.forEach(function (d) { all.push({ x: it.x + d.dx, y: it.y + d.dy, s: d.s, c: d.c }); });
+    if (it.bunch) stems.push({ x: it.x, y: it.y });
+  });
+  var showUnder = n >= 8, h = Math.max(out.h, showUnder ? 48 : 0), push = (h - out.h) / 2;
+  all.forEach(function (d) { d.y += push; });
+  stems.forEach(function (d) { d.y += push; });
+  return { dots: all, stems: stems, h: h, beside: false, under: showUnder, labelTop: showUnder ? 0 : 6 };
+}
+
+function paper(h) {
+  var edge = h - 12, d = 'M0 ' + edge + 'V20A20 20 0 0 1 20 0H292A20 20 0 0 1 312 20V' + edge;
+  for (var x = 312; x > 0; x -= 24) d += 'L' + (x - 12) + ' ' + h + 'L' + (x - 24) + ' ' + edge;
+  return d + 'Z';
+}
+
+
+var FULL = 164, MIN = 0.4, TICK = 0.25, RING = 2 * Math.PI * 127;
+var UNRIPE = [156, 194, 90], RIPE = [228, 71, 47];
+
+function mix(p) {
+  return 'rgb(' + UNRIPE.map(function (a, i) { return Math.round(a + (RIPE[i] - a) * p); }).join(',') + ')';
+}
+// SwiftUI 的 .bouncy：0.5 秒、bounce 0.3（阻尼比 0.7）
+function spring(t) {
+  if (t <= 0) return 0;
+  var w = 2 * Math.PI / 0.5, z = 0.7, d = w * Math.sqrt(1 - z * z);
+  return 1 - Math.exp(-z * w * t) * (Math.cos(d * t) + z * w / d * Math.sin(d * t));
+}
+function centered(size) {
+  return 'translate(' + (132 - size / 2) + ' ' + (132 - size / 2) + ') scale(' + size / 100 + ')';
+}
+function frames(sec, dur, dpr) {
+  var p = Math.min(1, Math.max(0, sec / dur)), grow = function (x) { return FULL * (MIN + (1 - MIN) * x); };
+  // B0：一拍才算一次，寬和左上角各自對到像素
+  var p0 = Math.min(1, Math.floor(Math.min(sec, dur) / TICK + 1e-6) * TICK / dur);
+  var snap = function (v) { return Math.round(v * dpr) / dpr; };
+  var s0 = snap(grow(p0)), at = snap(132 - grow(p0) / 2);
+  var stepped = MIN;
+  [0.2, 0.4, 0.6, 0.8, 1].forEach(function (q) { stepped += (1 - MIN) / 5 * spring(sec - q * dur); });
+  return { p: p, list: [
+    { place: 'translate(' + at + ' ' + at + ') scale(' + s0 / 100 + ')', fill: mix(p0) },
+    { place: centered(FULL), fill: mix(p) },
+    { place: centered(grow(p)), fill: mix(p) },
+    { place: centered(FULL * stepped), fill: mix(p) }] };
+}
+
+
+function receiptHTML(mode,n,usual){
+  var t=today(mode,n),ph=360+t.h+(usual?22:0),h='';
+  h+='<div class="receipt" style="height:'+(ph+62)+'px"><svg class="paper" width="312" height="'+ph+'" aria-hidden="true"><path d="'+paper(ph)+'" fill="#FFF"></path></svg>';
+  h+='<svg class="big" width="124" height="124" aria-hidden="true"><use href="#tom" width="124" height="124" fill="#F2BC2F"></use></svg><div class="body"><div class="ripe">熟了，又收下一顆</div><div class="lines">';
+  ['top:0','bottom:0'].forEach(function(s){h+='<svg class="dash" style="'+s+'" width="264" height="1" aria-hidden="true"><path d="M0 .5H264" stroke="#D8D3C8" stroke-dasharray="4 3"></path></svg>'});
+  h+='<div class="kv"><span>寫論文</span><span>25 分</span></div><div class="kv"><span>測試用</span><span>21:10–21:35</span></div>';
+  h+='<div class="today" role="img" aria-label="今天收了 '+n+' 顆" style="height:'+t.h+'px"><span style="left:0;top:'+t.labelTop+'px">今天</span>';
+  if(t.under)h+='<span style="left:0;top:26px">'+n+' 顆</span>';
+  if(t.beside)h+='<span style="left:42px;top:'+t.labelTop+'px">'+n+' 顆</span>';
+  h+='<svg style="left:0;top:0;overflow:visible" width="264" height="'+t.h+'" aria-hidden="true">';
+  t.dots.forEach(function(d){h+='<use href="#tom" x="'+d.x+'" y="'+d.y+'" width="'+d.s+'" height="'+d.s+'" fill="'+d.c+'"></use>'});
+  t.stems.forEach(function(v){h+='<path transform="translate('+v.x+' '+v.y+')" d="M20 1.5V9M20 4C15 4 11 6 10 10M20 4C25 4 29 6 30 10" fill="none" stroke="#4E8B3A" stroke-width="2.4" stroke-linecap="round"></path>'});
+  h+='</svg></div>'+(usual?'<div class="usual">你平常 4 到 6 顆</div>':'')+'</div>';
+  h+='<div class="write">寫一句給自己<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#66666D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20L5 16L16 5L19 8L8 19Z"></path></svg></div></div></div>';
+  return h;
+}
+var OPTS=[
+['a','A1 最後 12 顆','最像現在，8 顆起多一個數字。13、20、30 顆畫出來一樣多，差別只剩數字。'],
+['b','A2 十顆一串','13 顆起十顆綁成一串，一眼數得出幾十。剛過 12 顆番茄會突然變少，串裡看不出每顆的標籤。'],
+['c','A3 縮小排滿（推薦）','每一顆都畫出來，收據不會比 12 顆時高。14 顆起番茄變小，30 顆時一顆 17 點（現在 26）。'],
+['d','A4 疊成一串','永遠一排，數字寫在「今天」旁邊，收據最矮。最多疊最後 12 顆，臉會被蓋住；5 顆也會寫數字。']];
+document.getElementById('opts').innerHTML=OPTS.map(function(o){return '<section><div class="head"><h2>'+o[1]+'</h2><p class="sub">'+o[2]+'</p></div><div class="row">'+[5,12,13,20,30].map(function(n){return receiptHTML(o[0],n,false)}).join('')+'</div></section>'}).join('');
+var SCROLL=['A1 最後 12 顆：捲 53','A2 十顆一串：捲 61','A3 縮小排滿：捲 53','A4 疊成一串：捲 23'];
+document.getElementById('se').innerHTML=OPTS.map(function(o,i){return '<div class="phone"><b>'+SCROLL[i]+'</b><div class="se"><div class="scroll"><div>'+receiptHTML(o[0],30,true)+'</div></div><div class="btns"><span class="keep">收下，休息一下</span><span class="more">再做 15 分</span><span class="more">再做 30 分</span></div></div></div>'}).join('');
+var NAMES=['B0 以前','B1 只變色（現在）','B2 一路慢慢變大（推薦）','B3 分五次長'];
+var NOTES=['一格一格跳，邊緣會抖。','大小不動，最安靜。少了長大的感覺。','真的速度看不到它在動，回頭看就大了一點。','每五分鐘彈一下。眼睛會被拉過去。'];
+document.getElementById('cells').innerHTML=NAMES.map(function(nm,i){return '<div class="cell"><h2>'+nm+'</h2><svg width="264" height="264" viewBox="0 0 264 264" fill="none" aria-hidden="true"><circle cx="132" cy="132" r="127" stroke="#E5E1D8" stroke-width="10"></circle><circle class="arc" cx="132" cy="132" r="127" stroke="#E4472F" stroke-width="10" stroke-linecap="round" transform="rotate(-90 132 132)"></circle><g class="t"><use href="#tom" width="100" height="100"></use></g></svg><div class="clock"></div><p class="sub">'+NOTES[i]+'</p></div>'}).join('');
+(function(){
+  var sec=0,dur=20,paused=false,last=performance.now(),cells=[].slice.call(document.querySelectorAll('.cell'));
+  var pos=document.getElementById('pos'),pb=document.getElementById('pause'),sp=[].slice.call(document.querySelectorAll('.sp'));
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches){paused=true;sec=10}
+  // 網址帶 #at-50 就停在一半，截圖用
+  var at=/^#at-(\d+)$/.exec(location.hash);if(at){paused=true;sec=Number(at[1])/100*dur}
+  function two(v){return (v<10?'0':'')+v}
+  function draw(){
+    var f=frames(sec,dur,window.devicePixelRatio||1),left=Math.ceil(1500*(1-f.p)),txt=two(Math.floor(left/60))+':'+two(left%60);
+    cells.forEach(function(c,i){
+      c.querySelector('.arc').setAttribute('stroke-dasharray',f.p*RING+' '+(RING+1));
+      var g=c.querySelector('.t');g.setAttribute('transform',f.list[i].place);g.setAttribute('fill',f.list[i].fill);
+      c.querySelector('.clock').textContent=txt;
+    });
+    if(document.activeElement!==pos||!paused)pos.value=Math.round(f.p*1000);
+    pb.textContent=paused?'繼續':'暫停';
+    sp.forEach(function(b){b.setAttribute('aria-pressed',String(Number(b.dataset.d)===dur))});
+  }
+  function tick(now){var gap=(now-last)/1000;last=now;if(!paused&&sec<dur+1){sec+=Math.max(0,gap);draw()}requestAnimationFrame(tick)}
+  document.getElementById('replay').onclick=function(){sec=0;paused=false;draw()};
+  pb.onclick=function(){paused=!paused;draw()};
+  sp.forEach(function(b){b.onclick=function(){dur=Number(b.dataset.d);sec=0;paused=false;draw()}});
+  pos.oninput=function(){paused=true;sec=Number(pos.value)/1000*dur;draw()};
+  draw();requestAnimationFrame(tick);
+})();
+</script>
