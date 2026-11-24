@@ -121,31 +121,6 @@ struct EndSheet: View {
     }
 }
 
-/// 「⋯」半頁裡點了哪一列。
-enum MorePick {
-    case note, sound, zen, end
-}
-
-/// 計時中右上「⋯」開的半頁：記一筆、背景音、聚焦模式、結束這顆。點一列就交給呼叫端開下一張。
-struct MoreSheet: View {
-    /// 這顆記過幾筆
-    var noteCount: Int
-    /// 現在選的背景音（關、雨、柴火）
-    var soundValue: String
-    var onPick: (MorePick) -> Void
-
-    var body: some View {
-        SheetCard(title: Words.moreTitle) {
-            SheetRow(title: Words.quickNote, value: noteCount > 0 ? String(noteCount) : nil) {
-                onPick(.note)
-            }
-            SheetRow(title: Words.ambienceTitle, value: soundValue) { onPick(.sound) }
-            SheetRow(title: Words.zenEnter) { onPick(.zen) }
-            SheetRow(title: Words.endThis) { onPick(.end) }
-        }
-    }
-}
-
 /// 作廢原因：四個分段（不預選，可以不選）＋一行選填 → 作廢這顆。
 struct VoidSheet: View {
     var onVoid: (String, String) -> Void

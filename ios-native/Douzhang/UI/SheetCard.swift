@@ -43,11 +43,10 @@ struct SheetCard<Content: View>: View {
     }
 }
 
-/// 半頁裡的一列：左邊主字（可帶小副標）、右邊值、選中打勾。
+/// 半頁裡的一列：左邊主字（可帶小副標）、右邊選中打勾。
 struct SheetRow: View {
     var title: String
     var sub: String?
-    var value: String?
     var selected = false
     var action: () -> Void
 
@@ -65,11 +64,6 @@ struct SheetRow: View {
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                if let value {
-                    Text(value)
-                        .font(Tokens.Fonts.sub)
-                        .foregroundStyle(Tokens.Colors.textSecondary)
-                }
                 if selected {
                     Text(Words.check)
                         .font(Tokens.Fonts.bodyStrong)

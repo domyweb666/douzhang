@@ -27,7 +27,7 @@ targets:
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         # 離線、不連網，出口合規免申報；沒這行每個 build 都要進 App Store Connect 手動回答
         ITSAppUsesNonExemptEncryption: false
-        # 平常只有直向；聚焦模式（橫放的翻牌時鐘）開著時才轉橫，由 AppDelegate 決定准不准
+        # 平常只有直向；聚焦模式（橫放的整頁時鐘）開著時才轉橫，由 AppDelegate 決定准不准
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationLandscapeLeft

@@ -2,7 +2,7 @@ import SwiftUI
 
 /// 主畫面現在開著哪張半頁。end 帶著打開那一刻固定的判斷：那時開始不到五分鐘嗎。
 enum HomeSheet: Identifiable, Hashable {
-    case more, note, end(early: Bool), voidReason, tag, sound, doing
+    case note, end(early: Bool), voidReason, tag, sound, doing
 
     var id: Self {
         self
@@ -10,9 +10,9 @@ enum HomeSheet: Identifiable, Hashable {
 }
 
 /// 主畫面。三態：待機、計時中、休息（鈴響是另一頁 BellScreen）。
-/// 待機：標籤膠囊、在做什麼、大時間（點了改長度）、背景音、開始鈕、番茄堆。
-/// 計時中與休息是「番茄就是時鐘」：左上標籤、右上「⋯」，中間一圈進度環圍著那顆番茄，時間在環下面。
-/// 計時中點畫面空白處就記一筆、點左上膠囊改在做什麼；其他動作收在「⋯」裡。
+/// 待機：在做什麼、大時間（點了改長度），下面背景音、開始、標籤，最底下番茄堆。
+/// 計時中與休息是「番茄就是時鐘」：左上標籤，中間一圈進度環圍著那顆番茄，時間在環下面。
+/// 計時中點畫面空白處就記一筆、點左上膠囊改在做什麼、右上結束；下面一排背景音、記一筆、聚焦。
 struct HomeScreen: View {
     @Environment(AppModel.self) private var model
     @State private var sheet: HomeSheet?
@@ -46,7 +46,7 @@ struct HomeScreen: View {
                 FocusRing(run: run, type: Machine.typeOf(state, run.typeId), now: model.now) {
                     sheet = .note
                 }
-                bottomRoom
+                focusActions(run)
             }
         } else if let run = state.restRun, model.phase == .rest {
             VStack(spacing: .zero) {
@@ -94,26 +94,61 @@ struct HomeScreen: View {
         .ignoresSafeArea(edges: .vertical)
     }
 
-    /// 計時中最上面那條：左邊膠囊（點了改在做什麼），右邊「⋯」。休息時只有膠囊，不能點。
+    /// 計時中最上面那條：左邊膠囊（點了改在做什麼），右邊「結束」。休息時只有膠囊，不能點。
     private func focusBar(_ run: FocusRun) -> some View {
-        HStack {
+        HStack(spacing: Tokens.Layout.group) {
             TagChip(type: Machine.typeOf(model.state, run.typeId), doing: run.doing) {
                 sheet = .doing
             }
-            Spacer()
-            RoundButton(label: Words.more, a11yLabel: Words.moreA11y) { sheet = .more }
+            Spacer(minLength: .zero)
+            SoftPill(label: Words.endShort, a11yLabel: Words.endThis) { openEnd() }
+                // 先給它位子：那句再長也只截斷自己
+                .layoutPriority(1)
         }
-        .padding(.top, Tokens.Space.m)
+        // 字再放大，兩顆膠囊一排就放不下了
+        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
+        .padding(.top, Tokens.Layout.pageTop)
     }
 
     private var bottomRoom: some View {
         Spacer().frame(height: Tokens.Shape.tabClearance + Tokens.Space.m)
     }
 
+    /// 計時中拇指下那一排：背景音、記一筆、聚焦。
+    private func focusActions(_ run: FocusRun) -> some View {
+        let ambience = model.state.settings.ambience
+        let noted = run.notes.count + run.pings.count
+        return HStack(spacing: Tokens.Layout.section) {
+            RoundIconButton(
+                face: .line(.music),
+                label: Words.ambienceChip(ambience),
+                a11yLabel: Words.ambienceTitle,
+                a11yValue: Words.ambienceKind(ambience),
+                action: { sheet = .sound }
+            )
+            .frame(width: Tokens.Home.roundColumn)
+            RoundIconButton(
+                face: .line(.pencil),
+                label: Words.quickNote,
+                a11yLabel: Words.quickNote,
+                a11yValue: noted > 0 ? Words.jotCount(noted) : "",
+                action: { sheet = .note }
+            )
+            .frame(width: Tokens.Home.roundColumn)
+            RoundIconButton(
+                face: .line(.focus),
+                label: Words.zenShort,
+                a11yLabel: Words.zenEnter,
+                action: { model.enterZen() }
+            )
+            .frame(width: Tokens.Home.roundColumn)
+        }
+        .padding(.bottom, Tokens.Layout.section)
+    }
+
     @ViewBuilder
     private func sheetBody(_ which: HomeSheet) -> some View {
         switch which {
-        case .more: moreSheet
         case .note: noteSheet
         case let .end(early): endSheet(early: early)
         case .voidReason: VoidSheet { reason, text in model.voidBean(reason: reason, text: text) }
@@ -129,24 +164,6 @@ struct HomeScreen: View {
             onAmend: { from, into, text in model.amendJot(from: from, into: into, text: text) },
             onEnd: { openEnd() }
         )
-    }
-
-    private var moreSheet: some View {
-        let run = model.state.focusRun
-        let count = (run?.notes.count ?? 0) + (run?.pings.count ?? 0)
-        return MoreSheet(
-            noteCount: count,
-            soundValue: Words.ambienceKind(model.state.settings.ambience)
-        ) { pick in
-            switch pick {
-            case .note: sheet = .note
-            case .sound: sheet = .sound
-            case .zen:
-                sheet = nil
-                model.enterZen()
-            case .end: openEnd()
-            }
-        }
     }
 
     /// 打開「結束這顆」那一刻固定判斷：4:59 看到「停下來」，按下去就照停下來辦，不會變成記一筆作廢。

@@ -1,52 +1,9 @@
 import SwiftUI
 
-/// 一張牌。數字換了：牌往後倒、換上新數字、再立回來。減少動態時不翻，直接是新數字。
-/// shown 是牌面上現在畫的數字，翻到一半才換成新的。
-struct FlipCard: View {
-    var digit: String
-    var width: CGFloat
-
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var shown = ""
-    @State private var fold = 0.0
-
-    var body: some View {
-        let layout = Tokens.ZenLayout.self
-        let height = width * layout.cardHeight / layout.cardWidth
-        let radius = width * layout.cardRadius / layout.cardWidth
-        Text(reduceMotion ? digit : shown)
-            .font(Tokens.Fonts.zenDigit(width * layout.digitSize / layout.cardWidth))
-            .foregroundStyle(Tokens.Zen.digit)
-            .frame(width: width, height: height)
-            .background(Tokens.Zen.card, in: RoundedRectangle(cornerRadius: radius))
-            .overlay {
-                // 每張牌中間那道橫縫
-                Tokens.Zen.background.frame(height: Tokens.Shape.zenSeam)
-            }
-            .rotation3DEffect(.degrees(fold * Tokens.Motion.zenFlipFold), axis: (x: 1, y: 0, z: 0))
-            .onAppear { shown = digit }
-            .onChange(of: digit) { _, next in flip(to: next) }
-    }
-
-    private func flip(to next: String) {
-        if reduceMotion {
-            shown = next
-            return
-        }
-        let half = Tokens.Motion.zenFlip
-        withAnimation(half) {
-            fold = 1
-        } completion: {
-            shown = next
-            withAnimation(half) { fold = 0 }
-        }
-    }
-}
-
-/// 聚焦模式：計時中橫放的整頁時鐘。黑底、四張深灰牌倒數，左邊一顆在變色的番茄，
-/// 下面一行這顆的標籤。淺色深色都是這一組。
-/// 平常只有時鐘；點一下畫面，底下出現「記一筆」「結束這顆」「回主畫面」，過幾秒自己收起來。
-/// 記一筆與結束都要打字或選，橫向時鍵盤會蓋掉大半個畫面，所以按了先回直向的主畫面再開那張半頁。
+/// 聚焦模式：計時中橫放的整頁時鐘。黑底、分與秒兩個大數字，中間那顆在變色的番茄就是冒號，
+/// 下面一行在做什麼（沒填就是標籤名）。淺色深色都是這一組。
+/// 平常只有時鐘；點一下畫面，那一行收起來換成一排按鈕，過幾秒自己換回來。
+/// 背景音、記一筆與結束都要打字或選，橫向時放不下也會被鍵盤蓋掉，所以按了先回直向的主畫面再開那張半頁。
 struct FocusScreen: View {
     @Environment(AppModel.self) private var model
     @Environment(\.accessibilityVoiceOverEnabled) private var voiceOver
@@ -58,92 +15,139 @@ struct FocusScreen: View {
 
     var body: some View {
         let left = run.endAt - model.now
-        GeometryReader { proxy in
-            let width = proxy.size.width
-            let layout = Tokens.ZenLayout.self
-            VStack(spacing: width * layout.lineGap) {
-                HStack(spacing: width * layout.tomatoGap) {
-                    tomato(box: width * layout.tomato)
-                    clock(TimeText.clockDigits(left), width: width * layout.clockScale)
+        ZStack(alignment: .bottom) {
+            GeometryReader { proxy in
+                VStack(spacing: Tokens.Layout.group) {
+                    clock(TimeText.clockParts(left), in: proxy)
+                    doingLine
                 }
-                doingLine.frame(maxWidth: width * (1 - layout.cardWidth))
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .contentShape(Rectangle())
+                .onTapGesture(perform: reveal)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(Words.zenScreenA11y(TimeText.mmss(left)))
+                .accessibilityAddTraits(.isButton)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .contentShape(Rectangle())
-            .onTapGesture(perform: reveal)
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel(Words.zenScreenA11y(TimeText.mmss(left)))
-            .accessibilityAddTraits(.isButton)
+            // 上下照整個螢幕置中；左右留在安全區裡
+            .ignoresSafeArea(edges: .vertical)
+            pills
         }
-        .overlay(alignment: .bottom) { pills }
         .background(Tokens.Zen.background.ignoresSafeArea())
         .statusBarHidden()
         .persistentSystemOverlays(.hidden)
         .onDisappear { hiding?.cancel() }
     }
 
-    /// 翻牌左邊那顆番茄：大小固定，只從青變成標籤色。
-    private func tomato(box: CGFloat) -> some View {
+    /// 分、番茄、秒。兩個數字各佔番茄旁邊一樣寬的一塊、靠著番茄排，換秒時番茄不會左右動。
+    /// 字級照整個畫面的寬；左右安全區放不下（或分鐘有三位）就縮到剛好。
+    private func clock(
+        _ parts: (minutes: String, seconds: String),
+        in proxy: GeometryProxy
+    ) -> some View {
+        let insets = proxy.safeAreaInsets
+        let screen = proxy.size.width + insets.leading + insets.trailing
+        let tomato = min(Tokens.ZenLayout.tomatoMax, screen * Tokens.ZenLayout.tomato)
+        let room = max(0, (proxy.size.width - tomato) / 2 - Tokens.Layout.section)
+        let digits = CGFloat(max(parts.minutes.count, parts.seconds.count))
+        let size = min(
+            screen * Tokens.ZenLayout.digit,
+            room / (digits * Tokens.Fonts.zenDigitWidth)
+        )
+        return HStack(spacing: Tokens.Layout.section) {
+            number(parts.minutes, size: size)
+                .frame(width: room, alignment: .trailing)
+            TomatoView(fill: ripeness, size: tomato)
+            number(parts.seconds, size: size)
+                .frame(width: room, alignment: .leading)
+        }
+    }
+
+    private func number(_ text: String, size: CGFloat) -> some View {
+        Text(text)
+            .font(Tokens.Fonts.zenDigit(size))
+            .foregroundStyle(Tokens.Zen.digit)
+            .modifier(NumberChange(value: text, countsDown: true))
+            .fixedSize()
+            .frame(height: size * Tokens.ZenLayout.digitRow)
+    }
+
+    /// 番茄大小固定，只從青變成標籤色。
+    private var ripeness: Color {
         let progress = Grow.progress(.focus(run), now: model.now)
         let ripe = Tokens.Tomato.body(type.color)
-        let fill = Grow.ripeColor(progress, unripe: Tokens.Tomato.unripe, ripe: ripe)
-        return TomatoView(fill: fill.color, size: box)
+        return Grow.ripeColor(progress, unripe: Tokens.Tomato.unripe, ripe: ripe).color
     }
 
-    /// 四張牌：分分：秒秒。
-    private func clock(_ digits: [String], width: CGFloat) -> some View {
-        let layout = Tokens.ZenLayout.self
-        let card = width * layout.cardWidth
-        let dot = width * layout.colonDot
-        return HStack(spacing: width * layout.gap) {
-            FlipCard(digit: digits[0], width: card)
-            FlipCard(digit: digits[1], width: card)
-            VStack(spacing: width * layout.colonGap) {
-                Circle().fill(Tokens.Zen.dim).frame(width: dot, height: dot)
-                Circle().fill(Tokens.Zen.dim).frame(width: dot, height: dot)
-            }
-            .padding(.horizontal, dot / 2)
-            FlipCard(digit: digits[2], width: card)
-            FlipCard(digit: digits[3], width: card)
-        }
-    }
-
-    /// 時鐘下面那一行：這個標籤的小番茄＋標籤與長度。太長就截掉，不換行。
+    /// 太長就截掉，不換行。按鈕出來時收起來，位子留著，數字才不會動。
     private var doingLine: some View {
-        HStack(spacing: Tokens.Space.s) {
-            TomatoView(color: type.color, size: Tokens.Shape.blockIcon * 1.5)
-            Text(Words.tagLabel(type))
-                .font(Tokens.Fonts.body)
-                .foregroundStyle(Tokens.Zen.dim)
-                .lineLimit(1)
-        }
+        Text(run.doing.isEmpty ? type.name : run.doing)
+            .font(Tokens.Fonts.body)
+            .foregroundStyle(Tokens.Zen.dim)
+            .lineLimit(1)
+            .padding(.horizontal, Tokens.Layout.screenMargin)
+            .opacity(controls ? 0 : 1)
+            .animation(Tokens.Motion.transition, value: controls)
     }
 
-    /// 底下三顆鈕：平常看不到、點不到（讀屏也讀不到）；點一下畫面才淡入。
+    /// 底下那排鈕：平常看不到、點不到（讀屏也讀不到）；點一下畫面才淡入。
+    /// 「結束」在右邊隔開；字放大到一排放不下時改成左右捲。
     private var pills: some View {
-        HStack(spacing: Tokens.Space.m) {
-            pill(Words.quickNote) { model.leaveZen(opening: .note) }
-            pill(Words.endThis) {
-                let early = Machine.stoppedEarly(run, now: TimeText.nowMillis())
-                model.leaveZen(opening: .end(early: early))
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: Tokens.Layout.group) {
+                // 左邊補一塊跟「結束」一樣寬的空，中間三顆才在畫面正中
+                endPill.hidden()
+                Spacer(minLength: .zero)
+                mainPills
+                Spacer(minLength: .zero)
+                endPill
             }
-            pill(Words.zenLeave) { model.leaveZen() }
+            ScrollView(.horizontal) {
+                HStack(spacing: Tokens.Layout.group) {
+                    mainPills
+                    endPill
+                }
+            }
+            .scrollIndicators(.hidden)
         }
-        .padding(.bottom, Tokens.Space.m)
+        .padding(.horizontal, Tokens.Layout.screenMargin)
+        .padding(.bottom, Tokens.Layout.group)
         .opacity(controls ? 1 : 0)
         .allowsHitTesting(controls)
         .accessibilityHidden(!controls)
         .animation(Tokens.Motion.transition, value: controls)
     }
 
-    private func pill(_ label: String, action: @escaping () -> Void) -> some View {
+    @ViewBuilder private var mainPills: some View {
+        let kind = model.state.settings.ambience
+        pill(Words.ambienceChip(kind)) { model.leaveZen(opening: .sound) }
+            .accessibilityLabel(Words.ambienceTitle)
+            .accessibilityValue(Words.ambienceKind(kind))
+        pill(Words.quickNote) { model.leaveZen(opening: .note) }
+        pill(Words.zenLeave) { model.leaveZen() }
+    }
+
+    private var endPill: some View {
+        pill(Words.endShort, fill: Tokens.Zen.pillDim) {
+            let early = Machine.stoppedEarly(run, now: TimeText.nowMillis())
+            model.leaveZen(opening: .end(early: early))
+        }
+        .accessibilityLabel(Words.endThis)
+    }
+
+    private func pill(
+        _ label: String,
+        fill: Color = Tokens.Zen.pill,
+        action: @escaping () -> Void
+    ) -> some View {
         Button(action: action) {
             Text(label)
                 .font(Tokens.Fonts.chip)
                 .foregroundStyle(Tokens.Zen.digit)
+                .lineLimit(1)
                 .frame(minHeight: Tokens.Shape.tapMin)
-                .padding(.horizontal, Tokens.Space.l)
-                .background(Tokens.Zen.pill, in: Capsule())
+                .padding(.horizontal, Tokens.Layout.screenMargin)
+                .background(fill, in: Capsule())
+                .contentShape(Capsule())
         }
         .buttonStyle(FadeStyle())
     }

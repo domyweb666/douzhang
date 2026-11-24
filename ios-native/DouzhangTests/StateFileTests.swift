@@ -154,10 +154,17 @@ final class TimeTextTests: XCTestCase {
         XCTAssertEqual(TimeText.mmss(-500), "0:00")
     }
 
-    func test四張牌的數字分鐘補到兩位() {
-        XCTAssertEqual(TimeText.clockDigits(25 * Moment.minute), ["2", "5", "0", "0"])
-        XCTAssertEqual(TimeText.clockDigits(61000), ["0", "1", "0", "1"])
-        XCTAssertEqual(TimeText.clockDigits(200 * Moment.minute), ["9", "9", "0", "0"])
+    func test聚焦模式的分與秒補到兩位超過百分照樣寫() {
+        XCTAssertTrue(TimeText.clockParts(25 * Moment.minute) == ("25", "00"))
+        XCTAssertTrue(TimeText.clockParts(61000) == ("01", "01"))
+        XCTAssertTrue(TimeText.clockParts(200 * Moment.minute) == ("200", "00"))
+    }
+
+    func test鈴響收據上的長度與起訖() {
+        XCTAssertEqual(Words.lenWithFlow(25, flow: 0), "25 分")
+        XCTAssertEqual(Words.lenWithFlow(25, flow: 15), "25 分＋15")
+        let start = Moment.local(2026, 11, 1, 8, 11)
+        XCTAssertEqual(Words.clockRange(start, start + 25 * Moment.minute), "08:11–08:36")
     }
 
     func test收據上的時刻是本地的時與分() {

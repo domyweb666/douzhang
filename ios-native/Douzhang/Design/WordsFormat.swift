@@ -25,9 +25,9 @@ extension Words {
         len < 1 ? "\(Int((len * secondsPerMinute).rounded())) 秒" : "\(number(len)) 分"
     }
 
-    /// 主畫面最上面那顆膠囊：「專注・25 分」；待機時可點，後面多一個 ›。
-    static func tagLabel(_ type: TagType, more: Bool = false) -> String {
-        "\(type.name)・\(typeLen(type.len))" + (more ? " \(chevron)" : "")
+    /// 計時中、休息最上面那顆膠囊：「專注・25 分」。
+    static func tagLabel(_ type: TagType) -> String {
+        "\(type.name)・\(typeLen(type.len))"
     }
 
     /// 計時中的膠囊有寫在做什麼時，那句後面接的長度：「・25 分」。分開寫是為了那句太長時長度不會被截掉。
@@ -35,14 +35,9 @@ extension Words {
         "・\(typeLen(len))"
     }
 
-    /// 待機那顆小鈕：填了就是那句，沒填是「在做什麼」。
-    static func doingChip(_ line: String) -> String {
-        line.isEmpty ? doing : line
-    }
-
-    /// 待機開始鈕的字：「開始・25 分」。
-    static func startLabel(_ len: Double) -> String {
-        "\(start)・\(number(len)) 分"
+    /// 計時中記一筆那顆的讀屏值：這顆記過幾筆。
+    static func jotCount(_ count: Int) -> String {
+        "\(count) 筆"
     }
 
     static func startTest(_ len: Double) -> String {
@@ -110,9 +105,9 @@ extension Words {
         }
     }
 
-    /// 主畫面那顆聲音鈕上的字：選了哪一種。
+    /// 背景音鈕上的字：現在播的那個，關著寫「背景音」。
     static func ambienceChip(_ kind: AmbienceKind) -> String {
-        "♪ " + (kind == .off ? ambienceTitle : ambienceKind(kind))
+        kind == .off ? ambienceTitle : ambienceKind(kind)
     }
 
     static func ambienceLevel(_ level: AmbienceLevel) -> String {
@@ -146,7 +141,17 @@ extension Words {
     }
 
     static func blockTitle(_ name: String, len: Double, flow: Double) -> String {
-        "\(name)・\(typeLen(len))" + (flow > 0 ? "＋\(number(flow))" : "")
+        "\(name)・" + lenWithFlow(len, flow: flow)
+    }
+
+    /// 這顆多長：「25 分」，延長過是「25 分＋15」。
+    static func lenWithFlow(_ len: Double, flow: Double) -> String {
+        typeLen(len) + (flow > 0 ? "＋\(number(flow))" : "")
+    }
+
+    /// 鈴響收據上的起訖：「08:11–08:36」。
+    static func clockRange(_ from: Millis, _ upTo: Millis) -> String {
+        "\(TimeText.hhmm(from))–\(TimeText.hhmm(upTo))"
     }
 
     /// 時間軸左邊的整點：半夜 12、上午 9、中午 12、下午 3、晚上 8。

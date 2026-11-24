@@ -32,29 +32,11 @@ enum Tokens {
     /// 聚焦模式：橫放的整頁時鐘，淺色深色都是同一組黑底。
     enum Zen {
         static let background = Color(domyLight: 0x000000, domyDark: 0x000000)
-        static let card = Color(domyLight: 0x1C1C1E, domyDark: 0x1C1C1E)
         static let digit = Color(domyLight: 0xF2F2F4, domyDark: 0xF2F2F4)
         static let dim = Color(domyLight: 0x8E8E93, domyDark: 0x8E8E93)
         static let pill = Color(domyLight: 0x2C2C2E, domyDark: 0x2C2C2E)
-    }
-
-    /// 聚焦模式的版面：都是「佔畫面寬度的幾成」。四張牌加冒號大約佔 78% 寬；
-    /// 時鐘縮成 clockScale 倍讓出位子給番茄，番茄的位子固定是全熟大小，長大時時鐘不會被推動。
-    enum ZenLayout {
-        static let cardWidth: CGFloat = 0.16
-        static let cardHeight: CGFloat = 0.24
-        static let digitSize: CGFloat = 0.19
-        static let cardRadius: CGFloat = 0.024
-        static let gap: CGFloat = 0.014
-        static let colonDot: CGFloat = 0.018
-        static let colonGap: CGFloat = 0.03
-        /// 時鐘跟下面那句的距離
-        static let lineGap: CGFloat = 0.026
-        static let clockScale: CGFloat = 0.78
-        static let tomato: CGFloat = 0.17
-        static let tomatoGap: CGFloat = 0.03
-        /// 點一下畫面，底下三顆鈕出現這麼久（秒）
-        static let controlsSeconds = 3
+        /// 「結束」那顆比其他鈕暗一階
+        static let pillDim = Color(domyLight: 0x1C1C1E, domyDark: 0x1C1C1E)
     }
 
     /// 文字：Domy 的字級（iOS 系統文字樣式），跟著系統字級縮放。
@@ -87,10 +69,17 @@ enum Tokens {
             clock(56, cap: 1.4)
         }
 
-        /// 聚焦模式牌上的數字：大小跟著畫面寬，不跟系統字級放大，不然會撐出牌子
+        /// 聚焦模式的大數字：大小跟著畫面寬，不跟系統字級放大，不然會撐出畫面
         static func zenDigit(_ size: CGFloat) -> Font {
             Font.system(size: size, weight: .heavy).monospacedDigit()
         }
+
+        /// 上面那種數字一個有多寬（字級的幾成）：等寬，量一次就好
+        static let zenDigitWidth: CGFloat = {
+            let size: CGFloat = 100
+            let font = UIFont.monospacedDigitSystemFont(ofSize: size, weight: .heavy)
+            return NSAttributedString(string: "0", attributes: [.font: font]).size().width / size
+        }()
     }
 
     /// 間距：Domy 的刻度 4／8／12／16／20／24／32。
@@ -134,15 +123,12 @@ enum Tokens {
         static let podDot: CGFloat = 12
         /// 收據半頁可捲區最高
         static let sheetScrollMax: CGFloat = 420
-        /// 主畫面開始鈕下面留給番茄堆的高度
-        static let pileRoom: CGFloat = 140
         static let weekDayWidth: CGFloat = 40
         static let dayDot: CGFloat = 6
         static let blockIcon: CGFloat = 16
         static let colorSwatch: CGFloat = 36
         static let selectRing: CGFloat = 2
-        static let zenSeam: CGFloat = 2
-        /// 慶祝畫面那顆、「今天收了幾顆」那排的小番茄、那排最後剛收的這顆
+        /// 刻度尺那頁的番茄；鈴響收據「今天」那排的小番茄、那排最後剛收的這顆
         static let celebrateTomato: CGFloat = 132
         static let celebrateDot: CGFloat = 26
         static let celebrateDotNew: CGFloat = 34
@@ -214,10 +200,6 @@ enum Tokens {
         static let tick = Double(Params.tickMs) / Params.msPerSecond
         /// 時鐘該等速：進度環不用彈簧，一拍一拍直線補上
         static let ringSweep = Animation.linear(duration: tick)
-        /// 聚焦模式翻牌：牌先往後倒、換數字、再立回來，各這麼久
-        static let zenFlipHalf = 0.15
-        static let zenFlipFold = -88.0
-        static let zenFlip = Animation.snappy(duration: zenFlipHalf)
     }
 
     enum Sound {

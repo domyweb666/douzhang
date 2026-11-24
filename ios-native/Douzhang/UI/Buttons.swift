@@ -90,30 +90,26 @@ struct TextButton: View {
     }
 }
 
-/// 小顆的中性膠囊鈕（主畫面那顆背景音、番茄架空狀態的鈕）。primary＝茄紫底。
+/// 小顆的茄紫膠囊鈕（番茄架空狀態的鈕）。
 struct CompactButton: View {
     var label: String
-    var primary = false
     var action: () -> Void
 
     var body: some View {
         Button(action: action) {
             Text(label)
                 .font(Tokens.Fonts.chip)
-                .foregroundStyle(primary ? Tokens.Colors.onAccent : Tokens.Colors.textPrimary)
+                .foregroundStyle(Tokens.Colors.onAccent)
                 .frame(minHeight: Tokens.Shape.buttonCompact)
                 .padding(.horizontal, Tokens.Space.card)
-                .background(
-                    primary ? Tokens.Colors.accent : Tokens.Colors.fillButton,
-                    in: Capsule()
-                )
+                .background(Tokens.Colors.accent, in: Capsule())
         }
         .buttonStyle(PressStyle())
     }
 }
 
-/// 圓形的小鈕（計時中右上那顆「⋯」）。
-struct RoundButton: View {
+/// 淡底膠囊鈕，高度夠手指按（計時中右上的「結束」）。
+struct SoftPill: View {
     var label: String
     var a11yLabel: String
     var action: () -> Void
@@ -121,10 +117,12 @@ struct RoundButton: View {
     var body: some View {
         Button(action: action) {
             Text(label)
-                .font(Tokens.Fonts.bodyStrong)
+                .font(Tokens.Fonts.chip)
                 .foregroundStyle(Tokens.Colors.textPrimary)
-                .frame(width: Tokens.Shape.tapMin, height: Tokens.Shape.tapMin)
-                .background(Tokens.Colors.fillButton, in: Circle())
+                .lineLimit(1)
+                .frame(minHeight: Tokens.Shape.tapMin)
+                .padding(.horizontal, Tokens.Layout.cardPad)
+                .background(Tokens.Colors.fillButton, in: Capsule())
         }
         .buttonStyle(PressStyle())
         .accessibilityLabel(a11yLabel)

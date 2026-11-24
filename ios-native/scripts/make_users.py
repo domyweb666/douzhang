@@ -307,7 +307,7 @@ expected = {
     "誰": arg,
     "產生時刻": time.strftime("%Y-%m-%d %H:%M", local(now)),
     "今天已經收下": kept_today,
-    "鈴響頁第一行": f"今天收了 {kept_today + 1} 顆" if bell else "（不是鈴響頁）",
+    "鈴響頁今天那列": f"{kept_today + 1} 顆小番茄（讀屏念「今天收了 {kept_today + 1} 顆」）" if bell else "（不是鈴響頁）",
     "鈴響頁第二行": "（不出現：斷了一陣子回來的第一天）" if back else (usual() or "（不出現：日子不夠）"),
     "斷了一陣子": back,
     "標籤編輯「專注」那一行": length_line("t1"),

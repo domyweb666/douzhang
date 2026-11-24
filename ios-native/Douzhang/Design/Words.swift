@@ -13,7 +13,7 @@ enum Words {
     static let rest = "休息"
     static let backFromRest = "回來了，開始下一顆"
     static let ripeTitle = "熟了，又收下一顆"
-    static let noteOptional = "✎ 寫一句給自己（選填）"
+    static let today = "今天"
     static let noteTitle = "寫一句給自己"
     static let notePlaceholder = "這顆做了什麼、下次從哪接"
 
@@ -26,11 +26,8 @@ enum Words {
     static let noteTitlePing = "誰找你、什麼事？"
     static let jotDown = "記下"
     static let tapNoteHint = "點一下畫面記一筆"
-    static let more = "⋯"
-    static let moreA11y = "這一顆的選項"
-    static let moreTitle = "這一顆"
     static let endThis = "結束這顆"
-    /// 記一筆半頁右邊那顆：位子窄，讀屏念的是 endThis
+    /// 計時中右上、聚焦模式、記一筆半頁右邊那顆：位子窄，讀屏念的是 endThis
     static let endShort = "結束"
     static let endTitle = "結束這顆？"
     static let endSubEarly = "開始不到五分鐘，停下來不會留下紀錄。"
@@ -55,6 +52,8 @@ enum Words {
     // MARK: 聚焦模式
 
     static let zenEnter = "聚焦模式"
+    /// 計時中下面那顆圓鈕：位子窄，讀屏念的是 zenEnter
+    static let zenShort = "聚焦"
     static let zenLeave = "回主畫面"
 
     // MARK: 標籤

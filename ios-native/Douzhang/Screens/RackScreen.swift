@@ -80,10 +80,7 @@ struct RackScreen: View {
                 .font(Tokens.Fonts.title3)
                 .foregroundStyle(Tokens.Colors.textPrimary)
         } actions: {
-            CompactButton(
-                label: model.wiped ? Words.wipedAction : Words.rackEmptyAction,
-                primary: true
-            ) {
+            CompactButton(label: model.wiped ? Words.wipedAction : Words.rackEmptyAction) {
                 withAnimation(Tokens.Motion.transition) {
                     model.page = model.wiped ? .settings : .home
                 }
