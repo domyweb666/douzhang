@@ -2,12 +2,6 @@ import CoreMotion
 import Foundation
 import Observation
 
-/// 番茄堆裡的一顆要畫成什麼樣：多長（決定大小）、哪個標籤色。
-struct JarBean: Equatable {
-    var len: Double
-    var color: TomatoColor
-}
-
 /// 番茄堆的現場：物理世界、每顆的顏色、傾斜、音效與觸覺。畫面每一幀叫 advance，再照 bodies 畫。
 /// 番茄都躺好之後就睡著（asleep），畫面停止每幀重畫；點一下、掉新的一顆、手機一傾斜就醒來。
 @MainActor
@@ -23,7 +17,8 @@ final class JarScene {
     @ObservationIgnored private(set) var known: Int?
     @ObservationIgnored private var pending: [(dueAt: TimeInterval, bean: JarBean)] = []
     @ObservationIgnored private var lastFrame: TimeInterval = 0
-    @ObservationIgnored private var lastHit: TimeInterval = 0
+    @ObservationIgnored private var beat = JarBeat()
+    @ObservationIgnored private(set) var glow = JarGlow()
     @ObservationIgnored private var quietFrames = 0
     @ObservationIgnored private var slow = SlowWatch()
     @ObservationIgnored private let sounds = JarSounds()
@@ -145,6 +140,7 @@ final class JarScene {
         for item in due {
             drop(item.bean)
         }
+        glow.advance(now: now)
         if isStill {
             settleQuietly()
             return
@@ -158,10 +154,9 @@ final class JarScene {
         let before = world.bodies
         stepWorld(min(Tokens.Motion.frameMax, elapsed))
         if !world.landed.isEmpty {
+            beat.landed(now: now)
             sounds.land(sound: soundOn)
-        }
-        if world.impact > Tokens.Sound.hitThreshold, now - lastHit > Tokens.Sound.hitGap {
-            lastHit = now
+        } else if beat.hits(impact: world.impact, now: now) {
             sounds.hit(sound: soundOn, impact: world.impact)
         }
         slow.count(now: now)
@@ -179,12 +174,12 @@ final class JarScene {
         }
     }
 
-    /// 靜止版沒有東西在動：感測器關掉，畫完這一幀就睡。
+    /// 靜止版沒有東西在動：感測器關掉，畫完這一幀就睡（有一顆還在亮就等它淡回去）。
     private func settleQuietly() {
         if motion.isAccelerometerActive {
             motion.stopAccelerometerUpdates()
         }
-        if pending.isEmpty {
+        if pending.isEmpty, !glow.isOn {
             sleepSoon()
         }
     }
@@ -208,13 +203,14 @@ final class JarScene {
     /// 現在正在畫，不能當場改畫面會讀的狀態：排到這一幀之後。
     private func sleepSoon() {
         Task { @MainActor in
-            if self.pending.isEmpty {
+            if self.pending.isEmpty, !self.glow.isOn {
                 self.asleep = true
             }
         }
     }
 
     private func wake() {
+        sounds.ready()
         quietFrames = 0
         restartClock()
         if asleep {
@@ -242,12 +238,13 @@ extension JarScene {
 
     // MARK: 點一下、傾斜
 
-    /// 點一下：附近的番茄往上彈。靜止版不彈。
+    /// 點一下：附近的番茄往上彈。靜止版不彈，最近那顆亮一下。
     func tap(x: Double, y: Double) {
-        if isStill {
-            return
+        if !isStill {
+            world.tap(x: x, y: y)
+        } else if let near = world.nearest(x: x, y: y) {
+            glow.light(near)
         }
-        world.tap(x: x, y: y)
         wake()
     }
 

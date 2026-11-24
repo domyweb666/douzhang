@@ -212,6 +212,13 @@ struct JarWorld {
             bodies[index].velX += (body.x - x) * tuning.tapSide * strength
         }
     }
+
+    /// 點一下影響得到的範圍裡，離手指最近的那顆的 id；沒有就 nil。
+    func nearest(x: Double, y: Double) -> Int? {
+        let near = bodies.min { hypot($0.x - x, $0.y - y) < hypot($1.x - x, $1.y - y) }
+        guard let near, hypot(near.x - x, near.y - y) < tuning.tapRadius else { return nil }
+        return near.id
+    }
 }
 
 extension JarWorld {

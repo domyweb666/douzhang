@@ -99,6 +99,7 @@ struct PagerView: View {
                 page(SettingsScreen(), .settings)
             }
             .scrollTargetLayout()
+            .background(PromptTouches())
         }
         .scrollTargetBehavior(.paging)
         .scrollPosition(id: $model.page)

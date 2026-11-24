@@ -57,6 +57,14 @@ final class JarSounds {
         player.play()
     }
 
+    /// 番茄要開始動了：先叫醒觸覺，第一下才不會晚到。
+    func ready() {
+        if VeggieHaptics.isEnabled {
+            landTap.prepare()
+            hitTap.prepare()
+        }
+    }
+
     /// 落地那一刻的視聽觸：同一事件同一幀。
     func land(sound: Bool) {
         if sound {
@@ -65,19 +73,19 @@ final class JarSounds {
         tap(landTap)
     }
 
-    /// 碰撞：一次「嗒」＋輕觸覺；音量隨衝擊。
+    /// 碰撞：一次「嗒」＋輕觸覺；音量與震動都隨衝擊。
     func hit(sound: Bool, impact: Double) {
         if sound {
             let volume = min(Tokens.Sound.hitVolMax, impact / Tokens.Sound.hitVolDiv)
             play(hits.randomElement(), volume: Float(volume))
         }
-        tap(hitTap)
+        tap(hitTap, strength: JarBeat.strength(impact))
     }
 
     /// 震的那一刻才看開關：改了立刻生效。
-    private func tap(_ generator: UIImpactFeedbackGenerator) {
+    private func tap(_ generator: UIImpactFeedbackGenerator, strength: Double = 1) {
         if VeggieHaptics.isEnabled {
-            generator.impactOccurred()
+            generator.impactOccurred(intensity: strength)
         }
     }
 }

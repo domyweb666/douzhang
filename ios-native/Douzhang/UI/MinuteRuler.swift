@@ -55,8 +55,18 @@ struct MinuteRuler: View {
 
     /// 第一次排版完才把位置交給捲動區：還沒排好就給，會停在最左邊（跟 RootView 指定頁同一個做法）
     @State private var ready = false
+    /// 打開時停在哪一格，用整條尺的幾成表示：第一次畫就在那一格，不會從 1 分跳過去
+    @State private var start: UnitPoint
 
     private let marks = Params.typeLengths.map { Int($0) }
+
+    init(minutes: Binding<Int>) {
+        _minutes = minutes
+        let marks = Params.typeLengths.map { Int($0) }
+        let index = marks.firstIndex(of: minutes.wrappedValue) ?? 0
+        let share = Double(index) / Double(max(1, marks.count - 1))
+        _start = State(initialValue: UnitPoint(x: share, y: UnitPoint.center.y))
+    }
 
     private var position: Binding<Int?> {
         Binding(
@@ -83,10 +93,9 @@ struct MinuteRuler: View {
             // 不限一次滑幾格：甩一下就能從 5 分滑到 60 分
             .scrollTargetBehavior(.viewAligned(limitBehavior: .never))
             .scrollPosition(id: position, anchor: .center)
+            .defaultScrollAnchor(start)
             // 兩側留半個畫面寬：第一格與最後一格也停得到正中央
             .safeAreaPadding(.horizontal, max(0, (proxy.size.width - Tokens.Dial.slot) / 2))
-            // 停到那一格之前先不畫，不然會看到它從 1 分跳過去
-            .opacity(ready ? 1 : 0)
             .task {
                 try? await Task.sleep(for: .milliseconds(Params.tickMs))
                 ready = true

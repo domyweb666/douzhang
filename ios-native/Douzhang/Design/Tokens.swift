@@ -99,6 +99,8 @@ enum Tokens {
         /// 番茄左上那道亮面與兩頰
         static let tomatoShine = 0.6
         static let tomatoCheek = 0.3
+        /// 靜止版點番茄，最亮的時候往白色靠多少
+        static let tapGlow = 0.45
     }
 
     enum Shape {
@@ -165,16 +167,20 @@ enum Tokens {
 
     /// 前四個是動作代號表（照《SwiftUI 蘋果風格手感指南》第四節）：畫面的動畫只准從這裡拿，
     /// 不准自己挑曲線、寫秒數（.swiftlint.yml 的 no_hardcoded_curve 會擋）。
+    /// 每一格都寫明秒數：系統彈簧不寫就是 0.5 秒，按壓會慢到點得快時看不出縮了。
     enum Motion {
         /// 按壓可點的東西
-        static let press: Animation = .snappy
+        static let press = Animation.snappy(duration: DomyTokens.Motion.pressDuration)
         /// 資料變了：切換選項、加刪、展開收合、換檢視、數字換值
-        static let change: Animation = .snappy
+        static let change = Animation.snappy(duration: DomyTokens.Motion.transition)
         /// 換頁、浮層淡入淡出
-        static let transition: Animation = .smooth
+        static let transition = Animation.smooth(duration: DomyTokens.Motion.transition)
         /// 完成的那一瞬間：熟了的那顆彈一下，從 celebrateFrom 這麼小彈出來
-        static let celebrate: Animation = .bouncy
+        static let celebrate = Animation.bouncy(duration: 0.5)
         static let celebrateFrom: CGFloat = 0.6
+        /// 靜止版點番茄：那顆亮起來、淡回去各多久（秒）
+        static let glowRise = DomyTokens.Motion.pressDuration
+        static let glowFall = DomyTokens.Motion.transition
         static let pressScale = DomyTokens.Motion.pressScale
         /// 收下這顆 → 番茄掉進來：等多久才掉（秒）、往上的初速、左右散開多少
         static let dropDelay = 0.18
@@ -208,6 +214,10 @@ enum Tokens {
         static let hitGap = 0.09
         static let hitVolDiv = 5000.0
         static let hitVolMax = 0.1
+        /// 碰撞的輕震：剛過門檻震 hitTapMin，撞到 hitTapFull 這麼快震滿。音量撞到 500 就滿了，
+        /// 跟著音量走每一下會幾乎一樣大；整疊掉回底、從上面掉到底大約是 1000 上下
+        static let hitTapMin = 0.35
+        static let hitTapFull = 1100.0
     }
 
     /// 角色色：只准畫番茄、番茄串、葉子；不當文字色、不當按鈕色。淺深色同一組。

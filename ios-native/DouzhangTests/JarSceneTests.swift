@@ -134,4 +134,39 @@ final class JarSceneTests: XCTestCase {
         let body = try XCTUnwrap(scene.world.bodies.first)
         XCTAssertEqual(body.y, 852 - body.radius, accuracy: 1)
     }
+
+    func test減少動態時點番茄不動只亮一下再淡回去() throws {
+        let scene = JarScene()
+        scene.reduceMotion = true
+        scene.layout(width: 393, height: 852, beans: one, seen: 1)
+        let before = try XCTUnwrap(scene.world.bodies.first)
+        scene.tap(x: before.x, y: before.y)
+        XCTAssertTrue(scene.glow.isOn)
+        var now = Date().timeIntervalSinceReferenceDate
+        scene.advance(now: now)
+        now += Tokens.Motion.glowRise
+        scene.advance(now: now)
+        XCTAssertEqual(scene.glow.strength(of: before.id), 1, accuracy: 0.01)
+        now += Tokens.Motion.glowFall
+        scene.advance(now: now)
+        XCTAssertFalse(scene.glow.isOn)
+        XCTAssertEqual(scene.world.bodies.first, before)
+    }
+
+    func test減少動態時點在空的地方什麼都不亮() throws {
+        let scene = JarScene()
+        scene.reduceMotion = true
+        scene.layout(width: 393, height: 852, beans: one, seen: 1)
+        let body = try XCTUnwrap(scene.world.bodies.first)
+        scene.tap(x: body.x, y: body.y - scene.world.tuning.tapRadius - 1)
+        XCTAssertFalse(scene.glow.isOn)
+    }
+
+    func test沒開減少動態時點番茄是彈不是亮() throws {
+        let scene = mounted(seen: 1)
+        let body = try XCTUnwrap(scene.world.bodies.first)
+        scene.tap(x: body.x, y: body.y)
+        XCTAssertFalse(scene.glow.isOn)
+        XCTAssertLessThan(try XCTUnwrap(scene.world.bodies.first).velY, body.velY)
+    }
 }

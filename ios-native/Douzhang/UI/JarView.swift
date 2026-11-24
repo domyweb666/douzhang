@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// 番茄堆：今天的番茄躺在最下面；收下一顆就從上面掉進來，落地那一幀「啵」＋短觸覺。
-/// 傾斜手機番茄跟著滾（設定可關）、點一下彈、碰撞有聲音與觸覺、掉幀就退成靜止版。
+/// 傾斜手機番茄跟著滾（設定可關）、點一下彈、碰撞有聲音與觸覺、掉幀就退成靜止版（點了亮一下）。
 /// 物理在 Core/JarPhysics.swift，現場在 JarScene；這裡只負責每一幀畫出來。
 struct JarView: View {
     /// 今天的番茄（依時間排）：分鐘決定大小，標籤決定顏色
@@ -110,10 +110,17 @@ private struct JarCanvas: View {
                         center: CGPoint(x: body.x, y: body.y),
                         radius: body.radius,
                         angle: body.angle,
-                        fill: Tokens.Tomato.body(scene.color(of: body)).color
+                        fill: fill(body)
                     )
                 }
             }
         }
+    }
+
+    /// 標籤色；靜止版被點到的那顆往白色靠（調色的算法跟計時中由青轉紅同一個）。
+    private func fill(_ body: JarBody) -> Color {
+        let base = Tokens.Tomato.body(scene.color(of: body))
+        let glow = scene.glow.strength(of: body.id) * Tokens.Opacity.tapGlow
+        return Grow.ripeColor(glow, unripe: base, ripe: Tokens.Tomato.shine).color
     }
 }

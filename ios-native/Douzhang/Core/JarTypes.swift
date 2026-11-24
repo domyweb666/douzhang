@@ -39,6 +39,12 @@ struct JarTuning {
     var tapSide: Double
 }
 
+/// 番茄堆裡的一顆要畫成什麼樣：多長（決定大小）、哪個標籤色。
+struct JarBean: Equatable {
+    var len: Double
+    var color: TomatoColor
+}
+
 /// 堆裡的一顆。angle 是弧度、順時針為正，只給畫用。
 struct JarBody: Equatable {
     var id: Int
