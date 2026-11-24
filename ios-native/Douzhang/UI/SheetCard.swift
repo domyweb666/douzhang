@@ -1,10 +1,9 @@
 import SwiftUI
 
-/// 半頁的內容：標題、副標，下面是各張半頁自己的東西。放在系統的 .sheet 裡，
+/// 半頁的內容：標題，下面是各張半頁自己的東西。沒有副標：半頁不放常駐的說明字。放在系統的 .sheet 裡，
 /// 高度跟著內容走；內容太高或鍵盤開著放不下時可以往上拉成整頁、裡面可捲。
 struct SheetCard<Content: View>: View {
     var title: String
-    var sub: String?
     @ViewBuilder var content: Content
 
     @State private var fitted: CGFloat = Tokens.Shape.sheetScrollMax
@@ -16,12 +15,6 @@ struct SheetCard<Content: View>: View {
                     .font(Tokens.Fonts.section)
                     .foregroundStyle(Tokens.Colors.textPrimary)
                     .accessibilityAddTraits(.isHeader)
-                if let sub {
-                    Text(sub)
-                        .font(Tokens.Fonts.caption)
-                        .foregroundStyle(Tokens.Colors.textSecondary)
-                        .padding(.top, Tokens.Space.xs)
-                }
                 content.padding(.top, Tokens.Space.card)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -43,27 +36,19 @@ struct SheetCard<Content: View>: View {
     }
 }
 
-/// 半頁裡的一列：左邊主字（可帶小副標）、右邊選中打勾。
+/// 半頁裡的一列：左邊主字、右邊選中打勾。
 struct SheetRow: View {
     var title: String
-    var sub: String?
     var selected = false
     var action: () -> Void
 
     var body: some View {
         Button(action: action) {
             HStack(spacing: Tokens.Space.m) {
-                VStack(alignment: .leading, spacing: Tokens.Space.xs) {
-                    Text(title)
-                        .font(Tokens.Fonts.body)
-                        .foregroundStyle(Tokens.Colors.textPrimary)
-                    if let sub {
-                        Text(sub)
-                            .font(Tokens.Fonts.caption)
-                            .foregroundStyle(Tokens.Colors.textSecondary)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                Text(title)
+                    .font(Tokens.Fonts.body)
+                    .foregroundStyle(Tokens.Colors.textPrimary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 if selected {
                     Text(Words.check)
                         .font(Tokens.Fonts.bodyStrong)

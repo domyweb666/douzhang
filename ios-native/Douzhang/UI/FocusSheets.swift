@@ -107,16 +107,16 @@ struct EndSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        SheetCard(title: Words.endTitle, sub: early ? Words.endSubEarly : Words.endSub) {
+        SheetCard(title: Words.endTitle) {
             if !isDone {
-                SheetRow(title: Words.doneEarly, sub: Words.doneEarlySub) {
+                SheetRow(title: Words.doneEarly) {
                     dismiss()
                     onDoneEarly()
                 }
             }
             SheetRow(title: early ? Words.stopNow : Words.voidThis, action: onVoid)
             BigButton(label: Words.keepGoing, second: true) { dismiss() }
-                .padding(.top, Tokens.Space.l)
+                .padding(.top, Tokens.Layout.section)
         }
     }
 }
@@ -132,22 +132,22 @@ struct VoidSheet: View {
     private let reasons = Words.voidReasons.map { SegmentOption(value: $0, label: $0) }
 
     var body: some View {
-        SheetCard(title: Words.voidThis, sub: Words.voidSub) {
+        SheetCard(title: Words.voidThis) {
             Segmented(options: reasons, value: reason) { reason = $0 }
             LineInput(
                 placeholder: Words.voidTextPlaceholder,
                 text: $text,
                 maxLength: Params.voidTextMaxChars
             )
-            .padding(.top, Tokens.Space.m)
-            HStack(spacing: Tokens.Space.m) {
+            .padding(.top, Tokens.Layout.group)
+            HStack(spacing: Tokens.Layout.group) {
                 BigButton(label: Words.keepGoing, second: true) { dismiss() }
                 BigButton(label: Words.voidThis) {
                     dismiss()
                     onVoid(reason ?? "", text)
                 }
             }
-            .padding(.top, Tokens.Space.m)
+            .padding(.top, Tokens.Layout.group)
         }
     }
 }

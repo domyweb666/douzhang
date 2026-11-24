@@ -93,7 +93,7 @@ struct MinuteRuler: View {
             }
         }
         .frame(height: Tokens.Dial.height)
-        .sensoryFeedback(.selection, trigger: minutes)
+        .haptic(.selection, trigger: minutes)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Words.lengthA11y)
         .accessibilityValue(Words.minutes(minutes))

@@ -1,5 +1,6 @@
 import AVFoundation
 import UIKit
+import VeggieKit
 
 /// 音訊模式全 app 只有一份，統一在這裡切。
 /// 音效那組：靜音鍵撥到靜音就不響、不在背景播。白噪音那組：靜音也播、在背景也播。
@@ -27,7 +28,7 @@ enum AudioMode {
     }
 }
 
-/// 番茄堆的入堆音、碰撞音與觸覺。聲音開關關著時只剩觸覺。
+/// 番茄堆的入堆音、碰撞音與觸覺。聲音開關關著時只剩觸覺；觸覺回饋關著就不震。
 @MainActor
 final class JarSounds {
     private var pop: AVAudioPlayer?
@@ -61,7 +62,7 @@ final class JarSounds {
         if sound {
             play(pop)
         }
-        landTap.impactOccurred()
+        tap(landTap)
     }
 
     /// 碰撞：一次「嗒」＋輕觸覺；音量隨衝擊。
@@ -70,6 +71,13 @@ final class JarSounds {
             let volume = min(Tokens.Sound.hitVolMax, impact / Tokens.Sound.hitVolDiv)
             play(hits.randomElement(), volume: Float(volume))
         }
-        hitTap.impactOccurred()
+        tap(hitTap)
+    }
+
+    /// 震的那一刻才看開關：改了立刻生效。
+    private func tap(_ generator: UIImpactFeedbackGenerator) {
+        if VeggieHaptics.isEnabled {
+            generator.impactOccurred()
+        }
     }
 }

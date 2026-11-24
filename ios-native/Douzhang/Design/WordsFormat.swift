@@ -126,6 +126,11 @@ extension Words {
         "\(count) 顆"
     }
 
+    /// 鈴響收據「今天」下面的總數：小番茄畫得下全部就不寫。
+    static func todayTotal(_ count: Int) -> String? {
+        count > Params.celebrateTomatoes ? beansCount(count) : nil
+    }
+
     /// 多久：不到一小時寫分，滿一小時寫「幾小時 幾分」。
     static func duration(_ minutes: Double) -> String {
         let whole = Int(minutes.rounded())

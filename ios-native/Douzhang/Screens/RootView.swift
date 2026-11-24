@@ -23,10 +23,10 @@ struct RootView: View {
             }
         }
         // 震動只留給有意義的那幾刻：收下、拿掉東西、出錯。切換選項的輕觸在各自的元件上
-        .sensoryFeedback(.success, trigger: model.pulses.kept)
-        .sensoryFeedback(.impact(weight: .light), trigger: model.pulses.removed)
-        .sensoryFeedback(.error, trigger: model.saveFailed) { _, failed in failed }
-        .sensoryFeedback(.error, trigger: model.backupProblem) { _, problem in problem != nil }
+        .haptic(.success, trigger: model.pulses.kept)
+        .haptic(.impact(weight: .light), trigger: model.pulses.removed)
+        .haptic(.error, trigger: model.saveFailed) { $0 }
+        .haptic(.error, trigger: model.backupProblem) { $0 != nil }
     }
 }
 

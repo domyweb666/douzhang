@@ -8,12 +8,20 @@ options:
   deploymentTarget:
     iOS: "17.0" # 跟米說一樣：@Observable、彈簧動畫、觸覺回饋都是 iOS 17 的寫法
 
+# 自家的套件（蔬菜家族設定頁共用元件，公開 repo），不連網、沒有別人的程式，不算規矩檔 P4 擋的第三方 SDK
+packages:
+  VeggieKit:
+    url: https://github.com/domyweb666/VeggieKit
+    exactVersion: "1.0.1"
+
 targets:
   Douzhang:
     type: application
     platform: iOS
     sources:
       - Douzhang
+    dependencies:
+      - package: VeggieKit
     # Info.plist 由 XcodeGen 每次產生（不進 repo）。
     info:
       path: Douzhang/Info.plist

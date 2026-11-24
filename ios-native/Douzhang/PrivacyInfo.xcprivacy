@@ -5,7 +5,7 @@
   理由代碼照 Apple「NSPrivacyAccessedAPITypeReasons」文件：
   C617.1 讀 App 自己資料夾裡檔案的大小與資訊（狀態檔、自動備份）；
   3B52.1 讀使用者用檔案選取器選的那個檔的大小（匯入備份前看有沒有超過上限）；
-  CA92.1 只讀寫 App 自己的設定（選了要擋哪些 app）。
+  CA92.1 只讀寫 App 自己的設定（選了要擋哪些 app、外觀、觸覺回饋；後兩個由自家套件 VeggieKit 讀）。
   送審前照當時的 Apple 文件再對一次代碼。
 -->
 <plist version="1.0">

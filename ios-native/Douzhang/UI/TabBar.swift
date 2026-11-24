@@ -94,7 +94,7 @@ struct TabBar: View {
         .frame(width: Tokens.Shape.tabBarWidth, height: Tokens.Shape.tabBar)
         .background { plate }
         .padding(.bottom, Tokens.Shape.tabBarBottom)
-        .sensoryFeedback(.selection, trigger: page)
+        .haptic(.selection, trigger: page)
     }
 
     /// 影子只掛在膠囊底上：掛在整組內容上的話，圖示與字也要一起算影子，滑動時每一格都算一次。

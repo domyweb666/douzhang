@@ -30,17 +30,12 @@ enum Words {
     /// 計時中右上、聚焦模式、記一筆半頁右邊那顆：位子窄，讀屏念的是 endThis
     static let endShort = "結束"
     static let endTitle = "結束這顆？"
-    static let endSubEarly = "開始不到五分鐘，停下來不會留下紀錄。"
-    static let endSub = "作廢只記一筆，不扣任何東西。"
     static let doneEarly = "提早做完了"
-    static let doneEarlySub = "剩下的時間小修，鈴響再停"
-    static let doneEarlyLine = "剩下的時間，唸一遍、檢查、小修。鈴響再停。"
     static let stopNow = "停下來"
     static let voidThis = "作廢這顆"
-    static let voidSub = "原因寫事實就好。"
     /// 第二個跟計時中記一筆的「有人找」同名：同一件事只有一個名字。以前叫「訊息」，見 WordsInsight
     static let voidReasons = ["念頭", "有人找", "卡住", "其他"]
-    static let voidTextPlaceholder = "例：去看留言（分鐘數會自動記）"
+    static let voidTextPlaceholder = "例：去看留言"
     static let keepGoing = "繼續做"
 
     // MARK: 正在做什麼
@@ -84,7 +79,7 @@ enum Words {
 
     // MARK: 平實語氣的系統訊息：第一句先回答有沒有損失
 
-    static let saveFailed = "這台裝置沒辦法存，記得匯出備份"
+    static let saveFailed = "這台裝置沒辦法存，記得匯出資料"
     static let importUnreadable = "這個檔案讀不懂，原本的資料沒動"
 
     // MARK: 分頁
@@ -105,7 +100,6 @@ enum Words {
     static let restLongRow = "長休息"
     static let restLongOff = "關"
     static let autoNextRow = "休息完自動開始下一顆"
-    static let general = "一般"
     static let notifRow = "到點通知"
     static let notifOn = "開著"
     static let notifOff = "沒開"
@@ -123,23 +117,19 @@ enum Words {
     static let shieldAppsNone = "還沒選"
     static let shieldDenied = "螢幕使用時間沒有允許，所以開不了。"
 
-    // MARK: 備份與清空
+    // MARK: 備份與清除
 
-    static let dataSection = "資料"
-    static let exportBackup = "匯出備份"
-    static let importBackup = "從備份匯入"
     static let importTooBig = "這個檔案太大，不像番茄帳的備份，原本的資料沒動"
     static let autoBackupFailed = "沒辦法先把現在的資料備份起來，這次不匯入，原本的資料沒動"
     static let exportFailed = "這次沒匯出成功，原本的資料沒動"
-    static let backupsLeft = "資料清掉了，但自動備份檔沒刪乾淨，再按一次清空試試"
-    static let importConfirm = "用備份覆蓋現在的資料？"
-    static let importConfirmOk = "覆蓋現在的資料"
+    static let backupsLeft = "資料清掉了，但自動備份檔沒刪乾淨，再按一次清除試試"
+    static let importConfirm = "用這份換掉現在的番茄、標籤和設定？"
+    static let importConfirmOk = "換掉現在的資料"
     static let cancel = "取消"
-    static let wipeAll = "清空所有資料"
-    static let wipeTitle = "清空所有番茄、番茄串和設定後就找不回來了"
-    static let wipeExportFirst = "先匯出備份"
-    static let wipeAgainTitle = "真的要清空？清了就拿不回來"
-    static let wipeAgainOk = "永久清空"
+    static let wipeTitle = "清除所有番茄、番茄串和設定後就找不回來了"
+    static let wipeExportFirst = "先匯出資料"
+    static let wipeAgainTitle = "真的要清除？清了就拿不回來"
+    static let wipeAgainOk = "永久清除"
     static let wipedLine = "全部清掉了。清掉的拿不回來，有匯出過的備份可以在設定匯入。"
     static let wipedAction = "去設定匯入"
 
@@ -147,7 +137,6 @@ enum Words {
 
     static let ambienceTitle = "背景音"
     static let ambienceVolumeCap = "音量"
-    static let ambienceSub = "計時中才播，響了就停。鎖屏、切到別的 app 也會繼續播。"
 
     // MARK: 番茄架
 
@@ -167,7 +156,6 @@ enum Words {
     static let thisWeek = "這週"
     static let rackEmpty = "第一顆響完，這裡就會掛上今天的番茄串。"
     static let rackEmptyAction = "回去開始一顆"
-    static let chevron = "›"
     static let check = "✓"
     static let confirm = "好"
     static let voidA11y = "作廢"

@@ -15,11 +15,16 @@ struct SettingsShield: View {
             title: Words.shieldSection,
             footer: denied ? Words.shieldDenied : nil
         ) {
-            SettingsToggle(label: Words.shieldRow, isOn: model.state.settings.shield) { isOn in
+            SettingsToggle(
+                icon: "lock.shield",
+                label: Words.shieldRow,
+                isOn: model.state.settings.shield
+            ) { isOn in
                 Task { denied = await !model.setShield(isOn) }
             }
             SettingsDivider()
             SettingsRow(
+                icon: "apps.iphone",
                 label: Words.shieldAppsRow,
                 value: count > 0 ? Words.shieldAppsCount(count) : Words.shieldAppsNone,
                 action: pick

@@ -87,7 +87,7 @@ struct FocusRing: View {
                 time: TimeText.mmss(run.endAt - now)
             ) {
                 if run.done {
-                    HomeCaption(text: Words.doneEarlyLine)
+                    HomeCaption(text: Words.doneEarly)
                 }
             }
         }

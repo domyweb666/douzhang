@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import VeggieKit
 
 /// 設定頁的一區：標題、白卡（裡面是一列列）。footer 只給出錯與結果用，不放常駐說明。
 struct SettingsSection<Content: View>: View {
@@ -38,51 +39,38 @@ struct SettingsDivider: View {
     }
 }
 
-/// 設定頁的一列：左邊名字，右邊值；可點的列尾有箭頭。danger＝紅字（只有清空所有資料）。
+/// 設定頁的一列（樣子是全家共用的 VeggieRow）：圖示、名字、右邊的值；可點的列尾有箭頭。
+/// danger＝紅字（只有清除所有資料）。
 struct SettingsRow: View {
+    var icon: String
     var label: String
     var value: String?
+    var accessory = VeggieRow.Accessory.push
     var danger = false
     var action: (() -> Void)?
 
     var body: some View {
         if let action {
-            Button(action: action) { row }.buttonStyle(FadeStyle())
+            Button(action: action) { row(accessory) }.buttonStyle(FadeStyle())
         } else {
-            row
+            row(.none)
         }
     }
 
-    private var row: some View {
-        HStack(spacing: Tokens.Layout.group) {
-            Text(label)
-                .foregroundStyle(danger ? Tokens.Colors.danger : Tokens.Colors.textPrimary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            if let value {
-                Text(value).foregroundStyle(Tokens.Colors.textSecondary)
-            }
-            if action != nil, !danger {
-                Text(Words.chevron).foregroundStyle(Tokens.Colors.textTertiary)
-            }
-        }
-        .font(Tokens.Fonts.body)
-        .frame(minHeight: Tokens.Shape.row)
-        .contentShape(Rectangle())
+    private func row(_ tail: VeggieRow.Accessory) -> some View {
+        VeggieRow(icon: icon, title: label, value: value, accessory: tail, destructive: danger)
     }
 }
 
 /// 設定頁的一列開關。
 struct SettingsToggle: View {
+    var icon: String
     var label: String
     var isOn: Bool
     var onChange: (Bool) -> Void
 
     var body: some View {
-        Toggle(label, isOn: Binding(get: { isOn }, set: onChange))
-            .font(Tokens.Fonts.body)
-            .foregroundStyle(Tokens.Colors.textPrimary)
-            .tint(Tokens.Colors.accent)
-            .frame(minHeight: Tokens.Shape.row)
+        VeggieToggleRow(icon: icon, title: label, isOn: Binding(get: { isOn }, set: onChange))
     }
 }
 

@@ -35,7 +35,7 @@ struct TagChip: View {
     }
 }
 
-/// 置中的小字（提早做完的提醒、鈴響後很久才回來、作廢後那一行）。
+/// 置中的小字（標過提早做完、鈴響後很久才回來、作廢後那一行）。
 struct HomeCaption: View {
     var text: String
 

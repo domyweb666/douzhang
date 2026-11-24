@@ -1,4 +1,5 @@
 import SwiftUI
+import VeggieKit
 
 /// 設定頁的「節奏」那一區：休息怎麼結束、短休息、長休息、休息完自動開始。
 /// 「我自己決定」的休息沒有長度，短休息、長休息、自動開始三列收起來；
@@ -16,46 +17,47 @@ struct SettingsRhythm: View {
     var body: some View {
         let settings = model.state.settings
         SettingsSection(title: Words.rhythm) {
-            VStack(alignment: .leading, spacing: Tokens.Layout.item) {
-                restHead(settings)
+            VStack(alignment: .leading, spacing: .zero) {
+                VeggieRow(
+                    icon: "cup.and.saucer",
+                    title: Words.restRow,
+                    value: settings.restMode == .smart ? Words.restSmartValue : nil
+                )
                 Segmented(options: modes, value: settings.restMode) { mode in
                     model.update { $0.restMode = mode }
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.vertical, Tokens.Layout.rowPadV)
+            .padding(.bottom, Tokens.Layout.rowPadV)
             if settings.restMode == .auto {
                 SettingsDivider()
-                SettingsRow(label: Words.restShortRow, value: RestWords.short(settings.restShort)) {
+                SettingsRow(
+                    icon: "timer",
+                    label: Words.restShortRow,
+                    value: RestWords.short(settings.restShort)
+                ) {
                     onOpen(.restShort)
                 }
                 SettingsDivider()
-                SettingsRow(label: Words.restLongRow, value: RestWords.long(settings)) {
+                SettingsRow(
+                    icon: "bed.double",
+                    label: Words.restLongRow,
+                    value: RestWords.long(settings)
+                ) {
                     onOpen(.restLong)
                 }
             }
             if settings.restMode != .own {
                 SettingsDivider()
-                SettingsToggle(label: Words.autoNextRow, isOn: settings.autoNext) { isOn in
+                SettingsToggle(
+                    icon: "forward.end",
+                    label: Words.autoNextRow,
+                    isOn: settings.autoNext
+                ) { isOn in
                     model.update { $0.autoNext = isOn }
                 }
             }
         }
-    }
-
-    /// 「休息」這一列的字；智能調節時右邊寫它怎麼算。
-    private func restHead(_ settings: AppSettings) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: Tokens.Layout.group) {
-            Text(Words.restRow)
-                .foregroundStyle(Tokens.Colors.textPrimary)
-            Spacer(minLength: .zero)
-            if settings.restMode == .smart {
-                Text(Words.restSmartValue)
-                    .foregroundStyle(Tokens.Colors.textSecondary)
-                    .multilineTextAlignment(.trailing)
-            }
-        }
-        .font(Tokens.Fonts.body)
     }
 }
 

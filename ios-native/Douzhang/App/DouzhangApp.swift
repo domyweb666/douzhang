@@ -1,4 +1,5 @@
 import SwiftUI
+import VeggieKit
 
 @main
 struct DouzhangApp: App {
@@ -11,6 +12,8 @@ struct DouzhangApp: App {
             RootView()
                 .environment(model)
                 .task { await model.run() }
+                // 外觀設在視窗上，所以等畫面出來才套
+                .onAppear { Appearance.stored.apply() }
         }
         .onChange(of: scenePhase) { _, next in
             if next == .active {

@@ -12,6 +12,8 @@ enum Params {
 
     /// 畫面時鐘多久刷新一次（毫秒）
     static let tickMs = 250
+    /// 設定頁做完一件事的那一句（已複製版本資訊）留多久（毫秒）
+    static let noticeMs = 2600
     /// 選填的那一句、記一筆一行、作廢原因那一行最多幾個字
     static let noteMaxChars = 120
     static let jotMaxChars = 60

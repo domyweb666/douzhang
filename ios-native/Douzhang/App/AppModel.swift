@@ -49,7 +49,7 @@ final class AppModel {
     /// 設定頁備份區下面那一行；沒事是 nil
     var backupProblem: BackupProblem?
     var lastBackup: Millis?
-    /// 選好、讀得懂、也備份過現在的資料了，等使用者按「覆蓋」
+    /// 選好、讀得懂、也備份過現在的資料了，等使用者按「換掉」
     var pendingImport: AppState?
     /// 匯出寫好的暫存檔：有值就開系統的分享選單
     var exportFile: ExportFile?

@@ -21,24 +21,19 @@ struct SoundSheet: View {
                 model.update { $0.ambience = kind }
             }
             if settings.ambience != .off {
-                caption(Words.ambienceVolumeCap)
+                Text(Words.ambienceVolumeCap)
+                    .font(Tokens.Fonts.caption)
+                    .foregroundStyle(Tokens.Colors.textSecondary)
+                    .padding(.top, Tokens.Layout.section)
                 Segmented(options: levels, value: settings.ambienceVolume) { level in
                     model.update { $0.ambienceVolume = level }
                 }
-                .padding(.top, Tokens.Space.s)
+                .padding(.top, Tokens.Layout.item)
             }
-            caption(Words.ambienceSub)
             BigButton(label: Words.confirm) { dismiss() }
-                .padding(.top, Tokens.Space.l)
+                .padding(.top, Tokens.Layout.section)
         }
         .onAppear { model.previewAmbience(true) }
         .onDisappear { model.previewAmbience(false) }
-    }
-
-    private func caption(_ text: String) -> some View {
-        Text(text)
-            .font(Tokens.Fonts.caption)
-            .foregroundStyle(Tokens.Colors.textSecondary)
-            .padding(.top, Tokens.Space.l)
     }
 }

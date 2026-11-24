@@ -32,6 +32,11 @@ extension Tokens {
         static let shrink: CGFloat = 0.5
     }
 
+    /// 設定頁：標籤列那顆番茄，跟其他列的圖示一樣寬（VeggieKit 的 24）。
+    enum SettingsPage {
+        static let icon: CGFloat = 24
+    }
+
     /// 筆記本：一行多高（跟著系統字級放大）。
     enum Notebook {
         static let line: CGFloat = 36

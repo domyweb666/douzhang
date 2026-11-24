@@ -54,7 +54,7 @@ struct Segmented<Value: Hashable>: View {
                 .accessibilityAddTraits(isOn ? .isSelected : [])
             }
         }
-        .sensoryFeedback(.selection, trigger: value)
+        .haptic(.selection, trigger: value)
     }
 }
 
