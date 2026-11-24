@@ -6,7 +6,10 @@ import VeggieKit
 extension Words {
     static let fullName = "番茄帳完整版"
     static let priceReading = "正在讀價格"
-    static let priceFailed = "沒有扣款。現在讀不到價格。"
+    /// 還沒按購買就讀不到：沒有錢的事要回答，不提扣款
+    static let priceUnread = "現在讀不到價格。"
+    /// 按了購買才發現沒有價格
+    private static let priceFailed = "沒有扣款。\(priceUnread)"
     private static let chargedHint = "有被扣款的話，按「\(VeggieText.restore)」。"
     private static let otherAccountHint = "用別的 Apple 帳號買的，先到 App Store 換成那個帳號再試。"
     private static let notVerified = "Apple 傳回的購買紀錄驗不過，先當作沒買。"
@@ -89,8 +92,7 @@ extension Words {
 
     // MARK: 付費頁的聚焦預覽
 
-    static let fullSample = "範例"
-    static let fullSampleDoing = "寫第三節"
+    static let fullSampleDoing = "範例・寫第三節"
 
     static func fullSampleA11y(_ time: String) -> String {
         "聚焦模式的範例，剩 \(time)"

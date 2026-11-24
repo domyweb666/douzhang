@@ -20,6 +20,8 @@ final class Purchases {
     private(set) var isPricing = false
     /// 正在買或正在恢復：那兩顆按鈕先不能點
     private(set) var doing: FullDoing?
+    /// 剛做完、要講的那一次。不放在畫面裡：鈴響時設定頁整頁會換掉，「可能已經扣款」就跟著忘了
+    var lastNote: FullNote?
 
     @ObservationIgnored private var product: Product?
     @ObservationIgnored private var updates: Task<Void, Never>?

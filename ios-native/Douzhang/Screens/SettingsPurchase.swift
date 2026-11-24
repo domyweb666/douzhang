@@ -8,9 +8,10 @@ struct SettingsPurchase: View {
     @State private var isOpen = false
     /// 付費頁蓋著，含收起來的那段動畫
     @State private var isCovered = false
-    @State private var note: FullNote?
 
     var body: some View {
+        @Bindable var shop = shop
+        let note = shop.lastNote
         let line = note?.settingsLine(shop.status)
         VStack(alignment: .leading, spacing: Tokens.Layout.item) {
             rows
@@ -21,8 +22,9 @@ struct SettingsPurchase: View {
         }
         .modifier(FullEffects(note: note, line: line, isOn: !isCovered))
         .fullScreenCover(isPresented: $isOpen, onDismiss: uncover) {
-            FullScreen(note: $note) { isOpen = false }
+            FullScreen(note: $shop.lastNote) { isOpen = false }
         }
+        .onChange(of: shop.status, initial: true) { _, status in forget(status) }
         .task { await openForShot() }
     }
 
@@ -48,24 +50,32 @@ struct SettingsPurchase: View {
     }
 
     private func openFull() {
-        note = nil
+        shop.lastNote = shop.lastNote?.kept(shop.status)
         isCovered = true
         isOpen = true
     }
 
-    /// 在付費頁講過的不在這裡再講一次；買到一半關掉的還沒講，留著等結果。
+    /// 在付費頁講過的不在這裡再講一次，錢還沒定論的例外；買到一半關掉的還沒講，留著等結果。
     private func uncover() {
         if !shop.isBusy {
-            note = nil
+            shop.lastNote = shop.lastNote?.kept(shop.status)
         }
         isCovered = false
     }
 
+    /// 別處核准了：沒定論的那句不留著，不然哪天退款，「在等核准」又冒出來。
+    /// 付費頁還開著的先不動（那一頁要換成「買好了」），關掉的時候再忘。
+    private func forget(_ status: FullStatus) {
+        if status == .owned, !isCovered, shop.lastNote?.isUnsettled == true {
+            shop.lastNote = nil
+        }
+    }
+
     private func restore() {
-        note = nil
+        shop.lastNote = shop.lastNote?.kept(shop.status)
         Task {
             let result = await shop.restore()
-            note = FullNote(result: .restored(result))
+            shop.lastNote = FullNote.after(shop.lastNote, .restored(result))
         }
     }
 

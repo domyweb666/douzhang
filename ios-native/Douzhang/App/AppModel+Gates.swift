@@ -22,10 +22,15 @@ extension AppModel {
 
     /// 買了沒變了：同步、擋板、聚焦一起照新的答案。只停功能，不動任何設定與紀錄。
     func setFull(_ status: FullStatus) {
+        // 換之前看：響過那顆的記號還留著，看 zenFor 會把在設定頁的人拉回主畫面
+        let wasZen = zenOn
         fullStatus = status
         if !FullRule.allows(.zen, status: status) {
             // 正在聚焦的回直向；不留著，不然哪天又買了會自己轉橫
             zenFor = nil
+            if wasZen {
+                page = .home
+            }
         }
         cloud.setPaid(FullRule.allows(.cloud, status: status))
         syncGates()

@@ -1,5 +1,6 @@
 @testable import Douzhang
 import FamilyControls
+import UIKit
 import XCTest
 
 /// 擋 app 與聚焦的鎖：規則（純函式），還有買了沒變了的時候殼怎麼動。
@@ -89,6 +90,31 @@ final class FullLockTests: XCTestCase {
         XCTAssertEqual(shell.model.shield.applied, .clear)
     }
 
+    /// 上次蓋著、重開、Apple 還沒回就停下來：這支手機不能一直被擋著。
+    func test冷啟動計時中不知道買了沒停下來就解開() async throws {
+        let stage = CloudStage()
+        defer { stage.clean() }
+        let shell = try await AppShell.open(stage, focusing(at: TimeText.nowMillis()))
+        defer { shell.close() }
+        XCTAssertEqual(shell.model.phase, .focus)
+        XCTAssertEqual(shell.model.shield.applied, .unknown)
+        shell.model.stopEarly()
+        XCTAssertEqual(shell.model.phase, .idle)
+        XCTAssertEqual(shell.model.fullStatus, .unknown)
+        XCTAssertEqual(shell.model.shield.applied, .clear)
+    }
+
+    func test冷啟動那顆已經響了不知道買了沒也解開() async throws {
+        let stage = CloudStage()
+        defer { stage.clean() }
+        let start = TimeText.nowMillis() - 60 * Moment.minute
+        let shell = try await AppShell.open(stage, focusing(at: start))
+        defer { shell.close() }
+        XCTAssertEqual(shell.model.phase, .bell)
+        XCTAssertEqual(shell.model.fullStatus, .unknown)
+        XCTAssertEqual(shell.model.shield.applied, .clear)
+    }
+
     func test退款不忘記選過要擋的app() async throws {
         let stage = CloudStage()
         defer { stage.clean() }
@@ -113,13 +139,34 @@ final class FullLockTests: XCTestCase {
         model.enterZen()
         XCTAssertTrue(model.zenOn)
         XCTAssertEqual(ScreenTurn.allowed, .landscape)
+        // 三頁被聚焦整頁換掉時，捲動位置可能寫回 nil
+        model.page = nil
         model.setFull(.notOwned)
+        XCTAssertEqual(model.page, Page.home)
         XCTAssertFalse(model.zenOn)
         XCTAssertEqual(ScreenTurn.allowed, .portrait)
         XCTAssertEqual(model.phase, .focus)
         model.setFull(.owned)
         XCTAssertFalse(model.zenOn)
         XCTAssertEqual(ScreenTurn.allowed, .portrait)
+    }
+
+    func test沒在聚焦退款不會把人拉回主畫面() async throws {
+        let stage = CloudStage()
+        defer { stage.clean() }
+        let state = focusing(at: TimeText.nowMillis(), shield: false)
+        let shell = try await AppShell.open(stage, state)
+        defer { shell.close() }
+        let model = shell.model
+        model.setFull(.owned)
+        model.enterZen()
+        model.stopEarly()
+        // 結束了的那顆，記號還留著
+        XCTAssertNotNil(model.zenFor)
+        XCTAssertFalse(model.zenOn)
+        model.page = .settings
+        model.setFull(.notOwned)
+        XCTAssertEqual(model.page, Page.settings)
     }
 
     func test沒買與不知道進不了聚焦() async throws {
@@ -136,13 +183,77 @@ final class FullLockTests: XCTestCase {
         }
     }
 
-    func test清除所有資料不動買了沒() async throws {
+    func test計時中清除所有資料擋板解開買了沒不動() async throws {
+        let host = HostSettings()
+        defer { host.restore() }
         let stage = CloudStage()
         defer { stage.clean() }
-        let shell = try await AppShell.open(stage, Store.blank())
+        let shell = try await AppShell.open(stage, focusing(at: TimeText.nowMillis()))
         defer { shell.close() }
-        shell.model.setFull(.owned)
-        shell.model.wipeAll()
-        XCTAssertEqual(shell.model.fullStatus, .owned)
+        let model = shell.model
+        model.setFull(.owned)
+        XCTAssertEqual(model.shield.applied, .blocked)
+        host.markHaptics()
+        model.wipeAll()
+        XCTAssertEqual(model.phase, .idle)
+        XCTAssertEqual(model.shield.applied, .clear)
+        XCTAssertEqual(model.fullStatus, .owned)
+        await host.waitForWipe()
+        // 清完照樣是買了的：再開始一顆、開關打開就蓋
+        model.commit(focusing(at: TimeText.nowMillis()))
+        XCTAssertEqual(model.shield.applied, .blocked)
+        model.stopEarly()
+        XCTAssertEqual(model.shield.applied, .clear)
+    }
+}
+
+/// wipeAll 會動測試宿主的外觀、觸覺、選過要擋的 app：先記著，測完放回去。
+@MainActor
+private struct HostSettings {
+    private static let haptics = "haptics"
+    private static let names = ["appearance", haptics, "appShield.selection"]
+
+    private let saved: [String: Any]
+    private let style: UIUserInterfaceStyle?
+
+    private static var windows: [UIWindow] {
+        UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap(\.windows)
+    }
+
+    init() {
+        var found: [String: Any] = [:]
+        for name in HostSettings.names {
+            found[name] = UserDefaults.standard.object(forKey: name)
+        }
+        saved = found
+        style = HostSettings.windows.first?.overrideUserInterfaceStyle
+    }
+
+    /// 觸覺的開關晚一拍才清：先放一個值，才看得出清完了沒。
+    func markHaptics() {
+        UserDefaults.standard.set(true, forKey: HostSettings.haptics)
+    }
+
+    func waitForWipe() async {
+        await CloudStage.until("觸覺的開關清完") {
+            UserDefaults.standard.object(forKey: HostSettings.haptics) == nil
+        }
+    }
+
+    func restore() {
+        for name in HostSettings.names {
+            if let value = saved[name] {
+                UserDefaults.standard.set(value, forKey: name)
+            } else {
+                UserDefaults.standard.removeObject(forKey: name)
+            }
+        }
+        if let style {
+            for window in HostSettings.windows {
+                window.overrideUserInterfaceStyle = style
+            }
+        }
     }
 }

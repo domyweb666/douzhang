@@ -2,7 +2,7 @@ import SwiftUI
 
 /// 完整版的整頁（付費頁）：上面的聚焦預覽與四樣可捲，下面決定的那一塊固定。
 /// 只從設定頁「完整版」那一列進來，付完或關掉都回到那裡；關閉鍵一打開就在。
-/// 做到一半不出現：開著的時候下一顆自己開始了，就收起來（正在付款不收，會看不到結果）。
+/// 做到一半不出現：開著的時候下一顆自己開始了，就收起來（什麼時候收由 FullCue 決定）。
 struct FullScreen: View {
     @Binding var note: FullNote?
     var onClose: () -> Void
@@ -25,7 +25,11 @@ struct FullScreen: View {
                 FullOfferBlock(note: $note, onClose: onClose)
                     // 沒有 Home 指示條的矮手機，安全區到底，自己留一點
                     .padding(.bottom, isShort ? Tokens.Layout.group : .zero)
+                    // 先給它要的高，上面的清單讓位：字放到最大也看得到價格
+                    .layoutPriority(1)
             }
+            // 讀屏兩指搓跟「關閉」同一條路，付款中也一樣能關
+            .accessibilityAction(.escape, onClose)
         }
         .background(Tokens.Colors.background.ignoresSafeArea())
         // 退款（變成沒買）也要再讀：買過的人一打開時沒有讀
@@ -34,8 +38,8 @@ struct FullScreen: View {
                 Task { await shop.loadPrice() }
             }
         }
-        .onChange(of: model.phase) { _, phase in
-            if phase == .focus, !shop.isBusy {
+        .onChange(of: FullCue(isFocusing: model.phase == .focus, note: note)) { last, now in
+            if now.closes(after: last, isBusy: shop.isBusy) {
                 onClose()
             }
         }

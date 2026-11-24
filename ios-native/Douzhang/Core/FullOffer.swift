@@ -62,6 +62,43 @@ struct FullNote: Equatable {
         case .bought, .restored: nil
         }
     }
+
+    /// 錢的事還沒有定論：可能付過了，或付款在等核准。
+    var isUnsettled: Bool {
+        main != nil
+    }
+
+    /// 關掉付費頁、再打開、再按恢復的那一刻還留著的：沒定論的留到有新結果，買到了就不算了。
+    func kept(_ status: FullStatus) -> FullNote? {
+        isUnsettled && status != .owned ? self : nil
+    }
+
+    /// 又做完一次之後要講的那一次。取消、重複點不算有新結果：沒定論的不會因此又變回「購買」。
+    static func after(_ last: FullNote?, _ result: Result) -> FullNote {
+        let next = FullNote(result: result)
+        guard let last, last.isUnsettled else { return next }
+        if next.line == nil {
+            return last
+        }
+        // 沒問到不是新答案，錢還是沒定論：原來那句再講一次，不叫他「再試一次」買
+        return result == .restored(.failed) ? FullNote(result: last.result) : next
+    }
+}
+
+/// 付費頁開著的時候盯著的兩件事。合成一個看：同一拍都變了也只收一次。
+struct FullCue: Equatable {
+    var isFocusing: Bool
+    var note: FullNote?
+
+    /// 要不要收起來。下一顆自己開始了就收；正在付款不收，會看不到結果。
+    /// 付款中才開始的：結果有句子要講就留著等他看，取消、重複點的收起來。
+    func closes(after last: FullCue, isBusy: Bool) -> Bool {
+        guard isFocusing, !isBusy else { return false }
+        // 結果跟下一顆同一拍到：有句子要講的也留著
+        guard last.isFocusing else { return note == last.note || note?.line == nil }
+        guard let note, note != last.note else { return false }
+        return note.line == nil
+    }
 }
 
 /// 付費頁底下那一塊現在的樣子：講哪一句、主按鈕做什麼。純函式，畫面照著畫。
@@ -83,7 +120,7 @@ struct FullOffer: Equatable {
         }
         // 上次說買到了、現在卻沒有：退款了，那句不算
         let told = note?.saysOwned == true ? nil : note
-        let noPrice = shelf.price == .failed ? Words.priceFailed : nil
+        let noPrice = shelf.price == .failed ? Words.priceUnread : nil
         return FullOffer(
             main: told?.main ?? priceMain(shelf.price),
             line: told?.line ?? noPrice,

@@ -5,7 +5,7 @@ import VeggieKit
 /// 完整版要決定的那一塊：訊息、付一次與價格、主按鈕、先不用、恢復購買（準則 6-20，只寫這一份）。
 /// 什麼時候講什麼、主按鈕是哪一顆由 Core/FullOffer.swift 決定，這裡照著畫。
 struct FullOfferBlock: View {
-    /// 剛做完的那一次。由開這一頁的地方拿著：買到一半關掉頁，結果才有地方講
+    /// 剛做完的那一次。不放在這一頁：買到一半關掉頁，結果才有地方講
     @Binding var note: FullNote?
     var onClose: () -> Void
 
@@ -14,10 +14,12 @@ struct FullOfferBlock: View {
     var body: some View {
         let offer = FullOffer.now(shop.shelf, note: note)
         VStack(spacing: .zero) {
-            // 字放到最大時訊息自己捲，購買鈕永遠在畫面裡
-            ViewThatFits(in: .vertical) {
-                notes(offer)
-                ScrollView { notes(offer) }
+            if let line = offer.line {
+                told(line, isProblem: offer.isProblem)
+            }
+            if offer.showsPrice {
+                price
+                    .padding(.bottom, Tokens.Layout.group)
             }
             BigButton(label: Words.fullMain(offer.main), waiting: offer.isWaiting) {
                 press(offer.main)
@@ -31,21 +33,19 @@ struct FullOfferBlock: View {
         .modifier(FullEffects(note: note, line: offer.line))
     }
 
-    private func notes(_ offer: FullOffer) -> some View {
-        VStack(alignment: .leading, spacing: .zero) {
-            if let line = offer.line {
-                FullLine(text: line, isProblem: offer.isProblem)
-                    .padding(.bottom, Tokens.Layout.group)
-            }
-            if offer.showsPrice {
-                price
-                    .padding(.bottom, Tokens.Layout.group)
-            }
+    /// 高度最後才分到它：字放到最大時只有這句自己捲，價格與購買鈕不會被擠掉（沒看到價格不准付錢）。
+    private func told(_ line: String, isProblem: Bool) -> some View {
+        let words = FullLine(text: line, isProblem: isProblem)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        return ViewThatFits(in: .vertical) {
+            words
+            ScrollView { words }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.bottom, Tokens.Layout.group)
+        .layoutPriority(-1)
     }
 
-    /// 價格跟旁邊的字一樣大。還沒讀到就空著，不寫任何數字。
+    /// 價格跟旁邊的字一樣大。還沒讀到就空著，不寫任何數字。不放進會捲的地方。
     private var price: some View {
         ViewThatFits(in: .horizontal) {
             HStack(spacing: .zero) {
@@ -60,6 +60,7 @@ struct FullOfferBlock: View {
         }
         .font(Tokens.Fonts.body)
         .foregroundStyle(Tokens.Colors.textPrimary)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
     }
 
@@ -126,10 +127,10 @@ struct FullOfferBlock: View {
     }
 
     private func restore() {
-        note = nil
+        note = note?.kept(shop.status)
         Task {
             let result = await shop.restore()
-            note = FullNote(result: .restored(result))
+            note = FullNote.after(note, .restored(result))
         }
     }
 }

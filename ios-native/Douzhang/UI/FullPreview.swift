@@ -27,7 +27,11 @@ struct FullPreview: View {
                 TomatoView(fill: ripeness, size: size)
                     .scaleEffect(CGFloat(Grow.scale(progress)))
             }
-            caption(Words.fullSampleDoing)
+            // 「範例」寫在這一行，不放角落：小手機或字放大時，角落的字會壓到數字
+            Text(Words.fullSampleDoing)
+                .font(Tokens.Fonts.caption)
+                .foregroundStyle(Tokens.Zen.dim)
+                .lineLimit(1)
         }
         .frame(width: width, height: height)
         .background(Tokens.Zen.background, in: shape)
@@ -35,22 +39,10 @@ struct FullPreview: View {
         .overlay {
             shape.strokeBorder(Tokens.Colors.separator, lineWidth: Tokens.Shape.hairline)
         }
-        .overlay(alignment: .topTrailing) {
-            caption(Words.fullSample)
-                .padding(.horizontal, Tokens.Layout.cardPad)
-                .padding(.vertical, Tokens.Layout.rowPadV)
-        }
         // 這是一張圖，數字不跟系統字級放大，圖裡的小字也不放到撐破
         .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Words.fullSampleA11y(TimeText.mmss(Params.FullSample.leftMs)))
         .accessibilityAddTraits(.isImage)
-    }
-
-    private func caption(_ text: String) -> some View {
-        Text(text)
-            .font(Tokens.Fonts.caption)
-            .foregroundStyle(Tokens.Zen.dim)
-            .lineLimit(1)
     }
 }

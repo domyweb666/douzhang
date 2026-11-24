@@ -22,11 +22,16 @@ final class FullOfferTests: XCTestCase {
         XCTAssertEqual(Words.fullMain(now.main), "正在讀價格")
     }
 
-    func test讀不到價格先講沒扣款再給再讀一次() {
+    func test還沒按購買就讀不到價格不提扣款給再讀一次() {
         let now = offer(price: .failed)
-        XCTAssertEqual(now, FullOffer(main: .readPrice, line: Words.priceFailed))
+        XCTAssertEqual(now, FullOffer(main: .readPrice, line: "現在讀不到價格。"))
         XCTAssertEqual(Words.fullMain(now.main), "再讀一次")
         XCTAssertFalse(now.isWaiting)
+    }
+
+    func test按了購買才發現沒有價格先講沒扣款() {
+        let now = offer(.bought(.noPrice), price: .failed)
+        XCTAssertEqual(now, FullOffer(main: .readPrice, line: "沒有扣款。現在讀不到價格。"))
     }
 
     func test還沒開始讀也按得到不會一直掛著正在讀() {
