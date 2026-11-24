@@ -26,7 +26,7 @@ enum Notify {
     /// 開了「休息完自動開始」：休息時連下一顆的到點一起排，下一顆在背景自己開始時才有人叫；
     /// 休息完那則的內文改成下一顆自己開始了。「我自己決定」的休息沒有結束時刻，不排。
     private static func restNotices(_ state: AppState, run: RestRun) -> [PlannedNotice] {
-        guard state.settings.restMode == .auto, let endAt = run.endAt else { return [] }
+        guard state.settings.restMode != .own, let endAt = run.endAt else { return [] }
         let isAuto = state.settings.autoNext
         let body = isAuto ? Words.autoNextStarted : Words.backFromRest
         var list = [PlannedNotice(title: Words.restDone, body: body, fireAt: endAt)]

@@ -10,33 +10,32 @@ enum SettingsSheet: Identifiable, Hashable {
     }
 }
 
-/// 設定（左右滑三頁的右邊那頁）。依序：標籤、節奏、提醒、專注、手感、備份。
-/// 改完立刻生效（下一拍就讀新設定）。每區是一張白卡，列之間有分隔線，說明字放在卡片下。
+/// 設定（左右滑三頁的右邊那頁）。順序照多米 iOS 開發準則 3-3：
+/// app 專屬（標籤、節奏、專注、手感）→ 一般（通知、聲音）→ 資料（匯出、匯入、清空排最後）。
+/// 改完立刻生效（下一拍就讀新設定）。卡片下不放常駐說明，只有出錯與結果才出現一行（3-4）。
 struct SettingsScreen: View {
     @Environment(AppModel.self) private var model
     @State private var sheet: SettingsSheet?
     @State private var importing = false
     @State private var askingWipe = false
+    @State private var askingWipeAgain = false
 
     var body: some View {
         @Bindable var model = model
         VStack(spacing: .zero) {
             PageTitle(text: Words.settings)
             ScrollView {
-                VStack(alignment: .leading, spacing: Tokens.Space.section) {
+                VStack(alignment: .leading, spacing: Tokens.Layout.section) {
                     types
                     SettingsRhythm { sheet = $0 }
-                    reminders
                     SettingsShield()
                     feel
                     developer
+                    general
                     backup
-                    SettingsSection {
-                        SettingsRow(label: Words.wipeAll, danger: true) { askingWipe = true }
-                    }
                 }
-                .padding(.top, Tokens.Space.l)
-                .padding(.bottom, Tokens.Shape.tabClearance)
+                .padding(.top, Tokens.Layout.section)
+                .padding(.bottom, Tokens.Layout.bottomClear)
             }
             .scrollIndicators(.hidden)
             .scrollDismissesKeyboard(.interactively)
@@ -53,12 +52,21 @@ struct SettingsScreen: View {
             Button(Words.cancel, role: .cancel) { model.cancelImport() }
             Button(Words.importConfirmOk) { model.confirmImport() }
         }
+        // 清空問兩次、兩次的按鈕字不一樣、第一次附匯出（準則 3-3）。
+        // 下一個框、分享選單等這個框收掉那一拍過了再開：同一拍開，系統會吞掉
         .alert(Words.wipeTitle, isPresented: $askingWipe) {
+            Button(Words.wipeExportFirst, action: exportFirst)
+            Button(Words.wipeAll, role: .destructive) { Task { askingWipeAgain = true } }
             Button(Words.cancel, role: .cancel) {}
-            Button(Words.wipeAll, role: .destructive) { model.wipeAll() }
-        } message: {
-            Text(Words.wipeBody)
         }
+        .alert(Words.wipeAgainTitle, isPresented: $askingWipeAgain) {
+            Button(Words.wipeAgainOk, role: .destructive) { model.wipeAll() }
+            Button(Words.cancel, role: .cancel) {}
+        }
+    }
+
+    private func exportFirst() {
+        Task { model.exportBackup() }
     }
 
     /// 匯入的確認框：有等著覆蓋的那一份才問。
@@ -77,7 +85,7 @@ struct SettingsScreen: View {
 
     private var types: some View {
         let settings = model.state.settings
-        return SettingsSection(title: Words.taskType, footer: Words.typeSub) {
+        return SettingsSection(title: Words.taskType) {
             ForEach(settings.types) { type in
                 typeRow(type)
                 SettingsDivider()
@@ -94,7 +102,7 @@ struct SettingsScreen: View {
         Button {
             sheet = .tag(type.id)
         } label: {
-            HStack(spacing: Tokens.Space.m) {
+            HStack(spacing: Tokens.Layout.group) {
                 TomatoView(color: type.color, size: Tokens.Shape.colorSwatch / 1.5)
                 Text(type.name)
                     .foregroundStyle(Tokens.Colors.textPrimary)
@@ -125,23 +133,24 @@ struct SettingsScreen: View {
         }
     }
 
-    // MARK: 提醒、手感、開發
+    // MARK: 一般、手感、開發
 
     /// 到點通知：允許「開著」；被拒「沒開」＋點了去系統設定；
-    /// 還沒問過什麼都不寫（第一次按開始才問，那時系統設定裡也還沒有這一列）。
-    private var reminders: some View {
-        SettingsSection(title: Words.reminders) {
+    /// 還沒問過整列不出現（第一次按開始才問，那時系統設定裡也還沒有這一列）。
+    private var general: some View {
+        SettingsSection(title: Words.general) {
             switch model.notif {
             case .undetermined:
-                SettingsRow(label: Words.notifRow)
+                EmptyView()
             case .granted:
                 SettingsRow(label: Words.notifRow, value: Words.notifOn)
+                SettingsDivider()
             case .denied:
                 SettingsRow(label: Words.notifRow, value: Words.notifOff) {
                     SystemSettings.openNotifications()
                 }
+                SettingsDivider()
             }
-            SettingsDivider()
             SettingsToggle(label: Words.soundRow, isOn: model.state.settings.sound) { isOn in
                 model.update { $0.sound = isOn }
             }
@@ -159,7 +168,7 @@ struct SettingsScreen: View {
     /// 開發期才有的測試模式開關（正式 build 整區不畫）。
     @ViewBuilder private var developer: some View {
         #if DEBUG
-            SettingsSection(title: Words.devSection, footer: Words.testModeSub) {
+            SettingsSection(title: Words.devSection) {
                 SettingsToggle(label: Words.testModeRow, isOn: model.state.settings.demo) { isOn in
                     model.update { $0.demo = isOn }
                 }
@@ -167,28 +176,28 @@ struct SettingsScreen: View {
         #endif
     }
 
-    // MARK: 備份
+    // MARK: 資料
 
-    /// 匯出、匯入兩列；出錯原因（有才出）紅字在卡片下；說明與上次自動備份時間放在說明字。
+    /// 匯出（右邊是上次自動備份那天）、匯入、最後一列清空；出錯原因（有才出）紅字在卡片下。
     private var backup: some View {
-        VStack(alignment: .leading, spacing: Tokens.Space.s) {
-            SettingsSection(title: Words.backup, footer: backupFooter) {
-                SettingsRow(label: Words.exportBackup) { model.exportBackup() }
+        VStack(alignment: .leading, spacing: Tokens.Layout.item) {
+            SettingsSection(title: Words.dataSection) {
+                SettingsRow(label: Words.exportBackup, value: lastBackup) { model.exportBackup() }
                 SettingsDivider()
                 SettingsRow(label: Words.importBackup) { importing = true }
+                SettingsDivider()
+                SettingsRow(label: Words.wipeAll, danger: true) { askingWipe = true }
             }
             if let problem = model.backupProblem {
                 Text(problem.words)
                     .font(Tokens.Fonts.sub)
                     .foregroundStyle(Tokens.Colors.danger)
-                    .padding(.horizontal, Tokens.Space.card)
+                    .padding(.horizontal, Tokens.Layout.cardPad)
             }
         }
     }
 
-    private var backupFooter: String {
-        guard let last = model.lastBackup else { return Words.backupNote }
-        let when = "\(Words.monthDay(Store.dayKey(last))) \(TimeText.hhmm(last))"
-        return "\(Words.backupNote)\n\(Words.lastAutoBackup(when))"
+    private var lastBackup: String? {
+        model.lastBackup.map { Words.lastAutoBackup(Words.monthDay(Store.dayKey($0))) }
     }
 }

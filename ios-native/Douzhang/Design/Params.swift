@@ -16,6 +16,8 @@ enum Params {
     static let noteMaxChars = 120
     static let jotMaxChars = 60
     static let voidTextMaxChars = 40
+    /// 「在做什麼」最多幾個字
+    static let doingMaxChars = 60
     /// 鈴響後「再做一下」的兩個選項
     static let flowMinutes = [15, 30]
     /// 慶祝畫面「今天收了幾顆」那排最多畫幾顆（多的只畫最後這幾顆）
@@ -25,18 +27,22 @@ enum Params {
     static let jarLowFpsSeconds = 3
     /// 月檢視一格最多畫幾顆小圓點，再多寫「+N」
     static let monthDotsMax = 8
+    /// 月檢視清單一天最多列幾件事，再多寫「等」
+    static let monthDoneNames = 3
     /// 匯入檔大小上限 5 MB
     static let importMaxBytes = 5 * 1024 * 1024
 
-    /// 標籤長度的刻度：5–90 分每 5 分一格
-    static let typeLengths = Array(stride(from: 5.0, through: 90.0, by: 5.0))
+    /// 標籤長度的刻度：1–90 分，一分鐘一格
+    static let typeLengths = Array(stride(from: 1.0, through: 90.0, by: 1.0))
+    /// 刻度尺每幾分畫一條長線、寫數字
+    static let rulerMajorEvery = 5
 
     /// 新安裝的五個標籤的長度與番茄色；名字在 Words.presetTags，順序對齊
     static let presetLengths: [Double] = [25, 50, 30, 45, 10]
     static let presetColors: [TomatoColor] = [.red, .purple, .orange, .yellow, .pink]
 
-    /// 計時中長大的番茄：一開始是全熟大小的幾成
-    static let growMinScale = 0.4
+    /// 休息時那顆還沒長的小青番茄：全熟大小的幾成
+    static let restTomatoScale = 0.4
 
     /// 「加一個標籤」新標籤的長度
     static let newTypeMinutes = 15.0
@@ -59,6 +65,15 @@ enum Params {
     /// 今天每收下幾顆來一次長休息；0＝關
     static let restLongEveryOptions = [0, 3, 4, 5]
     static let restLongMinuteOptions = [15, 20, 30]
+
+    /// 智能調節的休息：專注幾分 ÷ divisor；今天每滿 bonusEvery 分再加 bonusMinutes；夾在最少與最多之間
+    enum SmartRest {
+        static let divisor = 5.0
+        static let bonusEvery = 100.0
+        static let bonusMinutes = 10
+        static let minMinutes = 3
+        static let maxMinutes = 30
+    }
 
     /// 白噪音音量三段各自的大小（0–1）
     static func ambienceVolume(_ level: AmbienceLevel) -> Double {

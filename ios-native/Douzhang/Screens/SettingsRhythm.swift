@@ -1,29 +1,29 @@
 import SwiftUI
 
 /// 設定頁的「節奏」那一區：休息怎麼結束、短休息、長休息、休息完自動開始。
-/// 「我自己決定」的休息沒有長度，短休息、長休息、自動開始三列收起來。
+/// 「我自己決定」的休息沒有長度，短休息、長休息、自動開始三列收起來；
+/// 智能調節自己算長短，收起短休息、長休息，算法寫在「休息」那一列右邊。
 struct SettingsRhythm: View {
     @Environment(AppModel.self) private var model
     var onOpen: (SettingsSheet) -> Void
 
     private let modes = [
         SegmentOption(value: RestMode.auto, label: Words.restModeAuto),
+        SegmentOption(value: RestMode.smart, label: Words.restModeSmart),
         SegmentOption(value: RestMode.own, label: Words.restModeSelf),
     ]
 
     var body: some View {
         let settings = model.state.settings
-        SettingsSection(title: Words.rhythm, footer: footer(settings)) {
-            VStack(alignment: .leading, spacing: Tokens.Space.s) {
-                Text(Words.restRow)
-                    .font(Tokens.Fonts.body)
-                    .foregroundStyle(Tokens.Colors.textPrimary)
+        SettingsSection(title: Words.rhythm) {
+            VStack(alignment: .leading, spacing: Tokens.Layout.item) {
+                restHead(settings)
                 Segmented(options: modes, value: settings.restMode) { mode in
                     model.update { $0.restMode = mode }
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.vertical, Tokens.Space.m)
+            .padding(.vertical, Tokens.Layout.rowPadV)
             if settings.restMode == .auto {
                 SettingsDivider()
                 SettingsRow(label: Words.restShortRow, value: RestWords.short(settings.restShort)) {
@@ -33,6 +33,8 @@ struct SettingsRhythm: View {
                 SettingsRow(label: Words.restLongRow, value: RestWords.long(settings)) {
                     onOpen(.restLong)
                 }
+            }
+            if settings.restMode != .own {
                 SettingsDivider()
                 SettingsToggle(label: Words.autoNextRow, isOn: settings.autoNext) { isOn in
                     model.update { $0.autoNext = isOn }
@@ -41,20 +43,19 @@ struct SettingsRhythm: View {
         }
     }
 
-    /// 卡片下的說明：休息怎麼算（看得到那幾列時才講）。
-    private func footer(_ settings: AppSettings) -> String {
-        if settings.restMode == .own {
-            return Words.restSelfSub
+    /// 「休息」這一列的字；智能調節時右邊寫它怎麼算。
+    private func restHead(_ settings: AppSettings) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: Tokens.Layout.group) {
+            Text(Words.restRow)
+                .foregroundStyle(Tokens.Colors.textPrimary)
+            Spacer(minLength: .zero)
+            if settings.restMode == .smart {
+                Text(Words.restSmartValue)
+                    .foregroundStyle(Tokens.Colors.textSecondary)
+                    .multilineTextAlignment(.trailing)
+            }
         }
-        var lines: [String] = []
-        if settings.restShort == .auto {
-            lines.append(Words.restShortAutoSub)
-        }
-        if settings.restLongEvery > 0 {
-            lines.append(Words.restLongSub(settings.restLongEvery, settings.restLongMinutes))
-        }
-        lines.append(Words.autoNextSub)
-        return lines.joined(separator: "\n")
+        .font(Tokens.Fonts.body)
     }
 }
 

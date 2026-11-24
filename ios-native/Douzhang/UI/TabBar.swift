@@ -92,14 +92,20 @@ struct TabBar: View {
         }
         .padding(Tokens.Space.xs * 1.5)
         .frame(width: Tokens.Shape.tabBarWidth, height: Tokens.Shape.tabBar)
-        .background(Tokens.Colors.card, in: Capsule())
-        .shadow(
-            color: Tokens.Colors.shadow.opacity(Tokens.Shape.tabShadow.opacity),
-            radius: Tokens.Shape.tabShadow.radius,
-            y: Tokens.Shape.tabShadow.y
-        )
+        .background { plate }
         .padding(.bottom, Tokens.Shape.tabBarBottom)
         .sensoryFeedback(.selection, trigger: page)
+    }
+
+    /// 影子只掛在膠囊底上：掛在整組內容上的話，圖示與字也要一起算影子，滑動時每一格都算一次。
+    private var plate: some View {
+        Capsule()
+            .fill(Tokens.Colors.card)
+            .shadow(
+                color: Tokens.Colors.shadow.opacity(Tokens.Shape.tabShadow.opacity),
+                radius: Tokens.Shape.tabShadow.radius,
+                y: Tokens.Shape.tabShadow.y
+            )
     }
 
     private var iconStroke: StrokeStyle {

@@ -56,7 +56,8 @@ for owner in ("Words", "Params"):
         if inside <= 1:
             print(f"沒人用：{owner}.{name}")
 
-tokens_text = next(text for path, text in sources.items() if path.name == "Tokens.swift")
+# Tokens.swift 快滿 300 行，後來的代號放 Tokens 開頭的其他檔
+tokens_text = chr(10).join(text for path, text in sources.items() if path.name.startswith("Tokens"))
 groups = set(re.findall(r"    enum ([A-Za-z0-9_]+)", tokens_text))
 for group in sorted(groups):
     have = members(tokens_text, f"enum {group} {{")

@@ -119,11 +119,6 @@ enum RackCalendar {
         )
     }
 
-    /// 現在是當天的第幾小時（畫今天那條線用）。
-    static func hourOfDay(_ now: Millis) -> Double {
-        (now - DayKeys.start(Store.dayKey(now))) / Params.msPerHour
-    }
-
     /// 這個月的格子：一週一列（週一開頭）。
     /// 葉子：這個月裡、已經過完、沒有番茄的日子掛一片，不算缺。
     /// 今天與以後不掛（今天還沒過完）；第一顆番茄那天以前也不掛（那時還沒在用，不是「沒做」）。

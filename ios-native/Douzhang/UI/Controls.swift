@@ -9,7 +9,7 @@ struct PageTitle: View {
             .font(Tokens.Fonts.largeTitle)
             .foregroundStyle(Tokens.Colors.textPrimary)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.top, Tokens.Space.s)
+            .padding(.top, Tokens.Layout.pageTop)
             .accessibilityAddTraits(.isHeader)
     }
 }

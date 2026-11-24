@@ -7,9 +7,11 @@ enum TomatoColor: String, CaseIterable {
     case red, orange, yellow, purple, pink
 }
 
-/// 休息怎麼結束：到點提醒，或「我自己決定」（狀態檔裡寫成 self）。
+/// 休息多久、怎麼結束：到點提醒（照短休息、長休息的設定）、智能調節（照專注多久算，一樣到點提醒），
+/// 或「我自己決定」（狀態檔裡寫成 self）。
 enum RestMode: String {
     case auto
+    case smart
     case own = "self"
 }
 
@@ -76,6 +78,8 @@ struct FocusRun: Equatable {
     var id = ""
     var zone: String?
     var doneAt: Millis?
+    /// 正在做什麼（選填，空的就是沒填）：開始時抄下一顆填的那句，途中可以改
+    var doing = ""
 }
 
 /// 收下之後的休息。endAt 是 nil 代表「我自己決定」：不倒數，按回來才結束。
@@ -108,6 +112,7 @@ struct Bean: Equatable {
     var zone: String?
     var done = false
     var doneAt: Millis?
+    var doing = ""
 }
 
 /// 作廢的一筆：只記第幾分鐘、原因、選填那一行，什麼都不扣。
@@ -124,6 +129,7 @@ struct VoidEntry: Equatable {
     var len: Double?
     var notes: [String] = []
     var pings: [String] = []
+    var doing = ""
 }
 
 struct DayRecord: Equatable {
@@ -137,6 +143,8 @@ struct AppState: Equatable {
     var current: Current?
     var days: [String: DayRecord]
     var lastLine: Int
+    /// 下一顆要做的事（選填）。收下、作廢都留著：常常接著做同一件
+    var doing = ""
 
     /// 正在跑（或已經響了還沒收）的那一顆；不在計時中是 nil。
     var focusRun: FocusRun? {

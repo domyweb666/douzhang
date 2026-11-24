@@ -10,6 +10,7 @@ struct TimelineItem: Equatable {
     var start: Millis
     var end: Millis
     var typeId = ""
+    var doing = ""
     var len = 0.0
     var flow = 0.0
     var clue = ""
@@ -22,6 +23,7 @@ struct TimelineItem: Equatable {
 struct ReceiptRow: Equatable {
     var kind: ItemKind
     var time: Millis
+    var doing = ""
     var clue = ""
     var isDouble = false
     var flow = 0.0
@@ -58,6 +60,11 @@ enum Receipt {
         state.days.values.contains { hasRecord($0) }
     }
 
+    /// 一筆紀錄做的是什麼：有寫在做什麼就是那句，沒寫就是標籤名。
+    static func workName(_ doing: String, type: TagType) -> String {
+        doing.isEmpty ? type.name : doing
+    }
+
     /// 番茄串上的格子，依時間排。
     static func podItems(_ day: DayRecord) -> [PodItem] {
         let beans = day.beans.map { bean in
@@ -73,6 +80,7 @@ enum Receipt {
             let row = ReceiptRow(
                 kind: .bean,
                 time: bean.start ?? bean.keptAt,
+                doing: bean.doing,
                 clue: bean.clue,
                 isDouble: Store.units(bean.len) > 1,
                 flow: bean.flow,
@@ -85,6 +93,7 @@ enum Receipt {
             let row = ReceiptRow(
                 kind: .voided,
                 time: entry.voidedAt,
+                doing: entry.doing,
                 minute: entry.minute,
                 reason: entry.reason,
                 text: entry.text
@@ -106,6 +115,7 @@ enum Receipt {
                 start: start,
                 end: start + (bean.len + bean.flow) * Params.msPerMinute,
                 typeId: bean.typeId,
+                doing: bean.doing,
                 len: bean.len,
                 flow: bean.flow,
                 clue: bean.clue
@@ -117,6 +127,7 @@ enum Receipt {
                 start: entry.voidedAt - Double(entry.minute) * Params.msPerMinute,
                 end: entry.voidedAt,
                 typeId: entry.typeId,
+                doing: entry.doing,
                 minute: entry.minute,
                 reason: entry.reason,
                 text: entry.text

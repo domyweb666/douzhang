@@ -1,14 +1,14 @@
 import SwiftUI
 import UIKit
 
-/// 設定頁的一區：標題、白卡（裡面是一列列）、卡片下的說明字。
+/// 設定頁的一區：標題、白卡（裡面是一列列）。footer 只給出錯與結果用，不放常駐說明。
 struct SettingsSection<Content: View>: View {
     var title: String?
     var footer: String?
     @ViewBuilder var content: Content
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Tokens.Space.s) {
+        VStack(alignment: .leading, spacing: Tokens.Layout.item) {
             if let title {
                 Text(title)
                     .font(Tokens.Fonts.title3)
@@ -16,7 +16,7 @@ struct SettingsSection<Content: View>: View {
                     .accessibilityAddTraits(.isHeader)
             }
             VStack(spacing: .zero) { content }
-                .padding(.horizontal, Tokens.Space.card)
+                .padding(.horizontal, Tokens.Layout.cardPad)
                 .background(
                     Tokens.Colors.card,
                     in: RoundedRectangle(cornerRadius: Tokens.Shape.radiusCard)
@@ -25,7 +25,7 @@ struct SettingsSection<Content: View>: View {
                 Text(footer)
                     .font(Tokens.Fonts.caption)
                     .foregroundStyle(Tokens.Colors.textSecondary)
-                    .padding(.horizontal, Tokens.Space.card)
+                    .padding(.horizontal, Tokens.Layout.cardPad)
             }
         }
     }
@@ -54,7 +54,7 @@ struct SettingsRow: View {
     }
 
     private var row: some View {
-        HStack(spacing: Tokens.Space.m) {
+        HStack(spacing: Tokens.Layout.group) {
             Text(label)
                 .foregroundStyle(danger ? Tokens.Colors.danger : Tokens.Colors.textPrimary)
                 .frame(maxWidth: .infinity, alignment: .leading)

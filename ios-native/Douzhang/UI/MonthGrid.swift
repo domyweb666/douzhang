@@ -48,7 +48,7 @@ struct MonthGrid: View {
                 }
             }
         }
-        .padding(.top, Tokens.Space.m)
+        .padding(.top, Tokens.Layout.group)
     }
 
     /// 一格：日期（今天有產品色淡底）＋那天的番茄。別的月份的日子只寫淡淡的日期；還沒到的日子不能點。
@@ -59,11 +59,11 @@ struct MonthGrid: View {
         return Button {
             onPickDay(day.key)
         } label: {
-            VStack(spacing: Tokens.Space.xs) {
+            VStack(spacing: Tokens.Layout.tight) {
                 Text(String(Int(day.key.suffix(2)) ?? 0))
                     .font(Tokens.Fonts.caption)
                     .foregroundStyle(isToday ? Tokens.Colors.accentText : ink)
-                    .padding(.horizontal, Tokens.Space.s)
+                    .padding(.horizontal, Tokens.Layout.item)
                     .background(isToday ? Tokens.Colors.soft : .clear, in: Capsule())
                 if busy, !day.beans.isEmpty {
                     dots(day.beans)
@@ -73,7 +73,7 @@ struct MonthGrid: View {
                 }
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, Tokens.Space.xs)
+            .padding(.vertical, Tokens.Layout.tight)
             .contentShape(Rectangle())
         }
         .buttonStyle(FadeStyle())

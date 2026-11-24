@@ -81,6 +81,7 @@ enum SystemSettings {
 /// 計時中鎖在主畫面：分頁列不畫、不能滑。
 struct PagerView: View {
     @Environment(AppModel.self) private var model
+    @State private var pager = PagerMotion()
 
     var body: some View {
         @Bindable var model = model
@@ -95,6 +96,8 @@ struct PagerView: View {
         }
         .scrollTargetBehavior(.paging)
         .scrollPosition(id: $model.page)
+        .modifier(PagerWatch(pager: pager))
+        .environment(pager)
         // 一開始停在中間那頁（主畫面）
         .defaultScrollAnchor(.center)
         .scrollIndicators(.hidden)

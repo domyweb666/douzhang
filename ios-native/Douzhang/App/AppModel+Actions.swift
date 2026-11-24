@@ -66,6 +66,11 @@ extension AppModel {
         pulses.removed += 1
     }
 
+    /// 改「正在做什麼」：計時中改這一顆的，同時留給下一顆。
+    func setDoing(_ text: String) {
+        commit(Machine.setDoing(settled(), text: text))
+    }
+
     // MARK: 標籤
 
     func pickType(_ id: String) {

@@ -33,7 +33,7 @@ struct TomatoColorRow: View {
     }
 }
 
-/// 一個標籤的編輯：改名、番茄色、滾輪選長度、這個長度最近怎麼結束的那一行、最下面刪除（只剩一個時沒有）。
+/// 一個標籤的編輯：改名、番茄色、滾輪選長度、最下面刪除（只剩一個時沒有）。
 /// 改了立刻存，「好」只是關。
 /// 主畫面的標籤半頁與設定頁共用。
 struct TagEditor: View {
@@ -60,7 +60,6 @@ struct TagEditor: View {
             TomatoColorRow(value: type.color) { model.setTypeColor(type.id, color: $0) }
                 .padding(.top, Tokens.Space.m)
             lengthWheel
-            lengthNote
             BigButton(label: Words.confirm) {
                 saveName()
                 onClose()
@@ -79,29 +78,18 @@ struct TagEditor: View {
         .onChange(of: type.name) { _, next in name = next }
     }
 
-    /// 系統的滾輪（滾動有系統的輕觸覺）。長度只能從刻度選。
+    /// 一分鐘一格、頭尾相接的滾輪。長度只能從刻度選。
     private var lengthWheel: some View {
         let selection = Binding(
-            get: { type.len },
+            get: { SettingsLogic.nearestLen(type.len) },
             set: { model.setTypeLen(type.id, len: $0) }
         )
-        return Picker(Words.taskType, selection: selection) {
-            ForEach(Params.typeLengths, id: \.self) { len in
-                Text(Words.typeLen(len)).tag(len)
-            }
-        }
-        .pickerStyle(.wheel)
-        .labelsHidden()
-    }
-
-    /// 這個長度最近幾顆怎麼結束的。只列計數，長度要不要調她自己看；換了長度就從新長度重新數。
-    private var lengthNote: some View {
-        let outcome = Insights.lengthOutcome(model.state, type: type, now: TimeText.nowMillis())
-        return Text(Words.lengthLine(outcome, len: type.len))
-            .font(Tokens.Fonts.caption)
-            .foregroundStyle(Tokens.Colors.textSecondary)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.bottom, Tokens.Space.m)
+        return LoopWheel(
+            label: Words.lengthA11y,
+            values: Params.typeLengths,
+            selection: selection,
+            text: { Words.typeLen($0) }
+        )
     }
 
     private func saveName() {

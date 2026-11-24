@@ -108,4 +108,16 @@ enum Store {
         case let .minutes(fixed): return RestPlan(minutes: fixed, long: false)
         }
     }
+
+    /// 智能調節：這顆專注幾分（含延長）÷ 5；今天的專注每跨過一個 100 分再加 10，跨過的那次算長休息。
+    /// 25 分休 5、第四顆跨過 100 休 15，就是原本的番茄鐘，換成任何長度都算得出來。
+    /// before＝那天在這顆之前已經專注幾分。
+    static func smartRest(focused: Double, before: Double) -> RestPlan {
+        let every = Params.SmartRest.bonusEvery
+        let crossed = Int((before + focused) / every) - Int(before / every)
+        let base = Int((focused / Params.SmartRest.divisor).rounded())
+        let minutes = base + crossed * Params.SmartRest.bonusMinutes
+        let capped = min(Params.SmartRest.maxMinutes, max(Params.SmartRest.minMinutes, minutes))
+        return RestPlan(minutes: capped, long: crossed > 0)
+    }
 }

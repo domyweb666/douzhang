@@ -5,8 +5,8 @@ import SwiftUI
 struct BellScreen: View {
     @Environment(AppModel.self) private var model
     @State private var draft = ""
+    /// 開著筆記本那張半頁
     @State private var noteOpen = false
-    @FocusState private var noteFocused: Bool
 
     var body: some View {
         if let run = model.state.focusRun {
@@ -23,26 +23,28 @@ struct BellScreen: View {
                     .padding(.bottom, Tokens.Space.l)
                 }
                 .scrollIndicators(.hidden)
-                .scrollDismissesKeyboard(.interactively)
                 BigButton(label: late > 0 ? Words.keepThis : Words.keepAndRest) {
                     model.keep(text: draft)
                 }
                 flowRow(run)
             }
             .padding(.bottom, Tokens.Space.m)
-            .onAppear {
-                draft = run.draft
-                noteOpen = !run.draft.isEmpty
-            }
+            .sheet(isPresented: $noteOpen) { NotebookSheet(text: $draft) }
+            .onAppear { draft = run.draft }
             // 每個字都存：切走或殺掉再開，打到一半的字還在
             .onChange(of: draft) { _, next in model.setDraft(next) }
         }
     }
 
     /// 很久才回來（超過這顆的休息長度）：多一行「響了 N 分鐘前。收下後直接回待機。」
+    /// 智能調節的休息跟著今天的累計走，跟收下時用同一個算法；其他模式照舊用番茄長度。
     private func lateMinutes(_ run: FocusRun) -> Int {
         let ago = model.now - run.endAt
-        let limit = Double(Store.restMinutes(run.len)) * Params.msPerMinute
+        let isSmart = model.state.settings.restMode == .smart
+        let rest = isSmart
+            ? Machine.restPlan(model.state, run: run).minutes
+            : Store.restMinutes(run.len)
+        let limit = Double(rest) * Params.msPerMinute
         return ago >= limit ? Int(ago / Params.msPerMinute) : 0
     }
 
@@ -62,24 +64,23 @@ struct BellScreen: View {
         .padding(.top, Tokens.Space.l)
     }
 
-    /// 選填的一句：先是一列可點的字，點了才變成輸入框（不然一進來鍵盤就蓋住番茄）。打過字的回來直接是輸入框。
+    /// 選填的一句：點了開筆記本，不在這一頁打字（鍵盤會蓋住番茄）。寫過就顯示那句，點了再開。
     @ViewBuilder private var noteField: some View {
-        if noteOpen {
-            TextField(Words.notePlaceholder, text: $draft, axis: .vertical)
-                .focused($noteFocused)
-                .modifier(FieldChrome(focused: noteFocused))
-                .onChange(of: draft) { _, next in
-                    if next.count > Params.noteMaxChars {
-                        draft = String(next.prefix(Params.noteMaxChars))
-                    }
-                }
-                .padding(.top, Tokens.Space.m)
+        if draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            TextButton(label: Words.noteOptional, tone: .secondary) { noteOpen = true }
+                .padding(.top, Tokens.Layout.group)
         } else {
-            TextButton(label: Words.noteOptional, tone: .secondary) {
-                Feel.change { noteOpen = true }
-                noteFocused = true
+            Button {
+                noteOpen = true
+            } label: {
+                Text(draft)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .modifier(FieldChrome(focused: false))
             }
-            .padding(.top, Tokens.Space.m)
+            .buttonStyle(FadeStyle())
+            .accessibilityHint(Words.noteTitle)
+            .padding(.top, Tokens.Layout.group)
         }
     }
 

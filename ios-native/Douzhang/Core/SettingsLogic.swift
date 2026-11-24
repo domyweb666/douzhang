@@ -57,6 +57,12 @@ enum SettingsLogic {
         return mapType(state, id: id) { $0.len = len }
     }
 
+    /// 刻度上離這個長度最近的一格：舊檔的 12.5 分這種，打開滾輪與刻度尺時停在這裡。
+    static func nearestLen(_ len: Double) -> Double {
+        let scale = Params.typeLengths
+        return min(scale[scale.count - 1], max(scale[0], len.rounded()))
+    }
+
     static func setTypeColor(_ state: AppState, id: String, color: TomatoColor) -> AppState {
         mapType(state, id: id) { $0.color = color }
     }

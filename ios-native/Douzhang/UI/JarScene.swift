@@ -34,8 +34,10 @@ final class JarScene {
     /// 靜止版（減少動態、或連續掉幀）：不傾斜、不彈，新的一顆直接出現在底，啵與觸覺照樣。
     @ObservationIgnored var reduceMotion = false
     @ObservationIgnored var soundOn = true
-    /// 這頁看得到嗎：看不到就關感測器、不醒來
+    /// 停在這一頁嗎：停在別頁就關感測器
     @ObservationIgnored var active = true
+    /// 三頁正在滑、或停在別頁：感測器的讀數不理，不醒來
+    @ObservationIgnored private var frozen = false
     @ObservationIgnored var onKnown: (Int) -> Void = { _ in }
 
     var isStill: Bool {
@@ -186,11 +188,27 @@ final class JarScene {
 
     private func wake() {
         quietFrames = 0
-        lastFrame = 0
-        // 停著的那段不算掉幀：不然停停醒醒幾次就會被當成太慢，退成靜止版
-        slow.restart()
+        restartClock()
         if asleep {
             asleep = false
+        }
+    }
+
+    /// 停過一陣子再接著畫：停著的那段不算時間，也不算掉幀，不然停停醒醒幾次就會退成靜止版。
+    private func restartClock() {
+        lastFrame = 0
+        slow.restart()
+    }
+}
+
+// MARK: 滑頁時凍結
+
+extension JarScene {
+    /// 滑動一開始就凍住，停回這一頁才接著走。睡著的照樣睡著，不因為滑走再滑回來就重畫。
+    func setFrozen(_ isOn: Bool) {
+        frozen = isOn
+        if !isOn {
+            restartClock()
         }
     }
 
@@ -206,11 +224,15 @@ final class JarScene {
     }
 
     /// 傾斜：加速度計換成重力向量的目標值；關掉時回到靜置重力。沒有加速度計（模擬器）就什麼都不做。
+    /// 只是滑走的話留著原本的方向：滑回來還沒接上感測器的那一下，番茄不會自己滾。
     func setTilt(_ isOn: Bool) {
         motion.stopAccelerometerUpdates()
-        targetX = 0
-        targetY = world.tuning.gravity
-        guard isOn, active, !isStill, motion.isAccelerometerAvailable else { return }
+        guard isOn, !isStill, motion.isAccelerometerAvailable else {
+            targetX = 0
+            targetY = world.tuning.gravity
+            return
+        }
+        guard active else { return }
         motion.accelerometerUpdateInterval = JarWorld.frame
         motion.startAccelerometerUpdates(to: .main) { [weak self] data, _ in
             guard let self, let reading = data?.acceleration else { return }
@@ -221,6 +243,9 @@ final class JarScene {
     }
 
     private func tilt(x: Double, y: Double) {
+        if frozen {
+            return
+        }
         targetX = x * Tokens.Motion.tiltPerG
         targetY = -y * Tokens.Motion.tiltPerG
         // 跟睡著時的重力比（睡著時它停著不動）：慢慢傾斜也會累積到門檻；
@@ -231,44 +256,16 @@ final class JarScene {
         }
     }
 
-    /// 滑走時停下（感測器關掉）；滑回來時接上傾斜、醒來走幾幀再睡。
+    /// 停穩在別頁才關感測器，停穩回這一頁才接上。滑到一半又滑回來的不動它。
     func setActive(_ isOn: Bool, tilt isTiltOn: Bool) {
+        if active == isOn {
+            return
+        }
         active = isOn
         setTilt(isTiltOn)
-        if isOn {
-            wake()
-        }
     }
 
     func stop() {
         motion.stopAccelerometerUpdates()
-    }
-}
-
-/// 每秒結算一次幀數：連續幾秒低於門檻就退成靜止版（低電量、很舊的手機的退路）。
-struct SlowWatch {
-    private var frames = 0
-    private var since: TimeInterval = 0
-    private var lowSeconds = 0
-    private(set) var tooSlow = false
-
-    mutating func count(now: TimeInterval) {
-        frames += 1
-        if since == 0 {
-            since = now
-        }
-        guard now - since > 1 else { return }
-        lowSeconds = frames < Params.jarLowFps ? lowSeconds + 1 : 0
-        frames = 0
-        since = now
-        if lowSeconds >= Params.jarLowFpsSeconds {
-            tooSlow = true
-        }
-    }
-
-    /// 停過一陣子再開始畫：從下一幀重新數，停著的時間不算進這一秒
-    mutating func restart() {
-        frames = 0
-        since = 0
     }
 }

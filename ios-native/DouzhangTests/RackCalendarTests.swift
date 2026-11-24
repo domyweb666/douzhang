@@ -132,8 +132,4 @@ final class RackCalendarTests: XCTestCase {
         XCTAssertEqual(RackCalendar.axisHours([blocks]), AxisHours(from: 0, upTo: 24))
         XCTAssertNil(RackCalendar.axisHours([[], []]))
     }
-
-    func test現在是當天第幾小時() {
-        XCTAssertEqual(RackCalendar.hourOfDay(Moment.local(2026, 11, 17, 14, 30)), 14.5)
-    }
 }

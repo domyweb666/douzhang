@@ -2,15 +2,14 @@ import SwiftUI
 
 /// 番茄架的時間軸：天、3 天、週共用這一個，差別只在一次排幾欄。
 /// 左邊時刻，右邊一天一欄；每顆番茄是它標籤顏色的實心方塊，畫在開始的時刻、高度照長度，作廢是虛線框。
-/// 時間重疊的並排、同一群平分欄寬（排法在 Core/RackCalendar.swift）；今天那欄有一條標出現在時間的線。
-/// 字的多寡跟著欄寬：天＝標籤、長度、那句；3 天＝標籤；週太窄，不寫字。
+/// 時間重疊的並排、同一群平分欄寬（排法在 Core/RackCalendar.swift）。
+/// 字的多寡跟著欄寬：天＝做什麼、長度、那句；3 天＝做什麼；週太窄，不寫字。
+/// 「做什麼」是這顆寫的那句在做什麼，沒寫就是標籤名。
 struct RackTimeline: View {
     var state: AppState
     /// 要畫的那幾天（1、3 或 7 個日期鍵）
     var keys: [String]
     var view: RackView
-    var now: Millis
-    var todayKey: String
     /// 點了某一天的方塊
     var onOpen: (String) -> Void
 
@@ -38,7 +37,7 @@ struct RackTimeline: View {
                 .padding(.leading, Tokens.Rack.timelineGutter)
             }
             .frame(height: Double(axis.upTo - axis.from) * hourHeight, alignment: .top)
-            .padding(.top, Tokens.Space.m)
+            .padding(.top, Tokens.Layout.group)
         }
     }
 
@@ -71,24 +70,12 @@ struct RackTimeline: View {
                         y: (block.top - Double(from)) * hourHeight
                     )
                 }
-                if key == todayKey {
-                    nowLine(from: from)
-                }
             }
         }
     }
 
     private func type(of item: TimelineItem) -> TagType {
         Machine.typeOf(state, item.typeId)
-    }
-
-    /// 今天那一欄標出現在時間的橫線。
-    private func nowLine(from: Int) -> some View {
-        let hour = RackCalendar.hourOfDay(now)
-        return Tokens.Colors.accent
-            .frame(height: Tokens.Rack.nowLine)
-            .offset(y: (hour - Double(from)) * hourHeight)
-            .allowsHitTesting(false)
     }
 }
 
@@ -125,8 +112,8 @@ struct TimelineBlock: View {
                 }
                 if view != .week, pixels >= Double(Tokens.Rack.timelineTextMin) {
                     text
-                        .padding(.horizontal, Tokens.Space.s)
-                        .padding(.top, isTall ? Tokens.Space.xs : .zero)
+                        .padding(.horizontal, Tokens.Layout.item)
+                        .padding(.top, isTall ? Tokens.Layout.tight : .zero)
                 }
             }
             .clipShape(shape)
@@ -136,16 +123,25 @@ struct TimelineBlock: View {
         .accessibilityLabel(a11yLabel)
     }
 
+    private var name: String {
+        Receipt.workName(block.item.doing, type: type)
+    }
+
     private var title: String {
-        Words.blockTitle(type.name, len: block.item.len, flow: block.item.flow)
+        Words.blockTitle(name, len: block.item.len, flow: block.item.flow)
     }
 
     private var voidLine: String {
         let item = block.item
-        return Words.voidLine(minute: item.minute, reason: item.reason, text: item.text)
+        return Words.voidLine(
+            minute: item.minute,
+            reason: item.reason,
+            text: item.text,
+            doing: item.doing
+        )
     }
 
-    /// 天檢視且沒有並排才寫完整的（標籤・長度，夠高再加那句），其他只寫標籤名；作廢只在天檢視寫。
+    /// 天檢視且沒有並排才寫完整的（做什麼・長度，夠高再加那句），其他只寫做什麼；作廢只在天檢視寫。
     @ViewBuilder private var text: some View {
         let isFull = view == .day && block.lanes == 1
         let ink = Tokens.Tomato.onBody(type.color).color
@@ -160,7 +156,7 @@ struct TimelineBlock: View {
                     Text(block.item.clue).lineLimit(2)
                 }
             } else {
-                Text(type.name).lineLimit(1)
+                Text(name).lineLimit(1)
             }
         }
         .font(Tokens.Fonts.caption)

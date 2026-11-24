@@ -16,6 +16,7 @@ enum StateEncoding {
             "settings": writeSettings(state.settings),
             "days": state.days.mapValues(writeDay),
             "lastLine": state.lastLine,
+            "doing": state.doing,
         ]
         if let current = state.current {
             object["current"] = writeCurrent(current)
@@ -83,6 +84,7 @@ enum StateEncoding {
             "done": run.done,
             "draft": run.draft,
             "id": run.id,
+            "doing": run.doing,
         ]
         object["tz"] = run.zone
         object["doneAt"] = run.doneAt
@@ -130,6 +132,9 @@ enum StateEncoding {
         if !bean.id.isEmpty {
             object["id"] = bean.id
         }
+        if !bean.doing.isEmpty {
+            object["doing"] = bean.doing
+        }
         return object
     }
 
@@ -148,6 +153,9 @@ enum StateEncoding {
         object["len"] = entry.len
         if !entry.id.isEmpty {
             object["id"] = entry.id
+        }
+        if !entry.doing.isEmpty {
+            object["doing"] = entry.doing
         }
         return object
     }

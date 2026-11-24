@@ -33,6 +33,8 @@ targets:
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
         UILaunchScreen: {}
+        # 沒這行，iPhone 上 app 自己的動畫最快只到 60Hz（Expo 版有，轉 SwiftUI 時漏了）
+        CADisableMinimumFrameDurationOnPhone: true
         # 白噪音：鎖屏、切到別的 app 也繼續播。只有 audio，沒有別的背景模式
         UIBackgroundModes:
           - audio

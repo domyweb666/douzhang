@@ -2,7 +2,7 @@ import FamilyControls
 import SwiftUI
 
 /// 設定頁的「專注」那一區：計時中擋住其他 app。
-/// 兩列都要先有螢幕使用時間的授權：不允許就不開、不開選擇畫面，卡片下換成那一行說明。
+/// 兩列都要先有螢幕使用時間的授權：不允許就不開、不開選擇畫面，卡片下才出現那一行。
 struct SettingsShield: View {
     @Environment(AppModel.self) private var model
     @State private var denied = false
@@ -13,7 +13,7 @@ struct SettingsShield: View {
         let count = model.shieldCount
         SettingsSection(
             title: Words.shieldSection,
-            footer: denied ? Words.shieldDenied : Words.shieldSub
+            footer: denied ? Words.shieldDenied : nil
         ) {
             SettingsToggle(label: Words.shieldRow, isOn: model.state.settings.shield) { isOn in
                 Task { denied = await !model.setShield(isOn) }

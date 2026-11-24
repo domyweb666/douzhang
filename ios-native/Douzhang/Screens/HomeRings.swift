@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// 番茄就是時鐘：一圈進度環圍著那顆番茄，走完一圈就熟。
-/// 多大、什麼顏色由 Core/Grow.swift 算；這裡只畫。純裝飾，讀屏略過（剩多久在下面的時間）。
+/// 什麼顏色由 Core/Grow.swift 算；這裡只畫。純裝飾，讀屏略過（剩多久在下面的時間）。
 struct RingTomato: View {
     /// 環的直徑
     var size: CGFloat
@@ -37,7 +37,7 @@ struct RingBlock<Below: View>: View {
     var progress: Double
     var ringColor: Color
     var fill: Color
-    var scale: Double
+    var scale = 1.0
     var time: String
     /// 時間是往下數的（「我自己決定」的休息往上數）：數字換值時往哪邊滾
     var countsDown = true
@@ -68,7 +68,7 @@ struct RingBlock<Below: View>: View {
     }
 }
 
-/// 計時中：環是標籤的番茄色，裡面那顆從青長成標籤色；整塊點一下開記一筆。
+/// 計時中：環是標籤的番茄色，裡面那顆大小固定、從青變成標籤色；整塊點一下開記一筆。
 struct FocusRing: View {
     var run: FocusRun
     var type: TagType
@@ -84,7 +84,6 @@ struct FocusRing: View {
                 progress: progress,
                 ringColor: ripe.color,
                 fill: fill.color,
-                scale: Grow.scale(progress),
                 time: TimeText.mmss(run.endAt - now)
             ) {
                 if run.done {
@@ -119,15 +118,15 @@ struct RestRing: View {
             progress: progress,
             ringColor: Tokens.Tomato.vine.color,
             fill: Tokens.Tomato.unripe.color,
-            scale: Params.growMinScale,
+            scale: Params.restTomatoScale,
             time: time,
             countsDown: run.endAt != nil
         ) {
-            HomeCaption(text: run.long ? Words.restLongRow : Words.rest)
-            HomeCaption(text: Words.restBody)
-            if !run.msg.isEmpty {
-                HomeCaption(text: run.msg)
-            }
+            EmptyView()
         }
+        // 畫面上只剩時間：是不是休息，讀屏還是要念得出來
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(run.long ? Words.restLongRow : Words.rest)
+        .accessibilityValue(time)
     }
 }

@@ -15,11 +15,11 @@ struct StatsPanel<Footer: View>: View {
     @ViewBuilder var footer: Footer
 
     var body: some View {
-        VStack(spacing: Tokens.Space.m) {
+        VStack(spacing: Tokens.Layout.group) {
             whereCard(Stats.stats(state, keys: Stats.rangeDays(range, selected: selected)))
             jotCard(Insights.jotTally(state, now: TimeText.nowMillis()))
         }
-        .padding(.top, Tokens.Space.m)
+        .padding(.top, Tokens.Layout.section)
     }
 
     /// 第一張：這段時間花在哪幾種事上。

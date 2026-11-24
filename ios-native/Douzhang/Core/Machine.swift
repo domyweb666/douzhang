@@ -74,7 +74,8 @@ enum Machine {
             startedAt: now,
             endAt: now + type.len * Params.msPerMinute,
             id: Store.recordId(now),
-            zone: zone
+            zone: zone,
+            doing: state.doing
         )
         return with(state, current: .focus(run))
     }
@@ -88,11 +89,9 @@ enum Machine {
     static func keep(_ state: AppState, now: Millis, text: String) -> AppState {
         guard let run = state.focusRun else { return state }
         let key = dayKey(of: run)
+        let plan = restPlan(state, run: run)
         var next = with(state, current: nil)
         next.days[key, default: DayRecord()].beans.append(bean(from: run, now: now, text: text))
-        // 那天第幾顆決定這次是短休息還是長休息
-        let count = next.days[key]?.beans.count ?? 0
-        let plan = Store.restAfter(state.settings, len: run.len, beansToday: count)
         var restMs = Double(plan.minutes) * Params.msPerMinute
         // 測試顆的休息跟它一樣短，不然看一次掉番茄要等好幾分鐘；輪到長休息時照樣標成長休息
         if run.typeId == devTypeId {
@@ -161,7 +160,8 @@ enum Machine {
             zone: run.zone,
             len: run.len,
             notes: run.notes,
-            pings: run.pings
+            pings: run.pings,
+            doing: run.doing
         )
         next.days[dayKey(of: run), default: DayRecord()].voids.append(entry)
         return next
@@ -239,7 +239,7 @@ extension Machine {
         Store.dayKey(run.startedAt, zone: run.zone)
     }
 
-    /// 進行中那顆身上帶的東西，收下時全部抄進番茄：編號、時區、有沒有提早做完與幾點按的。
+    /// 進行中那顆身上帶的東西，收下時全部抄進番茄：編號、時區、有沒有提早做完與幾點按的、在做什麼。
     private static func bean(from run: FocusRun, now: Millis, text: String) -> Bean {
         Bean(
             keptAt: now,
@@ -253,7 +253,22 @@ extension Machine {
             id: run.id,
             zone: run.zone,
             done: run.done,
-            doneAt: run.doneAt
+            doneAt: run.doneAt,
+            doing: run.doing
         )
+    }
+}
+
+// MARK: 休息多久
+
+extension Machine {
+    /// 收下這顆之後休息多久。state 是還沒收下這顆的狀態：照「那天」已經收下的算，跨日從頭數。
+    static func restPlan(_ state: AppState, run: FocusRun) -> RestPlan {
+        let kept = state.days[dayKey(of: run)]?.beans ?? []
+        if state.settings.restMode == .smart {
+            let before = kept.reduce(0.0) { $0 + $1.len + $1.flow }
+            return Store.smartRest(focused: run.len + run.flowMin, before: before)
+        }
+        return Store.restAfter(state.settings, len: run.len, beansToday: kept.count + 1)
     }
 }

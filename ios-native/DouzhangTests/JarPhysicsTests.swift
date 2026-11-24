@@ -86,12 +86,19 @@ final class JarPhysicsTests: XCTestCase {
         XCTAssertEqual(world.radiusFor(minutes: 200), base * 1.9, accuracy: 1e-9)
     }
 
-    func test刻度上每一格長度的番茄都比前一格大() {
+    func test刻度上每一格長度的番茄都比前一格大最短的幾格一樣小() {
         let world = JarLab.world()
         let sizes = Params.typeLengths.map { world.radiusFor(minutes: $0) }
+        let smallest = world.radiusFor(minutes: 1)
         for index in 1 ..< sizes.count {
-            XCTAssertGreaterThan(sizes[index], sizes[index - 1])
+            if sizes[index] > smallest {
+                XCTAssertGreaterThan(sizes[index], sizes[index - 1])
+            } else {
+                // 太小會看不見：最短的幾格夾在下限
+                XCTAssertEqual(sizes[index], smallest)
+            }
         }
+        XCTAssertGreaterThan(world.radiusFor(minutes: 7), smallest)
     }
 
     func test從上面掉一顆兩秒內落在底而且落地那一幀有回報() throws {

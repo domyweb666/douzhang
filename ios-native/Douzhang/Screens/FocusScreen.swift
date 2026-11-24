@@ -43,7 +43,7 @@ struct FlipCard: View {
     }
 }
 
-/// 聚焦模式：計時中橫放的整頁時鐘。黑底、四張深灰牌倒數，左邊一顆在長的番茄，
+/// 聚焦模式：計時中橫放的整頁時鐘。黑底、四張深灰牌倒數，左邊一顆在變色的番茄，
 /// 下面一行這顆的標籤。淺色深色都是這一組。
 /// 平常只有時鐘；點一下畫面，底下出現「記一筆」「結束這顆」「回主畫面」，過幾秒自己收起來。
 /// 記一筆與結束都要打字或選，橫向時鍵盤會蓋掉大半個畫面，所以按了先回直向的主畫面再開那張半頁。
@@ -82,13 +82,12 @@ struct FocusScreen: View {
         .onDisappear { hiding?.cancel() }
     }
 
-    /// 翻牌左邊那顆在長的番茄：位子固定是全熟大小，番茄從青長成標籤色、從小長到滿。
+    /// 翻牌左邊那顆番茄：大小固定，只從青變成標籤色。
     private func tomato(box: CGFloat) -> some View {
         let progress = Grow.progress(.focus(run), now: model.now)
         let ripe = Tokens.Tomato.body(type.color)
         let fill = Grow.ripeColor(progress, unripe: Tokens.Tomato.unripe, ripe: ripe)
-        return TomatoView(fill: fill.color, size: box * CGFloat(Grow.scale(progress)))
-            .frame(width: box, height: box)
+        return TomatoView(fill: fill.color, size: box)
     }
 
     /// 四張牌：分分：秒秒。

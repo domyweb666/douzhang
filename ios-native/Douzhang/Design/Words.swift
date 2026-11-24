@@ -11,10 +11,10 @@ enum Words {
     static let keepThis = "收下這顆"
     static let keepAndRest = "收下，休息一下"
     static let rest = "休息"
-    static let restBody = "離開螢幕。喝水、看遠處、伸展、閉眼都好。"
     static let backFromRest = "回來了，開始下一顆"
     static let ripeTitle = "熟了，又收下一顆"
     static let noteOptional = "✎ 寫一句給自己（選填）"
+    static let noteTitle = "寫一句給自己"
     static let notePlaceholder = "這顆做了什麼、下次從哪接"
 
     // MARK: 中途
@@ -24,13 +24,14 @@ enum Words {
     static let notePing = "有人找"
     static let noteTitleThought = "冒出什麼念頭？"
     static let noteTitlePing = "誰找你、什麼事？"
-    static let noteSub = "點一下就記下。想寫一行也可以，休息時再處理。"
     static let jotDown = "記下"
     static let tapNoteHint = "點一下畫面記一筆"
     static let more = "⋯"
     static let moreA11y = "這一顆的選項"
     static let moreTitle = "這一顆"
     static let endThis = "結束這顆"
+    /// 記一筆半頁右邊那顆：位子窄，讀屏念的是 endThis
+    static let endShort = "結束"
     static let endTitle = "結束這顆？"
     static let endSubEarly = "開始不到五分鐘，停下來不會留下紀錄。"
     static let endSub = "作廢只記一筆，不扣任何東西。"
@@ -44,6 +45,12 @@ enum Words {
     static let voidReasons = ["念頭", "有人找", "卡住", "其他"]
     static let voidTextPlaceholder = "例：去看留言（分鐘數會自動記）"
     static let keepGoing = "繼續做"
+
+    // MARK: 正在做什麼
+
+    static let doing = "在做什麼"
+    static let doingPlaceholder = "例：寫第三節"
+    static let clearDoing = "清掉這句"
 
     // MARK: 聚焦模式
 
@@ -59,9 +66,12 @@ enum Words {
     static let addType = "加一個標籤"
     static let deleteThisType = "刪除這個標籤"
     static let typeNameA11y = "標籤名字"
+    static let lengthA11y = "長度"
+    static let minuteUnit = "分"
+    static let dialDone = "完成"
+    static let dialHint = "點兩下改長度"
     static let newTypeName = "新標籤"
     static let unnamedType = "未命名"
-    static let typeSub = "每個標籤一個長度，番茄大小跟著長度走"
     static let devTypeName = "測試"
 
     // MARK: 通知：文案固定，不含使用者寫的那句
@@ -89,16 +99,14 @@ enum Words {
     static let rhythm = "節奏"
     static let restRow = "休息"
     static let restModeAuto = "到點提醒我"
+    static let restModeSmart = "智能調節"
     static let restModeSelf = "我自己決定"
-    static let restSelfSub = "休息不倒數，按「回來了，開始下一顆」才結束。"
     static let restShortRow = "短休息"
     static let restShortAuto = "跟著長度"
-    static let restShortAutoSub = "跟著長度：番茄長度 ÷ 5，最少 3 分。"
     static let restLongRow = "長休息"
     static let restLongOff = "關"
     static let autoNextRow = "休息完自動開始下一顆"
-    static let autoNextSub = "同一個標籤。「我自己決定」的休息不會自動開始。"
-    static let reminders = "提醒"
+    static let general = "一般"
     static let notifRow = "到點通知"
     static let notifOn = "開著"
     static let notifOff = "沒開"
@@ -107,7 +115,6 @@ enum Words {
     static let tiltRow = "傾斜手機，番茄跟著滾"
     static let devSection = "開發"
     static let testModeRow = "測試模式"
-    static let testModeSub = "開了之後，主畫面的開始鈕直接開一顆 5 秒的測試番茄，休息也 5 秒。會記進今天的紀錄。"
 
     // MARK: 計時中擋住其他 app
 
@@ -115,15 +122,13 @@ enum Words {
     static let shieldRow = "計時中擋住其他 app"
     static let shieldAppsRow = "要擋的 app"
     static let shieldAppsNone = "還沒選"
-    static let shieldSub = "按開始那一刻擋上；收下、結束，或響了之後回到番茄帳就解開。"
     static let shieldDenied = "螢幕使用時間沒有允許，所以開不了。"
 
     // MARK: 備份與清空
 
-    static let backup = "備份"
+    static let dataSection = "資料"
     static let exportBackup = "匯出備份"
     static let importBackup = "從備份匯入"
-    static let backupNote = "番茄帳的資料只在這支 iPhone 上。每週匯出一次備份。"
     static let importTooBig = "這個檔案太大，不像番茄帳的備份，原本的資料沒動"
     static let autoBackupFailed = "沒辦法先把現在的資料備份起來，這次不匯入，原本的資料沒動"
     static let exportFailed = "這次沒匯出成功，原本的資料沒動"
@@ -133,7 +138,9 @@ enum Words {
     static let cancel = "取消"
     static let wipeAll = "清空所有資料"
     static let wipeTitle = "清空所有番茄、番茄串和設定後就找不回來了"
-    static let wipeBody = "要留的話先匯出備份。"
+    static let wipeExportFirst = "先匯出備份"
+    static let wipeAgainTitle = "真的要清空？清了就拿不回來"
+    static let wipeAgainOk = "永久清空"
     static let wipedLine = "全部清掉了。清掉的拿不回來，有匯出過的備份可以在設定匯入。"
     static let wipedAction = "去設定匯入"
 

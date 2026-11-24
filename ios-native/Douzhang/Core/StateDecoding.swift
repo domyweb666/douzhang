@@ -36,7 +36,8 @@ enum StateDecoding {
             settings: settings,
             current: StateUpgrade.numbered(readCurrent(object["current"], settings: settings)),
             days: StateUpgrade.regrouped(StateUpgrade.numbered(days)),
-            lastLine: JSONRead.int(object["lastLine"]) ?? -1
+            lastLine: JSONRead.int(object["lastLine"]) ?? -1,
+            doing: JSONRead.string(object["doing"]) ?? ""
         )
     }
 
@@ -49,12 +50,12 @@ enum StateDecoding {
         let longMinutes = onScale(Params.restLongMinuteOptions, raw["restLongMinutes"])
         let ambience = JSONRead.string(raw["ambience"]).flatMap(AmbienceKind.init(rawValue:))
         let volume = JSONRead.string(raw["ambienceVolume"]).flatMap(AmbienceLevel.init(rawValue:))
-        let isOwn = JSONRead.string(raw["restMode"]) == RestMode.own.rawValue
+        let restMode = JSONRead.string(raw["restMode"]).flatMap(RestMode.init(rawValue:))
         let live = types.isEmpty ? base.types : types
         var settings = AppSettings(
             types: live,
             typeId: JSONRead.string(raw["typeId"]) ?? base.typeId,
-            restMode: isOwn ? .own : .auto,
+            restMode: restMode ?? base.restMode,
             sound: JSONRead.bool(raw["sound"], or: base.sound),
             demo: readDemo(raw["demo"]),
             tilt: JSONRead.bool(raw["tilt"], or: base.tilt),
@@ -134,7 +135,8 @@ enum StateDecoding {
             id: JSONRead.string(raw["id"]) ?? "",
             zone: JSONRead.string(raw["tz"]),
             done: JSONRead.bool(raw["done"], or: false),
-            doneAt: JSONRead.number(raw["doneAt"])
+            doneAt: JSONRead.number(raw["doneAt"]),
+            doing: JSONRead.string(raw["doing"]) ?? ""
         )
     }
 
@@ -150,7 +152,8 @@ enum StateDecoding {
             zone: JSONRead.string(raw["tz"]),
             len: JSONRead.number(raw["len"]),
             notes: JSONRead.strings(raw["notes"]),
-            pings: JSONRead.strings(raw["pings"])
+            pings: JSONRead.strings(raw["pings"]),
+            doing: JSONRead.string(raw["doing"]) ?? ""
         )
     }
 
@@ -183,7 +186,8 @@ enum StateDecoding {
             draft: JSONRead.string(raw["draft"]) ?? "",
             id: JSONRead.string(raw["id"]) ?? "",
             zone: JSONRead.string(raw["tz"]),
-            doneAt: JSONRead.number(raw["doneAt"])
+            doneAt: JSONRead.number(raw["doneAt"]),
+            doing: JSONRead.string(raw["doing"]) ?? ""
         )
     }
 

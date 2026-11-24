@@ -30,6 +30,16 @@ extension Words {
         "\(type.name)・\(typeLen(type.len))" + (more ? " \(chevron)" : "")
     }
 
+    /// 計時中的膠囊有寫在做什麼時，那句後面接的長度：「・25 分」。分開寫是為了那句太長時長度不會被截掉。
+    static func lenTail(_ len: Double) -> String {
+        "・\(typeLen(len))"
+    }
+
+    /// 待機那顆小鈕：填了就是那句，沒填是「在做什麼」。
+    static func doingChip(_ line: String) -> String {
+        line.isEmpty ? doing : line
+    }
+
     /// 待機開始鈕的字：「開始・25 分」。
     static func startLabel(_ len: Double) -> String {
         "\(start)・\(number(len)) 分"
@@ -77,8 +87,11 @@ extension Words {
         "每 \(every) 顆・\(minutes) 分"
     }
 
-    static func restLongSub(_ every: Int, _ minutes: Int) -> String {
-        "今天每收下 \(every) 顆，那次休息 \(minutes) 分。"
+    /// 設定裡智能調節的算法：「專注 ÷ 5，每滿 100 分 +10」。
+    static var restSmartValue: String {
+        let part = number(Params.SmartRest.divisor)
+        let every = number(Params.SmartRest.bonusEvery)
+        return "專注 ÷ \(part)，每滿 \(every) 分 +\(Params.SmartRest.bonusMinutes)"
     }
 
     static func shieldAppsCount(_ count: Int) -> String {
@@ -86,7 +99,7 @@ extension Words {
     }
 
     static func lastAutoBackup(_ when: String) -> String {
-        "上次自動備份：\(when)"
+        "自動備份 \(when)"
     }
 
     static func ambienceKind(_ kind: AmbienceKind) -> String {
@@ -202,9 +215,43 @@ extension Words {
         String(repeating: "′", count: notes) + String(repeating: "–", count: pings)
     }
 
-    static func voidLine(minute: Int, reason: String, text: String) -> String {
+    /// 有寫在做什麼就放最前面。
+    static func voidLine(
+        minute: Int,
+        reason: String,
+        text: String,
+        doing: String = ""
+    ) -> String {
+        let head = doing.isEmpty ? "" : "\(doing)・"
         let why = reason.isEmpty ? "" : "・\(voidReason(reason))"
         let note = text.isEmpty ? "" : "：\(text)"
-        return "作廢，第 \(minute) 分鐘" + why + note
+        return head + "作廢，第 \(minute) 分鐘" + why + note
+    }
+
+    /// 月檢視清單的標題：「這個月做了什麼」，翻到以前的月份是「10月做了什麼」。
+    static func doneTitle(_ key: String, todayKey: String) -> String {
+        let isThisMonth = DayKeys.shiftMonth(key, months: 0)
+            == DayKeys.shiftMonth(todayKey, months: 0)
+        guard !isThisMonth, let date = DayKeys.dateOf(key) else { return "\(thisMonth)做了什麼" }
+        return "\(Store.localCalendar().component(.month, from: date))月做了什麼"
+    }
+
+    /// 月檢視清單的主字：最多列幾個，再多寫「等」。
+    static func doneNames(_ names: [String]) -> String {
+        let more = names.count > Params.monthDoneNames ? "等" : ""
+        return names.prefix(Params.monthDoneNames).joined(separator: "、") + more
+    }
+
+    /// 月檢視清單日期塊下面的字：「週二」。
+    static func weekdayCompact(_ key: String) -> String {
+        "週" + weekdayShort[DayKeys.weekdayIndex(key)]
+    }
+
+    /// 月檢視清單一張卡讀屏念的那一句。
+    static func doneA11y(_ day: DoneDay) -> String {
+        let sum = daySumLine(day.sum.beans, day.sum.minutes)
+        return [dayTitle(day.key), doneNames(day.names), sum, day.clue]
+            .filter { !$0.isEmpty }
+            .joined(separator: "，")
     }
 }

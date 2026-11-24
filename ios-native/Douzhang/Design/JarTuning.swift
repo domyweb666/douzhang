@@ -29,4 +29,8 @@ extension JarTuning {
         tapUp: 650,
         tapSide: 5
     )
+
+    /// 多久重畫一次（秒）。物理的數值有些是「每一步」的，120Hz 螢幕也要維持每秒 60 步，手感才不變；
+    /// 比 1/60 少一點：剛好 1/60 時，螢幕時刻差一點點就會多等一格，變成每秒 40 步。
+    static let redraw = JarWorld.frame * 0.9
 }

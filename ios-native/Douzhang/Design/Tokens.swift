@@ -164,10 +164,11 @@ enum Tokens {
         static let timelineTextMin: CGFloat = 18
         static let timelineNoteMin: CGFloat = 44
         static let timelineLaneGap: CGFloat = 2
-        static let nowLine: CGFloat = 2
         static let monthDot: CGFloat = 10
         static let monthWeek: CGFloat = 60
         static let monthWeekFlat: CGFloat = 30
+        /// 月檢視清單左邊那塊日期的邊長
+        static let doneBlock: CGFloat = 56
         static let statsShare: CGFloat = 6
         static let statsName: CGFloat = 64
         /// 月檢視的葉子斜放的角度
@@ -206,6 +207,8 @@ enum Tokens {
         static let tiltSmooth = 0.15
         static let substeps = 2
         static let frameMax = 0.033
+        /// 換頁之後多久算停穩（秒）：感測器等停穩才開關；iOS 17 沒有捲動開始、結束的通知，也等這麼久
+        static let pageSettle = 0.5
         /// 進度環從正上方開始走；每一拍（畫面時鐘刷新的間隔）之間用動畫補上
         static let ringStart = -90.0
         static let tick = Double(Params.tickMs) / Params.msPerSecond
@@ -254,6 +257,27 @@ enum Tokens {
             case .orange, .yellow, .pink: ink
             }
         }
+    }
+}
+
+extension Tokens {
+    /// 間距的用途名（多米 iOS 開發準則 3-46）。表上沒有的挑最接近的用途，拿不準選大一級。
+    enum Layout {
+        /// 安全區上緣到大標題頂端
+        static let pageTop = Space.l * 2
+        static let screenMargin = Space.screen
+        /// 不同性質的兩塊：大標題到第一塊、一組卡到下一組的區塊標題
+        static let section = Space.section
+        /// 同一組的兄弟；item 是標籤和它自己的內容；tight 是黏在一起的一對
+        static let group = Space.m
+        static let item = Space.s
+        static let tight = Space.xs
+        static let cardPad = Space.card
+        static let rowPadV = Space.m
+        /// 最後一張卡到頁尾的總距離
+        static let footerTop = DomyTokens.Space.s12
+        /// 捲動內容底部讓出懸浮分頁列；安全區下緣另算
+        static let bottomClear = Shape.tabClearance
     }
 }
 

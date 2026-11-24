@@ -60,14 +60,13 @@ struct RackScreen: View {
                 }
             }
             if isEmpty {
-                empty
+                empty.padding(.bottom, Tokens.Layout.bottomClear)
             } else {
                 filled
             }
         }
         // 整塊貼齊最上面：標題不能掉到畫面中間（空狀態自己會在剩下的空間置中）
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .padding(.bottom, Tokens.Shape.tabClearance)
         .sheet(item: $openDay) { day in
             DaySheet(dayKey: day.id, day: model.state.days[day.id])
         }
@@ -97,7 +96,7 @@ struct RackScreen: View {
             if mode == .calendar {
                 Segmented(options: views, value: view) { view = $0 }
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.top, Tokens.Space.m)
+                    .padding(.top, Tokens.Layout.section)
                 periodNav
             }
             ScrollView {
@@ -109,8 +108,9 @@ struct RackScreen: View {
                         stats.id(range)
                     }
                 }
-                .padding(.bottom, Tokens.Space.l)
             }
+            // 內容捲到懸浮分頁列底下，最後一筆停在它上面
+            .contentMargins(.bottom, Tokens.Layout.bottomClear, for: .scrollContent)
             .scrollIndicators(.hidden)
         }
     }
@@ -164,7 +164,7 @@ struct RackScreen: View {
                 .opacity(atToday ? 0 : 1)
                 .disabled(atToday)
         }
-        .padding(.top, Tokens.Space.s)
+        .padding(.top, Tokens.Layout.group)
     }
 
     private func shift(_ step: Int) {
@@ -177,16 +177,18 @@ struct RackScreen: View {
         view = .day
     }
 
-    /// 行事曆那一半：月是格子，其他三種是時間軸。
+    /// 行事曆那一半：月是格子加做了什麼的清單，其他三種是時間軸。
     @ViewBuilder private var calendar: some View {
         let state = model.state
         if view == .month {
-            MonthGrid(
+            RackMonth(
                 state: state,
                 monthKey: selected,
                 todayKey: model.todayKey,
                 onPickDay: pickDay
-            )
+            ) { key in
+                openDay = OpenDay(id: key)
+            }
         } else {
             RackDayHeads(
                 state: state,
@@ -203,14 +205,12 @@ struct RackScreen: View {
                     .foregroundStyle(Tokens.Colors.textSecondary)
                     .modifier(NumberChange(value: line))
                     .frame(maxWidth: .infinity, alignment: .trailing)
-                    .padding(.top, Tokens.Space.s)
+                    .padding(.top, Tokens.Layout.item)
             }
             RackTimeline(
                 state: state,
                 keys: RackCalendar.viewDays(view, selected: selected),
-                view: view,
-                now: model.minuteNow,
-                todayKey: model.todayKey
+                view: view
             ) { key in
                 openDay = OpenDay(id: key)
             }
@@ -238,7 +238,7 @@ struct RackDayHeads: View {
             }
         }
         .padding(.leading, isSingle ? .zero : Tokens.Rack.timelineGutter)
-        .padding(.top, Tokens.Space.s)
+        .padding(.top, Tokens.Layout.group)
     }
 
     /// 一天的小方格：星期、日期、有紀錄的話下面一顆番茄紅的點。lit 的有產品色淡底。
@@ -258,9 +258,9 @@ struct RackDayHeads: View {
                 Circle()
                     .fill(hasRecord ? Tokens.Tomato.pod : .clear)
                     .frame(width: Tokens.Shape.dayDot, height: Tokens.Shape.dayDot)
-                    .padding(.top, Tokens.Space.xs)
+                    .padding(.top, Tokens.Layout.tight)
             }
-            .padding(.vertical, Tokens.Space.xs)
+            .padding(.vertical, Tokens.Layout.tight)
             .frame(minWidth: Tokens.Shape.weekDayWidth)
             .background(
                 lit ? Tokens.Colors.soft : .clear,

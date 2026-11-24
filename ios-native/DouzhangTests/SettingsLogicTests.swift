@@ -42,11 +42,27 @@ final class SettingsLogicTests: XCTestCase {
     }
 
     func test長度選刻度上的值會改刻度外的值不改() {
-        let changed = SettingsLogic.setTypeLen(Store.blank(), id: "t1", len: 40)
-        XCTAssertEqual(changed.settings.types[0].len, 40)
+        for len in [1.0, 42, 90] {
+            let changed = SettingsLogic.setTypeLen(Store.blank(), id: "t1", len: len)
+            XCTAssertEqual(changed.settings.types[0].len, len)
+        }
         let blank = Store.blank()
-        XCTAssertEqual(SettingsLogic.setTypeLen(blank, id: "t1", len: 42), blank)
-        XCTAssertEqual(SettingsLogic.setTypeLen(blank, id: "t1", len: 95), blank)
+        for len in [0, 42.5, 91] {
+            XCTAssertEqual(SettingsLogic.setTypeLen(blank, id: "t1", len: len), blank)
+        }
+    }
+
+    func test刻度是一到九十分一分鐘一格() {
+        XCTAssertEqual(Params.typeLengths.count, 90)
+        XCTAssertEqual(Params.typeLengths.first, 1)
+        XCTAssertEqual(Params.typeLengths.last, 90)
+    }
+
+    func test不在刻度上的長度停在最近的一格() {
+        XCTAssertEqual(SettingsLogic.nearestLen(25), 25)
+        XCTAssertEqual(SettingsLogic.nearestLen(12.4), 12)
+        XCTAssertEqual(SettingsLogic.nearestLen(5.0 / 60), 1)
+        XCTAssertEqual(SettingsLogic.nearestLen(120), 90)
     }
 
     func test選標籤後下一顆的長度跟著變() {

@@ -28,8 +28,6 @@ final class AppModel {
     private(set) var now = TimeText.nowMillis()
     /// 今天是哪一天：換日那一拍才換。番茄架、待機主畫面讀這個，不讀 now
     private(set) var todayKey = Store.dayKey(TimeText.nowMillis())
-    /// 現在，只到分鐘：番茄架時間軸那條「現在」的線用，一分鐘才動一次（讀檔那一拍就對上）
-    private(set) var minuteNow: Millis = 0
     private(set) var phase = Phase.idle
     /// 存不進去：畫面最上面顯示那一行
     private(set) var saveFailed = false
@@ -118,21 +116,13 @@ final class AppModel {
         setClock(time)
     }
 
-    /// 換時鐘：now 每次換；今天、分鐘只有真的變了才寫，沒變就不吵讀它們的畫面。
+    /// 換時鐘：now 每次換；今天只有真的變了才寫，沒變就不吵讀它的畫面。
     private func setClock(_ time: Millis) {
         now = time
         let day = Store.dayKey(time)
         if day != todayKey {
             todayKey = day
         }
-        let minute = Self.minuteOf(time)
-        if minute != minuteNow {
-            minuteNow = minute
-        }
-    }
-
-    private static func minuteOf(_ time: Millis) -> Millis {
-        (time / Params.msPerMinute).rounded(.down) * Params.msPerMinute
     }
 
     /// 換態：計時中鎖在主畫面，人可能在別頁（休息完自動開始），一樣拉回來。

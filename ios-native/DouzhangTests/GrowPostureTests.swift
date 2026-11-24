@@ -1,7 +1,7 @@
 @testable import Douzhang
 import XCTest
 
-/// 計時中長大的番茄：走了幾成、畫多大、什麼顏色。翻自 Expo 版 grow.test.js。
+/// 計時中變熟的番茄：走了幾成、什麼顏色。翻自 Expo 版 grow.test.js。
 final class GrowTests: XCTestCase {
     private let base = Moment.local(2026, 11, 17, 9)
     private let minute = Moment.minute
@@ -28,13 +28,6 @@ final class GrowTests: XCTestCase {
         let focusing = Machine.start(Store.blank(), now: base)
         let rest = Machine.keep(focusing, now: base + 25 * minute, text: "").current
         XCTAssertEqual(Grow.progress(rest, now: base + 26 * minute), 0)
-    }
-
-    func test大小從最小那一成一路長到全熟只變大() {
-        XCTAssertEqual(Grow.scale(0), Params.growMinScale)
-        XCTAssertEqual(Grow.scale(1), 1)
-        XCTAssertGreaterThan(Grow.scale(0.5), Grow.scale(0.25))
-        XCTAssertEqual(Grow.scale(2), 1)
     }
 
     func test顏色開始是青的到點是標籤色中間是兩色各一半() {
