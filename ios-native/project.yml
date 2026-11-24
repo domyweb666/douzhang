@@ -86,6 +86,10 @@ schemes:
       targets:
         Douzhang: all
         DouzhangTests: [test]
+    # 在 Xcode 按執行時用測試商店，不連 App Store、不花錢。只影響開發：打包走 archive，讀不到這個
+    run:
+      config: Debug
+      storeKitConfiguration: DouzhangTests/Full.storekit
     test:
       config: Debug
       targets:

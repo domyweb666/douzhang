@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// 單獨一頁的尺寸（Tokens.swift 快滿 300 行，另外放）：長度的刻度尺、主畫面、筆記本、聚焦模式、鈴響頁。
+/// 單獨一頁的尺寸（Tokens.swift 快滿 300 行，另外放）：長度的刻度尺、主畫面、筆記本、聚焦模式、完整版、鈴響頁。
 extension Tokens {
     /// 刻度尺：一分鐘一格，線從下往上長，數字在線上面。
     enum Dial {
@@ -51,6 +51,16 @@ extension Tokens {
         static let digitRow: CGFloat = 0.91
         /// 點一下畫面，底下的鈕出現這麼久（秒）
         static let controlsSeconds = 3
+    }
+
+    /// 完整版那一頁：聚焦預覽的高佔它寬的幾成；矮手機（SE）另一組，才放得下四樣。
+    enum Full {
+        static let preview: CGFloat = 0.5
+        static let previewShort: CGFloat = 0.4
+        /// 扣掉安全區，比這個矮就算矮手機
+        static let shortPage: CGFloat = 700
+        /// 主按鈕的字放不下時最多縮到幾成
+        static let shrink: CGFloat = 0.5
     }
 
     /// 鈴響頁：那張收據與下面的鈕。

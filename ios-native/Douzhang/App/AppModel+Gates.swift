@@ -1,7 +1,7 @@
 import FamilyControls
 import UIKit
 
-/// 跟著狀態走的三樣：白噪音、擋 app、聚焦模式。每次狀態或哪一態變了就對齊一次；
+/// 跟著狀態走的三樣：白噪音、擋 app、聚焦模式。每次狀態、哪一態、買了沒變了就對齊一次；
 /// 各自分辨答案有沒有變，沒變就不去吵系統（存草稿每個字都會走到這裡）。
 extension AppModel {
     func syncGates() {
@@ -14,8 +14,21 @@ extension AppModel {
         soundscape.apply(kind, level: settings.ambienceVolume)
         // 響的那一刻 app 在背景的話時鐘不走，擋板要等回到番茄帳才解開（第一版的取捨）；
         // 白噪音在背景播的時候 app 還醒著，到點那一刻聲音會自己停，擋板也跟著解開
-        shield.apply(Gates.shouldShield(state, now: time))
+        shield.apply(Gates.shield(state, now: time, status: fullStatus))
         syncZen()
+    }
+
+    // MARK: 完整版
+
+    /// 買了沒變了：同步、擋板、聚焦一起照新的答案。只停功能，不動任何設定與紀錄。
+    func setFull(_ status: FullStatus) {
+        fullStatus = status
+        if !FullRule.allows(.zen, status: status) {
+            // 正在聚焦的回直向；不留著，不然哪天又買了會自己轉橫
+            zenFor = nil
+        }
+        cloud.setPaid(FullRule.allows(.cloud, status: status))
+        syncGates()
     }
 
     // MARK: 白噪音
@@ -43,7 +56,8 @@ extension AppModel {
     func shieldPicked(_ selection: FamilyActivitySelection) {
         shield.saveSelection(selection)
         shieldCount = shield.count()
-        shield.reapply(Gates.shouldShield(state, now: TimeText.nowMillis()))
+        let time = TimeText.nowMillis()
+        shield.reapply(Gates.shield(state, now: time, status: fullStatus))
     }
 
     func forgetShield() {
@@ -59,12 +73,18 @@ extension AppModel {
         return "\(run.startedAt)-\(run.endAt)"
     }
 
+    /// 聚焦是完整版的功能：沒確定買了就不進，橫放也不看。
+    private var zenAllowed: Bool {
+        FullRule.allows(.zen, status: fullStatus)
+    }
+
     /// 聚焦只跟著那一顆：響了、結束、再做一下都從直向重新開始。
     var zenOn: Bool {
-        zenKey != nil && zenFor == zenKey
+        zenAllowed && zenKey != nil && zenFor == zenKey
     }
 
     func enterZen() {
+        guard zenAllowed else { return }
         zenFor = zenKey
         syncZen()
     }
@@ -85,7 +105,7 @@ extension AppModel {
         if UIApplication.shared.isIdleTimerDisabled != isOn {
             UIApplication.shared.isIdleTimerDisabled = isOn
         }
-        guard let key = zenKey else {
+        guard zenAllowed, let key = zenKey else {
             poseWatch.stop()
             return
         }

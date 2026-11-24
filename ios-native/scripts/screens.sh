@@ -49,6 +49,9 @@ shots=(
   "19-week3-stats     user-week3       rack  stats  light"
   "20-back-bell       user-back-bell   home  day    light"
   "21-back-stats      user-back        rack  stats  light"
+  # 付費頁：模擬器沒有測試商店，拍到的是正在讀價格或讀不到價格，截圖裡不會有金額
+  "22-full            idle   full      day    light"
+  "23-full-dark       idle   full      day    dark"
 )
 
 for shot in "${shots[@]}"; do

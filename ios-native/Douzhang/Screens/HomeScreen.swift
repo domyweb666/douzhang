@@ -15,6 +15,7 @@ enum HomeSheet: Identifiable, Hashable {
 /// 計時中點畫面空白處就記一筆、點左上膠囊改在做什麼、右上結束；下面一排背景音、記一筆、聚焦。
 struct HomeScreen: View {
     @Environment(AppModel.self) private var model
+    @Environment(Purchases.self) private var shop
     @State private var sheet: HomeSheet?
     /// 開著改長度的整頁刻度尺
     @State private var dialing = false
@@ -113,7 +114,7 @@ struct HomeScreen: View {
         Spacer().frame(height: Tokens.Shape.tabClearance + Tokens.Space.m)
     }
 
-    /// 計時中拇指下那一排：背景音、記一筆、聚焦。
+    /// 計時中拇指下那一排：背景音、記一筆、聚焦（買了完整版才有，沒有就剩兩顆置中）。
     private func focusActions(_ run: FocusRun) -> some View {
         let ambience = model.state.settings.ambience
         let noted = run.notes.count + run.pings.count
@@ -134,13 +135,15 @@ struct HomeScreen: View {
                 action: { sheet = .note }
             )
             .frame(width: Tokens.Home.roundColumn)
-            RoundIconButton(
-                face: .line(.focus),
-                label: Words.zenShort,
-                a11yLabel: Words.zenEnter,
-                action: { model.enterZen() }
-            )
-            .frame(width: Tokens.Home.roundColumn)
+            if shop.allows(.zen) {
+                RoundIconButton(
+                    face: .line(.focus),
+                    label: Words.zenShort,
+                    a11yLabel: Words.zenEnter,
+                    action: { model.enterZen() }
+                )
+                .frame(width: Tokens.Home.roundColumn)
+            }
         }
         .padding(.bottom, Tokens.Layout.section)
     }

@@ -3,19 +3,19 @@ import Foundation
 import ManagedSettings
 
 /// 計時中把選好的 app 蓋上系統擋板（螢幕使用時間 API）。
-/// 只做四件事：要授權、記住選了哪些、蓋上、解開。什麼時候蓋由 Gates.shouldShield 決定。
+/// 只做四件事：要授權、記住選了哪些、蓋上、解開。什麼時候蓋由 Gates.shield 決定。
 /// 選了哪些 app 只存在這支手機的 UserDefaults：系統給的是不透明代號，讀不出 app 名稱，也不進備份檔。
 /// 沒有擴充、沒有排程：到點那一刻 app 在背景的話不會自己解開，要回到番茄帳才解（第一版的取捨）。
 /// 擋不擋得成都不能卡住計時，所以失敗一律不往外丟。
 @MainActor
 final class AppShield {
-    private enum Applied {
+    enum Applied {
         case unknown, blocked, clear
     }
 
     private static let selectionKey = "appShield.selection"
     private lazy var store = ManagedSettingsStore()
-    private var applied = Applied.unknown
+    private(set) var applied = Applied.unknown
 
     func loadSelection() -> FamilyActivitySelection {
         guard let data = UserDefaults.standard.data(forKey: AppShield.selectionKey) else {
@@ -48,21 +48,31 @@ final class AppShield {
     }
 
     /// 蓋上或解開。答案跟上次一樣就不叫系統；開機第一次一定叫（上次被殺掉時可能還蓋著）。
-    func apply(_ isOn: Bool) {
-        let next = isOn ? Applied.blocked : Applied.clear
-        if next == applied {
-            return
+    func apply(_ move: ShieldMove) {
+        switch move {
+        case .cover where applied != .blocked: cover()
+        case .clear where applied != .clear: clear()
+        case .cover, .clear, .leave: break
         }
-        reapply(isOn)
     }
 
-    /// 照現在選的重蓋一次（計時中改了要擋的）。沒授權、沒選東西時系統自己不會擋。
-    func reapply(_ isOn: Bool) {
-        applied = isOn ? .blocked : .clear
-        guard isOn else {
-            store.clearAllSettings()
-            return
+    /// 照現在選的重蓋一次（計時中改了要擋的）。
+    func reapply(_ move: ShieldMove) {
+        switch move {
+        case .cover: cover()
+        case .clear: clear()
+        case .leave: break
         }
+    }
+
+    private func clear() {
+        applied = .clear
+        store.clearAllSettings()
+    }
+
+    /// 沒授權、沒選東西時系統自己不會擋。
+    private func cover() {
+        applied = .blocked
         let selection = loadSelection()
         let apps = selection.applicationTokens
         let categories = selection.categoryTokens
@@ -75,8 +85,7 @@ final class AppShield {
 
     /// 清空所有資料時用：解開，選過的也忘掉。
     func forget() {
-        store.clearAllSettings()
-        applied = .clear
+        clear()
         UserDefaults.standard.removeObject(forKey: AppShield.selectionKey)
     }
 }

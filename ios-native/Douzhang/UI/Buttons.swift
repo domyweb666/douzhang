@@ -26,13 +26,18 @@ struct BigButton: View {
     var label: String
     var second = false
     var disabled = false
+    /// 正在等：不能按，可是字是說明（正在讀價格、購買中），要讀得清楚
+    var waiting = false
     var action: () -> Void
 
     private var background: Color {
-        disabled || second ? Tokens.Colors.fillButton : Tokens.Colors.accent
+        disabled || waiting || second ? Tokens.Colors.fillButton : Tokens.Colors.accent
     }
 
     private var foreground: Color {
+        if waiting {
+            return Tokens.Colors.textSecondary
+        }
         if disabled {
             return Tokens.Colors.disabledText
         }
@@ -51,13 +56,14 @@ struct BigButton: View {
                 .background(background, in: Capsule())
         }
         .buttonStyle(PressStyle())
-        .disabled(disabled)
+        .disabled(disabled || waiting)
     }
 }
 
-/// 文字鈕的三種口氣：產品色（可點的連結）、次要色（退讓的動作）、紅字（只有清空與刪除）。
+/// 文字鈕的四種口氣：產品色（可點的連結）、一般字色（跟主要動作並列的選擇）、
+/// 次要色（退讓的動作）、紅字（只有清空與刪除）。
 enum TextTone {
-    case accent, secondary, danger
+    case accent, plain, secondary, danger
 }
 
 /// 文字鈕：至少 44pt 高。flush＝貼齊左邊，不加左右內距。
@@ -68,9 +74,17 @@ struct TextButton: View {
     var a11yLabel: String?
     var action: () -> Void
 
+    private var font: Font {
+        switch tone {
+        case .accent, .danger: Tokens.Fonts.bodyStrong
+        case .plain, .secondary: Tokens.Fonts.body
+        }
+    }
+
     private var color: Color {
         switch tone {
         case .accent: Tokens.Colors.accentText
+        case .plain: Tokens.Colors.textPrimary
         case .secondary: Tokens.Colors.textSecondary
         case .danger: Tokens.Colors.danger
         }
@@ -79,7 +93,7 @@ struct TextButton: View {
     var body: some View {
         Button(action: action) {
             Text(label)
-                .font(tone == .secondary ? Tokens.Fonts.body : Tokens.Fonts.bodyStrong)
+                .font(font)
                 .foregroundStyle(color)
                 .frame(minHeight: Tokens.Shape.tapMin)
                 .padding(.horizontal, flush ? .zero : Tokens.Space.m)

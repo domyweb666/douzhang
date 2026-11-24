@@ -66,6 +66,8 @@ final class AppModel {
     /// 待機時開著背景音半頁：邊選邊聽
     var previewing = false
     var shieldCount = 0
+    /// 完整版買了沒。由 RootView 照 Purchases 傳進來，不存檔
+    var fullStatus = FullStatus.unknown
 
     @ObservationIgnored let file: StateFile
     @ObservationIgnored let backups: BackupFiles

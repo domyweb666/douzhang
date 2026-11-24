@@ -20,9 +20,14 @@ enum LaunchOptions {
     static var page: Page {
         switch value("DOUZHANG_PAGE") {
         case "rack": .rack
-        case "settings": .settings
+        case "settings", "full": .settings
         default: .home
         }
+    }
+
+    /// 打開就停在付費頁。只開畫面，不碰買了沒。
+    static var opensFull: Bool {
+        value("DOUZHANG_PAGE") == "full"
     }
 
     static var rackMode: RackMode {

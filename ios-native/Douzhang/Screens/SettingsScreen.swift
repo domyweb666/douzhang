@@ -11,11 +11,12 @@ enum SettingsSheet: Identifiable, Hashable {
 }
 
 /// 設定（左右滑三頁的右邊那頁）。順序照多米 iOS 開發準則 3-3：
-/// app 專屬（標籤、節奏、專注、手感）→ 一般 → 資料（清除排最後）→ 支援 → 關於 → 頁尾。
+/// app 專屬（標籤、節奏、專注、手感）→ 一般 → 資料（清除排最後）→ 購買 → 支援 → 關於 → 頁尾。
 /// 列的樣子與全家共用的字來自 VeggieKit，顏色與字級在最外層用 veggieStyle 給一次。
 /// 改完立刻生效（下一拍就讀新設定）。卡片下不放常駐說明，只有出錯與結果才出現一行（3-4）。
 struct SettingsScreen: View {
     @Environment(AppModel.self) private var model
+    @Environment(Purchases.self) private var shop
     @State private var sheet: SettingsSheet?
 
     var body: some View {
@@ -25,11 +26,15 @@ struct SettingsScreen: View {
                 VStack(alignment: .leading, spacing: Tokens.Layout.section) {
                     types
                     SettingsRhythm { sheet = $0 }
-                    SettingsShield()
+                    // 完整版才有的列，沒買不列（準則 3-4）
+                    if shop.allows(.shield) {
+                        SettingsShield()
+                    }
                     feel
                     developer
                     SettingsGeneral()
                     SettingsData()
+                    SettingsPurchase()
                     SettingsSupport()
                     SettingsAbout()
                 }

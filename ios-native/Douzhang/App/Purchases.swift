@@ -19,11 +19,15 @@ final class Purchases {
     private(set) var priceFailed = false
     private(set) var isPricing = false
     /// 正在買或正在恢復：那兩顆按鈕先不能點
-    private(set) var isBusy = false
+    private(set) var doing: FullDoing?
 
     @ObservationIgnored private var product: Product?
     @ObservationIgnored private var updates: Task<Void, Never>?
     @ObservationIgnored private var order = AskOrder()
+
+    var isBusy: Bool {
+        doing != nil
+    }
 
     func allows(_ feature: FullFeature) -> Bool {
         FullRule.allows(feature, status: status)
@@ -71,8 +75,8 @@ final class Purchases {
         guard !isBusy else { return .busy }
         guard let product else { return .noPrice }
         guard AppStore.canMakePayments else { return .problem(.blocked) }
-        isBusy = true
-        defer { isBusy = false }
+        doing = .buying
+        defer { doing = nil }
         do {
             switch try await product.purchase() {
             case let .success(result):
@@ -92,8 +96,8 @@ final class Purchases {
 
     func restore() async -> RestoreResult {
         guard !isBusy else { return .busy }
-        isBusy = true
-        defer { isBusy = false }
+        doing = .restoring
+        defer { doing = nil }
         var isSynced = true
         do {
             // 不設時限：這一步可能要他登入 Apple 帳號，不能在打密碼時中斷
@@ -194,6 +198,23 @@ final class Purchases {
     private func note(_ what: String, _ error: Error) {
         let kind = String(describing: type(of: error))
         Purchases.log.error("\(what, privacy: .public): \(kind, privacy: .public)")
+    }
+}
+
+extension Purchases {
+    /// 付費頁要畫的：買了沒、價格讀到哪、正在做什麼。
+    var shelf: FullShelf {
+        FullShelf(status: status, price: priceStage, doing: doing)
+    }
+
+    private var priceStage: FullPrice {
+        if price != nil {
+            return .known
+        }
+        if isPricing {
+            return .reading
+        }
+        return priceFailed ? .failed : .idle
     }
 }
 

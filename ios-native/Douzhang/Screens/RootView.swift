@@ -28,9 +28,9 @@ struct RootView: View {
         .haptic(.impact(weight: .light), trigger: model.pulses.removed)
         .haptic(.error, trigger: model.saveFailed) { $0 }
         .haptic(.error, trigger: model.backupProblem) { $0 != nil }
-        // 買了才准同步；退款只停同步，番茄與開關都不動
-        .onChange(of: shop.status, initial: true) {
-            model.cloud.setPaid(shop.allows(.cloud))
+        // 買了才准同步、擋 app、聚焦；退款只停這三樣，番茄與開關都不動
+        .onChange(of: shop.status, initial: true) { _, status in
+            model.setFull(status)
         }
         .modifier(CloudAsk())
     }

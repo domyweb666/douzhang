@@ -38,37 +38,15 @@ struct FocusScreen: View {
         .onDisappear { hiding?.cancel() }
     }
 
-    /// 分、番茄、秒。兩個數字各佔番茄旁邊一樣寬的一塊、靠著番茄排，換秒時番茄不會左右動。
-    /// 字級照整個畫面的寬；左右安全區放不下（或分鐘有三位）就縮到剛好。
     private func clock(
         _ parts: (minutes: String, seconds: String),
         in proxy: GeometryProxy
     ) -> some View {
         let insets = proxy.safeAreaInsets
         let screen = proxy.size.width + insets.leading + insets.trailing
-        let tomato = min(Tokens.ZenLayout.tomatoMax, screen * Tokens.ZenLayout.tomato)
-        let room = max(0, (proxy.size.width - tomato) / 2 - Tokens.Layout.section)
-        let digits = CGFloat(max(parts.minutes.count, parts.seconds.count))
-        let size = min(
-            screen * Tokens.ZenLayout.digit,
-            room / (digits * Tokens.Fonts.zenDigitWidth)
-        )
-        return HStack(spacing: Tokens.Layout.section) {
-            number(parts.minutes, size: size)
-                .frame(width: room, alignment: .trailing)
-            GrowingTomato(run: run, fill: ripeness, size: tomato, now: model.now)
-            number(parts.seconds, size: size)
-                .frame(width: room, alignment: .leading)
+        return ZenClock(parts: parts, screen: screen, width: proxy.size.width) { size in
+            GrowingTomato(run: run, fill: ripeness, size: size, now: model.now)
         }
-    }
-
-    private func number(_ text: String, size: CGFloat) -> some View {
-        Text(text)
-            .font(Tokens.Fonts.zenDigit(size))
-            .foregroundStyle(Tokens.Zen.digit)
-            .modifier(NumberChange(value: text, countsDown: true))
-            .fixedSize()
-            .frame(height: size * Tokens.ZenLayout.digitRow)
     }
 
     /// 番茄的顏色：從青變成標籤色。

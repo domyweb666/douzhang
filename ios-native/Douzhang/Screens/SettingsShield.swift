@@ -1,7 +1,7 @@
 import FamilyControls
 import SwiftUI
 
-/// 設定頁的「專注」那一區：計時中擋住其他 app。
+/// 設定頁的「專注」那一區：計時中擋住其他 app。買了完整版才列（由 SettingsScreen 決定）。
 /// 兩列都要先有螢幕使用時間的授權：不允許就不開、不開選擇畫面，卡片下才出現那一行。
 struct SettingsShield: View {
     @Environment(AppModel.self) private var model
