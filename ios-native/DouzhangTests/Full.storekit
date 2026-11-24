@@ -1,0 +1,38 @@
+{
+  "identifier" : "7B3D4F16",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "290.0",
+      "familyShareable" : false,
+      "internalID" : "6829151902",
+      "localizations" : [
+        {
+          "description" : "iCloud 同步、計時中擋住其他 app、聚焦模式",
+          "displayName" : "番茄帳完整版",
+          "locale" : "zh_TW"
+        }
+      ],
+      "productID" : "org.domyweb.douzhang.full",
+      "referenceName" : "番茄帳完整版",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_failTransactionsEnabled" : false,
+    "_locale" : "zh_TW",
+    "_storefront" : "TWN",
+    "_storeKitErrors" : [
+
+    ]
+  },
+  "subscriptionGroups" : [
+
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}
