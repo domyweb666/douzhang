@@ -29,6 +29,7 @@
 2. 按 ＋ → 選 iCloud Containers → Continue。Description 填 `Douzhang`，Identifier 填 `iCloud.org.domyweb.douzhang`，對三遍 → Continue → Register。**不能還原**
 3. 右上的下拉切回 App IDs，點 `org.domyweb.douzhang`。
 4. Capabilities 找「iCloud」打勾，選「Include CloudKit support」（名字可能不同），按旁邊的 Configure（或 Edit），只勾 `iCloud.org.domyweb.douzhang` → Continue。
+   - **最容易漏**：只打勾 iCloud、沒按 Configure 選容器，打包會簽不過（2026-11-25 tfn-4 就是這句：描述檔的容器對不上）。
 5. 原本勾著的 Family Controls (Distribution) 不要動。按 Save；跳描述檔要重新產生的警告，按確認（打包流程會自己重拿）。
 
 ## C 建產品
