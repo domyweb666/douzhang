@@ -115,10 +115,6 @@ final class FormatV2Tests: XCTestCase {
         XCTAssertEqual(try reread(state), state)
     }
 
-    func test寫出去的版本號是二() {
-        XCTAssertEqual(StateEncoding.object(Store.blank())["v"] as? Int, 2)
-    }
-
     func test舊檔讀進來補編號不補時區讀幾次都一樣() throws {
         let text = """
         {"v":1,"settings":{},"days":{"2026-10-30":{

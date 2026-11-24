@@ -34,21 +34,22 @@ final class SettingsLogicTests: XCTestCase {
 
     func test改名最多二十字空白變未命名() {
         let long = String(repeating: "字", count: 30)
-        let renamed = SettingsLogic.renameType(Store.blank(), id: "t1", name: "  \(long)  ")
+        let blank = Store.blank()
+        let renamed = SettingsLogic.renameType(blank, id: "t1", name: "  \(long)  ", now: base)
         XCTAssertEqual(renamed.settings.types[0].name.count, 20)
-        let empty = SettingsLogic.renameType(Store.blank(), id: "t1", name: "   ")
+        let empty = SettingsLogic.renameType(blank, id: "t1", name: "   ", now: base)
         XCTAssertEqual(empty.settings.types[0].name, "未命名")
         XCTAssertEqual(empty.settings.types[1].name, "工作")
     }
 
     func test長度選刻度上的值會改刻度外的值不改() {
+        let blank = Store.blank()
         for len in [1.0, 42, 90] {
-            let changed = SettingsLogic.setTypeLen(Store.blank(), id: "t1", len: len)
+            let changed = SettingsLogic.setTypeLen(blank, id: "t1", len: len, now: base)
             XCTAssertEqual(changed.settings.types[0].len, len)
         }
-        let blank = Store.blank()
         for len in [0, 42.5, 91] {
-            XCTAssertEqual(SettingsLogic.setTypeLen(blank, id: "t1", len: len), blank)
+            XCTAssertEqual(SettingsLogic.setTypeLen(blank, id: "t1", len: len, now: base), blank)
         }
     }
 
@@ -79,18 +80,19 @@ final class SettingsLogicTests: XCTestCase {
 
     func test只剩一個時不能刪刪掉選中的就退回第一個() {
         let one = single()
-        XCTAssertEqual(SettingsLogic.removeType(one, id: "t1"), one)
+        XCTAssertEqual(SettingsLogic.removeType(one, id: "t1", now: 0), one)
         let picked = SettingsLogic.pickType(Store.blank(), typeId: "t2")
-        let removed = SettingsLogic.removeType(picked, id: "t2")
+        let removed = SettingsLogic.removeType(picked, id: "t2", now: 0)
         XCTAssertEqual(removed.settings.types.count, 4)
         XCTAssertEqual(removed.settings.typeId, "t1")
-        let other = SettingsLogic.removeType(picked, id: "t3")
+        let other = SettingsLogic.removeType(picked, id: "t3", now: 0)
         XCTAssertEqual(other.settings.typeId, "t2")
-        XCTAssertEqual(SettingsLogic.removeType(picked, id: "gone"), picked)
+        XCTAssertEqual(SettingsLogic.removeType(picked, id: "gone", now: 0), picked)
     }
 
     func test換番茄色只換那一個標籤() {
-        let state = SettingsLogic.setTypeColor(Store.blank(), id: "t1", color: .pink)
+        let blank = Store.blank()
+        let state = SettingsLogic.setTypeColor(blank, id: "t1", color: .pink, now: base)
         XCTAssertEqual(state.settings.types[0].color, .pink)
         XCTAssertEqual(state.settings.types[1].color, .purple)
     }

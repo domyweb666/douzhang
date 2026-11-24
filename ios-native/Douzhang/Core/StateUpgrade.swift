@@ -1,7 +1,7 @@
 import Foundation
 
-/// 讀檔之後補的三件事（格式 v2，規格在 .analytics/04-資料結構.md）：
-/// 沒有編號的紀錄補編號、每筆放回「開始那天」的格子、讀出刪掉的標籤。
+/// 讀檔之後補的四件事（規格在 .analytics/04-資料結構.md）。格式 v2：
+/// 沒有編號的紀錄補編號、每筆放回「開始那天」的格子、讀出刪掉的標籤；格式 v3：標籤補「幾時改過」。
 /// 都是純函式：同一份資料每次讀出來結果一樣，讀進來再寫出去也一樣。
 enum StateUpgrade {
     // MARK: 編號
@@ -67,7 +67,7 @@ enum StateUpgrade {
     }
 
     /// 有開始時刻、也有認得的時區才算得出來；缺一個就回 nil（留在原本的格子）。
-    private static func home(_ start: Millis?, zone: String?) -> String? {
+    static func home(_ start: Millis?, zone: String?) -> String? {
         guard let start, let zone, TimeZone(identifier: zone) != nil else { return nil }
         return Store.dayKey(start, zone: zone)
     }
@@ -84,5 +84,32 @@ enum StateUpgrade {
             list.append(RemovedTag(type: type, removedAt: JSONRead.number(raw["removedAt"]) ?? 0))
         }
         return list
+    }
+
+    // MARK: 標籤幾時改過
+
+    /// 改過、但不知道幾時改的：比沒動過的預設（0）大，比任何真的時刻小。
+    static let unknownTagMod: Millis = 1
+    /// 2001 到 2286 年的毫秒時刻都是 13 位。卡位數才不會把 t9 這種舊編號當成 9 毫秒改的
+    private static let millisDigits = 13
+
+    /// 檔裡有就照檔裡的（負的當沒有）。沒有的（v1、v2）：跟預設一模一樣＝沒動過；
+    /// 自己加的標籤編號就是加的時刻；其他只知道改過。type 是還沒填 mod 的那個。
+    static func tagMod(_ type: TagType, stored: Millis?) -> Millis {
+        if let stored, stored >= 0 {
+            return stored
+        }
+        if Store.presetTypes.contains(type) {
+            return 0
+        }
+        return addedAt(type.id) ?? unknownTagMod
+    }
+
+    /// 自己加的標籤編號是 t 加按下那一刻的毫秒（SettingsLogic.addType）；不是這種寫法就回 nil。
+    private static func addedAt(_ id: String) -> Millis? {
+        let digits = id.dropFirst()
+        guard id.first == "t", digits.count == millisDigits,
+              digits.allSatisfy(\.isNumber) else { return nil }
+        return Millis(digits)
     }
 }

@@ -85,15 +85,17 @@ extension AppModel {
     }
 
     func renameType(_ id: String, name: String) {
-        commit(SettingsLogic.renameType(settled(), id: id, name: name))
+        let now = TimeText.nowMillis()
+        commit(SettingsLogic.renameType(settled(), id: id, name: name, now: now))
     }
 
     func setTypeLen(_ id: String, len: Double) {
-        commit(SettingsLogic.setTypeLen(settled(), id: id, len: len))
+        commit(SettingsLogic.setTypeLen(settled(), id: id, len: len, now: TimeText.nowMillis()))
     }
 
     func setTypeColor(_ id: String, color: TomatoColor) {
-        commit(SettingsLogic.setTypeColor(settled(), id: id, color: color))
+        let now = TimeText.nowMillis()
+        commit(SettingsLogic.setTypeColor(settled(), id: id, color: color, now: now))
     }
 
     func removeType(_ id: String) {

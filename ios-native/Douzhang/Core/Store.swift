@@ -8,8 +8,9 @@ struct RestPlan: Equatable {
 
 /// 番茄帳 資料層的算法：空白狀態、日期鍵、一顆幾單位、休息多久。純函式，不碰檔案。
 enum Store {
-    /// 2＝每筆有編號與時區、刪掉的標籤另外留著（.analytics/04-資料結構.md）。舊版讀得進去，只是不認得新欄位
-    static let formatVersion = 2
+    /// 2＝每筆有編號與時區、刪掉的標籤另外留著；3＝標籤帶幾時改過（.analytics/04-資料結構.md）。
+    /// 舊版讀得進去，只是不認得新欄位
+    static let formatVersion = 3
     /// 一顆＝25 分；50 分的顆算兩單位
     static let minutesPerUnit = 25.0
     /// 「跟著長度」的休息＝長度 ÷ 5，最少 3 分

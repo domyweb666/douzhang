@@ -132,4 +132,33 @@ final class RackCalendarTests: XCTestCase {
         XCTAssertEqual(RackCalendar.axisHours([blocks]), AxisHours(from: 0, upTo: 24))
         XCTAssertNil(RackCalendar.axisHours([[], []]))
     }
+
+    /// 這天只有一顆時的時間軸與方塊：from 要小於 upTo，方塊要在軸裡。
+    private func assertFits(_ bean: Bean, line: UInt = #line) {
+        let blocks = RackCalendar.dayBlocks(November.day(bean), key: key, minHours: minHours)
+        guard let block = blocks.first, let axis = RackCalendar.axisHours([blocks]) else {
+            return XCTFail("沒有方塊", line: line)
+        }
+        XCTAssertLessThan(axis.from, axis.upTo, line: line)
+        XCTAssertGreaterThanOrEqual(block.top, Double(axis.from), line: line)
+        XCTAssertLessThanOrEqual(block.top + block.height, Double(axis.upTo), line: line)
+    }
+
+    func test別的時區收的整顆在這天外面也畫得出來() {
+        // 台北早上 8 點收、在洛杉磯看是前一天 16 點；反過來是後一天 11 點
+        assertFits(November.bean(16, 16, 0, len: 25))
+        assertFits(November.bean(18, 11, 0, len: 25))
+        assertFits(November.bean(16, 23, 50, len: 25))
+    }
+
+    func test壞檔的時刻與長度再極端也不會當() {
+        var bean = November.bean(17, 9, 0, len: 25)
+        bean.start = nil
+        for keptAt in [0, 4e12, 1e300] {
+            bean.keptAt = keptAt
+            assertFits(bean)
+        }
+        bean.len = 1e308
+        assertFits(bean)
+    }
 }

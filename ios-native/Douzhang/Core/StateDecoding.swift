@@ -75,6 +75,7 @@ enum StateDecoding {
     }
 
     /// 標籤：要有字串的 id 與名字才算；長度不是數字用 25；沒有顏色的依序分配，一開始就不同色。
+    /// 沒有「幾時改過」的（v1、v2）由 StateUpgrade 補。
     static func readTagTypes(_ value: Any?) -> [TagType] {
         let colors = TomatoColor.allCases
         var types: [TagType] = []
@@ -82,12 +83,13 @@ enum StateDecoding {
             guard let id = JSONRead.string(raw["id"]),
                   let name = JSONRead.string(raw["name"]) else { continue }
             let named = JSONRead.string(raw["color"]).flatMap(TomatoColor.init(rawValue:))
-            let type = TagType(
+            var type = TagType(
                 id: id,
                 name: name,
                 len: JSONRead.number(raw["len"]) ?? Store.defaultType.len,
                 color: named ?? colors[types.count % colors.count]
             )
+            type.mod = StateUpgrade.tagMod(type, stored: JSONRead.number(raw["mod"]))
             types.append(type)
         }
         return types

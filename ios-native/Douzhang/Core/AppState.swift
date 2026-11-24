@@ -30,11 +30,13 @@ enum AmbienceLevel: String, CaseIterable {
 }
 
 /// 標籤（狀態檔沿用 types 這個欄位名）：名字、一顆多長、番茄什麼顏色。
+/// mod 是格式 v3 加的：最後一次改它的時刻，兩台手機改了同一個標籤時晚的算數；沒動過的預設標籤是 0。
 struct TagType: Equatable, Identifiable {
     var id: String
     var name: String
     var len: Double
     var color: TomatoColor
+    var mod: Millis = 0
 }
 
 /// 刪掉的標籤：不丟，留著名字與顏色，舊番茄才不會被算到別的標籤上。

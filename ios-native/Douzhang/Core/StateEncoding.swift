@@ -46,14 +46,20 @@ enum StateEncoding {
     }
 
     /// 刪掉的標籤另外放一個陣列：舊版不認得這一欄，頂多看不到，不會把它當成還在。
-    private static func writeRemoved(_ removed: RemovedTag) -> JSONObject {
+    static func writeRemoved(_ removed: RemovedTag) -> JSONObject {
         var object = writeTagType(removed.type)
         object["removedAt"] = removed.removedAt
         return object
     }
 
-    private static func writeTagType(_ type: TagType) -> JSONObject {
-        ["id": type.id, "name": type.name, "len": type.len, "color": type.color.rawValue]
+    static func writeTagType(_ type: TagType) -> JSONObject {
+        [
+            "id": type.id,
+            "name": type.name,
+            "len": type.len,
+            "color": type.color.rawValue,
+            "mod": type.mod,
+        ]
     }
 
     private static func writeRestShort(_ value: RestShort) -> Any {
@@ -108,7 +114,7 @@ enum StateEncoding {
         return object
     }
 
-    private static func writeDay(_ day: DayRecord) -> JSONObject {
+    static func writeDay(_ day: DayRecord) -> JSONObject {
         ["beans": day.beans.map(writeBean), "voids": day.voids.map(writeVoid)]
     }
 

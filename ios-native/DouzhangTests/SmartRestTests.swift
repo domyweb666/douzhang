@@ -13,7 +13,7 @@ final class SmartRestTests: XCTestCase {
         state.settings.restShort = .minutes(15)
         state.settings.restLongEvery = 3
         state.settings.restLongMinutes = 20
-        return SettingsLogic.setTypeLen(state, id: "t1", len: len)
+        return SettingsLogic.setTypeLen(state, id: "t1", len: len, now: base)
     }
 
     /// 連續收 count 顆，響了就收、隔 40 分再開始；回最後一次收下後的休息與收下那一刻。

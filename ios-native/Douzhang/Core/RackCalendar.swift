@@ -78,8 +78,8 @@ enum RackCalendar {
         var cluster: [Int] = []
         var clusterEnd = -1.0
         for item in Receipt.timeline(day) {
-            let top = (item.start - base) / Params.msPerHour
-            let end = min(hoursPerDay, (item.end - base) / Params.msPerHour)
+            let top = topInDay((item.start - base) / Params.msPerHour, minHours: minHours)
+            let end = inDay((item.end - base) / Params.msPerHour)
             let height = max(minHours, end - top)
             if !cluster.isEmpty, top >= clusterEnd {
                 closeCluster(&blocks, cluster)
@@ -100,6 +100,17 @@ enum RackCalendar {
         return blocks
     }
 
+    /// 在別的時區收的那顆（格子照當地那天、時刻照這支手機現在的時區）與壞檔，
+    /// 算出來會在這天外面：夾進這天裡，畫面照樣畫得出來。
+    private static func inDay(_ hours: Double) -> Double {
+        min(hoursPerDay, max(0, hours))
+    }
+
+    /// 整顆在這天之後的，留一個最小高度的位子在最底下，不會畫到時間軸外面。
+    private static func topInDay(_ hours: Double, minHours: Double) -> Double {
+        inDay(hours >= hoursPerDay ? hoursPerDay - minHours : hours)
+    }
+
     private static func closeCluster(_ blocks: inout [DayBlock], _ cluster: [Int]) {
         let lanes = (cluster.map { blocks[$0].lane }.max() ?? 0) + 1
         for index in cluster {
@@ -109,10 +120,11 @@ enum RackCalendar {
 
     /// 幾天共用的時間軸：最早那顆的整點前一小時，到最晚那顆結束的整點後一小時。
     /// columns：每天排好的方塊。都沒有東西回 nil（畫面就空著，不寫 0）。
+    /// 先夾進 0 到 24 點再算，from 一定小於 upTo（畫面拿這兩個做範圍，反過來會當掉）。
     static func axisHours(_ columns: [[DayBlock]]) -> AxisHours? {
         let blocks = columns.flatMap { $0 }
-        guard let first = blocks.map(\.top).min() else { return nil }
-        let last = blocks.map { $0.top + $0.height }.max() ?? first
+        guard let first = blocks.map({ inDay($0.top) }).min() else { return nil }
+        let last = blocks.map { inDay($0.top + $0.height) }.max() ?? first
         return AxisHours(
             from: max(0, Int(first.rounded(.down)) - 1),
             upTo: min(Int(hoursPerDay), Int(last.rounded(.up)) + 1)

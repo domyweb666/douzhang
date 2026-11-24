@@ -25,36 +25,57 @@ enum SettingsLogic {
             id: "t\(Int(now))",
             name: Words.newTypeName,
             len: Params.newTypeMinutes,
-            color: freeColor(state.settings.types)
+            color: freeColor(state.settings.types),
+            mod: now
         )
         var next = state
         next.settings.types.append(type)
         return next
     }
 
+    /// 這次改（或刪）算在幾時：一定比上一次晚。兩台手機的時鐘不會一樣準，
+    /// 另一台快幾分鐘改過之後這台再改，照這台的時鐘寫會比較早，同步時後改的反而輸。
+    private static func stamp(_ now: Millis, after mod: Millis) -> Millis {
+        max(now, mod + 1)
+    }
+
+    /// 改一個標籤並記下幾時改的。值沒變就不算改過：不然打開編輯按「好」也會蓋掉另一台手機改的。
     private static func mapType(
         _ state: AppState,
         id: String,
+        now: Millis,
         change: (inout TagType) -> Void
     ) -> AppState {
         var next = state
         for index in next.settings.types.indices where next.settings.types[index].id == id {
-            change(&next.settings.types[index])
+            var type = next.settings.types[index]
+            change(&type)
+            if type != next.settings.types[index] {
+                type.mod = stamp(now, after: type.mod)
+                next.settings.types[index] = type
+            }
         }
         return next
     }
 
     /// 改名：頭尾空白去掉、最多 typeNameMaxChars 字，空的變「未命名」。
-    static func renameType(_ state: AppState, id: String, name: String) -> AppState {
+    static func renameType(
+        _ state: AppState,
+        id: String,
+        name: String,
+        now: Millis
+    ) -> AppState {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         let clean = String(trimmed.prefix(Params.typeNameMaxChars))
-        return mapType(state, id: id) { $0.name = clean.isEmpty ? Words.unnamedType : clean }
+        return mapType(state, id: id, now: now) {
+            $0.name = clean.isEmpty ? Words.unnamedType : clean
+        }
     }
 
     /// 長度只能從刻度選（同一把尺）；刻度外的值不改。
-    static func setTypeLen(_ state: AppState, id: String, len: Double) -> AppState {
+    static func setTypeLen(_ state: AppState, id: String, len: Double, now: Millis) -> AppState {
         guard Params.typeLengths.contains(len) else { return state }
-        return mapType(state, id: id) { $0.len = len }
+        return mapType(state, id: id, now: now) { $0.len = len }
     }
 
     /// 刻度上離這個長度最近的一格：舊檔的 12.5 分這種，打開滾輪與刻度尺時停在這裡。
@@ -63,19 +84,25 @@ enum SettingsLogic {
         return min(scale[scale.count - 1], max(scale[0], len.rounded()))
     }
 
-    static func setTypeColor(_ state: AppState, id: String, color: TomatoColor) -> AppState {
-        mapType(state, id: id) { $0.color = color }
+    static func setTypeColor(
+        _ state: AppState,
+        id: String,
+        color: TomatoColor,
+        now: Millis
+    ) -> AppState {
+        mapType(state, id: id, now: now) { $0.color = color }
     }
 
     /// 刪到剩一個就不能再刪；刪掉的是選中的就退回第一個。
     /// 刪掉的那個不丟，搬到 removedTypes：舊番茄照原本的名字與顏色算，不會併進別的標籤。
-    static func removeType(_ state: AppState, id: String, now: Millis = 0) -> AppState {
+    static func removeType(_ state: AppState, id: String, now: Millis) -> AppState {
         let types = state.settings.types.filter { $0.id != id }
         guard !types.isEmpty, types.count != state.settings.types.count else { return state }
         var next = state
         next.settings.types = types
         for gone in state.settings.types where gone.id == id {
-            next.settings.removedTypes.append(RemovedTag(type: gone, removedAt: now))
+            let removedAt = stamp(now, after: gone.mod)
+            next.settings.removedTypes.append(RemovedTag(type: gone, removedAt: removedAt))
         }
         if !types.contains(where: { $0.id == state.settings.typeId }) {
             next.settings.typeId = types[0].id
