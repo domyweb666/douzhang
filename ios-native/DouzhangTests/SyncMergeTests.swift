@@ -165,6 +165,19 @@ final class SyncMergeTests: XCTestCase {
         XCTAssertEqual(SyncJoin.union(["b"], ["a"]), ["a", "b"])
     }
 
+    /// 本機的字跟從檔案讀回來的字混在一起排，一句是另一句的開頭時也要同一個順序。
+    func test念頭一句是另一句的開頭兩台排出來一樣() throws {
+        var one = SyncSample.bean("r1", at: base)
+        one.notes = ["寫完", "寫"]
+        var two = SyncSample.bean("r1", at: base)
+        two.notes = ["寫完第二章", "寫"]
+        let expected = ["寫", "寫完", "寫完第二章"]
+        let here = try single(one, two)
+        let there = try single(two, one)
+        XCTAssertEqual(here.notes, expected)
+        XCTAssertEqual(there.notes, expected)
+    }
+
     func test作廢兩份不同原因跟著晚的那行字都留() throws {
         var early = SyncSample.voided("r1", at: base)
         early.text = "門鈴"

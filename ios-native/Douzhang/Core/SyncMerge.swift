@@ -88,12 +88,19 @@ enum SyncMerge {
     /// 照整毫秒比：本機帶小數、別台沒有，同一毫秒的兩筆才不會一台一個順序。
     private static func inOrder(_ day: DayRecord) -> DayRecord {
         DayRecord(
-            beans: day.beans.sorted {
-                ($0.keptAt.rounded(.down), $0.id) < ($1.keptAt.rounded(.down), $1.id)
-            },
-            voids: day.voids.sorted {
-                ($0.voidedAt.rounded(.down), $0.id) < ($1.voidedAt.rounded(.down), $1.id)
-            }
+            beans: day.beans.sorted { isBefore($0.keptAt, $0.id, $1.keptAt, $1.id) },
+            voids: day.voids.sorted { isBefore($0.voidedAt, $0.id, $1.voidedAt, $1.id) }
         )
+    }
+
+    private static func isBefore(
+        _ time: Millis,
+        _ id: String,
+        _ otherTime: Millis,
+        _ otherID: String
+    ) -> Bool {
+        let whole = time.rounded(.down)
+        let otherWhole = otherTime.rounded(.down)
+        return whole == otherWhole ? SyncJoin.precedes(id, otherID) : whole < otherWhole
     }
 }

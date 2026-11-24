@@ -98,6 +98,16 @@ enum SyncJoin {
         guard let left, let right else { return left ?? right }
         return max(left, right)
     }
+
+    /// 字的先後照位元組比，不用字串自己的 <：本機打的字跟從檔案讀回來的字，
+    /// 一個是另一個的開頭時（「寫」跟「寫完」）排出來的順序不一定一樣，兩台會合出不同的結果。
+    static func precedes(_ left: String, _ right: String) -> Bool {
+        left.utf8.lexicographicallyPrecedes(right.utf8)
+    }
+
+    static func precedes(_ left: [String], _ right: [String]) -> Bool {
+        left.lexicographicallyPrecedes(right) { precedes($0, $1) }
+    }
 }
 
 // MARK: 挑一份
@@ -118,7 +128,7 @@ extension SyncJoin {
             if left.time != right.time {
                 return left.time < right.time
             }
-            return left.rest.lexicographicallyPrecedes(right.rest)
+            return SyncJoin.precedes(left.rest, right.rest)
         }
     }
 
@@ -178,13 +188,15 @@ extension SyncJoin {
         let total = both.values.reduce(0, +)
         switch (total == left.count, total == right.count) {
         case (true, true):
-            return left.lexicographicallyPrecedes(right) ? right : left
+            return precedes(left, right) ? right : left
         case (true, false):
             return left
         case (false, true):
             return right
         case (false, false):
-            return both.keys.sorted().flatMap { Array(repeating: $0, count: both[$0] ?? 0) }
+            return both.keys
+                .sorted { precedes($0, $1) }
+                .flatMap { Array(repeating: $0, count: both[$0] ?? 0) }
         }
     }
 
@@ -218,7 +230,7 @@ extension SyncJoin {
         let unique = Set(list)
         return unique
             .filter { line in !unique.contains { $0 != line && $0.contains(line) } }
-            .sorted()
+            .sorted { precedes($0, $1) }
     }
 
     /// 重點的行都一樣（只差順序或多了短的行）：留字多的，一樣多就照行比。
@@ -229,8 +241,8 @@ extension SyncJoin {
         let leftLines = split(left)
         let rightLines = split(right)
         if leftLines != rightLines {
-            return leftLines.lexicographicallyPrecedes(rightLines) ? right : left
+            return precedes(leftLines, rightLines) ? right : left
         }
-        return max(left, right)
+        return precedes(left, right) ? right : left
     }
 }

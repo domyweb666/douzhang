@@ -27,7 +27,7 @@ final class FormatV3Tests: XCTestCase {
 
     // MARK: 寫出去
 
-    func test寫出去的版本號是三標籤帶幾時改過() throws {
+    func test寫出去的版本號是三標籤帶幾時改過() {
         let object = StateEncoding.object(Store.blank())
         XCTAssertEqual(object["v"] as? Int, 3)
         var type = Store.defaultType

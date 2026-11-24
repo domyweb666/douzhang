@@ -79,7 +79,7 @@ enum SyncTags {
         if leftMod != rightMod {
             return leftMod < rightMod
         }
-        return content(left).lexicographicallyPrecedes(content(right))
+        return SyncJoin.precedes(content(left), content(right))
     }
 
     private static func content(_ type: TagType) -> [String] {
@@ -117,6 +117,6 @@ enum SyncTags {
     private static func inOrder(_ mine: [String], _ ids: Set<String>) -> [String] {
         var seen: Set<String> = []
         let kept = mine.filter { ids.contains($0) && seen.insert($0).inserted }
-        return kept + ids.subtracting(kept).sorted()
+        return kept + ids.subtracting(kept).sorted { SyncJoin.precedes($0, $1) }
     }
 }
