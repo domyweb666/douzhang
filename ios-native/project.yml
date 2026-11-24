@@ -51,7 +51,15 @@ targets:
       path: Douzhang/Douzhang.entitlements
       properties:
         com.apple.developer.family-controls: true
-        # iCloud 同步：後台建好容器 iCloud.org.domyweb.douzhang、勾進 App ID 之後才加 com.apple.developer.icloud-container-identifiers 與 com.apple.developer.ubiquity-container-identifiers（兩個都填那個容器），再加 com.apple.developer.icloud-services: [CloudDocuments]。不加的話 url(forUbiquityContainerIdentifier:) 回 nil，同步等於沒開
+        # iCloud 同步：多米 2026-11-24 在後台建好容器、勾進 App ID 才加。少一個鍵同步就等於沒開
+        com.apple.developer.icloud-container-identifiers:
+          - iCloud.org.domyweb.douzhang
+        com.apple.developer.ubiquity-container-identifiers:
+          - iCloud.org.domyweb.douzhang
+        com.apple.developer.icloud-services:
+          - CloudDocuments
+        # 開發版與正式版看同一份，跟茄記一樣
+        com.apple.developer.icloud-container-environment: Production
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: org.domyweb.douzhang
