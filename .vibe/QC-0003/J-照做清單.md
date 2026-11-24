@@ -60,5 +60,9 @@ App Store Connect → 番茄帳 →「App 資訊」→ 一般資訊裡的「Appl
 - B 做完回「**勾好了**」。我才在 `ios-native/project.yml` 加 `icloud-container-identifiers`、`ubiquity-container-identifiers`（都填這個容器）、`icloud-services: CloudDocuments`、`icloud-container-environment: Production`。先加會簽不過；簽不簽得過要打包才知道。
 - A、C、D、E 做到哪就回到哪，不用一次做完。
 
-## 付費頁寫完之前打包 TestFlight 會怎樣
-擋其他 app、聚焦模式照舊免費能用，設定頁沒有購買區、沒有 iCloud 列。付費頁寫完那一版起，沒買的人這兩樣就鎖起來，測試的人會感覺到「本來能用的變不能用」，資料都不動。
+## 現在打包 TestFlight 會怎樣
+付費頁、設定頁購買區、擋 app 與聚焦的鎖 2026-11-24 寫完了（AI23，本機編不了、雲端沒跑）。從這版起：
+- 沒買的人看不到擋其他 app 與聚焦模式，測試的人會感覺到「本來能用的變不能用」，資料都不動。
+- A 沒變「有效」、C-1 到 C-7 沒做完，TestFlight 讀不到價格，等於沒有路可以買，聚焦模式（AI16）也驗不到。先把 A、C 做到那裡，或叫我從 AI23 之前（`702fac2`）打一版驗 AI16。
+- iCloud 的權限還沒加進 app，買了打開同步也不會動。B 做完回「勾好了」才加；加好、兩支手機同步走過，才准送審。
+- 上面寫「等付費頁」的，付費頁已經寫完；C-8 的截圖、C-9 的備註要等它能跑（雲端編過、在手機上打得開）我才給你。
