@@ -51,6 +51,8 @@ targets:
       path: Douzhang/Douzhang.entitlements
       properties:
         com.apple.developer.family-controls: true
+        # 到點通知穿過系統的專注模式；後台 App ID 要先勾 Time Sensitive Notifications，不然封存簽不過
+        com.apple.developer.usernotifications.time-sensitive: true
         # iCloud 同步：多米 2026-11-24 在後台建好容器、勾進 App ID 才加。少一個鍵同步就等於沒開
         com.apple.developer.icloud-container-identifiers:
           - iCloud.org.domyweb.douzhang

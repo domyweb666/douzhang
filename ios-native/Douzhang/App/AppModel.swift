@@ -125,6 +125,9 @@ final class AppModel {
             if next != phase {
                 enter(next)
             }
+            if StartAsk.shared.take() {
+                startFromOutside()
+            }
         }
         setClock(time)
     }

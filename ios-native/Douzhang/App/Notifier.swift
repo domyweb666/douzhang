@@ -74,6 +74,8 @@ final class Notifier {
             let content = UNMutableNotificationContent()
             content.title = notice.title
             content.body = notice.body
+            // 專注的人常開著系統的專注模式：不設這個，到點那一則會被收起來
+            content.interruptionLevel = .timeSensitive
             if sound {
                 content.sound = .default
             }

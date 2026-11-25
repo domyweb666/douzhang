@@ -80,6 +80,17 @@ enum Machine {
         return with(state, current: .focus(run))
     }
 
+    /// 從 app 外面（捷徑、Siri、動作按鈕）要求開始。休息中等於按了「回來了」再開始；
+    /// 正在計時、響了還沒收都不能蓋掉那顆，回 nil（只打開 app）。
+    static func startFromOutside(
+        _ state: AppState,
+        now: Millis,
+        zone: String? = nil
+    ) -> AppState? {
+        guard state.focusRun == nil else { return nil }
+        return start(backFromRest(state), now: now, zone: zone)
+    }
+
     /// 收下後那句：輪替，不跟上一次同一句。roll 是擲出來的位置。
     static func pickLine(after last: Int, roll: Int) -> Int {
         roll == last ? (roll + 1) % Words.restLines.count : roll

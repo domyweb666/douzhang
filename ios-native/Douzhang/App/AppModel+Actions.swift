@@ -16,6 +16,21 @@ extension AppModel {
         }
     }
 
+    /// 從 app 外面開始一顆。等完權限那個框才看狀態：等的時候可能已經按了開始。
+    func startFromOutside() {
+        Task {
+            let granted = await notifier.askOnce()
+            notif = granted ? .granted : .denied
+            let now = TimeText.nowMillis()
+            let zone = Store.zoneNow()
+            guard let next = Machine.startFromOutside(settled(), now: now, zone: zone) else {
+                return
+            }
+            idleLine = nil
+            commit(next)
+        }
+    }
+
     func keep(text: String) {
         jarFresh = state.focusRun?.id
         commit(Machine.keep(settled(), now: TimeText.nowMillis(), text: text))
