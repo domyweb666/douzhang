@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>番茄帳鎖定畫面倒數</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* 版面：一欄六題，每題的選項並排真實尺寸（393 寬手機），窄螢幕疊成一欄；底下固定一條時間拉桿 */
+:root{--bg:#F7F4EC;--ink:#1D1D1F;--sub:#5F5F66;--card:#FFFFFF;--line:#E5E1D8;--accent:#3B2547;--onAccent:#FFFFFF;--soft:#ECE3F1;--softInk:#4A2F5A;--fill:#E5E1D8;
+--font:-apple-system,'SF Pro Text',Inter,'PingFang TC','Noto Sans TC','Microsoft JhengHei',sans-serif;
+--num:-apple-system,'SF Pro Display',Inter,'Segoe UI',sans-serif;
+--gut-l:max(16px,env(safe-area-inset-left,0px));--gut-r:max(16px,env(safe-area-inset-right,0px))}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14130F;--ink:#F5F5F7;--sub:#A1A1A8;--card:#1C1C1E;--line:#38383A;--accent:#D9C2E8;--onAccent:#2A1A33;--soft:#3A2B45;--softInk:#E3D0F0;--fill:#2C2C2E;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#14130F;--ink:#F5F5F7;--sub:#A1A1A8;--card:#1C1C1E;--line:#38383A;--accent:#D9C2E8;--onAccent:#2A1A33;--soft:#3A2B45;--softInk:#E3D0F0;--fill:#2C2C2E;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/26px var(--font);padding-block:32px 190px;padding-left:var(--gut-l);padding-right:var(--gut-r)}
+main{max-width:1284px;margin:0 auto;display:flex;flex-direction:column;gap:56px}
+h1{margin:0;font-size:34px;line-height:41px;font-weight:700;text-wrap:balance}
+h2{margin:0;font-size:24px;line-height:30px;font-weight:700;text-wrap:balance}
+h3{margin:0;font-size:17px;line-height:24px;font-weight:600}
+p,ul,fieldset{margin:0;padding:0;border:0;min-width:0}
+ul{padding-left:20px}
+section{display:flex;flex-direction:column;gap:20px;min-width:0}
+.head{display:flex;flex-direction:column;gap:8px}
+.sub{color:var(--sub);max-width:65ch}
+.small{font-size:15px;line-height:22px}
+a{color:var(--softInk)}
+
+.pick{display:flex;flex-direction:column;gap:16px;padding:20px;border-radius:20px;background:var(--card);border:1px solid var(--line)}
+.pick dl{margin:0;display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 16px}
+.pick dt{font-weight:600;font-variant-numeric:tabular-nums}
+.pick dd{margin:0}
+.code{font:600 20px/28px var(--num);font-variant-numeric:tabular-nums;border:0;background:none;color:inherit;padding:0;width:13em;max-width:100%}
+.bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+button{border:0;min-height:44px;padding:0 18px;border-radius:999px;background:var(--fill);color:var(--ink);font:600 15px/20px var(--font);cursor:pointer}
+button.main{background:var(--accent);color:var(--onAccent)}
+button[aria-pressed=true]{background:var(--soft);color:var(--softInk)}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid var(--softInk);outline-offset:2px}
+
+.opts{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(393px,100%),1fr));gap:36px 24px;align-items:start}
+.opt{display:flex;flex-direction:column;gap:12px;min-width:0}
+.opt label{display:flex;align-items:center;gap:10px;min-height:44px;font-size:20px;line-height:26px;font-weight:700;cursor:pointer}
+.opt input{width:20px;height:20px;margin:0;accent-color:var(--accent);flex:none}
+.rec{font-size:13px;line-height:18px;font-weight:600;padding:3px 10px;border-radius:999px;background:var(--soft);color:var(--softInk);white-space:nowrap}
+.why{display:flex;flex-direction:column;gap:4px;min-height:100px}
+.cost{color:var(--sub);font-size:15px;line-height:22px}
+.cap{font-size:13px;line-height:18px;font-weight:600}
+
+/* 手機上的一塊。桌布、系統底色是畫給人看的，不跟著這頁的深淺色 */
+.wall{width:393px;max-width:100%;padding:24px 11px;border-radius:20px;display:flex;flex-direction:column;gap:8px}
+.wall.l{background:linear-gradient(160deg,#BFD6E4 0%,#E8E4D4 55%,#EBC9A9 100%);color:#1D1D1F}
+.wall.d{background:linear-gradient(160deg,#131B2C 0%,#2A2238 55%,#4A2A28 100%);color:#F5F5F7}
+.wall .cap{padding-left:6px}
+.wall .cap:not(:first-child){margin-top:8px}
+.la{width:100%;max-width:371px;min-height:84px;border-radius:26px;padding:14px;display:flex;color:var(--t);background:var(--b);overflow:hidden}
+.l .la,.l .note{--t:#1D1D1F;--s:#55555B;--k:rgba(0,0,0,.13);--b:rgba(250,249,246,.8)}
+.d .la,.d .note{--t:#F5F5F7;--s:#B4B4BB;--k:rgba(255,255,255,.22);--b:rgba(28,28,30,.78)}
+.la .num,.di .num{font-family:var(--num);font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.01em;white-space:nowrap}
+.la svg,.di svg{display:block;flex:none}
+.A{align-items:center;gap:14px}
+.A .mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.A .num{font-size:52px;line-height:60px}
+.B{align-items:center;justify-content:space-between;gap:14px}
+.B .num{font-size:68px;line-height:72px}
+.B .mid{display:flex;flex-direction:column;min-width:0}
+.C{flex-direction:column;gap:4px}
+.C .top{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:46px}
+.C .num{font-size:42px;line-height:46px}
+.C .mid{display:flex;flex-direction:column;min-width:0}
+.C .end{text-align:right}
+.lab{font-size:17px;line-height:22px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.la .sec{font-size:15px;line-height:20px;font-weight:500;color:var(--s);font-variant-numeric:tabular-nums}
+.big{font-size:22px;line-height:28px;font-weight:700}
+.vine{display:flex;align-items:center;gap:6px;height:42px}
+.vine .line{position:relative;flex:1;height:4px;border-radius:2px;background:var(--k)}
+.vine .line i{position:absolute;left:0;top:0;height:4px;border-radius:2px;background:#4E8B3A}
+.vine .line svg{position:absolute}
+.gone{border:1.5px dashed currentColor;border-radius:26px;min-height:84px;display:flex;align-items:center;justify-content:center;font-size:15px;opacity:.75;max-width:371px;padding:12px;text-align:center}
+.note{max-width:371px;border-radius:24px;padding:14px 16px;background:var(--b);color:var(--t);display:flex;gap:12px;align-items:center;font-size:15px;line-height:20px}
+.note .ic{width:38px;height:38px;border-radius:9px;background:#3B2547;display:grid;place-items:center;flex:none}
+.note b{display:block;font-weight:600}
+
+/* 動態島：一律黑底 */
+.di{background:#000;color:#fff;display:flex;align-items:center}
+.compact{width:231px;max-width:100%;height:36.67px;border-radius:19px;justify-content:space-between;margin:0 auto;--k:rgba(255,255,255,.26)}
+.compact>div{width:52.33px;display:flex;justify-content:center}
+.compact .num{font-size:15px;line-height:20px;font-weight:600}
+.pair{display:flex;align-items:center;justify-content:center;gap:8px}
+.mini{min-width:36.67px;height:36.67px;border-radius:19px;justify-content:center;padding:0 4px;--k:rgba(255,255,255,.26)}
+.mini .num{font-size:13px;line-height:18px;font-weight:600}
+.stub{width:126px;height:36.67px;border-radius:19px;background:#000}
+.lim{width:28px;height:28px;border-radius:14px;justify-content:center;--k:rgba(255,255,255,.26)}
+.exp{width:100%;max-width:371px;border-radius:44px;min-height:84px;padding:18px 24px;--k:rgba(255,255,255,.26)}
+.exp .num{color:#fff}
+.xA{justify-content:space-between;min-height:100px}
+.xA .num{font-size:40px;line-height:46px;padding-top:6px}
+.xB{flex-direction:column;gap:0;min-height:136px;padding-top:14px}
+.xB .r{width:100%;display:flex;justify-content:space-between;height:40px}
+.xB .num{font-size:64px;line-height:66px}
+.xC{flex-direction:column;gap:2px;min-height:110px;padding-top:14px}
+.xC .r{width:100%;display:flex;justify-content:space-between;align-items:center;height:42px}
+.xC .num{font-size:32px;line-height:40px}
+.xC .vine{width:100%}
+.exp .lab{font-size:15px}
+.strip{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;border-radius:26px;background:var(--b);color:var(--t);padding:14px 6px;max-width:371px}
+.l .strip{--t:#1D1D1F;--k:rgba(0,0,0,.13);--b:rgba(250,249,246,.8)}
+.d .strip{--t:#F5F5F7;--k:rgba(255,255,255,.22);--b:rgba(28,28,30,.78)}
+.strip div{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;line-height:16px;text-align:center;font-weight:500}
+
+.dock{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding-block:8px max(10px,env(safe-area-inset-bottom,0px));padding-left:var(--gut-l);padding-right:var(--gut-r)}
+.dock>div{max-width:1284px;margin:0 auto;display:flex;flex-wrap:wrap;gap:4px 16px;align-items:center}
+.dock .time{display:flex;align-items:center;gap:12px;flex:1 1 300px;min-width:0}
+.dock input[type=range]{flex:1;min-width:0;height:40px;accent-color:var(--accent)}
+.dock output{font:600 17px/22px var(--num);font-variant-numeric:tabular-nums;min-width:3.4em;text-align:right}
+.dock .grp{display:flex;gap:6px;align-items:center}
+.dock .grp button{min-height:40px;padding:0 12px}
+.dots{display:flex;gap:4px}
+.dots button{width:44px;padding:0;background:none;display:grid;place-items:center}
+.dots button::before{content:"";width:22px;height:22px;border-radius:50%;background:var(--c)}
+.dots button[aria-pressed=true]{background:var(--soft)}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(380px,100%),1fr));gap:28px 40px;align-items:start}
+.facts>div{display:flex;flex-direction:column;gap:8px;min-width:0}
+.facts li{font-size:15px;line-height:22px}
+.facts li+li{margin-top:6px}
+@media(max-width:460px){
+ .wall{width:calc(100% + var(--gut-l) + var(--gut-r));max-width:none;margin-left:calc(-1*var(--gut-l));margin-right:calc(-1*var(--gut-r));border-radius:0;padding-inline:8px}
+ .dock>div{gap:4px 8px}
+ .dock .grp{gap:4px}
+ .dock .grp button{padding:0 8px;font-size:14px}
+ .why{min-height:0}
+ h1{font-size:28px;line-height:34px}
+}
+</style>
+<main>
+<div class="head">
+<h1>鎖定畫面與動態島倒數（1.1，AI27）</h1>
+<p class="sub">六題，每題選一個。畫的是 393 寬的手機、真實尺寸。下面那條可以拉 25 分的不同時刻，選了哪個，其他題的圖會跟著換。第一版都不放按鈕，點下去就打開番茄帳。</p>
+</div>
+
+<div class="pick">
+<div class="head"><h3>照推薦：1A 2A 3B 4A 5A 6A</h3></div>
+<dl>
+<dt>1A</dt><dd>環包著番茄在左、時間在右，跟計時中那頁同一個長相</dd>
+<dt>2A</dt><dd>到點換成「響了。這顆熟了，回來收下。」</dd>
+<dt>3B</dt><dd>沒有終點的休息只寫「休息」，不數</dd>
+<dt>4A</dt><dd>動態島左邊環包番茄、右邊時間</dd>
+<dt>5A</dt><dd>標籤名、在做什麼都不放，只認顏色</dd>
+<dt>6A</dt><dd>計時中一直是青的，熟了才變標籤的顏色</dd>
+</dl>
+<div class="bar"><span>你選的</span><input class="code" id="code" readonly aria-label="你選的" value="1A 2A 3B 4A 5A 6A"><button class="main" id="copy">複製</button><button id="reset">全部照推薦</button></div>
+<div class="bar"><span>標籤的顏色</span><span class="dots" id="dots"></span></div>
+</div>
+
+<div id="qs" style="display:contents"></div>
+
+<section>
+<h2>查到的限制</h2>
+<div class="facts">
+<div><h3>尺寸</h3><ul>
+<li>鎖定畫面高 84–160，超過 160 系統可能截掉；393 寬手機是 371 寬，四邊留 14。<a href="https://developer.apple.com/documentation/activitykit/displaying-live-data-with-live-activities">ActivityKit 文件</a>、<a href="https://developer.apple.com/design/human-interface-guidelines/live-activities#Specifications">HIG 尺寸表</a></li>
+<li>動態島（393 寬）：緊湊左右各 52.33×36.67、最小 36.67–45×36.67、展開 371×84–160，底色一律黑。畫面橫放時左右各剩 28×28。同上</li>
+</ul></div>
+<div><h3>會不會自己動</h3><ul>
+<li>時間數字、進度條、圓環照結束時刻自己走，但照時間走的進度不能套自訂樣式，粗細由系統定。頁面上環的粗細是估的。<a href="https://developer.apple.com/documentation/swiftui/progressview/init(timerinterval:countsdown:)">文件</a></li>
+<li>圓環中間可以放自己的圖，番茄放得進去。<a href="https://developer.apple.com/documentation/swiftui/progressview/init(timerinterval:countsdown:label:currentvaluelabel:)">文件</a></li>
+<li>其他動畫只在內容更新那一下播，最長兩秒；永遠顯示的螢幕變暗時不播。<a href="https://developer.apple.com/documentation/widgetkit/animating-data-updates-in-widgets-and-live-activities">文件</a></li>
+<li>變暗時秒數會變成「--」（開發者回報，<a href="https://developer.apple.com/forums/thread/735124">735124</a>）。iOS 16.2 有人回報變暗時進度條停住，之後的版本沒查到（<a href="https://developer.apple.com/forums/thread/722073">722073</a>）。</li>
+<li>背景有聲音時，有人回報約 30 秒後就更新不進去，Apple 沒回（<a href="https://developer.apple.com/forums/thread/822999">822999</a>）。</li>
+</ul></div>
+<div><h3>到點與收掉</h3><ul>
+<li>staleDate 到了，系統把這張標成過時，可以換一種畫法。<a href="https://developer.apple.com/documentation/activitykit/activitycontent/staledate">文件</a></li>
+<li>準不準說法不一。Apple 工程師說先知道時刻就可以用（<a href="https://developer.apple.com/forums/thread/761577">761577</a>）；有人回報打開 app 才換（<a href="https://developer.apple.com/forums/thread/759250">759250</a>），有人回報沒畫過時的樣子時會蓋一個轉圈（<a href="https://developer.apple.com/forums/thread/740406">740406</a>）。要真機量。</li>
+<li>最久 8 小時，之後系統結束它，鎖定畫面最多再留 4 小時。結束的那一刻動態島馬上拿掉。<a href="https://developer.apple.com/documentation/activitykit/displaying-live-data-with-live-activities">文件</a></li>
+<li>一般只能在 app 開在眼前時開始。「休息完自動開始下一顆」碰到 app 睡著，這張要等打開 app 才會換成新的一顆。同上</li>
+<li>iOS 26 起能預約在某個時刻出現一張新的（<a href="https://developer.apple.com/documentation/activitykit/activity/request(attributes:content:pushtype:style:alertconfiguration:start:)">文件</a>）。最低 iOS 17，沒拿來用。</li>
+</ul></div>
+<div><h3>還會出現在哪</h3><ul>
+<li>待機顯示、配對的 Apple Watch、Mac 選單列、CarPlay 都會自動出現，用的是動態島那幾塊。放了標籤名，那邊也看得到。<a href="https://developer.apple.com/design/human-interface-guidelines/live-activities">HIG</a></li>
+<li>HIG 寫：敏感內容別放，旁邊的人看得到。同上</li>
+</ul></div>
+<div><h3>沒查到，要真機看</h3><ul>
+<li>圓環在 72 大小時實際多粗、圓頭還是平頭。</li>
+<li>到點那幾秒的數字跟 app 差不差一秒（app 是無條件進位）。</li>
+<li>Canvas 畫的番茄在即時動態裡畫不畫得出來；不行就改用圖檔。</li>
+<li>6C 那種轉向、裁切後的進度條還會不會自己走。</li>
+</ul></div>
+<div><h3>字</h3><ul>
+<li>既有：「響了。」「這顆熟了，回來收下。」「休息」「休息完了」。</li>
+<li>新字，草稿：「10:05 熟」（只有 2B 用）。</li>
+<li>新字，草稿（只給讀屏）：「這顆還在長」「休息中」。</li>
+</ul></div>
+</div>
+</section>
+</main>
+
+<div class="dock"><div>
+<div class="time"><input type="range" id="pos" min="0" max="1500" value="750" aria-label="走到哪裡"><output id="out">12:30</output></div>
+<div class="grp" id="jump"><button data-s="0">0%</button><button data-s="750">50%</button><button data-s="1350">90%</button><button data-s="1500">到點</button><button id="play" aria-pressed="false">走</button></div>
+<div class="grp"><button id="wp" aria-pressed="false">深色桌布</button></div>
+</div></div>
+
+<script>
+var FULL = 1500, REST = 300;
+var COL = { 紅: '#E4472F', 橘: '#F0892B', 黃: '#F2BC2F', 紫: '#8C5BA9', 粉: '#EE7E9D' };
+var UN = '#9CC25A', VINE = '#4E8B3A', INK = '#2B2329';
+var REC = { 1: 'A', 2: 'A', 3: 'B', 4: 'A', 5: 'A', 6: 'A' };
+var st = { sec: 750, play: false, wall: 'l', tag: '紅', pick: Object.assign({}, REC) };
+
+function rgb(h) { return [1, 3, 5].map(function (i) { return parseInt(h.substr(i, 2), 16); }); }
+function mix(a, b, p) { var x = rgb(a), y = rgb(b); return 'rgb(' + x.map(function (v, i) { return Math.round(v + (y[i] - v) * p); }).join(',') + ')'; }
+function two(v) { return (v < 10 ? '0' : '') + v; }
+function mmss(s) { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ':' + two(s % 60); }
+function tagc() { return COL[st.tag]; }
+
+// 番茄：跟 TomatoView 同一張 100×100。rise 有值時，底下 rise 成塗 up 色（6C）
+function tomato(size, fill, rise, up) {
+  var body = '<circle cx="50" cy="53" r="44" fill="' + fill + '"/>';
+  if (rise > 0) {
+    var y = 97 - 88 * Math.min(1, rise);
+    body += '<svg x="0" y="' + y + '" width="100" height="' + (100 - y) + '" viewBox="0 ' + y + ' 100 ' + (100 - y) + '" style="overflow:hidden"><circle cx="50" cy="53" r="44" fill="' + up + '"/></svg>';
+  }
+  return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 100 100" aria-hidden="true">' + body +
+    '<circle cx="50" cy="53" r="44" fill="none" stroke="' + INK + '" stroke-width="4"/>' +
+    '<path d="M19 44C21 33 28 25 38 21" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="5" stroke-linecap="round"/>' +
+    '<ellipse cx="37" cy="10" rx="12" ry="5.5" transform="rotate(-14 37 10)" fill="#6FAE52" stroke="' + INK + '" stroke-width="3.5"/>' +
+    '<ellipse cx="63" cy="10" rx="12" ry="5.5" transform="rotate(14 63 10)" fill="#6FAE52" stroke="' + INK + '" stroke-width="3.5"/>' +
+    '<path d="M50 11V3.5" fill="none" stroke="' + INK + '" stroke-width="4" stroke-linecap="round"/>' +
+    '<circle cx="37" cy="55" r="3.8" fill="' + INK + '"/><circle cx="63" cy="55" r="3.8" fill="' + INK + '"/>' +
+    '<ellipse cx="27" cy="64" rx="5.5" ry="3.2" fill="#fff" fill-opacity=".3"/><ellipse cx="73" cy="64" rx="5.5" ry="3.2" fill="#fff" fill-opacity=".3"/>' +
+    '<path d="M43.5 63Q50 69.5 56.5 63" fill="none" stroke="' + INK + '" stroke-width="3.2" stroke-linecap="round"/></svg>';
+}
+// 計時中的番茄照第 6 題畫。p 走了幾成；ripe 到點換成熟的
+function growing(size, p, grow, ripe) {
+  if (ripe) return tomato(size, tagc());
+  if (grow === 'C') return tomato(size, UN, p, tagc());
+  if (grow === 'B') { var q = p >= .4 ? .4 : 0; return tomato(Math.round(size * (.4 + .6 * q)), mix(UN, tagc(), q)); }
+  return tomato(size, UN);
+}
+function ring(size, p, color, inner, sw) {
+  sw = sw || Math.max(2.5, size * .085);
+  var r = (size - sw) / 2, c = 2 * Math.PI * r, m = size / 2;
+  return '<div style="position:relative;width:' + size + 'px;height:' + size + 'px;flex:none"><svg width="' + size + '" height="' + size + '" aria-hidden="true"><circle cx="' + m + '" cy="' + m + '" r="' + r + '" fill="none" style="stroke:var(--k)" stroke-width="' + sw + '"/>' +
+    (p > 0 ? '<circle cx="' + m + '" cy="' + m + '" r="' + r + '" fill="none" stroke="' + color + '" stroke-width="' + sw + '" stroke-linecap="round" stroke-dasharray="' + p * c + ' ' + (c + 1) + '" transform="rotate(-90 ' + m + ' ' + m + ')"/>' : '') +
+    '</svg><div style="position:absolute;inset:0;display:grid;place-items:center">' + inner + '</div></div>';
+}
+function leaf(left, top, turn) { return '<svg width="16" height="9" viewBox="0 0 24 11" style="left:' + left + '%;top:' + top + 'px;transform:rotate(' + turn + 'deg)"><ellipse cx="12" cy="5.5" rx="10.5" ry="4.5" fill="#6FAE52" stroke="' + INK + '" stroke-width="1.6"/></svg>'; }
+function vine(p, tom) {
+  return '<div class="vine"><div class="line"><i style="width:' + p * 100 + '%"></i>' + leaf(18, -9, -24) + leaf(42, 4, 24) + leaf(66, -9, -24) + '</div>' + tom + '</div>';
+}
+
+// 鎖定畫面一張。what：run 計時中、zero 到點沒換成、rang 到點換成、rest 休息倒數、restDone、up 往上數、word 只寫休息
+function card(what, o) {
+  o = o || {};
+  var L = o.layout || st.pick[1], grow = o.grow || st.pick[6], tag = (o.tag || st.pick[5]) === 'B';
+  var q2 = o.two || st.pick[2], sec = o.sec == null ? st.sec : o.sec;
+  if (what === 'run' && sec >= FULL) what = q2 === 'A' ? 'rang' : 'zero';
+  var p = Math.min(1, sec / FULL), rest = ['rest', 'restDone', 'up', 'word'].indexOf(what) >= 0;
+  var num = '', lab = '', sub = '', big = '', col = rest ? VINE : tagc(), full = what === 'rang';
+  if (what === 'run') num = mmss(FULL - sec);
+  if (what === 'zero') { num = '0:00'; p = 1; }
+  if (what === 'rang') { big = '響了。'; sub = '這顆熟了，回來收下。'; p = 1; }
+  if (what === 'rest') { num = mmss(REST * (1 - p)); lab = '休息'; if (p >= 1) { what = 'restDone'; num = ''; lab = ''; big = '休息完了'; } }
+  if (what === 'restDone') { big = '休息完了'; p = 1; num = lab = ''; }
+  if (what === 'up') { num = mmss(sec); lab = '休息'; p = 0; }
+  if (what === 'word') { big = '休息'; p = 0; }
+  if (!rest && !full) { if (tag) lab = '寫作'; if (q2 === 'B') sub = '10:05 熟'; }
+  var tom = function (s) { return rest ? tomato(Math.round(s * .4), UN) : growing(s, p, grow, full); };
+  var labs = (lab ? '<div class="lab">' + lab + '</div>' : '') + (sub && !big ? '<div class="sec">' + sub + '</div>' : '');
+  var bigs = '<div class="big">' + big + '</div>' + (sub ? '<div class="sec">' + sub + '</div>' : '');
+  var n = num ? '<div class="num">' + num + '</div>' : '';
+  if (L === 'A') return '<div class="la A">' + ring(72, p, col, tom(45), 6) + '<div class="mid">' + (big ? bigs : labs) + '</div>' + n + '</div>';
+  if (L === 'B') return '<div class="la B"><div class="mid">' + (big ? bigs : labs + n) + '</div>' + (rest ? tomato(24, UN) : growing(52, p, grow, full)) + '</div>';
+  return '<div class="la C"><div class="top">' + (big ? '<div class="mid">' + bigs + '</div>' : n + '<div class="mid end">' + labs + '</div>') + '</div>' + vine(p, rest ? tomato(20, UN) : growing(40, p, grow, full)) + '</div>';
+}
+function wall(html, theme) { return '<div class="wall ' + (theme || st.wall) + '">' + html + '</div>'; }
+function cap(t) { return '<div class="cap">' + t + '</div>'; }
+
+// 動態島
+function island(k) {
+  var p = Math.min(1, st.sec / FULL), ripe = st.sec >= FULL && st.pick[2] === 'A', g = st.pick[6], t = mmss(FULL - st.sec);
+  var rg = function (s, sw) { return ring(s, p, tagc(), growing(Math.round(s * .66), p, g, ripe), sw); };
+  var bare = function (s) { return ring(s, p, tagc(), '', 4); };
+  var num = '<span class="num">' + (ripe ? '響了。' : t) + '</span>';
+  var lead = k === 'A' ? rg(28, 3) : growing(26, p, g, ripe), trail = k === 'C' ? (ripe ? num : bare(24)) : num;
+  var out = cap('緊湊') + '<div class="di compact"><div>' + lead + '</div><div>' + trail + '</div></div>';
+  var mini = k === 'A' ? rg(28, 3) : k === 'B' ? num : ring(28, p, tagc(), growing(16, p, g, ripe), 3);
+  out += cap('最小（兩個 app 同時在）') + '<div class="pair"><div class="stub"></div><div class="di mini">' + mini + '</div></div>';
+  out += cap('橫放時變窄') + '<div class="pair"><div class="di lim">' + (k === 'B' ? growing(22, p, g, ripe) : rg(24, 2.6)) + '</div></div>';
+  return out + cap('展開（長按）') + expanded(k);
+}
+function expanded(k) {
+  var p = Math.min(1, st.sec / FULL), ripe = st.sec >= FULL && st.pick[2] === 'A', g = st.pick[6], t = mmss(FULL - st.sec);
+  var num = ripe ? '<span class="big">響了。</span>' : '<span class="num">' + t + '</span>';
+  var lab = st.pick[5] === 'B' || st.pick[5] === 'C' ? '<span class="lab">寫作</span>' : '';
+  if (k === 'A') return '<div class="di exp xA">' + ring(62, p, tagc(), growing(39, p, g, ripe), 5) + '<div style="display:flex;flex-direction:column;align-items:flex-end;padding-top:2px">' + lab + num + '</div></div>';
+  if (k === 'B') return '<div class="di exp xB"><div class="r">' + growing(38, p, g, ripe) + lab + '</div>' + num + '</div>';
+  return '<div class="di exp xC"><div class="r">' + (lab || '<span></span>') + num + '</div>' + vine(p, growing(34, p, g, ripe)) + '</div>';
+}
+function strip(k) {
+  var cols = [[0, '0%', 0], [.5, '50%', 0], [.9, '90%', 0], [1, '到點<br>有換成', 1], [1, '到點<br>沒換成', 0]];
+  return '<div class="strip">' + cols.map(function (c) { return '<div>' + ring(60, c[0], tagc(), growing(38, c[0], k, c[2]), 5) + '<span>' + c[1] + '</span></div>'; }).join('') + '</div>';
+}
+
+var Q = [
+{ n: 1, t: '鎖定畫面，計時中', s: '三個都塞得進高度上限 160（只有時間時，A 和 B 高 100、C 高 120）。桌布淺的配系統淺色、深的配系統深色；底的玻璃感由系統畫，這裡是近似。', o: [
+  ['A', '環包番茄，時間在右', '跟計時中那頁同一個長相，環自己走，番茄是主角。', '圓環的粗細系統定，會跟 app 裡的不太一樣。'],
+  ['B', '大時間', '離一公尺也看得到剩多少，做起來最少。', '看起來跟系統計時器差不多，番茄變成旁邊的小圖；看不到走了幾成。'],
+  ['C', '藤', '一條藤往番茄長過去，番茄帳才有的樣子。', '只能是直的細線，4 點粗改不了；藤是綠的，標籤的顏色要熟了才看得到。']],
+  m: function (k) { return wall(card('run', { layout: k }), 'l') + wall(card('run', { layout: k }), 'd'); } },
+{ n: 2, t: '鎖定畫面，響了還沒收', s: '到點時番茄帳多半睡著，這張會留到你打開番茄帳，最久到第 8 小時。到點通知照樣會響，寫的也是這兩句，剛響的時候兩張會一起在。', o: [
+  ['A', '換成「響了。」', '瞄一眼就知道要回來收。換不成的時候會停在 0:00，數字還是對的。', '會不會準時換沒把握，開發者回報兩種都有，要真機量。'],
+  ['B', '不換，多一行幾點熟', '不靠系統換畫面，前後都是對的，一定做得到。', '計時中多一行字；響了以後看不出要回來收，只剩通知會講。新字，草稿。'],
+  ['C', '到點自己不見', '一開始就跟系統說到點拿掉，鎖定畫面不留東西。', 'Apple 規定這樣做動態島從頭到尾都沒有，第 4 題等於不做。中途停下來時收不收得掉，沒查到。']],
+  m: function (k) {
+    if (k === 'A') return wall(cap('有換成') + card('rang') + cap('沒換成（停到你打開）') + card('zero', { two: 'A' }));
+    if (k === 'B') return wall(cap('還剩 12:30') + card('run', { two: 'B', sec: 750 }) + cap('到點後') + card('zero', { two: 'B' }));
+    return wall(cap('還剩 0:01') + card('run', { two: 'C', sec: 1499 }) + cap('到點後') + '<div class="note"><div class="ic">' + tomato(28, tagc()) + '</div><div><b>響了。</b>這顆熟了，回來收下。</div></div><div class="gone">這張不見了，剩上面那則通知</div>'); } },
+{ n: 3, t: '鎖定畫面，休息中', s: '有終點的休息三個都一樣：往下數、環是藤綠、裡面一顆小青番茄，到點換成「休息完了」（會不會換得成，跟第 2 題同一個問題）。要選的是「我自己決定」那種沒有終點的休息。', top: function () { return '<div class="opts"><div class="opt">' + cap('有終點（拉桿當 5 分鐘走）') + wall(card('rest')) + '</div><div class="opt">' + cap('到點') + wall(card('restDone')) + '</div></div>'; }, o: [
+  ['A', '往上數', '跟 app 裡休息那頁一樣。', '數字一直變大掛在鎖定畫面上，像在算你休多久。'],
+  ['B', '只寫「休息」', '還看得到番茄帳在等你，不催人。', '想知道休了多久要打開 app。'],
+  ['C', '不放', '收下就收掉，鎖定畫面最乾淨。', '有終點的休息有、這種沒有，看起來像壞掉。']],
+  m: function (k) { return wall(k === 'A' ? card('up') : k === 'B' ? card('word') : '<div class="gone">鎖定畫面和動態島都沒有東西</div>'); } },
+{ n: 4, t: '動態島', s: '休息時同一套，環換成藤綠、番茄換小青的。拉到「到點」看響了的樣子。', o: [
+  ['A', '環包番茄＋時間', '左右讀起來是同一件事，跟 1A 一套；最小時一樣看得到走了幾成。', '環很小，番茄的表情看不清楚，只剩顏色。'],
+  ['B', '番茄＋大時間', '番茄比較大、看得到臉；最小時直接看到分秒。', '看不到走了幾成；最小那格的字只有 13 點，會被擠扁的風險最高。'],
+  ['C', '番茄＋環，沒有數字', '最安靜，計時中不會一直看到秒在跳。', '要知道剩多久得長按；收合時少了最想知道的那個數字。']],
+  m: function (k) { return wall(island(k) + (st.pick[2] === 'C' ? cap('你選了 2C：這題不會出現') : '')); } },
+{ n: 5, t: '標籤名、在做什麼', s: '「在做什麼」三個都不放，照安全標準 P3。標籤名也是自己取的，「看診」「履歷」「離職」都有可能；Apple Watch、Mac 選單列、CarPlay 也會跟著出現。', o: [
+  ['A', '都不放', '跟通知同一個標準，顏色就認得出是哪一個標籤。之後想加很容易。', '兩個標籤同色時分不出來。'],
+  ['B', '放標籤名', '一眼知道在種哪一種。', '手機放桌上，旁邊的人也看得到；P3 要改寫。'],
+  ['C', '展開才看到', '鎖定畫面不放，長按動態島才有標籤名。', '沒有動態島的手機看不到；Mac 選單列還是會出現。']],
+  m: function (k) {
+    var lock = cap('鎖定畫面') + card('run', { tag: k, sec: Math.min(st.sec, 1499) });
+    return wall(lock + cap('動態島，展開') + swapTag(k)); } },
+{ n: 6, t: '番茄怎麼變', s: 'app 裡的番茄是慢慢變大、從青變成標籤的顏色。鎖定畫面沒有更新就不會動，能選的只有這三種。五格是同一顆走到不同時候；圖用 1A 的環來比。', o: [
+  ['A', '青的，熟了才換', '每一刻看到的都說得通，最穩。大小固定，鎖定畫面上看得清楚。', '中間看不到它在長，長的感覺只剩環。到點沒換成時還是青的。'],
+  ['B', 'app 醒著就順便換', '打開過番茄帳，它就換到當下的大小和顏色。', '鎖著就停在上次的樣子：圖裡第 10 分打開過一次，九成了還停在四成。一開始也很小。'],
+  ['C', '由下往上變色', '系統自己走，鎖著也真的在變；到點沒換成也是熟的。', '拿系統的進度條裁成番茄，Apple 沒寫可以這樣用，真機試過才知道。跟 app 裡整顆慢慢變色的樣子不同。']],
+  m: function (k) { return wall(strip(k)); } }
+];
+function swapTag(k) { var keep = st.pick[5], sec = st.sec; st.pick[5] = k; st.sec = Math.min(sec, FULL - 1); var h = expanded(st.pick[4]); st.pick[5] = keep; st.sec = sec; return h; }
+
+document.getElementById('qs').innerHTML = Q.map(function (q) {
+  return '<section aria-labelledby="h' + q.n + '"><div class="head"><h2 id="h' + q.n + '">' + q.n + '　' + q.t + '</h2><p class="sub">' + q.s + '</p></div>' +
+    (q.top ? '<div data-top="' + q.n + '"></div>' : '') +
+    '<div class="opts" role="radiogroup" aria-labelledby="h' + q.n + '">' + q.o.map(function (o) {
+      var id = 'q' + q.n + o[0];
+      return '<div class="opt"><label for="' + id + '"><input type="radio" name="q' + q.n + '" id="' + id + '" value="' + o[0] + '"><span>' + q.n + o[0] + ' ' + o[1] + '</span>' + (REC[q.n] === o[0] ? '<span class="rec">推薦</span>' : '') + '</label>' +
+        '<div class="why"><p>' + o[2] + '</p><p class="cost">代價：' + o[3] + '</p></div><div class="opt" data-m="' + q.n + o[0] + '"></div></div>';
+    }).join('') + '</div></section>';
+}).join('');
+document.getElementById('dots').innerHTML = Object.keys(COL).map(function (k) { return '<button data-c="' + k + '" aria-label="標籤顏色：' + k + '" style="--c:' + COL[k] + '"></button>'; }).join('');
+
+var pos = document.getElementById('pos'), out = document.getElementById('out'), playB = document.getElementById('play'), wp = document.getElementById('wp'), code = document.getElementById('code'), copy = document.getElementById('copy');
+function draw() {
+  Q.forEach(function (q) {
+    if (q.top) document.querySelector('[data-top="' + q.n + '"]').innerHTML = q.top();
+    q.o.forEach(function (o) { document.querySelector('[data-m="' + q.n + o[0] + '"]').innerHTML = q.m(o[0]); });
+  });
+  pos.value = st.sec;
+  out.textContent = st.sec >= FULL ? '到點' : mmss(FULL - st.sec);
+  playB.textContent = st.play ? '停' : '走'; playB.setAttribute('aria-pressed', String(st.play));
+  wp.setAttribute('aria-pressed', String(st.wall === 'd'));
+  document.querySelectorAll('#jump [data-s]').forEach(function (b) { b.setAttribute('aria-pressed', String(Number(b.dataset.s) === Math.round(st.sec))); });
+  document.querySelectorAll('#dots button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.c === st.tag)); });
+}
+function picks() {
+  Object.keys(REC).forEach(function (n) { document.getElementById('q' + n + st.pick[n]).checked = true; });
+  code.value = Object.keys(REC).map(function (n) { return n + st.pick[n]; }).join(' ');
+  try { localStorage.setItem('ai27', code.value); } catch (e) { /* 沒有儲存空間就不記 */ }
+}
+try {
+  var saved = /^1([ABC]) 2([ABC]) 3([ABC]) 4([ABC]) 5([ABC]) 6([ABC])$/.exec(localStorage.getItem('ai27') || '');
+  if (saved) [1, 2, 3, 4, 5, 6].forEach(function (n) { st.pick[n] = saved[n]; });
+} catch (e) { /* 沒有儲存空間就用推薦 */ }
+document.getElementById('qs').addEventListener('change', function (e) {
+  if (e.target.type !== 'radio') return;
+  st.pick[Number(e.target.name.slice(1))] = e.target.value; picks(); draw();
+});
+pos.oninput = function () { st.play = false; st.sec = Number(pos.value); draw(); };
+document.getElementById('jump').onclick = function (e) {
+  var b = e.target.closest('button'); if (!b) return;
+  if (b === playB) { st.play = !st.play; if (st.play && st.sec >= FULL) st.sec = 0; } else { st.play = false; st.sec = Number(b.dataset.s); }
+  draw();
+};
+wp.onclick = function () { st.wall = st.wall === 'l' ? 'd' : 'l'; draw(); };
+document.getElementById('dots').onclick = function (e) { var b = e.target.closest('button'); if (b) { st.tag = b.dataset.c; draw(); } };
+document.getElementById('reset').onclick = function () { st.pick = Object.assign({}, REC); picks(); draw(); };
+copy.onclick = function () {
+  var ok = function () { copy.textContent = '複製了'; setTimeout(function () { copy.textContent = '複製'; }, 1600); };
+  var no = function () { code.focus(); code.select(); };
+  if (navigator.clipboard) navigator.clipboard.writeText(code.value).then(ok, no); else no();
+};
+setInterval(function () { if (!st.play) return; st.sec = Math.min(FULL, Math.floor(st.sec) + 1); if (st.sec >= FULL) st.play = false; draw(); }, 1000);
+picks(); draw();
+</script>

@@ -59,7 +59,7 @@ final class StartOutsideTests: XCTestCase {
         XCTAssertNil(outside(begun, at: restEnd + Params.autoNextDelayMs))
     }
 
-    func test我自己決定的休息也開得起來() throws {
+    func test我自己決定的休息也開得起來() {
         var state = Store.blank()
         state.settings.restMode = .own
         let kept = Machine.keep(
