@@ -17,8 +17,8 @@ final class LiveCardGateTests: XCTestCase {
         XCTAssertEqual(gate.cue(nil, isBack: false), .changed)
     }
 
-    /// 開不成的時候手上沒有那張（nil）。不管成不成，同一個內容都只有回前景才再試。
-    func test開不成打字不重送回前景各試一次() {
+    /// 不管上次開不開得成，同一個內容都只有回前景才再試；手上沒有那張（nil）就准開。
+    func test同一個內容只有回前景才再試() {
         var gate = LiveCardGate()
         XCTAssertEqual(gate.cue(.rang(.red), isBack: false), .changed)
         for _ in 0 ..< 2 {

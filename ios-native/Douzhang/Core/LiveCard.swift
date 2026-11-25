@@ -39,7 +39,8 @@ enum LiveCard {
     }
 
     /// 沒有還掛著的那張時要不要開。last 是手上那張的下場，沒有是 nil。
-    /// 使用者自己滑掉的，同一個內容不再冒出來；滿 8 小時被系統結束的、上次開不成的要補。
+    /// 使用者自己滑掉的，同一個內容不再冒出來；滿 8 小時被系統結束的、上次開不成的要補；
+    /// 結束太久、系統連鎖定畫面那張也拿掉了，就分不出是誰收的，當成滑掉。
     static func opens(_ cue: LiveCardCue, after last: ActivityState?) -> Bool {
         cue == .changed || last != .dismissed
     }
