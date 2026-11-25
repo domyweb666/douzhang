@@ -1,3 +1,4 @@
+import ActivityKit
 import Foundation
 
 /// 鎖定畫面與動態島現在該不該有那一張、上面是什麼。純函式；叫系統的在 App/LiveCards.swift。
@@ -31,5 +32,37 @@ enum LiveCard {
             return nil
         }
         return .resting(from: Store.date(run.restStart), until: Store.date(endAt))
+    }
+
+    static func isUp(_ state: ActivityState?) -> Bool {
+        state == .active || state == .stale
+    }
+
+    /// 沒有還掛著的那張時要不要開。last 是手上那張的下場，沒有是 nil。
+    /// 使用者自己滑掉的，同一個內容不再冒出來；滿 8 小時被系統結束的、上次開不成的要補。
+    static func opens(_ cue: LiveCardCue, after last: ActivityState?) -> Bool {
+        cue == .changed || last != .dismissed
+    }
+}
+
+/// 為什麼要去動系統那一張：內容換了，或同一個內容但回到前景、再看一眼。
+enum LiveCardCue {
+    case changed, back
+}
+
+/// 要不要去動系統。存草稿每個字都會走到這裡：內容沒變就不動，上次開不成也一樣，等回前景。
+struct LiveCardGate {
+    private(set) var face: LiveCardFace?
+    /// 剛開機不知道系統裡留著什麼，一定對齊一次
+    private var isAligned = false
+
+    mutating func cue(_ next: LiveCardFace?, isBack: Bool) -> LiveCardCue? {
+        let isNew = !isAligned || next != face
+        isAligned = true
+        face = next
+        if isNew {
+            return .changed
+        }
+        return isBack ? .back : nil
     }
 }

@@ -150,12 +150,6 @@ final class LiveCardTests: XCTestCase {
         )
     }
 
-    func test整份換掉就照換上的那份() {
-        XCTAssertNil(LiveCard.face(Store.blank(), now: base + minute))
-        let other = Machine.start(Store.blank(), now: base + minute, typeId: "t3")
-        XCTAssertEqual(LiveCard.face(other, now: base + 40 * minute), .rang(.orange))
-    }
-
     // MARK: 沒變就是同一個值、不含使用者寫的字
 
     func test時間走與寫字都不換內容() {

@@ -193,8 +193,10 @@ final class AppModel {
     func becameActive() {
         tick()
         refreshNotif()
-        // 背景裡開不成的那一張（鎖定畫面），在眼前了再試一次
-        syncGates()
+        // 鎖定畫面那一張：開不成的、被系統結束的補開，冷啟動那一刻沒看到的多餘的收掉
+        if loaded {
+            liveCards.sync(state, now: TimeText.nowMillis(), isBack: true)
+        }
         cloud.becameActive()
     }
 

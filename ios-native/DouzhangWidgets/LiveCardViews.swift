@@ -67,7 +67,6 @@ struct LiveLockView: View {
         HStack(spacing: Tokens.Live.pad) {
             LiveRing(look: look, size: Tokens.Live.ring)
             words
-                .accessibilityHidden(true)
             Spacer(minLength: .zero)
             LiveTimer(look: look)
                 .font(Tokens.Fonts.clockLock)
@@ -78,7 +77,10 @@ struct LiveLockView: View {
         .padding(Tokens.Live.pad)
         // 一張最高 160，再大會被切掉
         .dynamicTypeSize(...DynamicTypeSize.accessibility1)
-        .accessibilityElement(children: .combine)
+        // 不用 combine：併出來的字停在併的那一刻，不跟著倒數走
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(look.spoken)
+        .spokenTime(look)
     }
 
     private var words: some View {
@@ -132,13 +134,16 @@ struct LiveMinimal: View {
     var look: LiveCardLook
 
     var body: some View {
-        let ring = LiveRing(look: look, size: Tokens.Live.compactRing)
-        if let timer = look.timer {
-            ring.accessibilityValue(
-                Text(timerInterval: timer, countsDown: true, showsHours: false)
-            )
-        } else {
-            ring
-        }
+        LiveRing(look: look, size: Tokens.Live.compactRing)
+            .spokenTime(look)
+    }
+}
+
+private extension View {
+    /// 剩多久念成會自己走的值。
+    func spokenTime(_ look: LiveCardLook) -> some View {
+        accessibilityValue(look.timer.map {
+            Text(timerInterval: $0, countsDown: true, showsHours: false)
+        } ?? Text(verbatim: ""))
     }
 }
