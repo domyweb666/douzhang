@@ -17,6 +17,11 @@ enum LaunchOptions {
         return path.isEmpty ? nil : URL(fileURLWithPath: path)
     }
 
+    /// 單元測試寄生在 app 裡跑。
+    static var isTesting: Bool {
+        !value("XCTestConfigurationFilePath").isEmpty
+    }
+
     static var page: Page {
         switch value("DOUZHANG_PAGE") {
         case "rack": .rack

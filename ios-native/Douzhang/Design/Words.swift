@@ -77,6 +77,11 @@ enum Words {
     static let notificationOffLine = "到點通知沒開。鈴只在番茄帳打開時響。"
     static let openNotifications = "打開通知"
 
+    // MARK: 鎖定畫面與動態島：只放通知那幾句，不放使用者寫的字
+
+    /// 只給讀屏，後面接著念時間
+    static let leftOfThis = "這顆還剩"
+
     // MARK: 平實語氣的系統訊息：第一句先回答有沒有損失
 
     static let saveFailed = "這台裝置沒辦法存，記得匯出資料"

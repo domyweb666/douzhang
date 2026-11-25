@@ -1,7 +1,7 @@
 import FamilyControls
 import UIKit
 
-/// 跟著狀態走的三樣：白噪音、擋 app、聚焦模式。每次狀態、哪一態、買了沒變了就對齊一次；
+/// 跟著狀態走的四樣：白噪音、擋 app、鎖定畫面那一張、聚焦模式。每次狀態、哪一態、買了沒變了就對齊一次；
 /// 各自分辨答案有沒有變，沒變就不去吵系統（存草稿每個字都會走到這裡）。
 extension AppModel {
     func syncGates() {
@@ -15,6 +15,7 @@ extension AppModel {
         // 響的那一刻 app 在背景的話時鐘不走，擋板要等回到番茄帳才解開（第一版的取捨）；
         // 白噪音在背景播的時候 app 還醒著，到點那一刻聲音會自己停，擋板也跟著解開
         shield.apply(Gates.shield(state, now: time, status: fullStatus))
+        liveCards.sync(state, now: time)
         syncZen()
     }
 

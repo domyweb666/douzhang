@@ -16,7 +16,8 @@ struct Pulses: Equatable {
 
 /// 殼：開機讀檔、每一拍看時鐘、到點換畫面、每次改動就存、狀態變了就重排通知。
 /// 狀態機在 Core/Machine.swift，畫面在 Screens/。每個動作先算新狀態（純函式），再 commit。
-/// 動作在 AppModel+Actions，備份在 AppModel+Backup，白噪音、擋 app、聚焦模式在 AppModel+Gates，
+/// 動作在 AppModel+Actions，備份在 AppModel+Backup，
+/// 白噪音、擋 app、聚焦模式、鎖定畫面那一張在 AppModel+Gates，
 /// iCloud 同步的接頭在 AppModel+Cloud。
 @MainActor
 @Observable
@@ -73,6 +74,7 @@ final class AppModel {
     @ObservationIgnored let backups: BackupFiles
     @ObservationIgnored let cloud: CloudLink
     @ObservationIgnored let notifier = Notifier()
+    @ObservationIgnored let liveCards = LiveCards()
     @ObservationIgnored let soundscape = Soundscape()
     @ObservationIgnored let shield = AppShield()
     @ObservationIgnored let poseWatch = PoseWatch()
@@ -191,6 +193,8 @@ final class AppModel {
     func becameActive() {
         tick()
         refreshNotif()
+        // 背景裡開不成的那一張（鎖定畫面），在眼前了再試一次
+        syncGates()
         cloud.becameActive()
     }
 

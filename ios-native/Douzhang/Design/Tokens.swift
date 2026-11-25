@@ -69,6 +69,15 @@ enum Tokens {
             clock(56, cap: 1.4)
         }
 
+        /// 鎖定畫面的大時間、動態島展開的：一張最高 160，所以不跟系統字級放大
+        static var clockLock: Font {
+            clock(52, cap: 1)
+        }
+
+        static var clockIsland: Font {
+            clock(40, cap: 1)
+        }
+
         /// 聚焦模式的大數字：大小跟著畫面寬，不跟系統字級放大，不然會撐出畫面
         static func zenDigit(_ size: CGFloat) -> Font {
             Font.system(size: size, weight: .heavy).monospacedDigit()
