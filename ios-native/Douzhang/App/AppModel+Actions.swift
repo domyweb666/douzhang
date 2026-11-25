@@ -16,19 +16,27 @@ extension AppModel {
         }
     }
 
-    /// 從 app 外面開始一顆。等完權限那個框才看狀態：等的時候可能已經按了開始。
+    /// 從 app 外面開始一顆。計時中、響了都不問權限、什麼都不做。
     func startFromOutside() {
+        guard Machine.startFromOutside(settled(), now: TimeText.nowMillis()) != nil else { return }
         Task {
             let granted = await notifier.askOnce()
             notif = granted ? .granted : .denied
-            let now = TimeText.nowMillis()
-            let zone = Store.zoneNow()
-            guard let next = Machine.startFromOutside(settled(), now: now, zone: zone) else {
-                return
-            }
-            idleLine = nil
-            commit(next)
+            beginFromOutside()
         }
+    }
+
+    /// 等完權限那個框再看一次狀態：等的時候可能已經按了開始。
+    func beginFromOutside() {
+        let zone = Store.zoneNow()
+        let now = TimeText.nowMillis()
+        guard let next = Machine.startFromOutside(settled(), now: now, zone: zone) else { return }
+        // 休息直接跳到計時，番茄堆沒出現過：不補記，下次會多出兩顆，兩顆都不掉
+        jarSeen = jarBeans.count
+        // 匯入確認框開著：留著的話按「換掉」會把這顆一起換掉
+        pendingImport = nil
+        idleLine = nil
+        commit(next)
     }
 
     func keep(text: String) {

@@ -30,16 +30,33 @@ final class StartOutsideTests: XCTestCase {
         XCTAssertNil(outside(state, at: base + 30 * minute))
     }
 
-    func test休息中等於回來了再開始番茄還在() throws {
-        let kept = Machine.keep(
+    func test休息中照選中的標籤開始番茄還在() throws {
+        var kept = Machine.keep(
             Machine.start(Store.blank(), now: base),
             now: base + 25 * minute,
             text: ""
         )
-        XCTAssertNotNil(kept.restRun)
+        XCTAssertEqual(kept.restRun?.typeId, "t1")
+        kept.settings.typeId = "t2"
         let next = try XCTUnwrap(outside(kept, at: base + 26 * minute))
+        XCTAssertEqual(next.focusRun?.typeId, "t2")
         XCTAssertEqual(next.focusRun?.startedAt, base + 26 * minute)
         XCTAssertEqual(next.days, kept.days)
+    }
+
+    func test自動開始前的空檔開得起來開了以後不動() {
+        var state = Store.blank()
+        state.settings.autoNext = true
+        let kept = Machine.keep(
+            Machine.start(state, now: base),
+            now: base + 25 * minute,
+            text: ""
+        )
+        let restEnd = base + 30 * minute
+        let gap = Machine.settle(kept, now: restEnd + 1)
+        XCTAssertEqual(outside(gap, at: restEnd + 1)?.focusRun?.startedAt, restEnd + 1)
+        let begun = Machine.settle(kept, now: restEnd + Params.autoNextDelayMs)
+        XCTAssertNil(outside(begun, at: restEnd + Params.autoNextDelayMs))
     }
 
     func test我自己決定的休息也開得起來() throws {

@@ -29,6 +29,34 @@ final class AppModelJarTests: XCTestCase {
         XCTAssertEqual(model.jarBeans.last?.id, mine)
     }
 
+    func test休息中從外面開始下一顆收下照樣掉() async throws {
+        let stage = CloudStage()
+        defer { stage.clean() }
+        let now = TimeText.nowMillis()
+        let shell = try await AppShell.open(stage, Machine.start(Store.blank(), now: now))
+        defer { shell.close() }
+        shell.model.jarSeen = 0
+        shell.model.keep(text: "")
+        XCTAssertNotNil(shell.model.state.restRun)
+        shell.model.beginFromOutside()
+        let mine = shell.model.state.focusRun?.id
+        shell.model.keep(text: "")
+        expectMineDrops(shell.model, mine)
+    }
+
+    func test從外面開始會收掉匯入確認框與待機那一行() async throws {
+        let stage = CloudStage()
+        defer { stage.clean() }
+        let shell = try await AppShell.open(stage, Store.blank())
+        defer { shell.close() }
+        shell.model.pendingImport = Store.blank()
+        shell.model.idleLine = "x"
+        shell.model.beginFromOutside()
+        XCTAssertNotNil(shell.model.state.focusRun)
+        XCTAssertNil(shell.model.pendingImport)
+        XCTAssertNil(shell.model.idleLine)
+    }
+
     func test計時中合進來收下自己那顆照樣掉() async throws {
         let stage = CloudStage()
         defer { stage.clean() }
