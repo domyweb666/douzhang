@@ -66,7 +66,7 @@ struct HomeScreen: View {
                 onTime: { dialing = true },
                 onSound: { sheet = .sound }
             )
-            .background { jar }
+            .backgroundPreferenceValue(JarStartKey.self) { start in jar(start: start) }
         }
     }
 
@@ -78,7 +78,8 @@ struct HomeScreen: View {
     /// 番茄在整個畫面後面掉、滾、堆在最下面，沉到螢幕最底部：
     /// 頁面的內距與安全區都往外撐掉，上到狀態列後面、下到螢幕底，分頁列蓋在番茄上面。
     /// 只在待機掛上：剛收的那顆休息完回到待機才從上面掉進去。空白處的點擊會穿過前景落到這裡。
-    private var jar: some View {
+    /// 開始鈕與分頁列擋番茄：可以停在上面，從旁邊滾下去。
+    private func jar(start: Anchor<CGRect>?) -> some View {
         @Bindable var model = model
         let state = model.state
         let beans = model.jarBeans.map { bean in
@@ -88,7 +89,8 @@ struct HomeScreen: View {
             beans: beans,
             sound: state.settings.sound,
             tilt: state.settings.tilt,
-            seen: $model.jarSeen
+            seen: $model.jarSeen,
+            startButton: start
         )
         .padding(.horizontal, -Tokens.Layout.screenMargin)
         .ignoresSafeArea(edges: .vertical)

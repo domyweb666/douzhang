@@ -46,4 +46,7 @@ extension JarTuning {
 
     /// 睡著之前那一整段加起來也不准走超過這麼遠（pt）。躺好的原地抖，淨移動都在 0.5 以內
     static let quietDrift = 1.0
+
+    /// 番茄堆跟分頁列左右置中差不到這麼多（pt）才算停好在這一頁：滑到一半量到的框不拿來擺分頁列
+    static let restAlign = 0.5
 }

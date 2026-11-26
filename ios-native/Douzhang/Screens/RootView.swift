@@ -119,7 +119,7 @@ struct PagerView: View {
         }
         .overlay(alignment: .bottom) {
             if !focusing {
-                TabBar(page: $model.page)
+                TabBar(page: $model.page) { pager.tabBar = $0 }
             }
         }
     }

@@ -8,7 +8,7 @@ struct JarWorld {
     /// 開機安置一步走多久、感測器多久讀一次、多久看一次躺好沒。畫面上的一步是 JarTuning.tick。
     static let frame = 1.0 / 60.0
     private static let minGapSquared = 1e-4
-    private static let minTouchGap = 1e-2
+    static let minTouchGap = 1e-2
 
     let tuning: JarTuning
     var bodies: [JarBody] = []
@@ -19,6 +19,8 @@ struct JarWorld {
     var impact = 0.0
     /// 這一幀落地的那幾顆的 id
     var landed: [Int] = []
+    /// 開始鈕、分頁列：番茄撞到會被擋，可以停在上面。換的時候走 setObstacles，壓在裡面的才會搬出來
+    var obstacles: [JarObstacle] = []
     private var nextId = 0
 
     init(tuning: JarTuning) {
@@ -124,7 +126,7 @@ struct JarWorld {
 
     /// 撞牆：反彈保留 wallRest；回報最大撞擊速度。位置由呼叫端壓回牆內。回傳有沒有真的撞上去。
     @discardableResult
-    private mutating func bounce(_ velocity: inout Double, sign: Double) -> Bool {
+    mutating func bounce(_ velocity: inout Double, sign: Double) -> Bool {
         let inward = velocity * sign
         guard inward > 0 else { return false }
         impact = max(impact, inward)
@@ -160,6 +162,10 @@ struct JarWorld {
                 body.y = radius
                 bounce(&body.velY, sign: -1)
             }
+            // 牆之後才擋路的東西：牆把被擠出去的壓回來時會壓進分頁列的圓頭，最後一步要是推出來（推的時候不出牆）
+            for obstacle in obstacles {
+                push(&body, from: obstacle, seconds: seconds)
+            }
             bodies[index] = body
         }
     }
@@ -187,6 +193,7 @@ struct JarWorld {
             let y = radius + Double.random(in: 0 ... 1) * max(0, height - 2 * radius)
             addBody(JarBody(id: 0, x: x, y: y, radius: radius))
         }
+        liftOut()
         let tilted = (gravityX, gravityY)
         gravityX = 0
         gravityY = tuning.gravity
@@ -239,6 +246,10 @@ extension JarWorld {
             body.easedY += ((body.y - body.prevY) / seconds - body.easedY) * spin.smooth
             if body.y >= height - body.radius - spin.touch {
                 body.spin += (moved(body.easedX) / body.radius - body.spin) * spin.grip
+            } else if let normal = touching(body) {
+                // 貼著開始鈕、分頁列：跟在底上一樣沿著表面滾不打滑，不然從圓頂滑下去像冰塊
+                let along = body.easedY * normal.x - body.easedX * normal.y
+                body.spin += (moved(along) / body.radius - body.spin) * spin.grip
             }
             bodies[index] = body
         }
