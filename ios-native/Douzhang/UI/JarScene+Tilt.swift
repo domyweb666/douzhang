@@ -23,12 +23,27 @@ extension JarScene {
         }
         targetX = x * Tokens.Motion.tiltPerG
         targetY = -y * Tokens.Motion.tiltPerG
+        sensor.pace(for: self)
+        guard asleep else {
+            sensor.calm.forget()
+            return
+        }
         // 跟睡著時的重力比（睡著時它停著不動）：慢慢傾斜也會累積到門檻；
-        // 放在桌上不動時，感測器的小雜訊不會讓畫面一直重畫
-        let shift = abs(targetX - world.gravityX) + abs(targetY - world.gravityY)
-        if asleep, shift > Tokens.Motion.tiltWake {
+        // 放在桌上不動、手拿著小抖動時，平滑過的讀數到不了門檻，畫面不會一直重畫
+        let shift = sensor.calm.shift(
+            x: targetX,
+            y: targetY,
+            gravityX: world.gravityX,
+            gravityY: world.gravityY
+        )
+        if shift > Tokens.Motion.tiltWake {
             wake()
         }
+    }
+
+    /// 加速度計多久讀一次：睡著時讀慢一點省電，醒著每秒 60 次
+    var sensorInterval: TimeInterval {
+        asleep ? 1 / Tokens.Motion.restRate : JarWorld.frame
     }
 
     /// 停穩在別頁才關感測器，停穩回這一頁才接上。滑到一半又滑回來的不動它。

@@ -197,6 +197,10 @@ enum Tokens {
         static let tiltPerG = 9.80665 * tiltScale
         /// 睡著時，重力要偏掉這麼多才醒來（大約傾斜一兩度）
         static let tiltWake = 25.0
+        /// 睡著時加速度計一秒讀幾次（醒著 60 次）。12 次加平滑，慢慢斜的醒來最多晚 134ms，15 次晚 104ms
+        static let restRate = 15.0
+        /// 睡著時讀數平滑，每讀一次往新讀數靠幾成：手抖壓到一半上下，一下子斜 5° 第一個讀數就醒
+        static let restSmooth = 0.55
         /// 每顆一幀移動不到這麼多（pt、弧度）、連續這麼多幀，就當作都躺好了
         static let quietDistance = 0.5
         static let quietAngle = 0.01

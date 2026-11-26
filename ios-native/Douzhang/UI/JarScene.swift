@@ -265,6 +265,7 @@ extension JarScene {
         restartClock()
         if asleep {
             asleep = false
+            sensor.pace(for: self)
         }
     }
 
