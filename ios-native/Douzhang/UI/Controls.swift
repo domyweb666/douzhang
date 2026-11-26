@@ -30,7 +30,20 @@ struct SegmentOption<Value: Hashable>: Identifiable {
 struct Segmented<Value: Hashable>: View {
     var options: [SegmentOption<Value>]
     var value: Value?
+    /// 小一號：放在卡片標題旁邊，不搶標題。膠囊看起來小，點得到的範圍照樣是手指那麼大
+    var small = false
     var onChange: (Value) -> Void
+
+    private var pill: CGFloat {
+        small ? Tokens.Shape.buttonCompact : Tokens.Shape.tapMin
+    }
+
+    private func font(_ isOn: Bool) -> Font {
+        if small {
+            return isOn ? Tokens.Fonts.chipSmall : Tokens.Fonts.caption
+        }
+        return isOn ? Tokens.Fonts.chip : Tokens.Fonts.sub
+    }
 
     var body: some View {
         FlowRow(spacing: Tokens.Space.s) {
@@ -41,14 +54,16 @@ struct Segmented<Value: Hashable>: View {
                     Feel.change { onChange(option.value) }
                 } label: {
                     Text(option.label)
-                        .font(isOn ? Tokens.Fonts.chip : Tokens.Fonts.sub)
+                        .font(font(isOn))
                         .foregroundStyle(ink)
-                        .frame(minWidth: Tokens.Shape.tapMin, minHeight: Tokens.Shape.tapMin)
-                        .padding(.horizontal, Tokens.Space.card)
+                        .frame(minWidth: pill, minHeight: pill)
+                        .padding(.horizontal, small ? Tokens.Space.m : Tokens.Space.card)
                         .background(
                             isOn ? Tokens.Colors.soft : Tokens.Colors.fillButton,
                             in: Capsule()
                         )
+                        .frame(minHeight: Tokens.Shape.tapMin)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(FadeStyle())
                 .accessibilityAddTraits(isOn ? .isSelected : [])

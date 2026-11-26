@@ -153,6 +153,9 @@ enum Words {
     /// 月檢視與長條圖下面那排，週一開頭
     static let weekdayShort = ["一", "二", "三", "四", "五", "六", "日"]
     static let statsEmpty = "這段時間還沒有番茄。"
+    /// 分析第一張右上的切換
+    static let chartBars = "長條"
+    static let chartDonut = "圓餅"
     static let thisWeek = "這週"
     static let rackEmpty = "第一顆響完，這裡就會掛上今天的番茄串。"
     static let rackEmptyAction = "回去開始一顆"

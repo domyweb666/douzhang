@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// 單獨一頁的尺寸（Tokens.swift 快滿 300 行，另外放）：長度的刻度尺、主畫面、筆記本、聚焦模式、完整版、鈴響頁。
+/// 單獨一頁的尺寸（Tokens.swift 快滿 300 行，另外放）：長度的刻度尺、主畫面、筆記本、聚焦模式、完整版、鈴響頁、分析的圓餅。
 extension Tokens {
     /// 刻度尺：一分鐘一格，線從下往上長，數字在線上面。
     enum Dial {
@@ -77,6 +77,15 @@ extension Tokens {
         static let line: CGFloat = 32
         static let buttonWidth: CGFloat = 264
         /// 字放不下時最多縮到幾成
+        static let shrink: CGFloat = 0.5
+    }
+
+    /// 分析第一張的圓餅（甜甜圈）：多寬、環多粗、塊與塊之間的縫（同色的兩塊靠它分開）。
+    enum Donut {
+        static let size: CGFloat = 200
+        static let ring: CGFloat = 32
+        static let gap: CGFloat = 1.5
+        /// 中間那句放不下時最多縮到幾成
         static let shrink: CGFloat = 0.5
     }
 }
