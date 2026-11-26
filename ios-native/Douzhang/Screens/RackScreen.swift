@@ -17,6 +17,8 @@ struct OpenDay: Identifiable {
 /// 沒番茄的日子不寫 0、沒有連續數字。
 struct RackScreen: View {
     @Environment(AppModel.self) private var model
+    @Environment(PagerMotion.self) private var pager
+    @State private var seen = RackSeen()
     @State private var mode = LaunchOptions.rackMode
     @State private var view = LaunchOptions.rackView
     @State private var range = StatsRange.week
@@ -42,7 +44,14 @@ struct RackScreen: View {
     ]
 
     private var selected: String {
-        picked.isEmpty ? model.todayKey : picked
+        picked.isEmpty ? seen.todayKey : picked
+    }
+
+    /// 這頁看得到嗎：停在這頁，或三頁正在滑（滑一開始就換新，滑進來時已經是新的、不會空白或閃一下）。
+    /// iOS 17 沒有「開始滑」的通知，滑過半才知道，所以一律當看得到（跟以前一樣每次都算）。
+    private var inView: Bool {
+        guard #available(iOS 18.0, *) else { return true }
+        return pager.rest == nil || pager.rest == .rack
     }
 
     /// 週、月跟行事曆的週、月是同一組，換一段的算法共用
@@ -51,7 +60,8 @@ struct RackScreen: View {
     }
 
     var body: some View {
-        let isEmpty = !Receipt.hasAnyRecord(model.state)
+        let shown = seen.refreshed(from: model, inView: inView)
+        let isEmpty = !Receipt.hasAnyRecord(shown.state)
         VStack(alignment: .leading, spacing: .zero) {
             HStack(alignment: .bottom) {
                 PageTitle(text: Words.rack)
@@ -76,13 +86,13 @@ struct RackScreen: View {
     /// 第一次是「第一顆響完…」＋回去開始一顆；剛清空是「全部清掉了…」＋去設定匯入。
     private var empty: some View {
         ContentUnavailableView {
-            Text(model.wiped ? Words.wipedLine : Words.rackEmpty)
+            Text(seen.wiped ? Words.wipedLine : Words.rackEmpty)
                 .font(Tokens.Fonts.title3)
                 .foregroundStyle(Tokens.Colors.textPrimary)
         } actions: {
-            CompactButton(label: model.wiped ? Words.wipedAction : Words.rackEmptyAction) {
+            CompactButton(label: seen.wiped ? Words.wipedAction : Words.rackEmptyAction) {
                 withAnimation(Tokens.Motion.transition) {
-                    model.page = model.wiped ? .settings : .home
+                    model.page = seen.wiped ? .settings : .home
                 }
             }
         }
@@ -114,7 +124,7 @@ struct RackScreen: View {
 
     /// 分析那一半。換這週、這個月的分段鈕與 ‹ 這一段 › 放在第一張卡片下面：先看到答案，要換一段再往下找。
     private var stats: some View {
-        StatsPanel(state: model.state, range: range, selected: selected, period: statsPeriod) {
+        StatsPanel(state: seen.state, range: range, selected: selected, period: statsPeriod) {
             VStack(spacing: .zero) {
                 Segmented(options: ranges, value: range) { range = $0 }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -126,7 +136,7 @@ struct RackScreen: View {
     /// 分析卡片標題與那行事實開頭的那一段：這週、這個月，翻到以前就是那一段的名字。
     private var statsPeriod: String {
         let month = DayKeys.shiftMonth(selected, months: 0)
-        let isThisMonth = month == DayKeys.shiftMonth(model.todayKey, months: 0)
+        let isThisMonth = month == DayKeys.shiftMonth(seen.todayKey, months: 0)
         return range == .month && isThisMonth ? Words.thisMonth : periodTitle
     }
 
@@ -137,7 +147,7 @@ struct RackScreen: View {
             return Words.monthTitle(selected)
         case .week:
             let weekStart = DayKeys.weekStart(selected)
-            let isThisWeek = weekStart == DayKeys.weekStart(model.todayKey)
+            let isThisWeek = weekStart == DayKeys.weekStart(seen.todayKey)
             return isThisWeek ? Words.thisWeek : Words.weekOf(weekStart)
         case .three:
             let days = RackCalendar.viewDays(.three, selected: selected)
@@ -149,7 +159,7 @@ struct RackScreen: View {
 
     /// ‹ 這一段 ›。畫面上已經有今天就沒有 ›（不往還沒到的日子翻）。
     private var periodNav: some View {
-        let today = model.todayKey
+        let today = seen.todayKey
         let atToday = RackCalendar.reachesToday(period, selected: selected, todayKey: today)
         return HStack {
             TextButton(label: Words.prevPeriod, a11yLabel: Words.prevPeriodA11y) { shift(-1) }
@@ -168,7 +178,7 @@ struct RackScreen: View {
     private func shift(_ step: Int) {
         let next = RackCalendar.shiftPeriod(period, selected: selected, step: step)
         picked = period == .month
-            ? MonthBoard.landing(model.state, month: next, todayKey: model.todayKey)
+            ? MonthBoard.landing(seen.state, month: next, todayKey: seen.todayKey)
             : next
     }
 
@@ -181,12 +191,12 @@ struct RackScreen: View {
 
     /// 行事曆那一半：月是格子加選中那一天做了什麼，其他三種是時間軸。
     @ViewBuilder private var calendar: some View {
-        let state = model.state
+        let state = seen.state
         if view == .month {
             RackMonth(
                 state: state,
                 selected: selected,
-                todayKey: model.todayKey,
+                todayKey: seen.todayKey,
                 onPickDay: { picked = $0 },
                 onOpen: { openDay = OpenDay(id: $0) }
             )
@@ -195,7 +205,7 @@ struct RackScreen: View {
                 state: state,
                 view: view,
                 selected: selected,
-                todayKey: model.todayKey,
+                todayKey: seen.todayKey,
                 onPick: pickDay
             )
             if view == .day, let sum = Receipt.daySum(state.days[selected]) {

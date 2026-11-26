@@ -105,9 +105,14 @@ enum Insights {
     /// 沒寫字的也算一筆；以前存的「訊息」當成「有人找」。
     static func jotTally(_ state: AppState, now: Millis) -> JotTally {
         let since = now - Params.Insight.jotDays * msPerDay
-        let items = state.days
-            .flatMap { entry in jotItems(entry.value, key: entry.key) }
-            .filter { $0.start >= since }
+        // 只翻最近那幾格，不把一整年做成清單（效能審查乙2）。一筆放在它開始那天、照當時的時區，
+        // 所以格子的日期最多比「現在這區的 since 那天」早 zoneSlackDays 天。鍵是 YYYY-MM-DD，字串比大小就是日期先後。
+        // 照原本的字典順序翻：時刻一樣的幾筆，先後才跟整份翻的時候一樣
+        let oldest = DayKeys.shift(Store.dayKey(since), days: -Params.Insight.zoneSlackDays)
+        var items: [JotItem] = []
+        for (key, day) in state.days where key >= oldest {
+            items += jotItems(day, key: key).filter { $0.start >= since }
+        }
         var tally = JotTally()
         var found: [String: Int] = [:]
         for item in items {

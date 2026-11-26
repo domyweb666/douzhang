@@ -103,6 +103,8 @@ enum Params {
         /// 「記了什麼、作廢的原因」看最近幾天；至少幾筆才分種類、分原因講
         static let jotDays = 14.0
         static let splitMin = 5
+        /// 一筆的時區跟手機現在的時區最多差 26 小時（UTC+14 對 UTC−12），日期最多差兩天：往前多翻這幾格
+        static let zoneSlackDays = 2
         /// 「你平常幾顆」看今天之前幾天、至少要幾個有開始番茄的日子、取中間哪一段
         static let usualDays = 21
         static let usualMinDays = 10
