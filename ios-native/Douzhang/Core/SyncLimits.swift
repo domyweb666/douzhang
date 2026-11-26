@@ -5,7 +5,7 @@ import Foundation
 enum SyncLimits {
     static func accepts(_ bean: Bean) -> Bool {
         isMinutes(bean.len) && isMinutes(bean.flow) && isTime(bean.keptAt)
-            && isTime(bean.start) && isTime(bean.doneAt)
+            && isTime(bean.start) && isTime(bean.doneAt) && isTime(bean.wordsEditedAt)
     }
 
     static func accepts(_ entry: VoidEntry) -> Bool {

@@ -138,7 +138,8 @@ enum StateDecoding {
             zone: JSONRead.string(raw["tz"]),
             done: JSONRead.bool(raw["done"], or: false),
             doneAt: JSONRead.number(raw["doneAt"]),
-            doing: JSONRead.string(raw["doing"]) ?? ""
+            doing: JSONRead.string(raw["doing"]) ?? "",
+            wordsEditedAt: JSONRead.number(raw["wordsEditedAt"])
         )
     }
 

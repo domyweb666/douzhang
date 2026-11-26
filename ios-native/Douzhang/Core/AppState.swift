@@ -115,6 +115,10 @@ struct Bean: Equatable {
     var done = false
     var doneAt: Millis?
     var doing = ""
+    /// 在番茄架的收據裡最後一次改在做什麼與那句的時刻；沒改過是 nil。
+    /// 同步合併同一顆時，改得晚的那份字整組贏（SyncJoin），不然另一台的舊字會被併回來。
+    /// 選填欄位，不升格式版本：舊版讀到多一欄照樣讀得懂，只是不認得它。
+    var wordsEditedAt: Millis?
 }
 
 /// 作廢的一筆：只記第幾分鐘、原因、選填那一行，什麼都不扣。

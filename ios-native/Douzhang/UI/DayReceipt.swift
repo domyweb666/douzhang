@@ -29,11 +29,13 @@ struct PodRow: View {
 }
 
 /// 一天的收據：時間、在做什麼、那句、作廢行、沒留話標記，由早到晚。
+/// 收下的那一列可以點，開半頁改在做什麼與那句；作廢那列不能改。
 struct DaySheet: View {
     var dayKey: String
     var day: DayRecord?
 
     @Environment(\.dismiss) private var dismiss
+    @State private var editing: ReceiptRow?
 
     var body: some View {
         let rows = day.map(Receipt.rows) ?? []
@@ -53,6 +55,7 @@ struct DaySheet: View {
             BigButton(label: Words.confirm, second: true) { dismiss() }
                 .padding(.top, Tokens.Layout.section)
         }
+        .sheet(item: $editing) { BeanWordsSheet(row: $0) }
     }
 
     @ViewBuilder
@@ -60,12 +63,24 @@ struct DaySheet: View {
         if row.kind == .bean {
             // 有寫在做什麼就是主字，那句退到下面一行；沒寫的照舊只有那句
             let hasDoing = !row.doing.isEmpty
-            line(
-                time: row.time,
-                text: beanLine(row),
-                sub: hasDoing ? row.clue : "",
-                muted: !hasDoing && row.clue.isEmpty
-            )
+            // 整列是按鈕，右邊的箭頭跟設定頁標籤那列同一個樣子：看得出點得開
+            Button { editing = row } label: {
+                HStack(spacing: Tokens.Layout.group) {
+                    line(
+                        time: row.time,
+                        text: beanLine(row),
+                        sub: hasDoing ? row.clue : "",
+                        muted: !hasDoing && row.clue.isEmpty
+                    )
+                    Image(systemName: "chevron.right")
+                        .font(Tokens.Fonts.caption.weight(.semibold))
+                        .foregroundStyle(Tokens.Colors.textTertiary)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(FadeStyle())
+            .accessibilityElement(children: .combine)
+            .accessibilityHint(Words.editWordsHint)
         } else {
             let text = Words.voidLine(
                 minute: row.minute,
@@ -116,5 +131,58 @@ struct DaySheet: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.vertical, Tokens.Layout.item)
+    }
+}
+
+/// 改收下的那一顆：在做什麼（一行）、寫給自己的那句（可以多行，跟筆記本一樣）。
+/// 按「好」才存；下滑關掉就是不改。
+struct BeanWordsSheet: View {
+    var row: ReceiptRow
+
+    @Environment(AppModel.self) private var model
+    @Environment(\.dismiss) private var dismiss
+    @State private var doing: String
+    @State private var clue: String
+    @FocusState private var clueFocused: Bool
+
+    /// 字在一開始就放好，不在 onAppear 才填：填的那一下會觸發超過上限就切掉，
+    /// 兩台合過、超過上限的那句沒動也會被切短。
+    init(row: ReceiptRow) {
+        self.row = row
+        _doing = State(initialValue: row.doing)
+        _clue = State(initialValue: row.clue)
+    }
+
+    var body: some View {
+        SheetCard(title: Words.editWordsTitle) {
+            label(Words.doing)
+            LineInput(
+                placeholder: Words.doingPlaceholder,
+                text: $doing,
+                maxLength: Params.doingMaxChars
+            )
+            label(Words.noteTitle)
+                .padding(.top, Tokens.Layout.group)
+            TextField(Words.notePlaceholder, text: $clue, axis: .vertical)
+                .focused($clueFocused)
+                .onChange(of: clue) { _, next in
+                    if next.count > Params.noteMaxChars {
+                        clue = String(next.prefix(Params.noteMaxChars))
+                    }
+                }
+                .modifier(FieldChrome(focused: clueFocused))
+            BigButton(label: Words.confirm) {
+                model.editWords(id: row.id, doing: doing, clue: clue)
+                dismiss()
+            }
+            .padding(.top, Tokens.Layout.group)
+        }
+    }
+
+    private func label(_ text: String) -> some View {
+        Text(text)
+            .font(Tokens.Fonts.sub)
+            .foregroundStyle(Tokens.Colors.textSecondary)
+            .padding(.bottom, Tokens.Layout.tight)
     }
 }

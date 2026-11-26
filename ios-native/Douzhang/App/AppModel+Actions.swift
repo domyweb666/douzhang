@@ -72,6 +72,12 @@ extension AppModel {
         commit(Machine.setDoing(settled(), text: text))
     }
 
+    /// 番茄架的收據裡改收下的那一顆：在做什麼與寫給自己的那句。
+    func editWords(id: String, doing: String, clue: String) {
+        let now = TimeText.nowMillis()
+        commit(Machine.editWords(settled(), id: id, doing: doing, clue: clue, now: now))
+    }
+
     // MARK: 標籤
 
     func pickType(_ id: String) {

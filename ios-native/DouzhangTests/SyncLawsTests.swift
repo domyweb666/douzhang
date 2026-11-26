@@ -67,6 +67,8 @@ final class SyncLawsTests: XCTestCase {
         bean.pings = dice.pick([[], [""], ["", ""], ["快遞"]])
         bean.done = dice.pick([true, false])
         bean.doneAt = dice.pick([nil, base, base + 0.5, base + 1])
+        // 收據改過字：沒改過、同一毫秒只差小數、晚一點的都要有
+        bean.wordsEditedAt = dice.pick([nil, nil, base + 3, base + 3.25, base + 3.75, base + 9])
         return bean
     }
 
@@ -158,6 +160,26 @@ final class SyncLawsTests: XCTestCase {
             XCTAssertEqual(merged(both, two), both, "第 \(round) 輪")
             XCTAssertEqual(merged(both, both), both, "第 \(round) 輪")
         }
+    }
+
+    /// 同一顆的三份（收下的有的在收據改過字、有的沒有，夾著作廢的），直接合：改字的規則也要三個性質都成立。
+    func test同一顆改過字的三份照什麼順序合都一樣() {
+        var dice = Dice(seed: 5)
+        let join = SyncJoin.records
+        for round in 0 ..< rounds * 5 {
+            let one = record(&dice)
+            let two = record(&dice)
+            let three = record(&dice)
+            XCTAssertEqual(join(one, two).whole, join(two, one).whole, "第 \(round) 輪")
+            let left = join(join(one, two), three).whole
+            XCTAssertEqual(left, join(one, join(two, three)).whole, "第 \(round) 輪")
+            XCTAssertEqual(join(one, one).whole, one.whole, "第 \(round) 輪")
+            XCTAssertEqual(join(join(one, two), two).whole, join(one, two).whole, "第 \(round) 輪")
+        }
+    }
+
+    private func record(_ dice: inout Dice) -> SyncRecord {
+        dice.pick([true, true, false]) ? .kept(bean("r1", &dice)) : .voided(entry("r1", &dice))
     }
 
     func test三台經過檔案來回最後每台一樣() {
