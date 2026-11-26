@@ -24,6 +24,8 @@ struct DouzhangApp: App {
                 model.becameActive()
                 Task { await shop.refresh() }
             case .background:
+                // 存檔在背景寫：進背景就可能被系統收掉，還沒落地的當場寫完
+                model.flushSaves()
                 model.cloud.enteredBackground()
             default:
                 break

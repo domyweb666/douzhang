@@ -271,4 +271,16 @@ extension Machine {
         }
         return Store.restAfter(state.settings, len: run.len, beansToday: kept.count + 1)
     }
+
+    /// 鈴響之後很久才回來（超過這顆的休息長度）：響了幾分鐘，不到就是 0。
+    /// 智能調節的休息跟著今天的累計走，跟收下時用同一個算法；其他模式照舊用番茄長度。
+    /// 差距先取到整毫秒：畫面在「響的那一刻＋整分鐘」重算，時刻換成 Date 再換回來會差一點點，不取整會少算一分。
+    static func lateMinutes(_ state: AppState, run: FocusRun, now: Millis) -> Int {
+        let ago = (now - run.endAt).rounded()
+        let rest = state.settings.restMode == .smart
+            ? restPlan(state, run: run).minutes
+            : Store.restMinutes(run.len)
+        let limit = Double(rest) * Params.msPerMinute
+        return ago >= limit ? Int(ago / Params.msPerMinute) : 0
+    }
 }

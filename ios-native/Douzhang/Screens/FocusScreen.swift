@@ -14,19 +14,9 @@ struct FocusScreen: View {
     @State private var hiding: Task<Void, Never>?
 
     var body: some View {
-        let left = run.endAt - model.now
         ZStack(alignment: .bottom) {
-            GeometryReader { proxy in
-                VStack(spacing: Tokens.Layout.group) {
-                    clock(TimeText.clockParts(left), in: proxy)
-                    doingLine
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .contentShape(Rectangle())
-                .onTapGesture(perform: reveal)
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel(Words.zenScreenA11y(TimeText.mmss(left)))
-                .accessibilityAddTraits(.isButton)
+            ZenFace(run: run, type: type, onTap: reveal) {
+                doingLine
             }
             // 上下照整個螢幕置中；左右留在安全區裡
             .ignoresSafeArea(edges: .vertical)
@@ -36,24 +26,6 @@ struct FocusScreen: View {
         .statusBarHidden()
         .persistentSystemOverlays(.hidden)
         .onDisappear { hiding?.cancel() }
-    }
-
-    private func clock(
-        _ parts: (minutes: String, seconds: String),
-        in proxy: GeometryProxy
-    ) -> some View {
-        let insets = proxy.safeAreaInsets
-        let screen = proxy.size.width + insets.leading + insets.trailing
-        return ZenClock(parts: parts, screen: screen, width: proxy.size.width) { size in
-            GrowingTomato(run: run, fill: ripeness, size: size, now: model.now)
-        }
-    }
-
-    /// 番茄的顏色：從青變成標籤色。
-    private var ripeness: Color {
-        let progress = Grow.progress(.focus(run), now: model.now)
-        let ripe = Tokens.Tomato.body(type.color)
-        return Grow.ripeColor(progress, unripe: Tokens.Tomato.unripe, ripe: ripe).color
     }
 
     /// 太長就截掉，不換行。按鈕出來時收起來，位子留著，數字才不會動。
@@ -143,5 +115,48 @@ struct FocusScreen: View {
                 controls = false
             }
         }
+    }
+}
+
+/// 聚焦模式的時鐘與下面那一行。時鐘自己讀：每一拍只重算這一塊，那排按鈕不跟著一秒算四次（效能審查乙1）。
+struct ZenFace<Below: View>: View {
+    @Environment(AppModel.self) private var model
+    var run: FocusRun
+    var type: TagType
+    var onTap: () -> Void
+    @ViewBuilder var below: Below
+
+    var body: some View {
+        let left = run.endAt - model.now
+        GeometryReader { proxy in
+            VStack(spacing: Tokens.Layout.group) {
+                clock(TimeText.clockParts(left), in: proxy)
+                below
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .contentShape(Rectangle())
+            .onTapGesture(perform: onTap)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(Words.zenScreenA11y(TimeText.mmss(left)))
+            .accessibilityAddTraits(.isButton)
+        }
+    }
+
+    private func clock(
+        _ parts: (minutes: String, seconds: String),
+        in proxy: GeometryProxy
+    ) -> some View {
+        let insets = proxy.safeAreaInsets
+        let screen = proxy.size.width + insets.leading + insets.trailing
+        return ZenClock(parts: parts, screen: screen, width: proxy.size.width) { size in
+            GrowingTomato(run: run, fill: ripeness, size: size, now: model.now)
+        }
+    }
+
+    /// 番茄的顏色：從青變成標籤色。
+    private var ripeness: Color {
+        let progress = Grow.progress(.focus(run), now: model.now)
+        let ripe = Tokens.Tomato.body(type.color)
+        return Grow.ripeColor(progress, unripe: Tokens.Tomato.unripe, ripe: ripe).color
     }
 }

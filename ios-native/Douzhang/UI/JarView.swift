@@ -11,9 +11,10 @@ struct JarView: View {
     /// 殼保管的「番茄堆上次看到幾顆」：鈴響時番茄堆不在畫面上，回來要知道哪顆是新的
     @Binding var seen: Int?
 
+    @Environment(AppModel.self) private var model
     @Environment(PagerMotion.self) private var pager
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    /// 出現時才建、而且只建一次。寫成預設值的話，主畫面每重算一次就多建一個丟掉的現場；
+    /// 出現時才拿、而且只建一次（殼保管，這頁拆掉再掛回來接著用）。寫成預設值的話，主畫面每重算一次就多建一個丟掉的現場；
     /// 而且第一次畫可能早於接上 onKnown，「上次看到幾顆」記不到，新的一顆就直接躺在底。
     @State private var scene: JarScene?
 
@@ -62,7 +63,8 @@ struct JarView: View {
     }
 
     private func start() {
-        let current = scene ?? JarScene()
+        let current = model.jarScene ?? JarScene()
+        model.jarScene = current
         current.soundOn = sound
         current.reduceMotion = reduceMotion
         current.active = !frozen
@@ -71,6 +73,9 @@ struct JarView: View {
             // 番茄堆是在畫的過程中回報的：排到這一幀之後再記，不在畫到一半時改狀態
             Task { @MainActor in seen = count }
         }
+        // 接回 onKnown 之後才跟上：不在畫面上時收下的那顆，回報的顆數才記得到
+        current.resume(beans, seen: seen)
+        // 接回時掉幀重新數、可能不再是靜止版：之後才看要不要開感測器
         current.setTilt(tilt)
         scene = current
     }

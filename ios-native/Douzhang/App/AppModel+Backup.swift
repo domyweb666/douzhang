@@ -6,6 +6,7 @@ extension AppModel {
     /// 要匯出的字。本機檔讀不懂時，匯出的是那份讀不懂的原文，不是空白。
     private func savedText() -> String? {
         if unreadable {
+            flushSaves()
             return try? file.readRaw()
         }
         return try? StateEncoding.text(state)
@@ -60,6 +61,8 @@ extension AppModel {
     /// 把現在存著的原文自動備份一份（匯入前、第一次同步前）。什麼都還沒存過就沒有東西要備份。
     /// 讀不到現在的資料就不知道要備份什麼：算沒備份成。
     func backUpSaved() -> Bool {
+        // 存檔在背景寫：還沒落地的不等，備份到的會是舊的那份
+        flushSaves()
         let raw: String?
         do {
             raw = try file.readRaw()

@@ -4,34 +4,65 @@ import SwiftUI
 /// 收下、再做 15／30 分固定在底部；收據太長時只有收據那塊捲動。
 struct BellScreen: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.scenePhase) private var scenePhase
     @State private var draft = ""
     /// 開著筆記本那張半頁
     @State private var noteOpen = false
+    /// 打了字、還沒存的那次：停手 draftSaveMs 才存
+    @State private var draftWait: Task<Void, Never>?
 
     var body: some View {
         if let run = model.state.focusRun {
-            let late = lateMinutes(run)
-            VStack(spacing: .zero) {
-                receipt(run, late: late)
-                buttons(run, late: late)
+            // 「響了 N 分鐘前」一分鐘才變一次：從響的那一刻起每整分鐘重算，不跟著每一拍的時鐘
+            let everyMinute = PeriodicTimelineSchedule(
+                from: Store.date(run.endAt),
+                by: Params.secondsPerMinute
+            )
+            TimelineView(everyMinute) { context in
+                // 整分鐘那格可能比那一刻早一點點畫；打字等別的原因重畫時排程時刻是舊的：取晚的那個
+                let shown = context.date.timeIntervalSince1970 * Params.msPerSecond
+                let late = Machine.lateMinutes(
+                    model.state,
+                    run: run,
+                    now: max(shown, TimeText.nowMillis())
+                )
+                VStack(spacing: .zero) {
+                    receipt(run, late: late)
+                    buttons(run, late: late)
+                }
             }
             .sheet(isPresented: $noteOpen) { NotebookSheet(text: $draft) }
             .onAppear { draft = run.draft }
-            // 每個字都存：切走或殺掉再開，打到一半的字還在
-            .onChange(of: draft) { _, next in model.setDraft(next) }
+            // 切走或殺掉再開，打到一半的字還在：停手就存，切走、離開這頁時等不及的那次當場存
+            .onChange(of: draft) { _, next in saveLater(next) }
+            .onChange(of: scenePhase) { _, next in
+                if next != .active {
+                    saveNow()
+                }
+            }
+            .onDisappear(perform: saveNow)
         }
     }
 
-    /// 很久才回來（超過這顆的休息長度）：多一行「響了 N 分鐘前」
-    /// 智能調節的休息跟著今天的累計走，跟收下時用同一個算法；其他模式照舊用番茄長度。
-    private func lateMinutes(_ run: FocusRun) -> Int {
-        let ago = model.now - run.endAt
-        let isSmart = model.state.settings.restMode == .smart
-        let rest = isSmart
-            ? Machine.restPlan(model.state, run: run).minutes
-            : Store.restMinutes(run.len)
-        let limit = Double(rest) * Params.msPerMinute
-        return ago >= limit ? Int(ago / Params.msPerMinute) : 0
+    private func saveLater(_ text: String) {
+        draftWait?.cancel()
+        draftWait = nil
+        // 跟存著的一樣（剛打開帶回舊的那句、刪回原樣）：不用再寫一次
+        guard text != model.state.focusRun?.draft else { return }
+        draftWait = Task {
+            try? await Task.sleep(for: .milliseconds(Params.draftSaveMs))
+            guard !Task.isCancelled else { return }
+            draftWait = nil
+            model.setDraft(text)
+        }
+    }
+
+    /// 還在等的那次當場存；沒有在等就什麼都不寫。
+    private func saveNow() {
+        guard let waiting = draftWait else { return }
+        waiting.cancel()
+        draftWait = nil
+        model.setDraft(draft)
     }
 
     /// 放得下就上下置中，放不下才捲。
@@ -59,6 +90,9 @@ struct BellScreen: View {
     private func buttons(_ run: FocusRun, late: Int) -> some View {
         VStack(spacing: Tokens.Layout.group) {
             BigButton(label: late > 0 ? Words.keepThis : Words.keepAndRest) {
+                // 收下帶著字走，收完這顆就沒了：等著的那次不用再存
+                draftWait?.cancel()
+                draftWait = nil
                 model.keep(text: draft)
             }
             if !run.flowed {
@@ -77,6 +111,8 @@ struct BellScreen: View {
 
     private func flowButton(_ minutes: Int) -> some View {
         Button {
+            // 再做一下不帶字，用的是存著的那句：先把等著的存進去
+            saveNow()
             model.flow(minutes: minutes)
         } label: {
             Text(Words.flowMore(minutes))

@@ -65,6 +65,20 @@ final class JarScene {
         follow(beans)
     }
 
+    /// 回到待機接著用上次的現場：上次那些原樣在前面就只掉多的；殼記的顆數對不上（那時合進別台的）、
+    /// 前面換了顏色或大小（改標籤、換日）就照第一次擺。殼說整份換過了照同步躺好；還沒量過寬高的由 layout 擺。
+    /// 掉幀重新數：以前每次回來都新建一個，退成靜止版的也重新給一次機會。
+    func resume(_ next: [JarBean], seen: Int?) {
+        guard let known else { return }
+        slow = SlowWatch()
+        guard let seen else { return follow(next, drops: false) }
+        if seen != known || !next.starts(with: beans) {
+            pending = []
+            seed(Array(next.prefix(min(seen, next.count))))
+        }
+        follow(next)
+    }
+
     /// 多一顆就掉一顆；數目對不上（換日、匯入、清空）就重新安置。
     /// drops 是 false：整份換過了（同步、匯入、清空），多的是別台收的，直接躺好。
     /// 顆數一樣也可能是別的番茄，所以看內容有沒有變。

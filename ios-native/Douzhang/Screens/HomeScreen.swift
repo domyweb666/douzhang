@@ -44,7 +44,7 @@ struct HomeScreen: View {
         if let run = state.focusRun {
             VStack(spacing: .zero) {
                 focusBar(run)
-                FocusRing(run: run, type: Machine.typeOf(state, run.typeId), now: model.now) {
+                FocusRing(run: run, type: Machine.typeOf(state, run.typeId)) {
                     sheet = .note
                 }
                 focusActions(run)
@@ -54,7 +54,7 @@ struct HomeScreen: View {
                 TagChip(type: Machine.typeOf(state, run.typeId))
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.top, Tokens.Space.m)
-                RestRing(run: run, now: model.now)
+                RestRing(run: run)
                 BigButton(label: Words.backFromRest) { model.backFromRest() }
                 bottomRoom
             }

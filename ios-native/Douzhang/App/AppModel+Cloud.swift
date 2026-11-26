@@ -8,9 +8,11 @@ extension AppModel: CloudHost {
     }
 
     /// 換上跟別台合好的整份。不 settle、不震：進行中那顆與偏好是原樣，合併不碰。
+    /// 當場寫完：合完接著就傳（CloudLink.take 看 cloudState），存不進去要在那之前就知道。
     func takeCloud(_ merged: AppState) {
         jarSeen = jarSeenAfter(merged)
         commit(merged)
+        flushSaves()
     }
 
     func backUpForCloud() -> Bool {

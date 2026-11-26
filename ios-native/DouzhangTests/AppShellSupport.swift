@@ -50,11 +50,14 @@ struct AppShell {
     }
 
     func close() {
+        // 背景還在寫的寫完再收：不然下一條測試開場時檔還在被寫
+        model.flushSaves()
         running.cancel()
     }
 
-    /// 存進檔裡的番茄。
+    /// 存進檔裡的番茄。存檔在背景寫：先等它寫完再讀。
     var ids: [String] {
+        model.flushSaves()
         let saved = StateFile(folder: home).load().state
         return SyncSample.beans(saved).map(\.id).sorted()
     }

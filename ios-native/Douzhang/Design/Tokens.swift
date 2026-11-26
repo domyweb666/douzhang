@@ -206,11 +206,8 @@ enum Tokens {
         static let frameMax = 0.033
         /// 換頁之後多久算停穩（秒）：感測器等停穩才開關；iOS 17 沒有捲動開始、結束的通知，也等這麼久
         static let pageSettle = 0.5
-        /// 進度環從正上方開始走；每一拍（畫面時鐘刷新的間隔）之間用動畫補上
+        /// 進度環從正上方開始走
         static let ringStart = -90.0
-        static let tick = Double(Params.tickMs) / Params.msPerSecond
-        /// 時鐘該等速：進度環不用彈簧，一拍一拍直線補上
-        static let ringSweep = Animation.linear(duration: tick)
     }
 
     enum Sound {

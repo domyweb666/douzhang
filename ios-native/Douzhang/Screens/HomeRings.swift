@@ -26,7 +26,6 @@ struct RingTomato: View {
                 .trim(from: 0, to: done)
                 .stroke(ringColor, style: line)
                 .rotationEffect(.degrees(Tokens.Motion.ringStart))
-                .animation(Tokens.Motion.ringSweep, value: done)
             if let growing {
                 GrowingTomato(run: growing, fill: fill, size: full, now: now)
             } else {
@@ -79,13 +78,15 @@ struct RingBlock<Below: View>: View {
 }
 
 /// 計時中：環是標籤的番茄色，裡面那顆從青長成標籤色；整塊點一下開記一筆。
+/// 時鐘自己讀：每一拍只重算這一塊，主畫面其他東西不跟著一秒算四次（效能審查乙1）。
 struct FocusRing: View {
+    @Environment(AppModel.self) private var model
     var run: FocusRun
     var type: TagType
-    var now: Millis
     var onNote: () -> Void
 
     var body: some View {
+        let now = model.now
         let progress = Grow.progress(.focus(run), now: now)
         let ripe = Tokens.Tomato.body(type.color)
         let fill = Grow.ripeColor(progress, unripe: Tokens.Tomato.unripe, ripe: ripe)
@@ -111,9 +112,14 @@ struct FocusRing: View {
 
 /// 休息：環是藤的綠、倒數休息；裡面一顆還沒長的小青番茄。
 /// 「我自己決定」的休息沒有終點，環不走、時間往上數。看資料不看設定：休息中改設定也不會卡住。
+/// 時鐘自己讀，理由同 FocusRing。
 struct RestRing: View {
+    @Environment(AppModel.self) private var model
     var run: RestRun
-    var now: Millis
+
+    private var now: Millis {
+        model.now
+    }
 
     private var progress: Double {
         guard let endAt = run.endAt, endAt > run.restStart else { return 0 }

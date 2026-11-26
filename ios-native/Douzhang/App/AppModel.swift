@@ -44,6 +44,8 @@ final class AppModel {
     var jarSeen: Int?
     /// 這台最近收下的那顆的編號：番茄堆把它排最後，從上面掉下來的才是它
     var jarFresh: String?
+    /// 番茄堆的現場：主畫面在鈴響、聚焦模式時整個拆掉，放這裡回待機才不用重建、重新安置（效能審查甲3）
+    @ObservationIgnored var jarScene: JarScene?
     /// 收下、拿掉東西各數一次：RootView 看到數字變了就震一下
     var pulses = Pulses()
 
@@ -70,6 +72,7 @@ final class AppModel {
     var fullStatus = FullStatus.unknown
 
     @ObservationIgnored let file: StateFile
+    @ObservationIgnored private let writer: StateWriter
     @ObservationIgnored let backups: BackupFiles
     @ObservationIgnored let cloud: CloudLink
     @ObservationIgnored let notifier = Notifier()
@@ -84,6 +87,7 @@ final class AppModel {
         cloud: CloudLink? = nil
     ) {
         self.file = file
+        writer = StateWriter(file: file)
         self.backups = backups
         // 預設參數不准用主執行緒的靜態值（Swift 5 模式），所以在這裡補
         self.cloud = cloud ?? CloudLink.standard
@@ -165,23 +169,50 @@ final class AppModel {
         Machine.settle(state, now: TimeText.nowMillis(), zone: Store.zoneNow())
     }
 
-    /// 換上新狀態並存檔。本機檔讀不懂時不存（壞檔不蓋）。
+    /// 換上新狀態並存檔（在背景寫）。本機檔讀不懂時不存（壞檔不蓋）。
+    /// 同步在寫成之後才叫（written）；不寫檔時當下叫。
     func commit(_ next: AppState) {
         state = next
-        if !unreadable {
-            saveFailed = !file.save(next)
+        if unreadable {
+            cloud.saved()
+        } else {
+            save(next)
         }
-        cloud.saved()
         follow()
     }
 
     /// 匯入、清空：整份換掉。這是唯一准蓋掉「讀不懂的本機檔」的路。
+    /// 重要又少用：當場寫完，存不存得進去當場知道。
     func replaceAll(_ next: AppState) {
         unreadable = false
         state = next
-        saveFailed = !file.save(next)
-        cloud.saved()
+        save(next)
         follow(force: true)
+        flushSaves()
+    }
+
+    /// 等背景還沒寫完的都寫進檔：進背景、要讀狀態檔之前。存不進去那一行當場跟上。
+    func flushSaves() {
+        showSaved(writer.flush())
+    }
+
+    private func save(_ next: AppState) {
+        writer.save(next) { [weak self] isSaved in self?.written(isSaved) }
+    }
+
+    /// 寫完一份。寫成了才叫同步：沒存進去的不准傳（準則 5-19），之前存不進去而沒拉成的也在這裡補拉。
+    private func written(_ isSaved: Bool) {
+        showSaved(isSaved)
+        if isSaved {
+            cloud.saved()
+        }
+    }
+
+    /// 存不進去那一行只在變了才動，不多吵畫面。
+    private func showSaved(_ isSaved: Bool) {
+        if saveFailed == isSaved {
+            saveFailed = !isSaved
+        }
     }
 
     /// 回到前景：時鐘立刻重算（鎖屏放過到點回來不閃計時中）；權限可能剛從系統設定改回來。

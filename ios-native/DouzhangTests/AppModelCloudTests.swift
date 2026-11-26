@@ -87,7 +87,8 @@ final class AppModelCloudTests: XCTestCase {
         let shell = try await AppShell.open(stage, home: stage.blockedFolder())
         defer { shell.close() }
         shell.model.setDoing("寫第三節")
-        XCTAssertTrue(shell.model.saveFailed)
+        // 存檔在背景寫：寫完才知道存不進去
+        await CloudStage.until("存不進去") { shell.model.saveFailed }
         await shell.turnOn()
         XCTAssertNil(shell.model.cloudState)
         XCTAssertEqual(shell.phone.drive.calls, 0)
