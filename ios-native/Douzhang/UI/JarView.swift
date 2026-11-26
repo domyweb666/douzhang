@@ -142,16 +142,17 @@ private struct JarCanvas: View {
                 center: CGPoint(x: pose.x, y: pose.y),
                 radius: vine.radius,
                 angle: -pose.angle,
-                fill: Tokens.Tomato.body(vine.bean.color).color
+                fill: TomatoArt.bodyColor(vine.bean.color)
             )
         }
     }
 
     /// 標籤色；靜止版被點到的那顆往白色靠（調色的算法跟計時中由青轉紅同一個）。
     private func fill(_ body: JarBody) -> Color {
-        let base = Tokens.Tomato.body(scene.color(of: body))
-        guard scene.glow.isOn else { return base.color }
+        let tag = scene.color(of: body)
+        guard scene.glow.isOn else { return TomatoArt.bodyColor(tag) }
         let glow = scene.glow.strength(of: body.id) * Tokens.Opacity.tapGlow
+        let base = Tokens.Tomato.body(tag)
         return Grow.ripeColor(glow, unripe: base, ripe: Tokens.Tomato.shine).color
     }
 }

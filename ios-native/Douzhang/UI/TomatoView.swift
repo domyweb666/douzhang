@@ -23,6 +23,33 @@ enum TomatoArt {
     private static let cheekY: CGFloat = 64
     private static let cheekOffset: CGFloat = 23
 
+    // 形狀都在那張 100×100 的畫布上、大小交給 scaleBy，所以每種大小共用同一組。
+    // 罐子醒著每一格每顆都要畫，第一次用到時建好就一直用（效能審查甲5）；每格只剩位移、旋轉、縮放
+    static let bodyPath = Path(ellipseIn: body)
+    static let shinePath = makeShine()
+    static let leafPaths = sides.map(leafPath)
+    static let stemPath = makeStem()
+    static let eyePaths = sides.map(eyePath)
+    static let cheekPaths = sides.map(cheekPath)
+    static let mouthPath = makeMouth()
+
+    // 番茄的顏色都是固定的 RGB，不分深淺模式，也一起先建好
+    private static let ink = Tokens.Tomato.ink.color
+    private static let leafColor = Tokens.Tomato.leaf.color
+    private static let shineColor = Tokens.Tomato.shine.color.opacity(Tokens.Opacity.tomatoShine)
+    private static let cheekColor = Tokens.Tomato.shine.color.opacity(Tokens.Opacity.tomatoCheek)
+    private static let shineStyle = StrokeStyle(lineWidth: shineLine, lineCap: .round)
+    private static let stemStyle = StrokeStyle(lineWidth: stemLine, lineCap: .round)
+    private static let mouthStyle = StrokeStyle(lineWidth: mouthLine, lineCap: .round)
+    private static let bodyColors = Dictionary(
+        uniqueKeysWithValues: TomatoColor.allCases.map { ($0, Tokens.Tomato.body($0).color) }
+    )
+
+    /// 標籤的身體色（先建好的那一份）。
+    static func bodyColor(_ color: TomatoColor) -> Color {
+        bodyColors[color] ?? Tokens.Tomato.body(color).color
+    }
+
     /// 在 center 畫一顆半徑 radius 的番茄，轉 angle 弧度（順時針為正），身體塗 fill。
     static func draw(
         _ context: inout GraphicsContext,
@@ -36,22 +63,23 @@ enum TomatoArt {
         layer.rotate(by: .radians(angle))
         layer.scaleBy(x: radius / middle, y: radius / middle)
         layer.translateBy(x: -middle, y: -middle)
-        let ink = GraphicsContext.Shading.color(Tokens.Tomato.ink.color)
-        let round = StrokeStyle(lineWidth: stemLine, lineCap: .round)
-        let bodyPath = Path(ellipseIn: body)
+        let inked = GraphicsContext.Shading.color(ink)
         layer.fill(bodyPath, with: .color(fill))
-        layer.stroke(bodyPath, with: ink, lineWidth: bodyLine)
-        drawShine(&layer)
-        for side in sides {
-            let leaf = leafPath(side: side)
-            layer.fill(leaf, with: .color(Tokens.Tomato.leaf.color))
-            layer.stroke(leaf, with: ink, lineWidth: leafLine)
+        layer.stroke(bodyPath, with: inked, lineWidth: bodyLine)
+        layer.stroke(shinePath, with: .color(shineColor), style: shineStyle)
+        for leaf in leafPaths {
+            layer.fill(leaf, with: .color(leafColor))
+            layer.stroke(leaf, with: inked, lineWidth: leafLine)
         }
-        layer.stroke(stemPath(), with: ink, style: round)
-        drawFace(&layer, ink: ink)
+        layer.stroke(stemPath, with: inked, style: stemStyle)
+        for (eye, cheek) in zip(eyePaths, cheekPaths) {
+            layer.fill(eye, with: inked)
+            layer.fill(cheek, with: .color(cheekColor))
+        }
+        layer.stroke(mouthPath, with: inked, style: mouthStyle)
     }
 
-    private static func drawShine(_ layer: inout GraphicsContext) {
+    private static func makeShine() -> Path {
         var shine = Path()
         shine.move(to: CGPoint(x: 19, y: 44))
         shine.addCurve(
@@ -59,9 +87,7 @@ enum TomatoArt {
             control1: CGPoint(x: 21, y: 33),
             control2: CGPoint(x: 28, y: 25)
         )
-        let white = Tokens.Tomato.shine.color.opacity(Tokens.Opacity.tomatoShine)
-        let style = StrokeStyle(lineWidth: shineLine, lineCap: .round)
-        layer.stroke(shine, with: .color(white), style: style)
+        return shine
     }
 
     /// side −1 左、1 右。兩片葉子以中線對稱，各往外轉一點。
@@ -79,37 +105,40 @@ enum TomatoArt {
         return Path(ellipseIn: rect).applying(turn)
     }
 
-    private static func stemPath() -> Path {
+    private static func makeStem() -> Path {
         var stem = Path()
         stem.move(to: CGPoint(x: middle, y: 11))
         stem.addLine(to: CGPoint(x: middle, y: 3.5))
         return stem
     }
 
-    private static func drawFace(_ layer: inout GraphicsContext, ink: GraphicsContext.Shading) {
-        let cheek = Tokens.Tomato.shine.color.opacity(Tokens.Opacity.tomatoCheek)
-        for side in sides {
-            let eyeX = middle + side * eyeOffset
-            let eye = CGRect(
-                x: eyeX - eyeRadius,
-                y: eyeY - eyeRadius,
-                width: eyeRadius * 2,
-                height: eyeRadius * 2
-            )
-            layer.fill(Path(ellipseIn: eye), with: ink)
-            let cheekX = middle + side * cheekOffset
-            let blush = CGRect(
-                x: cheekX - cheekSize.width / 2,
-                y: cheekY - cheekSize.height / 2,
-                width: cheekSize.width,
-                height: cheekSize.height
-            )
-            layer.fill(Path(ellipseIn: blush), with: .color(cheek))
-        }
+    private static func eyePath(side: CGFloat) -> Path {
+        let eyeX = middle + side * eyeOffset
+        let eye = CGRect(
+            x: eyeX - eyeRadius,
+            y: eyeY - eyeRadius,
+            width: eyeRadius * 2,
+            height: eyeRadius * 2
+        )
+        return Path(ellipseIn: eye)
+    }
+
+    private static func cheekPath(side: CGFloat) -> Path {
+        let cheekX = middle + side * cheekOffset
+        let blush = CGRect(
+            x: cheekX - cheekSize.width / 2,
+            y: cheekY - cheekSize.height / 2,
+            width: cheekSize.width,
+            height: cheekSize.height
+        )
+        return Path(ellipseIn: blush)
+    }
+
+    private static func makeMouth() -> Path {
         var mouth = Path()
         mouth.move(to: CGPoint(x: 43.5, y: 63))
         mouth.addQuadCurve(to: CGPoint(x: 56.5, y: 63), control: CGPoint(x: 50, y: 69.5))
-        layer.stroke(mouth, with: ink, style: StrokeStyle(lineWidth: mouthLine, lineCap: .round))
+        return mouth
     }
 }
 
