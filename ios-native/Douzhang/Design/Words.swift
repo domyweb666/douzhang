@@ -43,6 +43,9 @@ enum Words {
     static let doing = "在做什麼"
     static let doingPlaceholder = "例：寫第三節"
     static let clearDoing = "清掉這句"
+    /// 番茄架收據裡點收下的那一列：半頁標題、讀屏提示
+    static let editWordsTitle = "改這顆的字"
+    static let editWordsHint = "點兩下改這顆的字"
 
     // MARK: 聚焦模式
 

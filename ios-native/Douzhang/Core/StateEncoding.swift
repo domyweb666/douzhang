@@ -132,6 +132,7 @@ enum StateEncoding {
         object["start"] = bean.start
         object["tz"] = bean.zone
         object["doneAt"] = bean.doneAt
+        object["wordsEditedAt"] = bean.wordsEditedAt
         if bean.done {
             object["done"] = true
         }

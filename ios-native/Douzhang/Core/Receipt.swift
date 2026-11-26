@@ -20,9 +20,11 @@ struct TimelineItem: Equatable {
 }
 
 /// 一天的收據裡的一列。time 是畫在左邊的時刻：番茄是開始、作廢是作廢那一刻。
-struct ReceiptRow: Equatable {
+/// id 是那一顆的編號：點收下的那一列改字時拿來找它。
+struct ReceiptRow: Equatable, Identifiable {
     var kind: ItemKind
     var time: Millis
+    var id = ""
     var doing = ""
     var clue = ""
     var isDouble = false
@@ -80,6 +82,7 @@ enum Receipt {
             let row = ReceiptRow(
                 kind: .bean,
                 time: bean.start ?? bean.keptAt,
+                id: bean.id,
                 doing: bean.doing,
                 clue: bean.clue,
                 isDouble: Store.units(bean.len) > 1,

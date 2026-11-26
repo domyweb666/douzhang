@@ -36,6 +36,7 @@ extension Bean {
         next.keptAt = keptAt.rounded(.down)
         next.start = start.map { $0.rounded(.down) }
         next.doneAt = doneAt.map { $0.rounded(.down) }
+        next.wordsEditedAt = wordsEditedAt.map { $0.rounded(.down) }
         return next
     }
 }
@@ -65,12 +66,14 @@ enum SyncJoin {
     }
 
     /// 收下贏作廢；作廢那筆記的、寫的都併進來（打過的字不丟），原因與第幾分鐘不留。
+    /// 寫的字照 typed 的規則：作廢那筆改不了字，當成沒改過；收下那顆改過字就留它改的。
     private static func absorbed(_ bean: Bean, _ entry: VoidEntry) -> Bean {
         var next = bean
         next.notes = union(bean.notes, entry.notes)
         next.pings = union(bean.pings, entry.pings)
-        next.clue = lines(bean.clue, entry.text)
-        next.doing = lines(bean.doing, entry.doing)
+        let words = typed(Typed(bean), Typed(doing: entry.doing, clue: entry.text))
+        next.clue = words.clue
+        next.doing = words.doing
         return next
     }
 
@@ -78,8 +81,10 @@ enum SyncJoin {
         var next = rank(left) < rank(right) ? right : left
         next.notes = union(left.notes, right.notes)
         next.pings = union(left.pings, right.pings)
-        next.clue = lines(left.clue, right.clue)
-        next.doing = lines(left.doing, right.doing)
+        let words = typed(Typed(left), Typed(right))
+        next.clue = words.clue
+        next.doing = words.doing
+        next.wordsEditedAt = words.editedAt
         next.done = left.done || right.done
         next.doneAt = later(left.doneAt, right.doneAt)
         return next
@@ -170,6 +175,40 @@ extension SyncJoin {
 
     private static func mark(_ value: String?) -> String {
         value.map { "+" + $0 } ?? ""
+    }
+}
+
+// MARK: 改過的字
+
+extension SyncJoin {
+    /// 一筆的在做什麼、那句，跟最後在收據改字的時刻（作廢那筆改不了字，一律 nil）。
+    struct Typed: Equatable {
+        var doing: String
+        var clue: String
+        var editedAt: Millis?
+    }
+
+    /// 改字的時刻（照整毫秒）不一樣：晚的那份整組贏，時刻跟著它。兩句都留的話，
+    /// 另一台還沒改的舊字會被併回來，改短的又變回長的。
+    /// 一樣（含兩邊都沒改過）才照舊兩邊都留，時刻取晚的（同一毫秒只差小數）。
+    /// 先比時刻、一樣才併：交換、結合、冪等照樣成立（SyncLawsTests、WordsEditTests 隨機跑過）。
+    static func typed(_ left: Typed, _ right: Typed) -> Typed {
+        let leftAt = left.editedAt.map { $0.rounded(.down) }
+        let rightAt = right.editedAt.map { $0.rounded(.down) }
+        if leftAt != rightAt {
+            return later(leftAt, rightAt) == leftAt ? left : right
+        }
+        return Typed(
+            doing: lines(left.doing, right.doing),
+            clue: lines(left.clue, right.clue),
+            editedAt: later(left.editedAt, right.editedAt)
+        )
+    }
+}
+
+extension SyncJoin.Typed {
+    init(_ bean: Bean) {
+        self.init(doing: bean.doing, clue: bean.clue, editedAt: bean.wordsEditedAt)
     }
 }
 
