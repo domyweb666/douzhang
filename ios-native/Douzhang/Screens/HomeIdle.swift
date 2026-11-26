@@ -146,13 +146,17 @@ struct HomeIdle: View {
                 action: onSound
             )
             .frame(maxWidth: .infinity)
-            if settings.demo {
-                StartButton(label: Words.startTest(Machine.devType.len)) {
-                    model.start(typeId: Machine.devTypeId)
+            Group {
+                if settings.demo {
+                    StartButton(label: Words.startTest(Machine.devType.len)) {
+                        model.start(typeId: Machine.devTypeId)
+                    }
+                } else {
+                    StartButton(label: Words.start) { model.start() }
                 }
-            } else {
-                StartButton(label: Words.start) { model.start() }
             }
+            // 番茄堆在後面，番茄撞到開始鈕會被擋
+            .anchorPreference(key: JarStartKey.self, value: .bounds) { $0 }
             RoundIconButton(
                 face: .tomato(type.color),
                 label: type.name,

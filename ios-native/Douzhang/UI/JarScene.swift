@@ -9,7 +9,7 @@ final class JarScene {
     /// 都躺好了：畫面不用每幀重畫
     private(set) var asleep = false
 
-    @ObservationIgnored private(set) var world = JarWorld(tuning: .standard)
+    @ObservationIgnored var world = JarWorld(tuning: .standard)
     @ObservationIgnored private var colors: [Int: TomatoColor] = [:]
     @ObservationIgnored private var beans: [JarBean] = []
     /// 上次看到幾顆；nil＝還沒量到寬高、還沒安置
@@ -166,6 +166,7 @@ final class JarScene {
         var body = JarBody(id: 0, x: x, y: world.height - radius, radius: radius)
         body.angle = world.randomLean()
         add(body, color: bean.color)
+        world.liftOut()
         sounds.land(sound: soundOn)
     }
 

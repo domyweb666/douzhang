@@ -10,6 +10,8 @@ struct JarView: View {
     var tilt: Bool
     /// 殼保管的「番茄堆上次看到幾顆」：鈴響時番茄堆不在畫面上，回來要知道哪顆是新的
     @Binding var seen: Int?
+    /// 開始鈕的框（待機那頁往上送的）：番茄撞到會被擋
+    var startButton: Anchor<CGRect>?
 
     @Environment(AppModel.self) private var model
     @Environment(PagerMotion.self) private var pager
@@ -17,6 +19,8 @@ struct JarView: View {
     /// 出現時才拿、而且只建一次（殼保管，這頁拆掉再掛回來接著用）。寫成預設值的話，主畫面每重算一次就多建一個丟掉的現場；
     /// 而且第一次畫可能早於接上 onKnown，「上次看到幾顆」記不到，新的一顆就直接躺在底。
     @State private var scene: JarScene?
+    /// 盒子很小，主畫面重算時多建一個丟掉不要緊；量框的通知可能比 onAppear 早到，所以一開始就有
+    @State private var place = JarPlace()
 
     /// 三頁正在滑、或停在別頁：凍著不畫，不跟滑頁搶手。這頁滑走了其實還掛著
     private var frozen: Bool {
@@ -30,6 +34,25 @@ struct JarView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .onGeometryChange(for: CGRect?.self) { proxy in
+            startButton.map { proxy[$0] }
+        } action: { frame in
+            place.start = frame
+            placeObstacles()
+        }
+        // 滑頁時每一格都在變：只存著，停好在這一頁時才會換算分頁列
+        .onGeometryChange(for: CGRect.self) { proxy in
+            proxy.frame(in: .global)
+        } action: { frame in
+            if place.setScreen(frame) {
+                placeObstacles()
+            }
+        }
+        .onChange(of: pager.tabBar, initial: true) { _, frame in
+            if place.setTabBar(frame) {
+                placeObstacles()
+            }
+        }
         .contentShape(Rectangle())
         .gesture(
             SpatialTapGesture().onEnded { tap in
@@ -78,6 +101,12 @@ struct JarView: View {
         // 接回時掉幀重新數、可能不再是靜止版：之後才看要不要開感測器
         current.setTilt(tilt)
         scene = current
+        placeObstacles()
+    }
+
+    /// 殼保管的現場：還沒出現時量到的框，出現時再補擺。
+    private func placeObstacles() {
+        model.jarScene?.setObstacles(place.obstacles)
     }
 
     /// 停穩了再開關感測器：停下那一拍手指可能馬上又滑走。

@@ -8,6 +8,8 @@ import SwiftUI
 @Observable
 final class PagerMotion {
     private(set) var rest: Page? = .home
+    /// 分頁列在螢幕上的框：番茄堆拿來擋番茄。分頁列不在任何一頁裡，三頁與它只有這裡接得上
+    var tabBar: CGRect?
 
     @ObservationIgnored private var scrolling = false
     @ObservationIgnored private var settling: Task<Void, Never>?

@@ -206,6 +206,8 @@ enum Tokens {
         static let quietDistance = 0.5
         static let quietAngle = 0.01
         static let quietFrames = 30
+        /// 卡在原地抖的：之後連續這麼多個半秒，平均位置都沒離開第一個半秒的平均 quietDrift，也算躺好
+        static let shakeHalves = 2
         static let tiltSmooth = 0.15
         static let substeps = 2
         static let frameMax = 0.033

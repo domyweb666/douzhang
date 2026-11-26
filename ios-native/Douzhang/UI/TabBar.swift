@@ -58,6 +58,8 @@ struct TabIcon: Shape {
 /// 下面的懸浮膠囊分頁列（照 Domy 的樣子）。選中的那格有產品色淡底。
 struct TabBar: View {
     @Binding var page: Page?
+    /// 膠囊在螢幕上的框（不含下面留的空）
+    var onFrame: (CGRect) -> Void
 
     private let tabs: [(page: Page, label: String)] = [
         (.rack, Words.rack),
@@ -93,6 +95,11 @@ struct TabBar: View {
         .padding(Tokens.Space.xs * 1.5)
         .frame(width: Tokens.Shape.tabBarWidth, height: Tokens.Shape.tabBar)
         .background { plate }
+        .onGeometryChange(for: CGRect.self) { proxy in
+            proxy.frame(in: .global)
+        } action: { frame in
+            onFrame(frame)
+        }
         .padding(.bottom, Tokens.Shape.tabBarBottom)
         .haptic(.selection, trigger: page)
     }
