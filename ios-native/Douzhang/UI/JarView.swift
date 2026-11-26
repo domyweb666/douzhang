@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// 番茄堆：今天的番茄躺在最下面；收下一顆就從上面掉進來，落地那一幀「啵」＋短觸覺。
+/// 番茄堆：今天的番茄躺在最下面；收下一顆就從上緣掛下來，晃一晃斷了才掉，落地那一幀「啵」＋短觸覺。
 /// 傾斜手機番茄跟著滾（設定可關）、點一下彈、碰撞有聲音與觸覺、掉幀就退成靜止版（點了亮一下）。
 /// 物理在 Core/JarPhysics.swift，現場在 JarScene；這裡只負責每一幀畫出來。
 struct JarView: View {
@@ -13,8 +13,7 @@ struct JarView: View {
 
     @Environment(PagerMotion.self) private var pager
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    /// 出現時才建、而且只建一次。寫成預設值的話，主畫面每重算一次就多建一個丟掉的現場
-    /// （讀五個音檔、切音訊模式），滑到一半換頁那一拍就卡在這裡；
+    /// 出現時才建、而且只建一次。寫成預設值的話，主畫面每重算一次就多建一個丟掉的現場；
     /// 而且第一次畫可能早於接上 onKnown，「上次看到幾顆」記不到，新的一顆就直接躺在底。
     @State private var scene: JarScene?
 
@@ -104,22 +103,49 @@ private struct JarCanvas: View {
                     seen: seen
                 )
                 scene.advance(now: timeline.date.timeIntervalSinceReferenceDate)
-                for body in scene.world.bodies {
-                    TomatoArt.draw(
-                        &context,
-                        center: CGPoint(x: body.x, y: body.y),
-                        radius: body.radius,
-                        angle: body.angle,
-                        fill: fill(body)
-                    )
-                }
+                drawPile(&context)
+                drawVines(&context)
             }
+        }
+    }
+
+    /// 畫的是前後兩步之間的位置：物理一秒固定走 120 步，螢幕刷新落在哪裡就補到哪裡。
+    private func drawPile(_ context: inout GraphicsContext) {
+        let blend = scene.blend
+        for body in scene.world.bodies {
+            let shown = body.between(blend)
+            TomatoArt.draw(
+                &context,
+                center: CGPoint(x: shown.x, y: shown.y),
+                radius: shown.radius,
+                angle: shown.angle,
+                fill: fill(body)
+            )
+        }
+    }
+
+    /// 藤與還掛在上面的那顆：蒂頭朝著支點。
+    private func drawVines(_ context: inout GraphicsContext) {
+        let behind = (1 - scene.blend) * JarTuning.tick
+        for vine in scene.vines.all {
+            let time = vine.age - behind
+            JarVineArt.draw(&context, vine: vine, time: time)
+            guard vine.isHolding else { continue }
+            let pose = vine.pose(at: time)
+            TomatoArt.draw(
+                &context,
+                center: CGPoint(x: pose.x, y: pose.y),
+                radius: vine.radius,
+                angle: -pose.angle,
+                fill: Tokens.Tomato.body(vine.bean.color).color
+            )
         }
     }
 
     /// 標籤色；靜止版被點到的那顆往白色靠（調色的算法跟計時中由青轉紅同一個）。
     private func fill(_ body: JarBody) -> Color {
         let base = Tokens.Tomato.body(scene.color(of: body))
+        guard scene.glow.isOn else { return base.color }
         let glow = scene.glow.strength(of: body.id) * Tokens.Opacity.tapGlow
         return Grow.ripeColor(glow, unripe: base, ripe: Tokens.Tomato.shine).color
     }

@@ -5,6 +5,7 @@ import Foundation
 /// 輸出是每顆的位置與角度，以及「這一幀落地了哪幾顆、最大撞擊速度」。
 /// 呼叫端每幀先把 impact 歸零、把 landed 清空，再分子步呼叫 step。
 struct JarWorld {
+    /// 開機安置一步走多久、感測器多久讀一次、多久看一次躺好沒。畫面上的一步是 JarTuning.tick。
     static let frame = 1.0 / 60.0
     private static let minGapSquared = 1e-4
     private static let minTouchGap = 1e-2
@@ -41,8 +42,7 @@ struct JarWorld {
         var added = body
         nextId += 1
         added.id = nextId
-        added.prevX = body.x
-        added.prevY = body.y
+        added.markStep()
         bodies.append(added)
     }
 
@@ -79,9 +79,13 @@ struct JarWorld {
     }
 
     private mutating func collide(_ first: Int, _ second: Int) {
+        let reach = bodies[first].radius + bodies[second].radius
+        // 左右就離得夠遠的先跳過：四十顆一步要看三千多對，整顆抄出來再看，開機安置會拖到兩倍久
+        if abs(bodies[second].x - bodies[first].x) >= reach {
+            return
+        }
         var one = bodies[first]
         var two = bodies[second]
-        let reach = one.radius + two.radius
         let deltaX = two.x - one.x
         let deltaY = two.y - one.y
         let squared = deltaX * deltaX + deltaY * deltaY
@@ -128,7 +132,7 @@ struct JarWorld {
         return true
     }
 
-    private mutating func solveWalls() {
+    private mutating func solveWalls(_ seconds: Double) {
         for index in bodies.indices {
             var body = bodies[index]
             let radius = body.radius
@@ -149,10 +153,10 @@ struct JarWorld {
                     body.fresh = false
                     landed.append(body.id)
                 }
-                body.velX *= tuning.wallFric
+                body.velX = tuning.rolled(body.velX, seconds: seconds)
             }
-            // 上緣：還在掉進來的可以在上面，落定的不准飛出去
-            if body.y < radius, !body.fresh {
+            // 上緣：從上面外面掉進來的可以在上面；落定的、已經整顆進來過的（斷藤那顆）不准飛出去
+            if body.y < radius, !body.fresh || body.prevY >= radius {
                 body.y = radius
                 bounce(&body.velY, sign: -1)
             }
@@ -163,13 +167,12 @@ struct JarWorld {
     /// 走一步（秒）。
     mutating func step(_ seconds: Double) {
         for index in bodies.indices {
-            bodies[index].prevX = bodies[index].x
-            bodies[index].prevY = bodies[index].y
+            bodies[index].markStep()
         }
         integrate(seconds)
         for _ in 0 ..< tuning.iterations {
             solvePairs()
-            solveWalls()
+            solveWalls(seconds)
         }
         roll(seconds)
     }
@@ -196,6 +199,7 @@ struct JarWorld {
         for index in bodies.indices {
             bodies[index].angle = randomLean()
             bodies[index].spin = 0
+            bodies[index].markStep()
         }
     }
 
@@ -261,12 +265,15 @@ extension JarWorld {
     /// 兩顆貼在一起：沿著接觸面，兩顆實際的相對移動；扣掉各自轉動帶的，
     /// 剩下的是接觸點互搓多少，兩顆各分一半。
     private mutating func gear(_ first: Int, _ second: Int) {
+        let reach = bodies[first].radius + bodies[second].radius + tuning.spin.touch
+        if abs(bodies[second].x - bodies[first].x) > reach {
+            return
+        }
         let one = bodies[first]
         let two = bodies[second]
         let deltaX = two.x - one.x
         let deltaY = two.y - one.y
         let distance = hypot(deltaX, deltaY)
-        let reach = one.radius + two.radius + tuning.spin.touch
         if distance > reach || distance <= JarWorld.minTouchGap {
             return
         }

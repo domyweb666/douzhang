@@ -1,4 +1,3 @@
-import CoreMotion
 import Foundation
 import Observation
 
@@ -16,15 +15,20 @@ final class JarScene {
     /// 上次看到幾顆；nil＝還沒量到寬高、還沒安置
     @ObservationIgnored private(set) var known: Int?
     @ObservationIgnored private var pending: [(dueAt: TimeInterval, bean: JarBean)] = []
+    /// 還掛在藤上、沒掉進物理世界的
+    @ObservationIgnored private(set) var vines = JarVines()
     @ObservationIgnored private var lastFrame: TimeInterval = 0
+    /// 走過了但還不夠一步的時間
+    @ObservationIgnored private var leftover: TimeInterval = 0
     @ObservationIgnored private var beat = JarBeat()
     @ObservationIgnored private(set) var glow = JarGlow()
-    @ObservationIgnored private var quietFrames = 0
+    @ObservationIgnored private var quiet = JarQuiet()
     @ObservationIgnored private var slow = SlowWatch()
-    @ObservationIgnored private let sounds = JarSounds()
-    @ObservationIgnored private let motion = CMMotionManager()
-    @ObservationIgnored private var targetX = 0.0
-    @ObservationIgnored private var targetY = JarTuning.standard.gravity
+    @ObservationIgnored private let sounds = JarSounds.shared
+    @ObservationIgnored let sensor = JarTilt.shared
+    /// 重力要往哪個方向去（傾斜），每一步靠過去一點
+    @ObservationIgnored var targetX = 0.0
+    @ObservationIgnored var targetY = JarTuning.standard.gravity
 
     /// 靜止版（減少動態、或連續掉幀）：不傾斜、不彈，新的一顆直接出現在底，啵與觸覺照樣。
     @ObservationIgnored var reduceMotion = false
@@ -32,11 +36,16 @@ final class JarScene {
     /// 停在這一頁嗎：停在別頁就關感測器
     @ObservationIgnored var active = true
     /// 三頁正在滑、或停在別頁：感測器的讀數不理，不醒來
-    @ObservationIgnored private var frozen = false
+    @ObservationIgnored private(set) var frozen = false
     @ObservationIgnored var onKnown: (Int) -> Void = { _ in }
 
     var isStill: Bool {
         reduceMotion || slow.tooSlow
+    }
+
+    /// 畫面落在前後兩步之間的幾成：物理的步長固定，螢幕多快都從這裡內插。
+    var blend: Double {
+        leftover / JarTuning.tick
     }
 
     func color(of body: JarBody) -> TomatoColor {
@@ -80,6 +89,7 @@ final class JarScene {
     }
 
     private func seed(_ list: [JarBean]) {
+        vines.keepOnly(nil)
         world.seed(list.map { world.radiusFor(minutes: $0.len) })
         colors = [:]
         for (body, bean) in zip(world.bodies, list) {
@@ -88,46 +98,71 @@ final class JarScene {
         known = list.count
     }
 
-    /// 別台的直接躺好。這台剛收的那顆（排最後）還沒掉、正在掉，就讓它照樣掉完。
+    /// 別台的直接躺好。這台剛收的那顆（排最後）還沒掉、還掛著、正在掉，就讓它照樣掉完。
     /// 新清單的最後一顆不是它（清空、匯入換掉了）就整份躺好：不准掉一顆已經不在的。
     private func join(_ next: [JarBean]) {
         let waiting = pending.last?.bean
+        let hung = vines.holding.last
         let falling = world.bodies.last(where: \.fresh)
         let color = falling.flatMap { colors[$0.id] }
+        // 越後收的在越前面那一段：還在等的是最新的，再來是掛著的，再來才是正在掉的
+        let latest = waiting ?? hung?.bean
         guard let mine = next.last,
-              waiting == mine || (waiting == nil && color == mine.color)
+              latest == mine || (latest == nil && color == mine.color)
         else {
             pending = []
             seed(next)
             return
         }
+        let flying = vines
         seed(Array(next.dropLast()))
-        guard waiting == nil, let falling else { return }
-        world.addBody(falling)
-        if let added = world.bodies.last {
-            colors[added.id] = mine.color
+        if waiting != nil {
+            return
+        }
+        if let hung {
+            vines = flying
+            vines.keepOnly(hung)
+        } else if let falling {
+            add(falling, color: mine.color)
         }
     }
 
+    private func add(_ body: JarBody, color: TomatoColor) {
+        world.addBody(body)
+        if let added = world.bodies.last {
+            colors[added.id] = color
+        }
+    }
+
+    /// 新的一顆：掛上藤，晃一晃才掉。靜止版直接出現在底。
     private func drop(_ bean: JarBean) {
-        guard world.bodies.count < world.tuning.maxBeans else { return }
+        let count = world.bodies.count + vines.holding.count
+        guard count < world.tuning.maxBeans else { return }
+        if isStill {
+            lay(bean)
+        } else {
+            let radius = world.radiusFor(minutes: bean.len)
+            vines.hang(bean, radius: radius, width: world.width)
+        }
+    }
+
+    private func lay(_ bean: JarBean) {
         let radius = world.radiusFor(minutes: bean.len)
         let x = world.width / 2 + Double.random(in: -1 ... 1) * radius
         var body = JarBody(id: 0, x: x, y: world.height - radius, radius: radius)
         body.angle = world.randomLean()
-        if isStill {
-            world.addBody(body)
-            sounds.land(sound: soundOn)
-        } else {
-            body.y = -radius * 2
-            body.velX = Double.random(in: -1 ... 1) * Tokens.Motion.dropVelXSpread
-            body.velY = Tokens.Motion.dropVelY
-            body.fresh = true
-            world.addBody(body)
-        }
-        if let added = world.bodies.last {
-            colors[added.id] = bean.color
-        }
+        add(body, color: bean.color)
+        sounds.land(sound: soundOn)
+    }
+
+    /// 藤斷了：果子掉進物理世界。上一步還掛著的位置也帶過去，畫面才接得起來。
+    private func release(_ vine: JarVine) {
+        add(vine.fallen(), color: vine.bean.color)
+        let before = vine.pose(at: JarHang.cutAt - JarTuning.tick)
+        let last = world.bodies.count - 1
+        world.bodies[last].prevX = before.x
+        world.bodies[last].prevY = before.y
+        world.bodies[last].prevAngle = -before.angle
     }
 
     // MARK: 每一幀
@@ -151,7 +186,6 @@ final class JarScene {
             return
         }
         lastFrame = now
-        let before = world.bodies
         stepWorld(min(Tokens.Motion.frameMax, elapsed))
         if !world.landed.isEmpty {
             beat.landed(now: now)
@@ -160,58 +194,60 @@ final class JarScene {
             sounds.hit(sound: soundOn, impact: world.impact)
         }
         slow.count(now: now)
-        watchQuiet(before: before)
     }
 
+    /// 這一幀的時間切成固定的步走，不夠一步的留到下一幀：120Hz 一幀一步、60Hz 一幀兩步，手感一樣。
     private func stepWorld(_ seconds: Double) {
-        world.gravityX += (targetX - world.gravityX) * Tokens.Motion.tiltSmooth
-        world.gravityY += (targetY - world.gravityY) * Tokens.Motion.tiltSmooth
         world.impact = 0
         world.landed = []
-        let part = seconds / Double(Tokens.Motion.substeps)
-        for _ in 0 ..< Tokens.Motion.substeps {
-            world.step(part)
+        leftover += seconds
+        while leftover >= JarTuning.tick {
+            leftover -= JarTuning.tick
+            world.gravityX += (targetX - world.gravityX) * JarTuning.tiltPull
+            world.gravityY += (targetY - world.gravityY) * JarTuning.tiltPull
+            world.step(JarTuning.tick)
+            for vine in vines.step(JarTuning.tick) {
+                release(vine)
+            }
+            if quiet.settled(world.bodies, isBusy: hasMore) {
+                sleepSoon()
+            }
         }
     }
 
-    /// 靜止版沒有東西在動：感測器關掉，畫完這一幀就睡（有一顆還在亮就等它淡回去）。
+    /// 還有要掉的，或藤還沒縮完：不准睡
+    private var hasMore: Bool {
+        !pending.isEmpty || !vines.isEmpty
+    }
+
+    /// 靜止版沒有東西在動：感測器關掉，還掛著的直接到底，畫完這一幀就睡（有一顆還在亮就等它淡回去）。
     private func settleQuietly() {
-        if motion.isAccelerometerActive {
-            motion.stopAccelerometerUpdates()
+        sensor.stop(for: self)
+        for vine in vines.holding {
+            lay(vine.bean)
         }
+        vines = JarVines()
         if pending.isEmpty, !glow.isOn {
             sleepSoon()
         }
     }
+}
 
-    /// 每顆移動都小於門檻、也沒有還在掉的，連續這麼多幀就睡。
-    private func watchQuiet(before: [JarBody]) {
-        let moving = zip(before, world.bodies).contains { old, new in
-            new.fresh
-                || abs(new.x - old.x) > Tokens.Motion.quietDistance
-                || abs(new.y - old.y) > Tokens.Motion.quietDistance
-                || abs(new.angle - old.angle) > Tokens.Motion.quietAngle
-        }
-        quietFrames = moving || !pending.isEmpty || before.count != world.bodies.count
-            ? 0
-            : quietFrames + 1
-        if quietFrames >= Tokens.Motion.quietFrames {
-            sleepSoon()
-        }
-    }
+// MARK: 睡著、醒來
 
+extension JarScene {
     /// 現在正在畫，不能當場改畫面會讀的狀態：排到這一幀之後。
     private func sleepSoon() {
         Task { @MainActor in
-            if self.pending.isEmpty, !self.glow.isOn {
+            if !self.hasMore, !self.glow.isOn {
                 self.asleep = true
             }
         }
     }
 
-    private func wake() {
+    func wake() {
         sounds.ready()
-        quietFrames = 0
+        quiet.restart()
         restartClock()
         if asleep {
             asleep = false
@@ -223,11 +259,9 @@ final class JarScene {
         lastFrame = 0
         slow.restart()
     }
-}
 
-// MARK: 滑頁時凍結
+    // MARK: 滑頁時凍結
 
-extension JarScene {
     /// 滑動一開始就凍住，停回這一頁才接著走。睡著的照樣睡著，不因為滑走再滑回來就重畫。
     func setFrozen(_ isOn: Bool) {
         frozen = isOn
@@ -236,7 +270,7 @@ extension JarScene {
         }
     }
 
-    // MARK: 點一下、傾斜
+    // MARK: 點一下
 
     /// 點一下：附近的番茄往上彈。靜止版不彈，最近那顆亮一下。
     func tap(x: Double, y: Double) {
@@ -246,51 +280,5 @@ extension JarScene {
             glow.light(near)
         }
         wake()
-    }
-
-    /// 傾斜：加速度計換成重力向量的目標值；關掉時回到靜置重力。沒有加速度計（模擬器）就什麼都不做。
-    /// 只是滑走的話留著原本的方向：滑回來還沒接上感測器的那一下，番茄不會自己滾。
-    func setTilt(_ isOn: Bool) {
-        motion.stopAccelerometerUpdates()
-        guard isOn, !isStill, motion.isAccelerometerAvailable else {
-            targetX = 0
-            targetY = world.tuning.gravity
-            return
-        }
-        guard active else { return }
-        motion.accelerometerUpdateInterval = JarWorld.frame
-        motion.startAccelerometerUpdates(to: .main) { [weak self] data, _ in
-            guard let self, let reading = data?.acceleration else { return }
-            MainActor.assumeIsolated {
-                self.tilt(x: reading.x, y: reading.y)
-            }
-        }
-    }
-
-    private func tilt(x: Double, y: Double) {
-        if frozen {
-            return
-        }
-        targetX = x * Tokens.Motion.tiltPerG
-        targetY = -y * Tokens.Motion.tiltPerG
-        // 跟睡著時的重力比（睡著時它停著不動）：慢慢傾斜也會累積到門檻；
-        // 放在桌上不動時，感測器的小雜訊不會讓畫面一直重畫
-        let shift = abs(targetX - world.gravityX) + abs(targetY - world.gravityY)
-        if asleep, shift > Tokens.Motion.tiltWake {
-            wake()
-        }
-    }
-
-    /// 停穩在別頁才關感測器，停穩回這一頁才接上。滑到一半又滑回來的不動它。
-    func setActive(_ isOn: Bool, tilt isTiltOn: Bool) {
-        if active == isOn {
-            return
-        }
-        active = isOn
-        setTilt(isTiltOn)
-    }
-
-    func stop() {
-        motion.stopAccelerometerUpdates()
     }
 }

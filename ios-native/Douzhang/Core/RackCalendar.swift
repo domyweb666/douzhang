@@ -5,20 +5,45 @@ enum RackView: CaseIterable {
     case day, three, week, month
 }
 
-/// 排好位置的一塊。top、height 的單位是小時（從當天 0 點算）；
-/// 重疊的分到不同欄（lane），同一群重疊的平分寬度（lanes＝這一群有幾欄）。
+/// 排好位置的一塊。單位是小時（從當天 0 點算）：from、upTo 是真的起訖，top、height 是畫在哪、畫多高
+/// （太短的畫到最小高度、擠到的被推下來，所以不一定一樣）。
+/// 時間真的重疊的分到不同欄（lane），同一群重疊的平分寬度（lanes＝這一群有幾欄）。
 struct DayBlock: Equatable {
     var item: TimelineItem
+    var from: Double
+    var upTo: Double
     var top: Double
     var height: Double
     var lane: Int
     var lanes: Int
+
+    var bottom: Double {
+        top + height
+    }
 }
 
 /// 時間軸從幾點畫到幾點。
 struct AxisHours: Equatable {
     var from: Int
     var upTo: Int
+}
+
+/// 時間軸每個鐘頭多高（點）、幾點畫在哪。有番茄的鐘頭一樣高，空的收窄。
+struct TimeScale: Equatable {
+    var from: Int
+    /// 有番茄的鐘頭多高
+    var hour: Double
+    /// 從 from 起每個鐘頭多高
+    var heights: [Double]
+
+    /// 幾點（小時，可以帶小數）離時間軸最上面多遠。超過最後一個鐘頭的照 hour 往下接。
+    func offset(_ time: Double) -> Double {
+        let passed = max(0, time - Double(from))
+        let whole = min(heights.count, Int(passed))
+        let before = heights.prefix(whole).reduce(0, +)
+        let inside = (passed - Double(whole)) * hour
+        return before + (whole < heights.count ? min(inside, heights[whole]) : inside)
+    }
 }
 
 /// 月檢視的一格。不屬於這個月的格子不帶番茄。
@@ -37,7 +62,8 @@ struct MonthWeek: Equatable {
 }
 
 /// 番茄帳 番茄架的行事曆。純函式，只讀不寫。翻自 Expo 版 core/calendar.js。
-/// 規則沿用蒜日子：重疊的並排、同一群平分欄寬；太短的畫到最小高度；跨過午夜的只畫到當天 24:00。
+/// 真的重疊的並排、同一群平分欄寬；太短的畫到最小高度，擠到的天檢視並排、3 天與週往下推；
+/// 跨過午夜的只畫到當天 24:00。
 enum RackCalendar {
     private static let hoursPerDay = 24.0
     private static let threeDays = 3
@@ -70,34 +96,66 @@ enum RackCalendar {
         return last >= todayKey
     }
 
-    /// 一天的方塊排好位置。minHours：再短也畫這麼高，
-    /// 所以兩顆很短又很近的會被當成重疊、排成左右並排，不會疊在一起。
-    static func dayBlocks(_ day: DayRecord?, key: String, minHours: Double) -> [DayBlock] {
+    /// 一天的方塊排好位置。minHours：再短也畫這麼高；roomyHours：下面有空的話長到這麼高。
+    /// 兩顆很短又很近的：3 天、週往下推、不並排（一次只做一顆，真的重疊的是兩台同時），欄寬整條留給字，
+    /// 被推下來的那顆結尾照舊，所以隔一會兒就追回真的時刻。天（sideBySide）欄夠寬，照舊左右並排。
+    static func dayBlocks(
+        _ day: DayRecord?,
+        key: String,
+        minHours: Double,
+        roomyHours: Double = 0,
+        sideBySide: Bool = false
+    ) -> [DayBlock] {
         let base = DayKeys.start(key)
+        // 一塊佔住它那一欄到幾點：並排的算到畫出來的底，往下推的算到真的結束
+        let held = { (block: DayBlock) in sideBySide ? block.bottom : block.upTo }
         var blocks: [DayBlock] = []
         var cluster: [Int] = []
-        var clusterEnd = -1.0
+        // 前面幾群畫到哪裡：這一群從那裡以下才有位子
+        var taken = 0.0
         for item in Receipt.timeline(day) {
-            let top = topInDay((item.start - base) / Params.msPerHour, minHours: minHours)
-            let end = inDay((item.end - base) / Params.msPerHour)
-            let height = max(minHours, end - top)
-            if !cluster.isEmpty, top >= clusterEnd {
+            let start = (item.start - base) / Params.msPerHour
+            let from = topInDay(start, minHours: minHours)
+            // 整顆在這天之後的（別的時區收的）都夾在同一個位子，不是真的重疊：不佔時間，往下推就不會並排
+            let isAfter = start >= hoursPerDay
+            let upTo = isAfter ? from : max(from, inDay((item.end - base) / Params.msPerHour))
+            let apart = isAfter && !sideBySide
+            if apart || cluster.allSatisfy({ held(blocks[$0]) <= from }) {
                 closeCluster(&blocks, cluster)
+                taken = cluster.map { blocks[$0].bottom }.reduce(taken, max)
                 cluster = []
-                clusterEnd = -1
             }
-            let busy = cluster.filter { blocks[$0].top + blocks[$0].height > top }
-            let busyLanes = busy.map { blocks[$0].lane }
+            let busyLanes = cluster.filter { held(blocks[$0]) > from }.map { blocks[$0].lane }
             var lane = 0
             while busyLanes.contains(lane) {
                 lane += 1
             }
+            let sameLane = cluster.filter { blocks[$0].lane == lane }.map { blocks[$0].bottom }
+            let top = max(from, sameLane.reduce(taken, max))
             cluster.append(blocks.count)
-            blocks.append(DayBlock(item: item, top: top, height: height, lane: lane, lanes: 1))
-            clusterEnd = max(clusterEnd, top + height)
+            blocks.append(DayBlock(
+                item: item,
+                from: from,
+                upTo: upTo,
+                top: top,
+                height: max(minHours, upTo - top),
+                lane: lane,
+                lanes: 1
+            ))
         }
         closeCluster(&blocks, cluster)
-        return blocks
+        return stretched(blocks, roomyHours: roomyHours)
+    }
+
+    /// 沒有並排的那些，下面空著就長高一點，字多放一行；不會碰到下一塊。
+    private static func stretched(_ blocks: [DayBlock], roomyHours: Double) -> [DayBlock] {
+        var result = blocks
+        for index in result.indices where result[index].lanes == 1 {
+            let next = index + 1 < result.count ? result[index + 1].top : hoursPerDay
+            let room = min(roomyHours, next - result[index].top)
+            result[index].height = max(result[index].height, room)
+        }
+        return result
     }
 
     /// 在別的時區收的那顆（格子照當地那天、時刻照這支手機現在的時區）與壞檔，
@@ -131,23 +189,45 @@ enum RackCalendar {
         )
     }
 
+    /// 時間軸的每個鐘頭多高：真的有番茄的鐘頭是 hour，空的收成 flat，不用捲很久。
+    /// 短方塊畫到最小高度、伸進空鐘頭的那一截照 hour 的比例放，方塊才不會被壓扁。
+    static func timeScale(
+        _ columns: [[DayBlock]],
+        axis: AxisHours,
+        hour: Double,
+        flat: Double
+    ) -> TimeScale {
+        let blocks = columns.flatMap { $0 }
+        let heights = (axis.from ..< axis.upTo).map { index -> Double in
+            let start = Double(index)
+            let isBusy = blocks.contains { block in
+                Int(block.from) == index || (block.from < start && block.upTo > start)
+            }
+            if isBusy {
+                return hour
+            }
+            let reach = blocks.filter { $0.top < start + 1 }.map { $0.bottom - start }.max() ?? 0
+            return max(flat, min(1, reach) * hour)
+        }
+        return TimeScale(from: axis.from, hour: hour, heights: heights)
+    }
+
     /// 這個月的格子：一週一列（週一開頭）。
-    /// 葉子：這個月裡、已經過完、沒有番茄的日子掛一片，不算缺。
-    /// 今天與以後不掛（今天還沒過完）；第一顆番茄那天以前也不掛（那時還沒在用，不是「沒做」）。
+    /// 葉子只掛在這個月裡的日子，哪天掛看 MonthBoard.hasLeaf。
     static func monthWeeks(_ state: AppState, key: String, todayKey: String) -> [MonthWeek] {
         guard DayKeys.dateOf(key) != nil else { return [] }
         let firstOfMonth = DayKeys.shiftMonth(key, months: 0)
         let lastKey = DayKeys.shift(DayKeys.shiftMonth(key, months: 1), days: -1)
         let monthPrefix = String(firstOfMonth.dropLast(2))
-        let firstBeanKey = state.days.filter { !$0.value.beans.isEmpty }.keys.min()
+        let since = MonthBoard.firstKept(state)
         var weeks: [MonthWeek] = []
         var weekStart = DayKeys.weekStart(firstOfMonth)
         while weekStart <= lastKey {
             let days = DayKeys.weekDays(weekStart).map { dayKey in
                 let inMonth = dayKey.hasPrefix(monthPrefix)
                 let beans = inMonth ? state.days[dayKey]?.beans ?? [] : []
-                let started = firstBeanKey.map { dayKey >= $0 } ?? false
-                let leaf = inMonth && started && dayKey < todayKey && beans.isEmpty
+                let leaf = inMonth
+                    && MonthBoard.hasLeaf(state, key: dayKey, todayKey: todayKey, since: since)
                 return MonthDay(key: dayKey, inMonth: inMonth, beans: beans, leaf: leaf)
             }
             let busy = days.contains { !$0.beans.isEmpty }

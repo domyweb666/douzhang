@@ -33,4 +33,9 @@ final class JarBeatTests: XCTestCase {
         XCTAssertEqual(hard, 1, accuracy: 0.001)
         XCTAssertEqual(JarBeat.strength(5000), 1, accuracy: 0.001)
     }
+
+    func test嗒排到時晚太多就不播() {
+        XCTAssertFalse(JarBeat.isLate(asked: 10, now: 10 + Tokens.Sound.hitLate * 0.9))
+        XCTAssertTrue(JarBeat.isLate(asked: 10, now: 10 + Tokens.Sound.hitLate * 1.1))
+    }
 }

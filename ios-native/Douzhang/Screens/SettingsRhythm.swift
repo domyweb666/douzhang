@@ -3,7 +3,7 @@ import VeggieKit
 
 /// 設定頁的「節奏」那一區：休息怎麼結束、短休息、長休息、休息完自動開始。
 /// 「我自己決定」的休息沒有長度，短休息、長休息、自動開始三列收起來；
-/// 智能調節自己算長短，收起短休息、長休息，算法寫在「休息」那一列右邊。
+/// 智能調節自己算長短，收起短休息、長休息。
 struct SettingsRhythm: View {
     @Environment(AppModel.self) private var model
     var onOpen: (SettingsSheet) -> Void
@@ -18,11 +18,7 @@ struct SettingsRhythm: View {
         let settings = model.state.settings
         SettingsSection(title: Words.rhythm) {
             VStack(alignment: .leading, spacing: .zero) {
-                VeggieRow(
-                    icon: "cup.and.saucer",
-                    title: Words.restRow,
-                    value: settings.restMode == .smart ? Words.restSmartValue : nil
-                )
+                VeggieRow(icon: "cup.and.saucer", title: Words.restRow)
                 Segmented(options: modes, value: settings.restMode) { mode in
                     model.update { $0.restMode = mode }
                 }

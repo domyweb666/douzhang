@@ -82,13 +82,6 @@ extension Words {
         "每 \(every) 顆・\(minutes) 分"
     }
 
-    /// 設定裡智能調節的算法：「專注 ÷ 5，每滿 100 分 +10」。
-    static var restSmartValue: String {
-        let part = number(Params.SmartRest.divisor)
-        let every = number(Params.SmartRest.bonusEvery)
-        return "專注 ÷ \(part)，每滿 \(every) 分 +\(Params.SmartRest.bonusMinutes)"
-    }
-
     static func shieldAppsCount(_ count: Int) -> String {
         "\(count) 項"
     }
@@ -238,29 +231,15 @@ extension Words {
         return head + "作廢，第 \(minute) 分鐘" + why + note
     }
 
-    /// 月檢視清單的標題：「這個月做了什麼」，翻到以前的月份是「10月做了什麼」。
-    static func doneTitle(_ key: String, todayKey: String) -> String {
-        let isThisMonth = DayKeys.shiftMonth(key, months: 0)
-            == DayKeys.shiftMonth(todayKey, months: 0)
-        guard !isThisMonth, let date = DayKeys.dateOf(key) else { return "\(thisMonth)做了什麼" }
-        return "\(Store.localCalendar().component(.month, from: date))月做了什麼"
+    /// 月檢視下面那塊的標題：「11月26日 週四」。
+    static func dayHead(_ key: String) -> String {
+        "\(monthDay(key)) 週" + weekdayShort[DayKeys.weekdayIndex(key)]
     }
 
-    /// 月檢視清單的主字：最多列幾個，再多寫「等」。
-    static func doneNames(_ names: [String]) -> String {
-        let more = names.count > Params.monthDoneNames ? "等" : ""
-        return names.prefix(Params.monthDoneNames).joined(separator: "、") + more
-    }
-
-    /// 月檢視清單日期塊下面的字：「週二」。
-    static func weekdayCompact(_ key: String) -> String {
-        "週" + weekdayShort[DayKeys.weekdayIndex(key)]
-    }
-
-    /// 月檢視清單一張卡讀屏念的那一句。
-    static func doneA11y(_ day: DoneDay) -> String {
-        let sum = daySumLine(day.sum.beans, day.sum.minutes)
-        return [dayTitle(day.key), doneNames(day.names), sum, day.clue]
+    /// 月檢視下面那塊的一列讀屏念的那一句：「05:24，寫稿，25 分，寫完開頭」。
+    static func monthBeanA11y(_ item: TimelineItem, name: String) -> String {
+        let length = lenWithFlow(item.len, flow: item.flow)
+        return [TimeText.hhmm(item.start), name, length, item.clue]
             .filter { !$0.isEmpty }
             .joined(separator: "，")
     }

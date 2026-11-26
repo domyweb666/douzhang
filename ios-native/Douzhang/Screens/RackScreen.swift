@@ -164,28 +164,32 @@ struct RackScreen: View {
         .padding(.top, Tokens.Layout.group)
     }
 
+    /// 換一段。換月之後選哪一天另外算：一律 1 號的話，月檢視下面那塊會是空的。
     private func shift(_ step: Int) {
-        picked = RackCalendar.shiftPeriod(period, selected: selected, step: step)
+        let next = RackCalendar.shiftPeriod(period, selected: selected, step: step)
+        picked = period == .month
+            ? MonthBoard.landing(model.state, month: next, todayKey: model.todayKey)
+            : next
     }
 
-    /// 天檢視點上面那排是換一天；其他檢視（含月）點某一天是切到那天的天檢視。
+    /// 天檢視點上面那排是換一天；3 天、週點日期頭是切到那天的天檢視。
+    /// 月檢視不走這裡：點格子停在月檢視。
     private func pickDay(_ key: String) {
         picked = key
         view = .day
     }
 
-    /// 行事曆那一半：月是格子加做了什麼的清單，其他三種是時間軸。
+    /// 行事曆那一半：月是格子加選中那一天做了什麼，其他三種是時間軸。
     @ViewBuilder private var calendar: some View {
         let state = model.state
         if view == .month {
             RackMonth(
                 state: state,
-                monthKey: selected,
+                selected: selected,
                 todayKey: model.todayKey,
-                onPickDay: pickDay
-            ) { key in
-                openDay = OpenDay(id: key)
-            }
+                onPickDay: { picked = $0 },
+                onOpen: { openDay = OpenDay(id: $0) }
+            )
         } else {
             RackDayHeads(
                 state: state,

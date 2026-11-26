@@ -2,13 +2,11 @@ import SwiftUI
 
 /// 記一筆：兩個分段鈕，不預選；點哪個就記哪一種，點完才出現選填的那一行。倒數不停。
 /// 點另一個是改種類，不會記成兩筆。按「好」、下滑關掉都算記下了。
-/// 右邊第三顆「結束」不是種類：換成「結束這顆？」那張，打到一半的字照樣記下。
 struct NoteSheet: View {
     /// 點種類那一下：先記一筆沒寫字的
     var onJot: (JotKind) -> Void
     /// 剛記的那一筆改種類（前兩個不一樣），或補上那一行（前兩個一樣）
     var onAmend: (JotKind, JotKind, String) -> Void
-    var onEnd: () -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var kind: JotKind?
@@ -27,10 +25,7 @@ struct NoteSheet: View {
 
     var body: some View {
         SheetCard(title: Words.quickNote) {
-            HStack(alignment: .top, spacing: Tokens.Layout.item) {
-                Segmented(options: kinds, value: kind, onChange: pick)
-                endPill
-            }
+            Segmented(options: kinds, value: kind, onChange: pick)
             if let kind {
                 // 不自己拿游標：大多數時候點完種類就走，鍵盤不用跳出來
                 let ask = kind == .pings ? Words.noteTitlePing : Words.noteTitleThought
@@ -55,21 +50,6 @@ struct NoteSheet: View {
         }
         // 下滑關掉、響了自動收起來時，打到一半的那一行也跟著記下
         .onDisappear(perform: write)
-    }
-
-    /// 長得跟旁邊兩顆沒選中時一樣，但按了是動作，沒有選中的樣子。
-    private var endPill: some View {
-        Button(action: onEnd) {
-            Text(Words.endShort)
-                .font(Tokens.Fonts.sub)
-                .foregroundStyle(Tokens.Colors.textPrimary)
-                .lineLimit(1)
-                .frame(minWidth: Tokens.Shape.tapMin, minHeight: Tokens.Shape.tapMin)
-                .padding(.horizontal, Tokens.Layout.cardPad)
-                .background(Tokens.Colors.fillButton, in: Capsule())
-        }
-        .buttonStyle(FadeStyle())
-        .accessibilityLabel(Words.endThis)
     }
 
     private func pick(_ next: JotKind) {

@@ -1,7 +1,8 @@
 @testable import Douzhang
 import XCTest
 
-/// 番茄堆的現場：回到待機時，上次看過的已經躺好，多出來的那顆從畫布最上緣外面掉進來。
+/// 番茄堆的現場：回到待機時，上次看過的已經躺好，多出來的那顆先掛在上緣晃，斷了才掉進來。
+/// 掛著的那一段在 JarVineTests。
 @MainActor
 final class JarSceneTests: XCTestCase {
     private let one = [JarBean(len: 5, color: .yellow)]
@@ -12,6 +13,11 @@ final class JarSceneTests: XCTestCase {
         return scene
     }
 
+    /// 走到那顆剛從藤上斷下來。
+    private func cutLoose(_ scene: JarScene) {
+        JarLab.play(scene, seconds: JarHang.cutAt + JarWorld.frame)
+    }
+
     func test第一次量到寬高就回報看到幾顆() {
         let scene = JarScene()
         var told: [Int] = []
@@ -20,18 +26,14 @@ final class JarSceneTests: XCTestCase {
         XCTAssertEqual(told, [1])
     }
 
-    func test上次看到零顆回來多一顆就從最上緣外面一路掉到底() throws {
+    func test上次看到零顆回來多一顆就斷下來一路掉到底() throws {
         let scene = mounted(seen: 0)
         XCTAssertTrue(scene.world.bodies.isEmpty)
-        var now = Date().timeIntervalSinceReferenceDate + 1
-        scene.advance(now: now)
+        cutLoose(scene)
         let dropped = try XCTUnwrap(scene.world.bodies.first)
         XCTAssertTrue(dropped.fresh)
-        XCTAssertLessThan(dropped.y + dropped.radius, 0)
-        for _ in 0 ..< 60 * 4 {
-            now += JarWorld.frame
-            scene.advance(now: now)
-        }
+        XCTAssertLessThan(dropped.y, JarHang.reach + 1)
+        JarLab.play(scene, seconds: 4)
         let landed = try XCTUnwrap(scene.world.bodies.first)
         XCTAssertFalse(landed.fresh)
         // 地板就是畫布底（畫面上是螢幕最底部）
@@ -58,7 +60,7 @@ final class JarSceneTests: XCTestCase {
 
     func test自己那顆正在掉的時候別台來的躺好它照樣掉() throws {
         let scene = mounted(seen: 0)
-        scene.advance(now: Date().timeIntervalSinceReferenceDate + 1)
+        cutLoose(scene)
         let before = try XCTUnwrap(scene.world.bodies.last)
         XCTAssertTrue(before.fresh)
         scene.follow([JarBean(len: 25, color: .red)] + one, drops: false)
@@ -74,7 +76,7 @@ final class JarSceneTests: XCTestCase {
         let scene = mounted(seen: 0)
         scene.follow([JarBean(len: 25, color: .red)] + one, drops: false)
         XCTAssertEqual(scene.world.bodies.count, 1)
-        scene.advance(now: Date().timeIntervalSinceReferenceDate + 1)
+        cutLoose(scene)
         XCTAssertEqual(scene.world.bodies.count, 2)
         let mine = try XCTUnwrap(scene.world.bodies.last)
         XCTAssertTrue(mine.fresh)
@@ -84,13 +86,14 @@ final class JarSceneTests: XCTestCase {
     func test還沒掉的那顆清空後不掉下來() {
         let scene = mounted(seen: 0)
         scene.follow([], drops: false)
-        scene.advance(now: Date().timeIntervalSinceReferenceDate + 1)
+        cutLoose(scene)
+        XCTAssertTrue(scene.vines.isEmpty)
         XCTAssertTrue(scene.world.bodies.isEmpty)
     }
 
     func test正在掉的那顆清空後就沒有了() {
         let scene = mounted(seen: 0)
-        scene.advance(now: Date().timeIntervalSinceReferenceDate + 1)
+        cutLoose(scene)
         XCTAssertEqual(scene.world.bodies.filter(\.fresh).count, 1)
         scene.follow([], drops: false)
         XCTAssertTrue(scene.world.bodies.isEmpty)
@@ -99,7 +102,8 @@ final class JarSceneTests: XCTestCase {
     func test還沒掉的那顆匯入換掉後躺好的是匯入那份() throws {
         let scene = mounted(seen: 0)
         scene.follow([JarBean(len: 25, color: .red)], drops: false)
-        scene.advance(now: Date().timeIntervalSinceReferenceDate + 1)
+        cutLoose(scene)
+        XCTAssertTrue(scene.vines.isEmpty)
         XCTAssertEqual(scene.world.bodies.count, 1)
         let body = try XCTUnwrap(scene.world.bodies.first)
         XCTAssertFalse(body.fresh)
@@ -108,7 +112,7 @@ final class JarSceneTests: XCTestCase {
 
     func test正在掉的那顆匯入換掉後躺好的是匯入那份() throws {
         let scene = mounted(seen: 0)
-        scene.advance(now: Date().timeIntervalSinceReferenceDate + 1)
+        cutLoose(scene)
         let next = [JarBean(len: 25, color: .red), JarBean(len: 25, color: .purple)]
         scene.follow(next, drops: false)
         XCTAssertEqual(scene.world.bodies.count, 2)
@@ -121,7 +125,7 @@ final class JarSceneTests: XCTestCase {
         let scene = mounted(seen: 1)
         scene.follow([], drops: false)
         scene.follow(one)
-        scene.advance(now: Date().timeIntervalSinceReferenceDate + 1)
+        cutLoose(scene)
         let body = try XCTUnwrap(scene.world.bodies.first)
         XCTAssertTrue(body.fresh)
     }
@@ -131,6 +135,7 @@ final class JarSceneTests: XCTestCase {
         scene.reduceMotion = true
         scene.layout(width: 393, height: 852, beans: one, seen: 0)
         scene.advance(now: Date().timeIntervalSinceReferenceDate + 1)
+        XCTAssertTrue(scene.vines.isEmpty)
         let body = try XCTUnwrap(scene.world.bodies.first)
         XCTAssertEqual(body.y, 852 - body.radius, accuracy: 1)
     }

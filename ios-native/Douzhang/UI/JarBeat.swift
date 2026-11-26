@@ -18,6 +18,11 @@ struct JarBeat {
         return true
     }
 
+    /// 「嗒」排到的時候是不是已經晚太多、不該播了。
+    static func isLate(asked: TimeInterval, now: TimeInterval) -> Bool {
+        now - asked > Tokens.Sound.hitLate
+    }
+
     /// 震多大力（0–1）：剛過門檻最輕，撞得越快越重。
     static func strength(_ impact: Double) -> Double {
         let span = Tokens.Sound.hitTapFull - Tokens.Sound.hitThreshold

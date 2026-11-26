@@ -69,6 +69,9 @@ extension Tokens {
         static let tomato: CGFloat = 124
         /// 收據下緣一個鋸齒的高，也是它一半的寬
         static let tooth: CGFloat = 12
+        /// 念頭、有人找那一列左邊的圓與裡面的圖示
+        static let jotBadge: CGFloat = 36
+        static let jotIcon: CGFloat = 20
         static let dash = StrokeStyle(lineWidth: DomyTokens.Size.hairline, dash: [4, 3])
         /// 寫給自己那句一行多高（跟著系統字級放大）
         static let line: CGFloat = 32

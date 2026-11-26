@@ -163,8 +163,7 @@ struct HomeScreen: View {
     private var noteSheet: some View {
         NoteSheet(
             onJot: { model.jot($0) },
-            onAmend: { from, into, text in model.amendJot(from: from, into: into, text: text) },
-            onEnd: { openEnd() }
+            onAmend: { from, into, text in model.amendJot(from: from, into: into, text: text) }
         )
     }
 

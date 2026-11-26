@@ -118,7 +118,7 @@ struct ReceiptLine: View {
     }
 }
 
-/// 收據的「今天」那列：開始那天已經收下的，加上這一顆排在最後、比較大。看得到累積，不跟昨天比。
+/// 收據的「今天」那列：開始那天已經收下的，加上這一顆排在最後，每顆一樣大。看得到累積，不跟昨天比。
 /// 番茄排到第二行起，「今天」下面寫出總數；太多顆時只畫最後幾顆。讀屏念的數字照實。
 /// 有開始番茄的日子夠多之後，下面多一行「你平常 4 到 6 顆」；斷了一陣子回來的第一天不放。
 struct TodayRow: View {
@@ -163,7 +163,7 @@ struct TodayRow: View {
                     size: Tokens.Shape.celebrateDot
                 )
             }
-            TomatoView(color: type.color, size: Tokens.Shape.celebrateDotNew)
+            TomatoView(color: type.color, size: Tokens.Shape.celebrateDot)
         }
     }
 }
@@ -211,31 +211,64 @@ struct NoteLines: View {
     }
 }
 
-/// 計時中記的念頭與有人找。清單空就什麼都不畫，不寫「沒有紀錄」。沒寫字的不列空行。
+/// 計時中記的念頭與有人找：寫給自己那句的橫線下面，一筆一列，跟那句分得開（QC-0008 第 57 筆，多米選 C）。
+/// 左邊淡紫圓裡一個線條圖示（念頭是燈泡、有人找是對話框），右邊上行種類、下行那句。
+/// 清單空就什麼都不畫，不寫「沒有紀錄」。沒寫字的不列空行，合成一列「有人找 2 次」。
 struct Jotted: View {
     var run: FocusRun
 
     var body: some View {
         let rows = Self.rows(.notes, run.notes) + Self.rows(.pings, run.pings)
         if !rows.isEmpty {
-            VStack(alignment: .leading, spacing: Tokens.Layout.tight) {
+            VStack(alignment: .leading, spacing: Tokens.Layout.item) {
                 ForEach(Array(rows.enumerated()), id: \.offset) { row in
-                    HStack(alignment: .top, spacing: Tokens.Layout.group) {
-                        Text(row.element.0)
-                        Text(row.element.1).frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                    .font(Tokens.Fonts.sub)
-                    .foregroundStyle(Tokens.Colors.textSecondary)
+                    BellJotRow(jot: row.element)
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
-    /// 有寫字的一筆一列（左邊種類、右邊那一行）；沒寫字的那幾筆合成最後一列「有人找 2 次」。
-    private static func rows(_ kind: JotKind, _ all: [String]) -> [(String, String)] {
+    /// 有寫字的一筆一列；沒寫字的那幾筆合成最後一列「有人找 2 次」（只有種類那行）。
+    static func rows(_ kind: JotKind, _ all: [String]) -> [BellJot] {
         let label = kind == .notes ? Words.noteThought : Words.notePing
-        let written = all.filter { !$0.isEmpty }.map { (label, $0) }
+        let written = all.filter { !$0.isEmpty }.map { BellJot(kind: kind, label: label, text: $0) }
         let blank = all.count - written.count
-        return blank > 0 ? written + [(Words.jotTimes(kind, blank), "")] : written
+        let merged = BellJot(kind: kind, label: Words.jotTimes(kind, blank), text: "")
+        return blank > 0 ? written + [merged] : written
+    }
+}
+
+/// 收據上的一列：哪一種、種類那行寫什麼、那句（合成的那列沒有）。
+struct BellJot: Equatable {
+    var kind: JotKind
+    var label: String
+    var text: String
+}
+
+/// 一筆：圖示圓、種類、那句。讀屏一列念成一句「冒出念頭，很好」。
+struct BellJotRow: View {
+    var jot: BellJot
+
+    var body: some View {
+        HStack(alignment: .top, spacing: Tokens.Layout.group) {
+            LineIconView(kind: jot.kind == .notes ? .bulb : .bubble, size: Tokens.Bell.jotIcon)
+                .foregroundStyle(Tokens.Colors.accentText)
+                .frame(width: Tokens.Bell.jotBadge, height: Tokens.Bell.jotBadge)
+                .background(Tokens.Colors.soft, in: Circle())
+            VStack(alignment: .leading, spacing: .zero) {
+                Text(jot.label)
+                    .font(Tokens.Fonts.chip)
+                    .foregroundStyle(Tokens.Colors.accentText)
+                if !jot.text.isEmpty {
+                    Text(jot.text)
+                        .font(Tokens.Fonts.body)
+                        .foregroundStyle(Tokens.Colors.textPrimary)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(jot.text.isEmpty ? jot.label : "\(jot.label)，\(jot.text)")
     }
 }

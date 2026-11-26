@@ -30,6 +30,42 @@ enum JarLab {
         }
     }
 
+    /// 把現場一幀一幀走這麼多秒（hertz＝螢幕一秒畫幾次），從足夠晚的時刻開始：等著掉的都到點了。
+    @MainActor
+    static func play(_ scene: JarScene, seconds: Double, hertz: Double = 120) {
+        clock = max(clock, Date().timeIntervalSinceReferenceDate + 1)
+        for _ in 0 ..< Int((seconds * hertz).rounded(.up)) {
+            frame(scene, 1 / hertz)
+        }
+    }
+
+    /// 隔這麼久畫一格。
+    @MainActor
+    static func frame(_ scene: JarScene, _ gap: Double) {
+        clock += gap
+        scene.advance(now: clock)
+    }
+
+    /// 這麼久一格都沒畫。
+    @MainActor
+    static func pass(seconds: Double) {
+        clock += seconds
+    }
+
+    /// 上一格的時刻：同一個現場分幾段走，時刻不能倒退、中間也不能空一段（會被當成掉幀）
+    @MainActor private static var clock: TimeInterval = 0
+
+    /// 唯一的那顆畫在哪裡（還掛著的、或已經掉下來的）。
+    @MainActor
+    static func shown(_ scene: JarScene) -> CGPoint? {
+        if let vine = scene.vines.holding.first {
+            let pose = vine.pose(at: vine.age - (1 - scene.blend) * JarTuning.tick)
+            return CGPoint(x: pose.x, y: pose.y)
+        }
+        let body = scene.world.bodies.first?.between(scene.blend)
+        return body.map { CGPoint(x: $0.x, y: $0.y) }
+    }
+
     /// 每次回報落地的那一幀、是哪一顆、當時多高。
     struct Landing {
         var frame: Int
@@ -160,6 +196,21 @@ final class JarPhysicsTests: XCTestCase {
         let before = world.bodies[0].velY
         world.tap(x: 280, y: 50)
         XCTAssertEqual(world.bodies[0].velY, before)
+    }
+
+    func test手機朝下時斷藤掉下來的那顆不會從螢幕頂飛走() throws {
+        var world = JarLab.world()
+        world.gravityY = -300
+        world.addBody(JarLab.body(28, 150, 120, velX: 60, fresh: true))
+        for _ in 0 ..< 600 {
+            world.step(JarTuning.tick)
+            XCTAssertGreaterThanOrEqual(try XCTUnwrap(world.bodies.first).y, 28 - 1e-9)
+        }
+        // 從上面外面掉進來的照舊可以在上面
+        var above = JarLab.world()
+        above.addBody(JarLab.body(28, 150, -60, fresh: true))
+        above.step(JarTuning.tick)
+        XCTAssertLessThan(try XCTUnwrap(above.bodies.first).y, 0)
     }
 
     func test底排滿了新的一顆落在別顆上面撞到就回報只回報一次() throws {

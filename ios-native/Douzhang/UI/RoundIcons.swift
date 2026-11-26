@@ -1,9 +1,9 @@
 import SwiftUI
 
-/// 主畫面的小圖示（線條畫，跟分頁列同一套）。座標是 24×24 畫布上的圖形本身，不是版面數字。
+/// 主畫面與筆記本的小圖示（線條畫，跟分頁列同一套）。座標是 24×24 畫布上的圖形本身，不是版面數字。
 struct LineIcon: Shape {
     enum Kind {
-        case music, pencil, focus, updown
+        case music, pencil, focus, updown, check, bulb, bubble
     }
 
     var kind: Kind
@@ -15,6 +15,9 @@ struct LineIcon: Shape {
         case .pencil: drawPencil(&path)
         case .focus: drawFocus(&path)
         case .updown: drawUpdown(&path)
+        case .check: drawCheck(&path)
+        case .bulb: drawBulb(&path)
+        case .bubble: drawBubble(&path)
         }
         let scale = rect.width / Tokens.Shape.tabIcon
         return path.applying(CGAffineTransform(scaleX: scale, y: scale))
@@ -75,6 +78,60 @@ struct LineIcon: Shape {
     private func drawUpdown(_ path: inout Path) {
         path.addLines([CGPoint(x: 8, y: 9), CGPoint(x: 12, y: 5), CGPoint(x: 16, y: 9)])
         path.addLines([CGPoint(x: 8, y: 15), CGPoint(x: 12, y: 19), CGPoint(x: 16, y: 15)])
+    }
+
+    /// 寫好了：一個勾
+    private func drawCheck(_ path: inout Path) {
+        path.addLines([CGPoint(x: 4, y: 13), CGPoint(x: 9, y: 18), CGPoint(x: 20, y: 6)])
+    }
+
+    /// 冒出念頭：燈泡，底下兩條燈座
+    private func drawBulb(_ path: inout Path) {
+        path.addLines([CGPoint(x: 9, y: 18), CGPoint(x: 15, y: 18)])
+        path.addLines([CGPoint(x: 10, y: 21), CGPoint(x: 14, y: 21)])
+        let center = CGPoint(x: 12, y: 9)
+        // 從頂上往左繞下來到左邊的頸，再從右邊的頸繞回頂上（角度：0 朝右、往下為正）
+        path.move(to: CGPoint(x: 12, y: 3))
+        arc(&path, center: center, start: -90, end: -233.13)
+        path.addCurve(
+            to: CGPoint(x: 9.5, y: 16),
+            control1: CGPoint(x: 9.1, y: 14.4),
+            control2: CGPoint(x: 9.5, y: 15.1)
+        )
+        path.addLine(to: CGPoint(x: 14.5, y: 16))
+        path.addCurve(
+            to: CGPoint(x: 15.6, y: 13.8),
+            control1: CGPoint(x: 14.5, y: 15.1),
+            control2: CGPoint(x: 14.9, y: 14.4)
+        )
+        arc(&path, center: center, start: 53.13, end: -90)
+    }
+
+    /// 燈泡那一圈：半徑 6，從 start 度走到 end 度，切成小段畫，不靠順逆時針的旗標。
+    private func arc(_ path: inout Path, center: CGPoint, start: Double, end: Double) {
+        let pieces = 24
+        for index in 1 ... pieces {
+            let degrees = start + (end - start) * Double(index) / Double(pieces)
+            let radians = degrees * .pi / 180
+            path.addLine(to: CGPoint(
+                x: center.x + 6 * cos(radians),
+                y: center.y + 6 * sin(radians)
+            ))
+        }
+    }
+
+    /// 有人找：對話框，左下角一個尾巴
+    private func drawBubble(_ path: inout Path) {
+        path.addLines([
+            CGPoint(x: 4, y: 5),
+            CGPoint(x: 20, y: 5),
+            CGPoint(x: 20, y: 16),
+            CGPoint(x: 11, y: 16),
+            CGPoint(x: 6, y: 20),
+            CGPoint(x: 6, y: 16),
+            CGPoint(x: 4, y: 16),
+        ])
+        path.closeSubpath()
     }
 }
 

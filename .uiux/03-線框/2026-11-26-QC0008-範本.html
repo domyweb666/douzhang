@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+<title>番茄架與收據的範本</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* 版面：一個範本一段，每段四支手機橫排，窄螢幕橫著捲；上面一條列黏著，換字級與深淺色 */
+:root{--bg:#F7F4EC;--ink:#1D1D1F;--sub:#5F5F66;--card:#FFFFFF;--line:#E5E1D8;--accent:#3B2547;--soft:#ECE3F1;--softInk:#4A2F5A;--frame:#CFCAC0}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/27px -apple-system,'SF Pro Text',Inter,'PingFang TC','Noto Sans TC','Microsoft JhengHei',sans-serif;padding-block:32px 80px;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
+main{max-width:1784px;margin:0 auto;display:flex;flex-direction:column;gap:56px}
+h1{margin:0;font-size:34px;line-height:42px;font-weight:700;text-wrap:balance}
+h2{margin:0;font-size:24px;line-height:32px;font-weight:700}
+h3{margin:0;font-size:20px;line-height:28px;font-weight:700}
+p{margin:0;max-width:60ch}
+.sub{color:var(--sub)}
+.stack{display:flex;flex-direction:column;gap:12px;min-width:0}
+section{display:flex;flex-direction:column;gap:36px;min-width:0}
+.opt{display:flex;flex-direction:column;gap:16px;min-width:0}
+.name{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.pick{background:var(--accent);color:#FFF;border-radius:999px;padding:2px 14px;font-size:15px;line-height:24px;font-weight:600}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--bg);padding-block:12px;display:flex;flex-wrap:wrap;gap:12px 28px;border-bottom:1px solid var(--line)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.set{display:flex;flex-wrap:wrap;gap:8px}
+button{border:0;height:44px;padding:0 18px;border-radius:999px;background:var(--line);color:var(--ink);font:inherit;font-size:16px;font-weight:600;cursor:pointer}
+button[aria-pressed=true]{background:var(--accent);color:#FFF}
+button:focus-visible{outline:3px solid var(--softInk);outline-offset:2px}
+.row{display:flex;gap:32px;overflow-x:auto;padding-bottom:14px}
+figure{margin:0;flex:none;display:flex;flex-direction:column;gap:10px}
+figcaption{font-size:16px;line-height:24px;color:var(--sub)}
+/* 手機 */
+.phone{--p:#F7F4EC;--t1:#1D1D1F;--t2:#66666D;--sep:#E5E1D8;--fb:#D8D3C8;--c:#FFFFFF;--fill:#EFEBE3;--ac:#3B2547;--onac:#FFFFFF;--act:#4A2F5A;--so:#ECE3F1;position:relative;width:402px;height:874px;border-radius:44px;background:var(--p);color:var(--t1);overflow:hidden;outline:1px solid var(--frame);outline-offset:-1px}
+.dark .phone{--p:#14130F;--t1:#F5F5F7;--t2:#A1A1A8;--sep:#38383A;--fb:#48484A;--c:#1C1C1E;--fill:#2C2C2E;--ac:#D9C2E8;--onac:#2A1A33;--act:#E3D0F0;--so:#3A2B45}
+.abs{position:absolute}
+.title{left:20px;top:102px;font-size:34px;line-height:48px;font-weight:700}
+.chip{position:absolute;height:44px;border-radius:999px;background:var(--fill);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:500}
+.chip.on{background:var(--so);color:var(--act);font-weight:700}
+.nav{left:0;right:0;top:238px;text-align:center;font-size:21px;line-height:30px;font-weight:600}
+.arrow{top:238px;font-size:21px;line-height:30px;color:var(--act);font-weight:600}
+.head{position:absolute;top:290px;text-align:center}
+.head i{display:block;font-style:normal;font-size:17px;line-height:22px;color:var(--t2)}
+.head b{display:block;font-size:21px;line-height:28px;font-weight:600}
+.head u{display:block;width:6px;height:6px;border-radius:50%;margin:4px auto 0;background:#E5553C}
+.scroll{position:absolute;left:20px;right:20px;top:364px;bottom:0;overflow-y:auto;scrollbar-width:none}
+.scroll::-webkit-scrollbar,.bell::-webkit-scrollbar{display:none}
+.canvas{position:relative;margin-top:14px}
+.hour{position:absolute;left:0;right:0;height:1px}
+.hour span{position:absolute;left:0;width:52px;top:-12px;line-height:24px;color:var(--t2);white-space:nowrap}
+.hour hr{position:absolute;left:52px;right:0;top:0;margin:0;border:0;height:1px;background:var(--sep)}
+.blk{position:absolute;overflow:hidden;line-height:1.4}
+.blk div{overflow:hidden}
+.one{white-space:nowrap;text-overflow:ellipsis}
+.clamp{display:-webkit-box;-webkit-box-orient:vertical}
+.tab{left:51px;bottom:46px;width:300px;height:64px;border-radius:999px;background:var(--c);box-shadow:0 8px 24px rgba(25,22,20,.1);display:flex;align-items:center;justify-content:space-around;font-size:17px;padding:0 8px}
+.tab span{padding:12px 18px;border-radius:999px}
+.tab .on{background:var(--so);color:var(--act)}
+/* 收據 */
+.bell{position:absolute;left:0;right:0;top:62px;height:610px;overflow-y:auto;scrollbar-width:none}
+.bellin{min-height:610px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 0}
+.receipt{position:relative;width:312px}
+.paper{position:absolute;left:0;top:62px;z-index:0;display:block}
+.big{position:absolute;left:94px;top:0;z-index:2}
+.body{position:relative;z-index:1;padding:148px 24px 36px;display:flex;flex-direction:column;gap:24px}
+.ripe{text-align:center;font-weight:700;line-height:1.3}
+.lines{position:relative;padding:12px 0;display:flex;flex-direction:column;gap:12px;border-top:1px dashed var(--fb);border-bottom:1px dashed var(--fb);line-height:1.4}
+.kv{display:flex;justify-content:space-between;gap:12px;font-variant-numeric:tabular-nums}
+.write{line-height:var(--lh);background:repeating-linear-gradient(to bottom,transparent 0 calc(var(--lh) - 1px),var(--sep) calc(var(--lh) - 1px) var(--lh));min-height:calc(var(--lh)*2)}
+.note{display:flex;flex-direction:column;gap:12px}
+.jot{line-height:1.4}
+.g{display:grid;grid-template-columns:max-content 1fr;column-gap:12px;row-gap:4px;align-items:baseline}
+.slip{position:relative;width:312px;margin-top:-24px;background:var(--so);border-radius:0 0 20px 20px;padding:40px 24px 16px}
+.receipt{z-index:1}
+.keep{left:69px;top:684px;width:264px;height:52px;border-radius:999px;background:var(--ac);color:var(--onac);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:20px}
+.more{top:748px;width:126px;height:44px;border-radius:999px;background:var(--fill);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:18px}
+</style>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><symbol id="tom" viewBox="0 0 100 100" overflow="visible"><circle cx="50" cy="53" r="44" stroke="#2B2329" stroke-width="4"></circle><path d="M19 44C21 33 28 25 38 21" fill="none" stroke="#FFFFFF" stroke-opacity="0.6" stroke-width="5" stroke-linecap="round"></path><ellipse cx="37" cy="10" rx="12" ry="5.5" transform="rotate(-14 37 10)" fill="#6FAE52" stroke="#2B2329" stroke-width="3.5"></ellipse><ellipse cx="63" cy="10" rx="12" ry="5.5" transform="rotate(14 63 10)" fill="#6FAE52" stroke="#2B2329" stroke-width="3.5"></ellipse><path d="M50 11V3.5" fill="none" stroke="#2B2329" stroke-width="4" stroke-linecap="round"></path><circle cx="37" cy="55" r="3.8" fill="#2B2329"></circle><circle cx="63" cy="55" r="3.8" fill="#2B2329"></circle><ellipse cx="27" cy="64" rx="5.5" ry="3.2" fill="#FFFFFF" fill-opacity="0.3"></ellipse><ellipse cx="73" cy="64" rx="5.5" ry="3.2" fill="#FFFFFF" fill-opacity="0.3"></ellipse><path d="M43.5 63Q50 69.5 56.5 63" fill="none" stroke="#2B2329" stroke-width="3.2" stroke-linecap="round"></path></symbol></defs></svg>
+<main id="main">
+<div class="stack">
+<h1>番茄架與收據的範本</h1>
+<p class="sub">每支手機都是 402×874，可以往下捲。先選你手機的字級再看。從你錄影量起來，你是「特大」。</p>
+</div>
+<div class="bar">
+<div class="set" role="group" aria-label="字級"><button data-size="L">標準字</button><button data-size="XXL">特大（你現在）</button><button data-size="XXXL">再大一級</button></div>
+<div class="set" role="group" aria-label="外觀"><button data-dark="0">淺色</button><button data-dark="1">深色</button></div>
+</div>
+<section>
+<div class="stack"><h2>3 天與週怎麼放字</h2><p class="sub">每組四支：你 11 月那幾天的 3 天與週，再加忙的一天 8 顆的 3 天與週。忙的那幾天是假資料。22 號那顆幾點錄影裡看不到，沒畫。</p></div>
+<div id="racks" style="display:contents"></div>
+</section>
+<section>
+<div class="stack"><h2>收據上的「冒出念頭」「有人找」</h2><p class="sub">每組兩支：你那張，跟記比較多的一張。沒寫字的照舊合成「有人找 2 次」。什麼都沒記就什麼都不畫。</p></div>
+<div id="bells" style="display:contents"></div>
+</section>
+</main>
+<script>
+// 字級：系統文字樣式在三個字級的大小；scale＝高度跟著放大多少（footnote 的行高比）
+var SIZES = {
+  L: { foot: 13, cap: 12, sub: 15, body: 17, title: 28, axis: 13, line: 32, scale: 1 },
+  XXL: { foot: 17, cap: 16, sub: 19, body: 21, title: 32, axis: 15, line: 39, scale: 22 / 18 },
+  XXXL: { foot: 19, cap: 18, sub: 21, body: 23, title: 34, axis: 15, line: 42, scale: 24 / 18 }
+};
+var COL = { r: '#E4472F', o: '#F0892B', y: '#F2BC2F', p: '#8C5BA9', k: '#EE7E9D' };
+var INK = { r: '#FFFFFF', p: '#FFFFFF', o: '#2B2329', y: '#2B2329', k: '#2B2329' };
+var WD = '日一二三四五六'.split('');
+var S = 'XXL', DARK = 0;
+
+// 一顆：日、時、分、長度、名字、顏色、那句
+function b(day, h, m, len, name, color, clue) { return { day: day, start: h + m / 60, end: h + (m + len) / 60, len: len, name: name, color: color, clue: clue || '' }; }
+var REAL = [b(17, 4, 47, 5, '工作', 'p'), b(17, 4, 55, 5, '工作', 'p'), b(18, 0, 53, 1, '測試用', 'y'), b(19, 20, 49, 5, '測試用', 'y'), b(21, 3, 51, 90, '工作', 'p')];
+var NAMES = [['寫書', 'r'], ['第三章改稿', 'r'], ['回學員的信', 'o'], ['準備週四直播的投影片', 'p'], ['工作', 'p'], ['剪片', 'k'], ['讀書筆記整理', 'y'], ['測試用', 'y']];
+var FULL = [];
+NAMES.forEach(function (n, i) { var at = 9 * 60 + i * 30; FULL.push(b(26, Math.floor(at / 60), at % 60, 25, n[0], n[1], i === 3 ? '先排大綱' : '')); });
+[[23, 10, 0, 50, 1], [23, 13, 30, 25, 2], [23, 14, 0, 25, 2], [24, 9, 30, 25, 0], [24, 10, 0, 25, 0], [24, 15, 0, 50, 3], [25, 9, 0, 10, 2], [25, 9, 13, 10, 2], [25, 9, 26, 10, 5], [25, 11, 0, 45, 6]].forEach(function (d) { FULL.push(b(d[0], d[1], d[2], d[3], NAMES[d[4]][0], NAMES[d[4]][1], d[3] === 50 ? '明天從第二節接著寫' : '')); });
+
+function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+function hour(h) { h = h % 24; return h === 0 ? '半夜 12' : h < 12 ? '上午 ' + h : h === 12 ? '中午 12' : h < 18 ? '下午 ' + (h - 12) : '晚上 ' + (h - 12); }
+function hhmm(t) { var m = Math.round(t * 60); return ('0' + Math.floor(m / 60)).slice(-2) + ':' + ('0' + m % 60).slice(-2); }
+function dayOf(list, day) { return list.filter(function (x) { return x.day === day; }).sort(function (a, c) { return a.start - c.start; }); }
+
+// 甲的排法：短的往下推，不並排；後面有空就長到兩行
+function push(items, min, roomy) {
+  var floor = 0, out = items.map(function (it) {
+    var top = Math.max(it.start, floor), h = Math.max(min, it.end - top);
+    floor = top + h;
+    return { it: it, top: top, h: h };
+  });
+  out.forEach(function (o, i) {
+    var room = (i + 1 < out.length ? out[i + 1].top : 24) - o.top;
+    o.h = Math.max(o.h, Math.min(roomy, room));
+  });
+  return out;
+}
+// 幾點到幾點。真的有番茄的鐘頭高；空的收窄，只有被短方塊伸過來的那一截照放
+function scale(cols, tall, flat) {
+  var all = [].concat.apply([], cols), from = 24, to = 0, busy = {}, spill = {};
+  all.forEach(function (o) {
+    from = Math.min(from, o.top); to = Math.max(to, o.top + o.h);
+    for (var h = Math.floor(o.it.start); h < o.it.end; h++) busy[h] = 1;
+    for (h = Math.floor(o.top); h < o.top + o.h; h++) spill[h] = Math.max(spill[h] || 0, Math.min(1, o.top + o.h - h));
+  });
+  from = Math.max(0, Math.floor(from) - 1); to = Math.min(24, Math.ceil(to) + 1);
+  function px(h) { return busy[h] ? tall : Math.max(flat, (spill[h] || 0) * tall); }
+  function y(t) { var sum = 0, h = from; for (; h + 1 <= t; h++) sum += px(h); return sum + Math.min((t - h) * tall, px(h)); }
+  return { from: from, to: to, y: y };
+}
+// 「名字・25 分」大約幾個字寬，放不下就只寫名字
+function wide(it) { return it.name.length + 2.3 + String(it.len).length * 0.6; }
+function hours(sc, z) {
+  var out = '';
+  for (var h = sc.from; h <= sc.to; h++) out += '<div class="hour" style="top:' + sc.y(h) + 'px"><span style="font-size:' + z.axis + 'px">' + hour(h) + '</span><hr></div>';
+  return out;
+}
+
+function planA(days, list, z, week, fold) {
+  var tall = 108 * z.scale, flat = fold ? 28 : tall, gut = 52, w = (362 - gut) / days.length;
+  var min = (week ? 24 : 26) * z.scale / tall, roomy = (week ? 42 : 46) * z.scale / tall;
+  var cols = days.map(function (d) { return push(dayOf(list, d), min, roomy); });
+  var sc = scale(cols, tall, flat), out = hours(sc, z), fs = week ? z.cap : z.foot, lh = fs * 1.4;
+  cols.forEach(function (c, i) {
+    c.forEach(function (o) {
+      var h = sc.y(o.top + o.h) - sc.y(o.top) - 2, it = o.it, txt;
+      var n = Math.max(1, Math.floor((h - 4 + 1.5) / lh));
+      if (week) txt = '<div style="height:' + (n * lh) + 'px;font-weight:600">' + esc(it.name) + '</div>';
+      else if (n < 2) txt = '<div class="one"><b style="font-weight:600">' + esc(it.name) + '</b>' + (wide(it) * fs <= w - 10 ? '・' + it.len + ' 分' : '') + '</div>';
+      else {
+        var clue = it.clue && n >= 4 ? Math.min(2, n - 3) : 0;
+        txt = '<div class="clamp" style="font-weight:600;-webkit-line-clamp:' + (n - 1 - clue) + '">' + esc(it.name) + '</div><div>' + it.len + ' 分</div>' + (clue ? '<div class="clamp" style="-webkit-line-clamp:' + clue + '">' + esc(it.clue) + '</div>' : '');
+      }
+      out += '<div class="blk" style="left:' + (gut + w * i) + 'px;top:' + sc.y(o.top) + 'px;width:' + (w - 2) + 'px;height:' + h + 'px;border-radius:' + (week ? 4 : 8) + 'px;padding:2px ' + (week ? 2 : 4) + 'px;background:' + COL[it.color] + ';color:' + INK[it.color] + ';font-size:' + fs + 'px">' + txt + '</div>';
+    });
+  });
+  return { html: out, h: sc.y(sc.to) };
+}
+
+function planB(days, list, z, week) {
+  var tall = 64, gut = 52, w = (362 - gut) / days.length, fs = week ? z.cap : z.foot, lh = fs * 1.4, bar = week ? 3 : 4;
+  var cols = days.map(function (d) { return push(dayOf(list, d), lh / tall, 2 * lh / tall); });
+  var sc = scale(cols, tall, tall), out = hours(sc, z);
+  cols.forEach(function (c, i) {
+    c.forEach(function (o) {
+      var it = o.it, left = gut + w * i, h = sc.y(o.top + o.h) - sc.y(o.top), n = Math.max(1, Math.floor((h + 1) / lh));
+      out += '<div class="abs" style="left:' + left + 'px;top:' + sc.y(it.start) + 'px;width:' + bar + 'px;height:' + Math.max(8, (it.end - it.start) * tall - 2) + 'px;border-radius:2px;background:' + COL[it.color] + '"></div>';
+      var txt = week ? '<div style="height:' + (n * lh) + 'px;font-weight:600">' + esc(it.name) + '</div>'
+        : n < 2 ? '<div class="one"><b style="font-weight:600">' + esc(it.name) + '</b>・' + it.len + ' 分</div>'
+          : '<div class="clamp" style="font-weight:600;-webkit-line-clamp:' + (n - 1) + '">' + esc(it.name) + '</div><div style="color:var(--t2)">' + it.len + ' 分</div>';
+      out += '<div class="blk" style="left:' + (left + bar + 3) + 'px;top:' + sc.y(o.top) + 'px;width:' + (w - bar - 4) + 'px;height:' + h + 'px;font-size:' + fs + 'px">' + txt + '</div>';
+    });
+  });
+  return { html: out, h: sc.y(sc.to) };
+}
+
+function planC(days, list, z, week) {
+  var w = 362 / days.length, fs = week ? z.cap : z.foot, lh = fs * 1.4, out = '', max = 0;
+  days.forEach(function (d, i) {
+    var y = 0;
+    dayOf(list, d).forEach(function (it) {
+      var inner = w - 4 - (week ? 4 : 12), per = Math.max(1, Math.floor(inner / fs)), n = Math.min(2, Math.ceil(it.name.length / per)), h = (n + 1) * lh + 8;
+      var when = week ? hhmm(it.start) : hhmm(it.start) + '・' + it.len + ' 分';
+      out += '<div class="blk" style="left:' + (w * i + 2) + 'px;top:' + y + 'px;width:' + (w - 4) + 'px;height:' + h + 'px;border-radius:8px;padding:4px ' + (week ? 2 : 6) + 'px;background:' + COL[it.color] + ';color:' + INK[it.color] + ';font-size:' + fs + 'px"><div style="white-space:nowrap;font-variant-numeric:tabular-nums;' + (week ? 'font-size:' + Math.min(fs, 15) + 'px;line-height:' + lh + 'px' : '') + '">' + when + '</div><div class="clamp" style="font-weight:600;-webkit-line-clamp:' + n + '">' + esc(it.name) + '</div></div>';
+      y += h + 4;
+    });
+    max = Math.max(max, y);
+  });
+  return { html: out, h: max };
+}
+
+function phone(plan, days, list, week, title, noGutter) {
+  var z = SIZES[S], r = plan(days, list, z, week), gut = noGutter ? 0 : 52, w = (362 - gut) / days.length;
+  var heads = days.map(function (d, i) { return '<div class="head" style="left:' + (20 + gut + w * i) + 'px;width:' + w + 'px"><i>' + WD[(d + 6) % 7] + '</i><b>' + d + '</b>' + (dayOf(list, d).length ? '<u></u>' : '') + '</div>'; }).join('');
+  var seg = [['天', 20, 76], ['3 天', 104, 76], ['週', 188, 76], ['月', 272, 76]].map(function (x) { var on = x[0] === (week ? '週' : '3 天'); return '<div class="chip' + (on ? ' on' : '') + '" style="top:174px;left:' + x[1] + 'px;width:' + x[2] + 'px">' + x[0] + '</div>'; }).join('');
+  return '<div class="phone"><div class="abs title">番茄架</div><div class="chip on" style="left:206px;top:106px;width:92px">行事曆</div><div class="chip" style="left:306px;top:106px;width:76px">分析</div>' + seg + '<div class="abs arrow" style="left:33px">‹</div><div class="abs nav">' + title + '</div>' + heads + '<div class="scroll"><div class="canvas" style="height:' + (r.h + 130) + 'px">' + r.html + '</div></div><div class="abs tab"><span class="on">番茄架</span><span>主畫面</span><span>設定</span></div></div>';
+}
+function fig(cap, html) { return '<figure><figcaption>' + cap + '</figcaption>' + html + '</figure>'; }
+function rack(plan, noGutter) {
+  return '<div class="row">' + fig('3 天，你的 16 到 18 號', phone(plan, [16, 17, 18], REAL, false, '11月16日–11月18日', noGutter)) + fig('週，你的 16 號那週', phone(plan, [16, 17, 18, 19, 20, 21, 22], REAL, true, '11月16日 那週', noGutter)) + fig('3 天，忙的一天 8 顆', phone(plan, [24, 25, 26], FULL, false, '11月24日–11月26日', noGutter)) + fig('週，忙的一週', phone(plan, [23, 24, 25, 26, 27, 28, 29], FULL, true, '這週', noGutter)) + '</div>';
+}
+
+// 收據
+function paper(w, h, top) {
+  var t = 12, n = Math.round(w / (t * 2)), half = w / n / 2, e = h - t, r = top, d = 'M0 ' + e + 'V' + r + 'Q0 0 ' + r + ' 0H' + (w - r) + 'Q' + w + ' 0 ' + w + ' ' + r + 'V' + e;
+  for (var i = 0; i < n; i++) { var right = w - i * half * 2; d += 'L' + (right - half) + ' ' + h + 'L' + (right - half * 2) + ' ' + e; }
+  return '<svg class="paper" style="top:0" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '"><path d="' + d + 'Z" fill="var(--c)"></path></svg>';
+}
+var ICON = {
+  t: '<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3Z"></path>',
+  p: '<path d="M4 5h16v11H11l-5 4v-4H4Z"></path>'
+};
+function icon(k, s) { return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON[k] + '</svg>'; }
+var JOT = {
+  mine: [['t', '冒出念頭', ['很好']], ['p', '有人找', ['去買早餐']]],
+  many: [['t', '冒出念頭', ['第三章例子換成上次課堂那個', '查簡報字型']], ['p', '有人找', ['媽問週末回不回去', '有人找 2 次']]]
+};
+function rows(groups) {
+  var out = [];
+  groups.forEach(function (g) { g[2].forEach(function (t) { out.push(t.indexOf('有人找 ') === 0 ? [t, ''] : [g[1], t]); }); });
+  return out;
+}
+function grid(groups, z) {
+  return '<div class="jot g">' + rows(groups).map(function (r) {
+    return r[1] ? '<b style="font-size:' + z.sub + 'px;line-height:' + z.body * 1.4 + 'px;font-weight:600;color:var(--act)">' + r[0] + '</b><span style="font-size:' + z.body + 'px">' + r[1] + '</span>' : '<b style="font-size:' + z.sub + 'px;grid-column:1/-1;font-weight:600;color:var(--act)">' + r[0] + '</b>';
+  }).join('') + '</div>';
+}
+var BELLS = {
+  slip: function (g, z) { return { inside: '', after: '<div class="slip">' + grid(g, z) + '</div>' }; },
+  block: function (g, z) { return { inside: '<div style="background:var(--so);border-radius:12px;padding:12px;margin:0 -8px">' + grid(g, z) + '</div>', after: '' }; },
+  icons: function (g, z) {
+    return { inside: '<div class="jot" style="display:flex;flex-direction:column;gap:16px;padding-top:8px">' + g.map(function (x) {
+      var items = x[2].map(function (t) { return '<span style="font-size:' + z.body + 'px">' + t + '</span>'; }).join('');
+      return '<div style="display:flex;gap:12px"><span style="flex:none;width:36px;height:36px;border-radius:50%;background:var(--so);color:var(--act);display:flex;align-items:center;justify-content:center">' + icon(x[0], 20) + '</span><div style="display:flex;flex-direction:column;gap:4px;min-width:0"><b style="font-size:' + z.sub + 'px;font-weight:600;color:var(--act);line-height:36px">' + x[1] + '</b>' + items + '</div></div>';
+    }).join('') + '</div>', after: '' };
+  }
+};
+function bell(kind, g) {
+  var z = SIZES[S], j = BELLS[kind](g, z), tom = function (s) { return '<svg width="' + s + '" height="' + s + '" fill="' + COL.y + '" style="overflow:visible"><use href="#tom"></use></svg>'; };
+  return '<div class="phone"><div class="bell"><div class="bellin"><div class="receipt" data-receipt><svg class="big" width="124" height="124" fill="' + COL.y + '" style="overflow:visible"><use href="#tom"></use></svg><div class="body"><div class="ripe" style="font-size:' + z.title + 'px">熟了，又收下一顆</div><div class="lines" style="font-size:' + z.body + 'px"><div class="kv"><span>測試實戰有沒有用</span><span>1 分</span></div><div class="kv"><span>測試用</span><span>05:24–05:25</span></div><div class="kv" style="align-items:center"><span>今天</span><span style="display:flex;gap:4px">' + tom(26) + tom(26) + '</span></div></div><div class="note"><div class="write" style="--lh:' + z.line + 'px;font-size:' + z.body + 'px">很棒很棒</div>' + j.inside + '</div></div></div>' + j.after + '</div></div><div class="abs keep">收下，休息一下</div><div class="abs more" style="left:69px">再做 15 分</div><div class="abs more" style="left:207px">再做 30 分</div></div>';
+}
+function bells(kind) { return '<div class="row">' + fig('你那張', bell(kind, JOT.mine)) + fig('記比較多的一張', bell(kind, JOT.many)) + '</div>'; }
+function opt(title, text, html, pick) { return '<div class="opt"><div class="name"><h3>' + title + '</h3>' + (pick ? '<span class="pick">推薦，已寫進程式</span>' : '') + '</div><p>' + text + '</p>' + html + '</div>'; }
+
+function draw() {
+  var keep = [].map.call(document.querySelectorAll('.row'), function (r) { return r.scrollLeft; });
+  document.getElementById('racks').innerHTML =
+    opt('甲　鐘頭拉高，空的鐘頭收窄', '方塊用整條欄寬。短的往下推，不並排，所以緊接著的那顆會晚個幾分鐘的位置。3 天寫名字和長度，夠高再寫那句。週寫名字，折兩行。沒番茄的鐘頭壓成一條，不用捲很久。', rack(function (d, l, z, w) { return planA(d, l, z, w, true); }), true) +
+    opt('甲之二　鐘頭拉高，不收窄', '跟甲一樣，只差空的鐘頭照樣高。時間的比例最準，你那週要捲很長才看得到晚上 8 點那顆。', rack(function (d, l, z, w) { return planA(d, l, z, w, false); })) +
+    opt('乙　時間軸不變，色條加字', '高度跟現在一樣。方塊變成細色條，位置與長短都準，字排在右邊。顏色變少，週一行放兩個字。', rack(planB)) +
+    opt('丙　不要時間軸，照順序排', '每天一欄，一顆一張，寫幾點開始。字最滿、最不用捲。看不出中間空了多久。', rack(planC, true));
+  document.getElementById('bells').innerHTML =
+    opt('A　收據下面露出一張便條', '另一張淡紫的紙，壓在收據的鋸齒後面。種類用粗的紫字，內容跟收據一樣大、一樣黑。', bells('slip'), true) +
+    opt('B　便條底色塊', '留在同一張紙，墊一塊淡紫。跟寫給自己那兩條線靠在一起，看起來像同一區。', bells('block')) +
+    opt('C　圖示分兩組', '兩種各一個圖示，內容列在下面。分得最開，也最高。', bells('icons'));
+  [].forEach.call(document.querySelectorAll('[data-receipt]'), function (el) { var h = el.offsetHeight - 62; el.insertAdjacentHTML('afterbegin', '<div class="abs" style="top:62px;left:0">' + paper(312, h, 20) + '</div>'); });
+  document.getElementById('main').className = DARK ? 'dark' : '';
+  [].forEach.call(document.querySelectorAll('[data-size]'), function (x) { x.setAttribute('aria-pressed', x.dataset.size === S); });
+  [].forEach.call(document.querySelectorAll('[data-dark]'), function (x) { x.setAttribute('aria-pressed', +x.dataset.dark === DARK); });
+  [].forEach.call(document.querySelectorAll('.row'), function (r, i) { r.scrollLeft = keep[i] || 0; });
+}
+document.querySelector('.bar').addEventListener('click', function (e) {
+  var t = e.target.closest('button'); if (!t) return;
+  if (t.dataset.size) S = t.dataset.size; else DARK = +t.dataset.dark;
+  draw();
+});
+var want = /size-(\w+)/.exec(location.hash); if (want && SIZES[want[1]]) S = want[1];
+if (/dark/.test(location.hash)) DARK = 1;
+draw();
+</script>
+</content>
+</invoke>
+<invoke name="Bash">
+<parameter name="command">cd "C:/Users/fcharlie/AppData/Local/Temp/claude/a482f83b510c2337/a2486809-c0e1-4e28-ac8b-bae87fd0ec24/scratchpad" && mkdir -p shots && cp "E:/豆帳/.uiux/03-線框/2026-11-26-QC0008-範本.html" shots/t.html && U="file:///C:/Users/fcharlie/AppData/Local/Temp/claude/a482f83b510c2337/a2486809-c0e1-4e28-ac8b-bae87fd0ec24/scratchpad/shots"
+"/c/Program Files/Google/Chrome/Application/chrome.exe" --headless=new --disable-gpu --hide-scrollbars --window-size=1800,7900 --screenshot="$(cygpath -w "$PWD/shots/xxl.png")" "$U/t.html" 2>/dev/null; "/c/Program Files/Google/Chrome/Application/chrome.exe" --headless=new --disable-gpu --hide-scrollbars --window-size=1800,7900 --screenshot="$(cygpath -w "$PWD/shots/xxxl.png")" "$U/t.html#size-XXXL-dark" 2>/dev/null; python -c "
+from PIL import Image
+for n in ['xxl','xxxl']:
+    im=Image.open(f'shots/{n}.png'); print(im.size)
+    for i in range(0,7):
+        im.crop((0,i*1130,1800,(i+1)*1130)).save(f'shots/{n}_{i}.png')
+"; pwd

@@ -73,12 +73,75 @@ final class RackCalendarTests: XCTestCase {
         XCTAssertEqual(lanes(blocks), [[0, 1], [0, 1]])
     }
 
-    func test兩顆很短又很近的左右並排各佔一半() {
+    func test兩顆很短又很近的往下推不並排() {
         let day = November.day(November.bean(17, 5, 0, len: 5), November.bean(17, 5, 8, len: 5))
         let blocks = RackCalendar.dayBlocks(day, key: key, minHours: minHours)
-        XCTAssertEqual(lanes(blocks), [[0, 2], [1, 2]])
-        // 再短也畫到最小高度
+        XCTAssertEqual(lanes(blocks), [[0, 1], [0, 1]])
+        // 再短也畫到最小高度；第二顆接在第一顆下面，真的時刻另外記著
+        XCTAssertEqual(blocks.map(\.height), [minHours, minHours])
+        XCTAssertEqual(blocks[1].top, 5 + minHours)
+        XCTAssertEqual(blocks[1].from, 5 + 8.0 / 60, accuracy: 1e-9)
+    }
+
+    func test天檢視兩顆很短又很近的照舊左右並排各佔一半() {
+        let day = November.day(
+            November.bean(17, 5, 0, len: 5),
+            November.bean(17, 5, 8, len: 5),
+            November.bean(17, 6, 0, len: 25)
+        )
+        let blocks = RackCalendar.dayBlocks(
+            day,
+            key: key,
+            minHours: minHours,
+            sideBySide: true
+        )
+        XCTAssertEqual(lanes(blocks), [[0, 2], [1, 2], [0, 1]])
+        // 再短也畫到最小高度；各在自己的時刻，不往下推
         XCTAssertEqual(blocks[0].height, minHours)
+        XCTAssertEqual(blocks.map(\.top), blocks.map(\.from))
+    }
+
+    func test被推下來的那顆結尾照舊後面的追回真的時刻() {
+        let day = November.day(
+            November.bean(17, 9, 0, len: 5),
+            November.bean(17, 9, 10, len: 50),
+            November.bean(17, 10, 5, len: 25)
+        )
+        let blocks = RackCalendar.dayBlocks(day, key: key, minHours: minHours)
+        XCTAssertEqual(blocks[1].top, 9 + minHours)
+        XCTAssertEqual(blocks[1].bottom, 10, accuracy: 1e-9)
+        XCTAssertEqual(blocks[2].top, 10 + 5.0 / 60, accuracy: 1e-9)
+    }
+
+    func test滿的一天八顆各在自己的時刻() {
+        let tall = Tokens.Rack.timelineHourTall
+        var day = DayRecord()
+        day.beans = (0 ..< 8).map { index in
+            November.bean(17, 9 + index / 2, index % 2 * 30, len: 25)
+        }
+        for least in [Tokens.Rack.timelineBlockMinThree, Tokens.Rack.timelineBlockMinWeek] {
+            let blocks = RackCalendar.dayBlocks(day, key: key, minHours: Double(least / tall))
+            XCTAssertEqual(blocks.map(\.top), blocks.map(\.from))
+            XCTAssertEqual(Set(blocks.map(\.lanes)), [1])
+        }
+    }
+
+    func test下面有空就長高一點有東西就不長() {
+        let day = November.day(
+            November.bean(17, 4, 47, len: 5),
+            November.bean(17, 4, 55, len: 5),
+            November.bean(17, 6, 0, len: 60)
+        )
+        let blocks = RackCalendar.dayBlocks(
+            day,
+            key: key,
+            minHours: minHours,
+            roomyHours: minHours * 2
+        )
+        // 緊接著的那顆擋著，第一顆不長；第二顆下面空著，長到兩倍；本來就夠高的照長度
+        XCTAssertEqual(blocks[0].height, minHours, accuracy: 1e-9)
+        XCTAssertEqual(blocks[1].height, min(minHours * 2, 6 - blocks[1].top), accuracy: 1e-9)
+        XCTAssertEqual(blocks[2].height, 1)
     }
 
     func test空出來的欄會被後面的重疊補上都結束後回到整欄() {
@@ -124,6 +187,36 @@ final class RackCalendarTests: XCTestCase {
             minHours: minHours
         )
         XCTAssertEqual(RackCalendar.axisHours([first, second]), AxisHours(from: 8, upTo: 16))
+    }
+
+    func test空的鐘頭收窄有番茄的一樣高() {
+        let day = November.day(
+            November.bean(17, 9, 30, len: 25),
+            November.bean(17, 12, 40, len: 50)
+        )
+        let blocks = RackCalendar.dayBlocks(day, key: key, minHours: 0.25)
+        let axis = AxisHours(from: 8, upTo: 15)
+        let scale = RackCalendar.timeScale([blocks], axis: axis, hour: 100, flat: 20)
+        XCTAssertEqual(scale.heights, [20, 100, 20, 20, 100, 100, 20])
+        XCTAssertEqual(scale.offset(8), 0)
+        XCTAssertEqual(scale.offset(9.5), 70)
+        XCTAssertEqual(scale.offset(13), 260)
+        // 超過時間軸的照一小時往下接
+        XCTAssertEqual(scale.offset(15), 380)
+        XCTAssertEqual(scale.offset(15.5), 430)
+        // flat 跟 hour 一樣高（天檢視）就是每個鐘頭都一樣
+        let even = RackCalendar.timeScale([blocks], axis: axis, hour: 64, flat: 64)
+        XCTAssertEqual(even.heights, Array(repeating: 64, count: 7))
+    }
+
+    func test短方塊伸進空鐘頭的那一截不會被壓扁() {
+        let day = November.day(November.bean(17, 0, 45, len: 1))
+        let blocks = RackCalendar.dayBlocks(day, key: key, minHours: 0.75)
+        let axis = AxisHours(from: 0, upTo: 3)
+        let scale = RackCalendar.timeScale([blocks], axis: axis, hour: 100, flat: 20)
+        XCTAssertEqual(scale.heights, [100, 50, 20])
+        let drawn = scale.offset(blocks[0].bottom) - scale.offset(blocks[0].top)
+        XCTAssertEqual(drawn, 75, accuracy: 1e-9)
     }
 
     func test時間軸不會畫出零點以前二十四點以後都沒東西是空的() {

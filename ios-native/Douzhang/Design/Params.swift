@@ -31,8 +31,6 @@ enum Params {
     static let jarLowFpsSeconds = 3
     /// 月檢視一格最多畫幾顆小圓點，再多寫「+N」
     static let monthDotsMax = 8
-    /// 月檢視清單一天最多列幾件事，再多寫「等」
-    static let monthDoneNames = 3
     /// 匯入檔大小上限 5 MB
     static let importMaxBytes = 5 * 1024 * 1024
 

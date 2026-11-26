@@ -14,11 +14,12 @@ struct LeafMark: View {
 
 /// 番茄架的月檢視：一格一天，裡面是那天收下的番茄（一顆一個標籤色的小圓點）。
 /// 沒番茄的週壓扁成一行，只剩日期，整個月不會出現一排排空格子（沒番茄的日子不寫 0）。
-/// 過完、沒番茄的日子掛一片葉子，不算缺；壓扁的週不畫葉子，畫了那列就撐開。點一天就切到那天的天檢視。
+/// 過完、沒番茄的日子掛一片葉子，不算缺；壓扁的週不畫葉子，畫了那列就撐開。
+/// 點一天停在月檢視，格子下面那塊換成那天。
 struct MonthGrid: View {
     var state: AppState
-    /// 這個月裡任一天的日期鍵
-    var monthKey: String
+    /// 選中的日子，畫的就是它那個月
+    var selected: String
     var todayKey: String
     var onPickDay: (String) -> Void
 
@@ -32,7 +33,7 @@ struct MonthGrid: View {
                         .frame(maxWidth: .infinity)
                 }
             }
-            let weeks = RackCalendar.monthWeeks(state, key: monthKey, todayKey: todayKey)
+            let weeks = RackCalendar.monthWeeks(state, key: selected, todayKey: todayKey)
             ForEach(weeks, id: \.weekStart) { week in
                 HStack(alignment: .top, spacing: .zero) {
                     ForEach(week.days, id: \.key) { day in
@@ -51,9 +52,11 @@ struct MonthGrid: View {
         .padding(.top, Tokens.Layout.group)
     }
 
-    /// 一格：日期（今天有產品色淡底）＋那天的番茄。別的月份的日子只寫淡淡的日期；還沒到的日子不能點。
+    /// 一格：日期（選中的有產品色淡底，今天是產品色的字）＋那天的番茄。
+    /// 別的月份的日子只寫淡淡的日期；還沒到的日子不能點。
     private func cell(_ day: MonthDay, busy: Bool) -> some View {
-        let isToday = day.key == todayKey
+        let isSelected = day.key == selected
+        let isTinted = isSelected || day.key == todayKey
         let isDim = !day.inMonth || day.key > todayKey
         let ink = isDim ? Tokens.Colors.textTertiary : Tokens.Colors.textPrimary
         return Button {
@@ -62,9 +65,9 @@ struct MonthGrid: View {
             VStack(spacing: Tokens.Layout.tight) {
                 Text(String(Int(day.key.suffix(2)) ?? 0))
                     .font(Tokens.Fonts.caption)
-                    .foregroundStyle(isToday ? Tokens.Colors.accentText : ink)
+                    .foregroundStyle(isTinted ? Tokens.Colors.accentText : ink)
                     .padding(.horizontal, Tokens.Layout.item)
-                    .background(isToday ? Tokens.Colors.soft : .clear, in: Capsule())
+                    .background(isSelected ? Tokens.Colors.soft : .clear, in: Capsule())
                 if busy, !day.beans.isEmpty {
                     dots(day.beans)
                 }
@@ -81,6 +84,7 @@ struct MonthGrid: View {
         .accessibilityLabel(
             Words.monthDayA11y(day.key, beans: day.beans.count, leaf: busy && day.leaf)
         )
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
     /// 那天的番茄：依時間排，最多畫 monthDotsMax 顆，再多寫「+N」。

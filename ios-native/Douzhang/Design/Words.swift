@@ -27,7 +27,7 @@ enum Words {
     static let jotDown = "記下"
     static let tapNoteHint = "點一下畫面記一筆"
     static let endThis = "結束這顆"
-    /// 計時中右上、聚焦模式、記一筆半頁右邊那顆：位子窄，讀屏念的是 endThis
+    /// 計時中右上、聚焦模式那顆：位子窄，讀屏念的是 endThis
     static let endShort = "結束"
     static let endTitle = "結束這顆？"
     static let doneEarly = "提早做完了"

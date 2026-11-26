@@ -130,10 +130,9 @@ enum Tokens {
         static let blockIcon: CGFloat = 16
         static let colorSwatch: CGFloat = 36
         static let selectRing: CGFloat = 2
-        /// 刻度尺那頁的番茄；鈴響收據「今天」那排的小番茄、那排最後剛收的這顆
+        /// 刻度尺那頁的番茄；鈴響收據「今天」那排的小番茄（剛收的這顆也一樣大）
         static let celebrateTomato: CGFloat = 132
         static let celebrateDot: CGFloat = 26
-        static let celebrateDotNew: CGFloat = 34
         /// 進度環：最大直徑、多粗、全熟那顆佔環直徑幾成、環最多佔中間那塊高度幾成
         static let ringSize: CGFloat = 264
         static let ringStroke: CGFloat = 10
@@ -143,20 +142,28 @@ enum Tokens {
 
     /// 番茄架：時間軸、月檢視、分析的尺寸。
     enum Rack {
+        /// 一小時多高。3 天、週拉高才放得下字（跟著字級放大），沒番茄的鐘頭收成一條
         static let timelineHour: CGFloat = 64
+        static let timelineHourTall: CGFloat = 108
+        static let timelineHourFlat: CGFloat = 28
         static let timelineGutter: CGFloat = 52
-        /// 一顆再短也至少這麼高，字才放得下；週檢視沒有字，最矮畫這麼高
+        /// 一顆再短也至少這麼高，放得下一行字。3 天、週的跟 timelineHourTall 一起放大
         static let timelineBlockMin: CGFloat = 28
-        static let timelineBlockMinWeek: CGFloat = 8
-        /// 方塊不到這麼高就不寫字；至少這麼高才多寫一行那句
-        static let timelineTextMin: CGFloat = 18
+        static let timelineBlockMinThree: CGFloat = 26
+        static let timelineBlockMinWeek: CGFloat = 24
+        /// 3 天、週：下面有空就長到這麼高，放得下兩行字
+        static let timelineRoomThree: CGFloat = 46
+        static let timelineRoomWeek: CGFloat = 42
+        /// 週檢視一行字多高（跟著字級放大）；3 天、週方塊的圓角
+        static let timelineLineWeek: CGFloat = 17
+        static let timelineRadius = DomyTokens.Radius.sm
+        static let timelineRadiusWeek = Space.xs
+        /// 天檢視：至少這麼高才多寫一行那句
         static let timelineNoteMin: CGFloat = 44
         static let timelineLaneGap: CGFloat = 2
         static let monthDot: CGFloat = 10
         static let monthWeek: CGFloat = 60
         static let monthWeekFlat: CGFloat = 30
-        /// 月檢視清單左邊那塊日期的邊長
-        static let doneBlock: CGFloat = 56
         static let statsShare: CGFloat = 6
         static let statsName: CGFloat = 64
         /// 月檢視的葉子斜放的角度
@@ -182,10 +189,8 @@ enum Tokens {
         static let glowRise = DomyTokens.Motion.pressDuration
         static let glowFall = DomyTokens.Motion.transition
         static let pressScale = DomyTokens.Motion.pressScale
-        /// 收下這顆 → 番茄掉進來：等多久才掉（秒）、往上的初速、左右散開多少
+        /// 收下這顆 → 番茄掉進來：等多久才掉（秒）
         static let dropDelay = 0.18
-        static let dropVelY = -160.0
-        static let dropVelXSpread = 40.0
         /// 傾斜：重力乘多少、每一幀往新方向靠多少、每幀分幾個子步、一幀最長算多久
         static let tiltScale = 115.0
         /// 加速度計給的單位是 g：乘上每個 g 多少 m/s² 再乘 tiltScale
@@ -214,6 +219,8 @@ enum Tokens {
         static let hitGap = 0.09
         static let hitVolDiv = 5000.0
         static let hitVolMax = 0.1
+        /// 「嗒」排隊排到比這一撞晚這麼久（秒）就不播：對不上畫面，比沒有更怪
+        static let hitLate = 0.1
         /// 碰撞的輕震：剛過門檻震 hitTapMin，撞到 hitTapFull 這麼快震滿。音量撞到 500 就滿了，
         /// 跟著音量走每一下會幾乎一樣大；整疊掉回底、從上面掉到底大約是 1000 上下
         static let hitTapMin = 0.35

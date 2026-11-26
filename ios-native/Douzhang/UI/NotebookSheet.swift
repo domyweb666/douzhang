@@ -1,7 +1,7 @@
 import SwiftUI
 import UIKit
 
-/// 「寫一句給自己」的筆記本：橫線紙，打開就能寫，右上「好」關掉。
+/// 「寫一句給自己」的筆記本：橫線紙，打開就能寫，右上打勾關掉。
 /// 每個字都寫回呼叫端的 text（呼叫端照舊每字都存），所以下滑關掉也不會少字。
 struct NotebookSheet: View {
     @Binding var text: String
@@ -17,7 +17,7 @@ struct NotebookSheet: View {
                     .foregroundStyle(Tokens.Colors.textPrimary)
                     .accessibilityAddTraits(.isHeader)
                 Spacer(minLength: .zero)
-                TextButton(label: Words.confirm, flush: true) { dismiss() }
+                doneButton
             }
             .padding(.horizontal, Tokens.Layout.screenMargin)
             .padding(.top, Tokens.Layout.section)
@@ -30,6 +30,19 @@ struct NotebookSheet: View {
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
         .presentationCornerRadius(Tokens.Shape.radiusSheet)
+    }
+
+    /// 右上的打勾。圖示的右緣對齊紙上的線，多出來的點擊範圍往外伸進頁邊。
+    private var doneButton: some View {
+        Button { dismiss() } label: {
+            LineIconView(kind: .check)
+                .foregroundStyle(Tokens.Colors.accentText)
+                .frame(width: Tokens.Shape.tapMin, height: Tokens.Shape.tapMin)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(FadeStyle())
+        .accessibilityLabel(Words.confirm)
+        .padding(.trailing, (Tokens.Shape.tabIcon - Tokens.Shape.tapMin) / 2)
     }
 
     /// 還沒寫字時坐在第一條線上的提示。
