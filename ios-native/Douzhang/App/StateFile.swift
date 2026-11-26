@@ -38,8 +38,8 @@ struct StateFile {
     static let fileName = "douzhang.v1.json"
 
     let folder: URL
-    /// 沒有新檔時去哪裡找 Expo 版的舊資料
-    var legacy: () -> String? = { nil }
+    /// 沒有新檔時去哪裡找 Expo 版的舊資料。開機在背景讀檔時叫，所以要能跨執行緒
+    var legacy: @Sendable () -> String? = { nil }
 
     static var standard: StateFile {
         // 開發版截圖走查：讀指定資料夾裡擺好的那一態（正式 build 這裡一律是 nil）

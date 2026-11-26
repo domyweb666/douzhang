@@ -23,7 +23,7 @@ struct Pulses: Equatable {
 final class AppModel {
     /// 存著的狀態。過期的休息每一拍收掉，所以畫面讀到的就是現在這一態。
     private(set) var state = Store.blank()
-    /// 還在讀檔時是 false，畫面先空著
+    /// 還在讀檔時是 false，畫面先空著；也還不准存檔，不然空的那份會蓋掉存著的
     private(set) var loaded = false
     /// 每一拍都換。只給計時中、休息、鈴響那幾個畫面讀：別的畫面讀它會跟著一秒重算四次（11-22 卡頓的原因之一）
     private(set) var now = TimeText.nowMillis()
@@ -80,6 +80,8 @@ final class AppModel {
     @ObservationIgnored let shield = AppShield()
     @ObservationIgnored let poseWatch = PoseWatch()
     @ObservationIgnored private var notifWasOff = false
+    /// 背景正在讀檔：畫面重掛時 run 會再叫一次，同一份不讀兩次
+    @ObservationIgnored private var loading = false
 
     init(
         file: StateFile = .standard,
@@ -95,8 +97,8 @@ final class AppModel {
 
     /// 開機讀檔，然後每一拍看一次時鐘，直到畫面收掉。
     func run() async {
-        if !loaded {
-            load()
+        if !loaded, !loading {
+            await load()
         }
         while !Task.isCancelled {
             tick()
@@ -104,8 +106,11 @@ final class AppModel {
         }
     }
 
-    private func load() {
-        let found = file.load()
+    private func load() async {
+        loading = true
+        // 讀檔、解析在背景：一年份幾千筆，放主執行緒開機那一下會卡住（效能審查甲4）
+        let file = file
+        let found = await Task.detached(priority: .userInitiated) { file.load() }.value
         unreadable = found.unreadable
         state = Machine.settle(found.state, now: TimeText.nowMillis(), zone: Store.zoneNow())
         loaded = true
@@ -197,6 +202,7 @@ final class AppModel {
     }
 
     private func save(_ next: AppState) {
+        guard loaded else { return }
         writer.save(next) { [weak self] isSaved in self?.written(isSaved) }
     }
 

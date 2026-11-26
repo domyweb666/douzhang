@@ -53,11 +53,32 @@ enum Store {
         AppState(settings: blankSettings(), current: nil, days: [:], lastLine: -1)
     }
 
+    /// 共用的那一份西曆：新建一份不便宜，月檢視一次重算就要建上百份（效能審查乙3）。
+    /// 時區跟上次拿的不一樣才換（手機換時區、出國）；開機在背景讀檔時也會拿，所以上鎖。
+    final class SharedCalendar: @unchecked Sendable {
+        private let lock = NSLock()
+        private var stored = Calendar(identifier: .gregorian)
+
+        init(zone: TimeZone) {
+            stored.timeZone = zone
+        }
+
+        func calendar(in zone: TimeZone) -> Calendar {
+            lock.withLock {
+                if stored.timeZone != zone {
+                    stored.timeZone = zone
+                }
+                return stored
+            }
+        }
+    }
+
+    private static let sharedCalendar = SharedCalendar(zone: TimeZone.current)
+
     /// 一律用西曆算日期。手機設成民國曆或佛曆時，日期鍵也要跟 Expo 版同一種寫法，舊資料才對得上。
+    /// 每次都照手機現在的時區：比一下就好，不用等系統換時區的通知。
     static func localCalendar() -> Calendar {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone.current
-        return calendar
+        sharedCalendar.calendar(in: TimeZone.current)
     }
 
     static func date(_ time: Millis) -> Date {
@@ -69,12 +90,24 @@ enum Store {
     /// 一天從 Params.dayStartHour 點開始；「哪一天」每次讀檔都重算，改了這個數字不用動資料。
     static func dayKey(_ time: Millis, zone: String? = nil) -> String {
         var calendar = localCalendar()
-        if let zone, let known = TimeZone(identifier: zone) {
+        // 跟手機同一區的（幾乎每一筆）不換，換一次時區就要多建一份日曆
+        if let zone, zone != calendar.timeZone.identifier, let known = TimeZone(identifier: zone) {
             calendar.timeZone = known
         }
         let shifted = time - Params.dayStartHour * Params.msPerHour
         let parts = calendar.dateComponents([.year, .month, .day], from: date(shifted))
-        return String(format: "%04d-%02d-%02d", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0)
+        // 每讀一筆都要算一次：String(format:) 要繞一圈 NSString，自己補零寫法相同、輸出一樣
+        let year = zeroPadded(parts.year ?? 0, width: 4)
+        return year + "-" + zeroPadded(parts.month ?? 0, width: 2) + "-"
+            + zeroPadded(parts.day ?? 0, width: 2)
+    }
+
+    /// 跟 String(format: "%0Nd") 一樣：補零到 width 位，負號也算一位。
+    static func zeroPadded(_ number: Int, width: Int) -> String {
+        let digits = String(number.magnitude)
+        let sign = number < 0 ? "-" : ""
+        let zeros = String(repeating: "0", count: max(0, width - sign.count - digits.count))
+        return sign + zeros + digits
     }
 
     /// 一顆番茄自己的編號：從開始時刻來，同一支手機上不會撞。收下或作廢時跟著那筆紀錄走。
