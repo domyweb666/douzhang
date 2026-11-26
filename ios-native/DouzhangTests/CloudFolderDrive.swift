@@ -13,6 +13,9 @@ final class FolderDrive: CloudDrive {
     var pending: Set<String> = []
     /// 清單列不出來
     var isBroken = false
+    /// 清單帶不帶修改時間與大小（真的 iCloud 帶）；unstamped 裡的檔不帶
+    var isStamped = false
+    var unstamped: Set<String> = []
     /// 每次讀、寫之前卡多久
     var readPause = 0.0
     var writePause = 0.0
@@ -157,7 +160,15 @@ final class FolderDrive: CloudDrive {
     }
 
     private func listing() -> [CloudFile] {
-        FolderDrive.paths(in: root)
-            .map { CloudFile(path: $0, isReady: !pending.contains($0)) }
+        FolderDrive.paths(in: root).map { path in
+            var file = CloudFile(path: path, isReady: !pending.contains(path))
+            if isStamped, !unstamped.contains(path) {
+                let keys: Set<URLResourceKey> = [.contentModificationDateKey, .fileSizeKey]
+                let values = try? root.appendingPathComponent(path).resourceValues(forKeys: keys)
+                file.changedAt = values?.contentModificationDate
+                file.size = values?.fileSize
+            }
+            return file
+        }
     }
 }

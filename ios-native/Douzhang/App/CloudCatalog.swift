@@ -156,7 +156,8 @@ final class CloudCatalog {
         return CloudFile(
             path: path,
             isReady: status == NSMetadataUbiquitousItemDownloadingStatusCurrent,
-            changedAt: item.value(forAttribute: NSMetadataItemFSContentChangeDateKey) as? Date
+            changedAt: item.value(forAttribute: NSMetadataItemFSContentChangeDateKey) as? Date,
+            size: (item.value(forAttribute: NSMetadataItemFSSizeKey) as? NSNumber)?.intValue
         )
     }
 }

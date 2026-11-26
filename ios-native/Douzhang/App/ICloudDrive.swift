@@ -165,8 +165,15 @@ private extension ICloudDrive {
             for name in (try? manager.contentsOfDirectory(atPath: home.path)) ?? [] {
                 let path = "\(device)/\(name)"
                 guard SyncFiles.locate(path) != nil else { continue }
-                let isHere = isReady(home.appendingPathComponent(name))
-                found.append(CloudFile(path: path, isReady: isHere))
+                let url = home.appendingPathComponent(name)
+                let keys: Set<URLResourceKey> = [.contentModificationDateKey, .fileSizeKey]
+                let values = try? url.resourceValues(forKeys: keys)
+                found.append(CloudFile(
+                    path: path,
+                    isReady: isReady(url),
+                    changedAt: values?.contentModificationDate,
+                    size: values?.fileSize
+                ))
             }
         }
         return found

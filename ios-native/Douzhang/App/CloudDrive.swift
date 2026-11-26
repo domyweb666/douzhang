@@ -22,6 +22,8 @@ struct CloudFile: Equatable {
     /// 最新的那一版已經在這支手機上
     var isReady: Bool
     var changedAt: Date?
+    /// 位元組數。跟 changedAt 一起當「這一版」：兩個都一樣才算沒改過
+    var size: Int?
 }
 
 /// 雲端自己傳來的動靜。

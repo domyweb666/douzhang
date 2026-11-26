@@ -149,6 +149,28 @@ final class SyncFilesTests: XCTestCase {
         XCTAssertEqual(remotes.first?.types, [])
     }
 
+    /// 沒改過的檔拿上次讀出來的那一份，跟這趟剛讀的併：先後怎麼排都要跟整包一起讀一樣。
+    func test一檔一份不管先後併起來跟整包讀一樣() {
+        var state = SyncSample.state([
+            "2026-09-03": DayRecord(beans: [SyncSample.bean("r1", at: base)]),
+            "2026-10-05": DayRecord(voids: [SyncSample.voided("v1", at: base)]),
+            key: DayRecord(beans: [SyncSample.bean("r2", at: base)]),
+        ])
+        state = SettingsLogic.removeType(state, id: "t3", now: base)
+        var files = SyncFiles.outgoing(state, device: device)
+        files.merge(SyncFiles.outgoing(state, device: SyncSample.third)) { first, _ in first }
+        files["\(SyncSample.third)/2026-08.json"] = "{壞"
+        let data = files.mapValues { Data($0.utf8) }
+        let pieces = data.compactMap { SyncFiles.piece($0.key, $0.value, except: SyncSample.phone) }
+        let whole = SyncFiles.remotes(data, except: SyncSample.phone)
+        XCTAssertEqual(pieces.count, data.count - 1)
+        XCTAssertEqual(SyncFiles.joined(pieces.reversed()), whole)
+        XCTAssertEqual(SyncFiles.joined(pieces.sorted { $0.days.count < $1.days.count }), whole)
+        XCTAssertEqual(whole.map(\.device), [device, SyncSample.third])
+        XCTAssertEqual(whole.first?.days.count, 3)
+        XCTAssertEqual(whole.first?.removed, state.settings.removedTypes)
+    }
+
     func test日期鍵不對的那天跳過() {
         let days = ["2026-11-31", "2026-11-4", "2026-12-01", "abc", "2026-11-24x"]
             .map { #""\#($0)":{"beans":[\#(oneBean)]}"# }

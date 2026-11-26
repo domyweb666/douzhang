@@ -113,21 +113,36 @@ enum SyncFiles {
     /// 讀到的檔（相對路徑 → 內容）照裝置分好。own 是這台自己的編號，不讀自己寫的。
     /// 路徑不認得、太大、讀不懂、版本比自己新的檔都跳過，不影響別的檔。
     static func remotes(_ files: [String: Data], except own: String) -> [Remote] {
+        joined(files.compactMap { piece($0.key, $0.value, except: own) })
+    }
+
+    /// 一個檔讀出來的那一份：只有那個月的日子，或只有標籤。跳過的檔是 nil。
+    /// 拆成一檔一份，沒改過的檔下一趟才能直接拿上次讀出來的，不用再解析一次。
+    static func piece(_ path: String, _ data: Data, except own: String) -> Remote? {
+        guard let place = locate(path), place.device.uppercased() != own.uppercased(),
+              let object = readable(data) else { return nil }
+        var remote = Remote(device: place.device)
+        if let month = place.month {
+            remote.days = readDays(object["days"], month: month)
+        } else {
+            let types = StateDecoding.readTagTypes(object["types"])
+            let removed = StateUpgrade.readRemoved(object["removed"], live: types)
+            remote.types = types.filter { SyncLimits.accepts($0) }
+            remote.removed = removed.filter { SyncLimits.accepts($0) }
+        }
+        return remote
+    }
+
+    /// 同一台的每一份併成一份，照編號排。
+    /// 一個月一個檔、一台一個標籤檔：日子不會撞到同一天，標籤只有一份，先後不影響結果。
+    static func joined(_ pieces: [Remote]) -> [Remote] {
         var found: [String: Remote] = [:]
-        for (path, data) in files {
-            guard let place = locate(path), place.device.uppercased() != own.uppercased(),
-                  let object = readable(data) else { continue }
-            var remote = found[place.device] ?? Remote(device: place.device)
-            if let month = place.month {
-                // 一個月一個檔，檔裡只收那個月的日子，不會跟別的檔撞到同一天
-                remote.days.merge(readDays(object["days"], month: month)) { first, _ in first }
-            } else {
-                let types = StateDecoding.readTagTypes(object["types"])
-                let removed = StateUpgrade.readRemoved(object["removed"], live: types)
-                remote.types = types.filter { SyncLimits.accepts($0) }
-                remote.removed = removed.filter { SyncLimits.accepts($0) }
-            }
-            found[place.device] = remote
+        for piece in pieces {
+            var remote = found[piece.device] ?? Remote(device: piece.device)
+            remote.days.merge(piece.days) { first, _ in first }
+            remote.types += piece.types
+            remote.removed += piece.removed
+            found[piece.device] = remote
         }
         return found.values.sorted { $0.device < $1.device }
     }

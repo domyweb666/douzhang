@@ -49,6 +49,8 @@ final class CloudLink {
     @ObservationIgnored var unread: String?
     /// 讀不到的檔，幾點讀的：隔幾分鐘才再讀
     @ObservationIgnored var resting: [String: ContinuousClock.Instant] = [:]
+    /// 上次讀過的別台的檔：沒改過的不再讀
+    @ObservationIgnored var copies = CloudCopies()
 
     @ObservationIgnored let defaults: UserDefaults
     @ObservationIgnored let waits: CloudWaits
@@ -208,6 +210,7 @@ final class CloudLink {
         unread = nil
         sentContent = nil
         resting = [:]
+        copies = CloudCopies()
         drive.unwatch()
     }
 

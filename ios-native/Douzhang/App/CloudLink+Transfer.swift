@@ -25,8 +25,10 @@ extension CloudLink {
                   let book = try openLedger(identity, state),
                   let files = try await list(book, identity: identity, turn: turn) else { return }
             let found = try await fetch(files, own: book.device, identity: identity, turn: turn)
-            let remotes = await CloudLink.remotes(found, own: book.device)
-            guard isCurrent(turn), await join(remotes, turn: turn) else { return }
+            let (remotes, fresh) = await CloudLink.remotes(found, own: book.device)
+            guard isCurrent(turn) else { return }
+            copies.add(fresh)
+            guard await join(remotes, turn: turn) else { return }
             var next = book
             next.identity = identity
             next.seen = book.seen || !files.isEmpty
@@ -48,17 +50,19 @@ extension CloudLink {
 
     /// 能讀的都讀下來。還沒下載好的請系統下載，這輪跳過：下載好會有動靜，到時再拉一次。
     /// 時間到了就先合已經讀到的，記著下一趟從哪裡接；一趟至少走一個檔，才不會一直停在同一個。
+    /// 修改時間與大小都跟上次讀的一樣的檔不再讀，拿上次讀出來的那一份。
     private func fetch(
         _ files: [CloudFile],
         own: String,
         identity: String,
         turn: Int
-    ) async throws -> [String: Data] {
+    ) async throws -> Fetched {
         let end = ContinuousClock.now + .seconds(waits.pull)
         let others = files.filter { SyncFiles.locate($0.path)?.device != own }
+        copies.check(others, identity: identity, device: own)
         let start = others.firstIndex { $0.path == unread } ?? 0
         unread = nil
-        var found: [String: Data] = [:]
+        var found = Fetched()
         for (order, file) in others[start...].enumerated() {
             guard isCurrent(turn) else { break }
             guard order == 0 || ContinuousClock.now < end else {
@@ -68,8 +72,11 @@ extension CloudLink {
             if !file.isReady {
                 await drive.download(file.path)
             } else if !isResting(file.path) {
-                let data = try await read(file.path, identity: identity, turn: turn)
-                found[file.path] = data
+                if let copy = copies.same(file) {
+                    found.kept.append(copy.piece)
+                } else if let data = try await read(file.path, identity: identity, turn: turn) {
+                    found.read.append((file, data))
+                }
             }
         }
         return found
@@ -179,12 +186,31 @@ extension CloudLink {
         var sha: String
     }
 
+    /// 這一趟要合的：剛讀的檔，和沒改過、拿上次讀出來的那幾份（讀不懂的是 nil）。
+    struct Fetched {
+        var read: [(file: CloudFile, data: Data)] = []
+        var kept: [SyncFiles.Remote?] = []
+    }
+
+    /// 剛讀的一檔一檔解析，跟沒改過的那幾份併起來；有修改時間與大小的記下來，下一趟用。
     private nonisolated static func remotes(
-        _ files: [String: Data],
+        _ found: Fetched,
         own: String
-    ) async -> [SyncFiles.Remote] {
+    ) async -> (remotes: [SyncFiles.Remote], fresh: [String: CloudCopies.Copy]) {
         await Task.detached(priority: .utility) {
-            SyncFiles.remotes(files, except: own)
+            var pieces = found.kept.compactMap { $0 }
+            var fresh: [String: CloudCopies.Copy] = [:]
+            for (file, data) in found.read {
+                let piece = SyncFiles.piece(file.path, data, except: own)
+                if let piece {
+                    pieces.append(piece)
+                }
+                if let changedAt = file.changedAt, let size = file.size {
+                    let copy = CloudCopies.Copy(changedAt: changedAt, size: size, piece: piece)
+                    fresh[file.path] = copy
+                }
+            }
+            return (SyncFiles.joined(pieces), fresh)
         }.value
     }
 
