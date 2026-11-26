@@ -105,10 +105,13 @@ struct ReceiptLine: View {
                     .lineLimit(2)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
+            // 只准因為寬度放不下而縮。收據比畫面矮時，外層排版有一輪會給這列比一行還矮的高度，
+            // 名字不理它、值卻跟著縮，同一列就一大一小（QC-0008 #60 第二張收據）
             Text(value)
                 .monospacedDigit()
                 .lineLimit(1)
                 .minimumScaleFactor(Tokens.Bell.shrink)
+                .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: label.isEmpty ? .infinity : nil, alignment: .trailing)
                 .layoutPriority(1)
         }
