@@ -3,7 +3,7 @@ import Foundation
 /// 循環滾輪：同一組值重複很多輪排成一長條，打開時停在中間那一輪，往上往下都滾得下去（90 下面接 1）。
 /// 做法照蒜日子的 LoopWheelRules。純函式，畫面在 UI/LoopWheel.swift。
 enum LoopWheelRules {
-    /// 重複幾輪。往上、往下各有一半可以滾；輪數越多，打開那一下要排的列越多
+    /// 重複幾輪。往上、往下各有一半可以滾；UIPickerView 只建看得到的列，輪數多不會讓打開變慢
     static let laps = 10
 
     static func rowCount(_ count: Int) -> Int {

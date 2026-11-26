@@ -84,7 +84,7 @@ final class JarShakeTests: XCTestCase {
         JarLab.steps(seconds)
     }
 
-    func test掉落傾斜滾動時睡著那一步與每顆的位置跟改前一樣() throws {
+    func test掉落傾斜滾動時睡著那一步與每顆的位置跟改前一樣() {
         let (tick, world) = JarLab.dropTiltRoll()
         XCTAssertEqual(tick, JarShakeTests.beforeTick)
         XCTAssertEqual(world.bodies.count, JarShakeTests.beforeSpots.count)
