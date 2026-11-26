@@ -1,7 +1,17 @@
+import Charts
 import SwiftUI
 
+/// 分析第一張用哪種圖。這支手機的畫面偏好，存在 UserDefaults，不進存檔、不跟 iCloud 同步。
+/// rawValue 就是存在手機上的字，改了會忘記她選過的。
+enum StatsChart: String {
+    case bars, donut
+
+    static let storageKey = "statsChart"
+}
+
 /// 番茄架的分析：一張回答一題，標題就是那一題（.analytics/06-三層結構.md 的細查層）。
-/// 第一張「這段時間花在哪」：每個標籤一條橫條，下面一行專注多久、收了幾顆；換這週、這個月的那排在卡片下面。
+/// 第一張「這段時間花在哪」：右上切長條或圓餅。長條每個標籤一條橫條；圓餅一個標籤一塊，下面每個標籤一列當圖例。
+/// 最下面一行專注多久、收了幾顆；換這週、這個月的那排在卡片下面。
 /// 第二張「這兩週記了什麼、作廢的原因」：固定看最近 14 天，兩句計數，下面一顆一段。
 /// 只陳述：不跟上一段比、沒有百分比、沒有紅字。數字都是 Core 算的，這裡只畫。
 struct StatsPanel<Footer: View>: View {
@@ -14,6 +24,13 @@ struct StatsPanel<Footer: View>: View {
     /// 換這週、這個月與前後翻的那排
     @ViewBuilder var footer: Footer
 
+    @AppStorage(StatsChart.storageKey) private var chart = StatsChart.bars
+
+    private let charts = [
+        SegmentOption(value: StatsChart.bars, label: Words.chartBars),
+        SegmentOption(value: StatsChart.donut, label: Words.chartDonut),
+    ]
+
     var body: some View {
         VStack(spacing: Tokens.Layout.group) {
             whereCard(Stats.stats(state, keys: Stats.rangeDays(range, selected: selected)))
@@ -22,16 +39,26 @@ struct StatsPanel<Footer: View>: View {
         .padding(.top, Tokens.Layout.section)
     }
 
-    /// 第一張：這段時間花在哪幾種事上。
+    /// 第一張：這段時間花在哪幾種事上。這段沒有番茄就沒有切換：沒有東西可以換著看。
     private func whereCard(_ result: StatsResult) -> some View {
         let longest = max(1, result.tags.map(\.minutes).max() ?? 1)
         return VStack(alignment: .leading, spacing: Tokens.Space.m) {
-            StatsTitle(text: Words.whereTitle(period))
+            HStack(spacing: Tokens.Space.s) {
+                StatsTitle(text: Words.whereTitle(period))
+                if !result.tags.isEmpty {
+                    Spacer(minLength: Tokens.Space.s)
+                    Segmented(options: charts, value: chart, small: true) { chart = $0 }
+                        .fixedSize()
+                }
+            }
             if result.tags.isEmpty {
                 StatsNote(text: Words.statsEmpty)
             } else {
+                if chart == .donut {
+                    StatsDonut(tags: result.tags, minutes: result.minutes)
+                }
                 ForEach(result.tags, id: \.type.id) { tag in
-                    tagRow(tag, longest: longest)
+                    tagRow(tag, longest: chart == .bars ? longest : nil)
                 }
                 let fact = Words.focusFact(period, minutes: result.minutes, beans: result.beans)
                 StatsNote(text: fact)
@@ -42,11 +69,11 @@ struct StatsPanel<Footer: View>: View {
         .modifier(StatsCard())
     }
 
-    /// 一個標籤一列：小番茄、名字、右邊多久與幾顆；下面一條橫條。
+    /// 一個標籤一列：小番茄、名字、右邊多久與幾顆；長條時下面一條橫條，圓餅時這列就是圖例（longest 是 nil）。
     /// 橫條的長度是專注時間，都從左邊開始，最長的那條頂到底；沒有底條（不是要填滿的進度）。
-    private func tagRow(_ tag: StatsTag, longest: Double) -> some View {
-        let name = tag.removed ? Words.removedName(tag.type.name) : tag.type.name
-        let amount = Words.tagAmount(tag.minutes, beans: tag.beans)
+    private func tagRow(_ tag: StatsTag, longest: Double?) -> some View {
+        let name = tag.shownName
+        let amount = tag.amount
         return VStack(alignment: .leading, spacing: Tokens.Space.xs) {
             HStack(spacing: Tokens.Space.s) {
                 TomatoView(color: tag.type.color, size: Tokens.Shape.blockIcon * 1.5)
@@ -59,15 +86,19 @@ struct StatsPanel<Footer: View>: View {
                     .font(Tokens.Fonts.caption)
                     .foregroundStyle(Tokens.Colors.textSecondary)
             }
-            GeometryReader { proxy in
-                Capsule()
-                    .fill(Tokens.Tomato.body(tag.type.color).color)
-                    .frame(width: barWidth(tag.minutes / longest, room: proxy.size.width))
+            if let longest {
+                GeometryReader { proxy in
+                    Capsule()
+                        .fill(Tokens.Tomato.body(tag.type.color).color)
+                        .frame(width: barWidth(tag.minutes / longest, room: proxy.size.width))
+                }
+                .frame(height: Tokens.Rack.statsShare)
             }
-            .frame(height: Tokens.Rack.statsShare)
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(name)，\(amount)")
+        // 圓餅時每一塊自己念一樣的字，圖例再念一次就重複了
+        .accessibilityHidden(longest == nil)
     }
 
     /// 再短也留一個圓點那麼寬，才看得到是哪個顏色。
@@ -95,6 +126,54 @@ struct StatsPanel<Footer: View>: View {
             }
         }
         .modifier(StatsCard())
+    }
+}
+
+/// 圓餅（甜甜圈）：一個標籤一塊，大小是專注時間，由多到少從正上方順時針排；中間空心寫這段總共多久。
+/// 不寫百分比：小樣本的幾成會被讀成結論（.analytics/06-三層結構.md 不做「各標籤占幾成」）。
+/// 中間那句用次要的小字：專注時間是護欄，不放大。下面那行事實已經念了總數，讀屏不念中間。
+struct StatsDonut: View {
+    var tags: [StatsTag]
+    var minutes: Double
+
+    private var hole: CGFloat {
+        Tokens.Donut.size - Tokens.Donut.ring * 2
+    }
+
+    var body: some View {
+        Chart(tags, id: \.type.id) { tag in
+            SectorMark(
+                angle: .value(Words.chartDonut, tag.minutes),
+                innerRadius: .fixed(hole / 2),
+                // 只有一塊時不留縫，不然正上方會缺一口
+                angularInset: tags.count > 1 ? Tokens.Donut.gap : 0
+            )
+            .foregroundStyle(Tokens.Tomato.body(tag.type.color).color)
+            .accessibilityLabel(tag.shownName)
+            .accessibilityValue(tag.amount)
+        }
+        .frame(width: Tokens.Donut.size, height: Tokens.Donut.size)
+        .overlay {
+            Text(Words.duration(minutes))
+                .font(Tokens.Fonts.sub)
+                .foregroundStyle(Tokens.Colors.textSecondary)
+                .lineLimit(1)
+                .minimumScaleFactor(Tokens.Donut.shrink)
+                .frame(width: hole - Tokens.Space.m * 2)
+                .accessibilityHidden(true)
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
+/// 長條那一列與圓餅那一塊共用的字：刪掉的標籤註明（已刪除）；右邊多久與幾顆。
+private extension StatsTag {
+    var shownName: String {
+        removed ? Words.removedName(type.name) : type.name
+    }
+
+    var amount: String {
+        Words.tagAmount(minutes, beans: beans)
     }
 }
 

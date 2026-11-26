@@ -50,6 +50,7 @@ enum Tokens {
         static let sub = DomyTokens.TypeScale.subheadline.font
         static let chip = Font.system(.subheadline).weight(.semibold)
         static let caption = DomyTokens.TypeScale.footnote.font
+        static let chipSmall = Font.system(.footnote).weight(.semibold)
         static let tab = DomyTokens.TypeScale.caption.font
         static let button = DomyTokens.TypeScale.headline.font
 
