@@ -24,7 +24,7 @@ def day_key(ms):
     return time.strftime("%Y-%m-%d", time.localtime(ms / 1000))
 
 
-def bean(start, length, type_id, clue="", flow=0, notes=(), pings=()):
+def bean(start, length, type_id, clue="", flow=0, notes=(), pings=(), doing=""):
     return {
         "t": start + (length + flow) * MIN,
         "start": start,
@@ -34,6 +34,7 @@ def bean(start, length, type_id, clue="", flow=0, notes=(), pings=()):
         "notes": list(notes),
         "pings": list(pings),
         "flow": flow,
+        "doing": doing,
     }
 
 
@@ -47,9 +48,13 @@ def add(start, length, type_id, **more):
 
 
 # 今天：往回推，三顆加一次作廢，都在現在以前
-add(now - 4 * HOUR, 25, "t1", clue="把第二節寫完")
+add(now - 4 * HOUR, 25, "t1", clue="把第二節寫完", doing="寫第三章")
 # 記一筆：一筆有寫字的念頭，兩筆沒寫字的有人找（分析第二張會合成「有人找 2 次」）
-add(now - 3 * HOUR, 50, "t2", flow=15, notes=["要回信給出版社"], pings=["", ""])
+add(
+    now - 3 * HOUR, 50, "t2", flow=15, notes=["要回信給出版社"], pings=["", ""],
+    doing="整理讀書筆記",
+    clue="讀完這一章，整理了三個想試的做法。下次從標記的段落開始，用自己的話重寫一遍，再挑一個今天就做。",
+)
 add(now - 100 * MIN, 30, "t3")
 days[day_key(now)]["voids"].append(
     {"t": now - 60 * MIN, "typeId": "t1", "minute": 7, "reason": "訊息", "text": "去看留言"}
@@ -74,7 +79,9 @@ elif scenario == "bell":
     current = {
         "phase": "focus", "typeId": "t2", "len": 50, "startedAt": now - 51 * MIN,
         "endAt": now - 1 * MIN, "notes": ["查一下引用格式"], "pings": ["小美：下午的會"],
-        "flowed": False, "flowMin": 0, "done": False, "draft": "",
+        "flowed": False, "flowMin": 0, "done": False,
+        # 多行的專注筆記：收據上只露前三行
+        "draft": "第一節改完了。\n開頭那段太長，砍掉一半。\n例子換成上週那個客戶的。\n下次從第二節的圖開始。",
     }
 elif scenario == "rest":
     current = {

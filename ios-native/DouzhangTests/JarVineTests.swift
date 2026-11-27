@@ -95,7 +95,8 @@ final class JarVineTests: XCTestCase {
 
     func test斷開那一格畫面接得起來不會跳() throws {
         let scene = hanging()
-        JarLab.play(scene, seconds: JarHang.growTime)
+        // 走到斷開前 0.6 秒，接下來 1.2 秒一格一格看，斷開那格落在中間（晃的時間照擺長變長了）
+        JarLab.play(scene, seconds: JarHang.cutAt - 0.7)
         var spots: [CGPoint] = []
         for _ in 0 ..< 144 {
             JarLab.frame(scene, 1 / 120)
@@ -201,11 +202,12 @@ final class JarVineTests: XCTestCase {
     }
 
     func test藤還在縮的時候果子已經落定了也不睡() async {
-        // 矮到掛著就快碰到底：一斷就落地，藤還在縮
+        // 矮到掛著就快碰到底：一斷就落地，藤還在縮。走到藤縮完再多一點（晃的時間照擺長變長了）
         let scene = JarScene()
-        scene.layout(width: 393, height: 160, beans: [red], seen: 0)
+        scene.layout(width: 393, height: 150, beans: [red], seen: 0)
         var landed = 0
-        for _ in 0 ..< 200 {
+        let ticks = Int((JarHang.cutAt + JarHang.retractTime) / JarTuning.tick) + 20
+        for _ in 0 ..< ticks {
             JarLab.play(scene, seconds: JarTuning.tick)
             await Task.yield()
             let down = scene.world.bodies.first.map { !$0.fresh } ?? false
