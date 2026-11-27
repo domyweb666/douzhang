@@ -3,6 +3,7 @@ import Observation
 
 /// 番茄堆的現場：物理世界、每顆的顏色、傾斜、音效與觸覺。畫面每一幀叫 advance，再照 bodies 畫。
 /// 番茄都躺好之後就睡著（asleep），畫面停止每幀重畫；點一下、掉新的一顆、手機一傾斜就醒來。
+/// 新的一顆怎麼掛、怎麼掉、放不下怎麼縮在 JarScene+Drop。
 @MainActor
 @Observable
 final class JarScene {
@@ -10,13 +11,15 @@ final class JarScene {
     private(set) var asleep = false
 
     @ObservationIgnored var world = JarWorld(tuning: .standard)
-    @ObservationIgnored private var colors: [Int: TomatoColor] = [:]
+    @ObservationIgnored var colors: [Int: TomatoColor] = [:]
+    /// 這週的番茄放不下時，全部的半徑都乘上這個（JarFit）；放得下是 1
+    @ObservationIgnored var scale = 1.0
     @ObservationIgnored private var beans: [JarBean] = []
     /// 上次看到幾顆；nil＝還沒量到寬高、還沒安置
     @ObservationIgnored private(set) var known: Int?
     @ObservationIgnored private var pending: [(dueAt: TimeInterval, bean: JarBean)] = []
     /// 還掛在藤上、沒掉進物理世界的
-    @ObservationIgnored private(set) var vines = JarVines()
+    @ObservationIgnored var vines = JarVines()
     @ObservationIgnored private var lastFrame: TimeInterval = 0
     /// 走過了但還不夠一步的時間
     @ObservationIgnored private var leftover: TimeInterval = 0
@@ -24,7 +27,7 @@ final class JarScene {
     @ObservationIgnored private(set) var glow = JarGlow()
     @ObservationIgnored private var quiet = JarQuiet()
     @ObservationIgnored private var slow = SlowWatch()
-    @ObservationIgnored private let sounds = JarSounds.shared
+    @ObservationIgnored let sounds = JarSounds.shared
     @ObservationIgnored let sensor = JarTilt.shared
     /// 重力要往哪個方向去（傾斜），每一步靠過去一點
     @ObservationIgnored var targetX = 0.0
@@ -38,6 +41,8 @@ final class JarScene {
     /// 三頁正在滑、或停在別頁：感測器的讀數不理，不醒來
     @ObservationIgnored private(set) var frozen = false
     @ObservationIgnored var onKnown: (Int) -> Void = { _ in }
+    /// 上一幀走了幾步（量測用）
+    @ObservationIgnored private(set) var lastSteps = 0
 
     var isStill: Bool {
         reduceMotion || slow.tooSlow
@@ -52,7 +57,7 @@ final class JarScene {
         colors[body.id] ?? .red
     }
 
-    // MARK: 跟上今天的番茄
+    // MARK: 跟上這週的番茄
 
     /// 第一次量到寬高：先擺上次看到的那些，多出來的（鈴響時收下的）再照常掉進來。
     func layout(width: Double, height: Double, beans: [JarBean], seen: Int?) {
@@ -66,7 +71,7 @@ final class JarScene {
     }
 
     /// 回到待機接著用上次的現場：上次那些原樣在前面就只掉多的；殼記的顆數對不上（那時合進別台的）、
-    /// 前面換了顏色或大小（改標籤、換日）就照第一次擺。殼說整份換過了照同步躺好；還沒量過寬高的由 layout 擺。
+    /// 前面換了顏色或大小（改標籤、換週）就照第一次擺。殼說整份換過了照同步躺好；還沒量過寬高的由 layout 擺。
     /// 掉幀重新數：以前每次回來都新建一個，退成靜止版的也重新給一次機會。
     func resume(_ next: [JarBean], seen: Int?) {
         guard let known else { return }
@@ -79,7 +84,7 @@ final class JarScene {
         follow(next)
     }
 
-    /// 多一顆就掉一顆；數目對不上（換日、匯入、清空）就重新安置。
+    /// 多一顆就掉一顆；數目對不上（換週、匯入、清空）就重新安置。同一週換日清單不變，這裡不會被叫。
     /// drops 是 false：整份換過了（同步、匯入、清空），多的是別台收的，直接躺好。
     /// 顆數一樣也可能是別的番茄，所以看內容有沒有變。
     func follow(_ next: [JarBean], drops: Bool = true) {
@@ -102,11 +107,20 @@ final class JarScene {
         wake()
     }
 
+    /// 照這份重新安置。超過顆數上限只擺最近的那些；放不下就全部等比縮小。
     private func seed(_ list: [JarBean]) {
         vines.keepOnly(nil)
-        world.seed(list.map { world.radiusFor(minutes: $0.len) })
+        let shown = Array(list.suffix(world.tuning.maxBeans))
+        let sizes = shown.map { world.radiusFor(minutes: $0.len) }
+        scale = JarFit.scale(
+            radii: sizes,
+            width: world.width,
+            height: world.height,
+            share: world.tuning.fillShare
+        )
+        world.seed(sizes.map { $0 * scale })
         colors = [:]
-        for (body, bean) in zip(world.bodies, list) {
+        for (body, bean) in zip(world.bodies, shown) {
             colors[body.id] = bean.color
         }
         known = list.count
@@ -141,45 +155,6 @@ final class JarScene {
         }
     }
 
-    private func add(_ body: JarBody, color: TomatoColor) {
-        world.addBody(body)
-        if let added = world.bodies.last {
-            colors[added.id] = color
-        }
-    }
-
-    /// 新的一顆：掛上藤，晃一晃才掉。靜止版直接出現在底。
-    private func drop(_ bean: JarBean) {
-        let count = world.bodies.count + vines.holding.count
-        guard count < world.tuning.maxBeans else { return }
-        if isStill {
-            lay(bean)
-        } else {
-            let radius = world.radiusFor(minutes: bean.len)
-            vines.hang(bean, radius: radius, width: world.width)
-        }
-    }
-
-    private func lay(_ bean: JarBean) {
-        let radius = world.radiusFor(minutes: bean.len)
-        let x = world.width / 2 + Double.random(in: -1 ... 1) * radius
-        var body = JarBody(id: 0, x: x, y: world.height - radius, radius: radius)
-        body.angle = world.randomLean()
-        add(body, color: bean.color)
-        world.liftOut()
-        sounds.land(sound: soundOn)
-    }
-
-    /// 藤斷了：果子掉進物理世界。上一步還掛著的位置也帶過去，畫面才接得起來。
-    private func release(_ vine: JarVine) {
-        add(vine.fallen(), color: vine.bean.color)
-        let before = vine.pose(at: JarHang.cutAt - JarTuning.tick)
-        let last = world.bodies.count - 1
-        world.bodies[last].prevX = before.x
-        world.bodies[last].prevY = before.y
-        world.bodies[last].prevAngle = -before.angle
-    }
-
     // MARK: 每一幀
 
     /// 走一幀：先把該掉的掉下來，再走物理、處理落地與碰撞。now 是這一幀的時刻（秒）。
@@ -201,7 +176,7 @@ final class JarScene {
             return
         }
         lastFrame = now
-        stepWorld(min(Tokens.Motion.frameMax, elapsed))
+        lastSteps = stepWorld(min(Tokens.Motion.frameMax, elapsed))
         if !world.landed.isEmpty {
             beat.landed(now: now)
             sounds.land(sound: soundOn)
@@ -212,11 +187,14 @@ final class JarScene {
     }
 
     /// 這一幀的時間切成固定的步走，不夠一步的留到下一幀：120Hz 一幀一步、60Hz 一幀兩步，手感一樣。
-    private func stepWorld(_ seconds: Double) {
+    /// 回這一幀走了幾步。
+    private func stepWorld(_ seconds: Double) -> Int {
         world.impact = 0
         world.landed = []
         leftover += seconds
+        var steps = 0
         while leftover >= JarTuning.tick {
+            steps += 1
             leftover -= JarTuning.tick
             world.gravityX += (targetX - world.gravityX) * JarTuning.tiltPull
             world.gravityY += (targetY - world.gravityY) * JarTuning.tiltPull
@@ -228,6 +206,7 @@ final class JarScene {
                 sleepSoon()
             }
         }
+        return steps
     }
 
     /// 還有要掉的，或藤還沒縮完：不准睡
@@ -239,7 +218,7 @@ final class JarScene {
     private func settleQuietly() {
         sensor.stop(for: self)
         for vine in vines.holding {
-            lay(vine.bean)
+            lay(vine.bean, radius: vine.radius)
         }
         vines = JarVines()
         if pending.isEmpty, !glow.isOn {

@@ -1,10 +1,11 @@
+import QuartzCore
 import SwiftUI
 
-/// 番茄堆：今天的番茄躺在最下面；收下一顆就從上緣掛下來，晃一晃斷了才掉，落地那一幀「啵」＋短觸覺。
+/// 番茄堆：這週的番茄躺在最下面（週一清空）；收下一顆就從上緣掛下來，晃一晃斷了才掉，落地那一幀「啵」＋短觸覺。
 /// 傾斜手機番茄跟著滾（設定可關）、點一下彈、碰撞有聲音與觸覺、掉幀就退成靜止版（點了亮一下）。
 /// 物理在 Core/JarPhysics.swift，現場在 JarScene；這裡只負責每一幀畫出來。
 struct JarView: View {
-    /// 今天的番茄（依時間排）：分鐘決定大小，標籤決定顏色
+    /// 這週的番茄（依時間排）：分鐘決定大小，標籤決定顏色
     var beans: [JarBean]
     var sound: Bool
     var tilt: Bool
@@ -82,7 +83,7 @@ struct JarView: View {
     }
 
     private var a11yLabel: String {
-        beans.isEmpty ? Words.todayBeans : "\(Words.todayBeans) \(beans.count)"
+        beans.isEmpty ? Words.weekBeans : "\(Words.weekBeans) \(beans.count)"
     }
 
     private func start() {
@@ -119,42 +120,74 @@ struct JarView: View {
     }
 }
 
-/// 番茄堆的每一幀。睡著或凍著時不畫。
+/// 番茄堆的每一幀：跟著螢幕刷新（JarClock）。睡著或凍著時時鐘停掉，不再每格重畫。
 private struct JarCanvas: View {
     var scene: JarScene
     var beans: [JarBean]
     var seen: Int?
     var frozen: Bool
 
+    @State private var clock = JarClock()
+    @State private var sprites = JarSprites()
+    @Environment(\.displayScale) private var displayScale
+
     var body: some View {
-        let paused = scene.asleep || frozen
-        TimelineView(.animation(minimumInterval: JarTuning.redraw, paused: paused)) { timeline in
-            Canvas { context, size in
-                scene.layout(
-                    width: size.width,
-                    height: size.height,
-                    beans: beans,
-                    seen: seen
-                )
-                scene.advance(now: timeline.date.timeIntervalSinceReferenceDate)
-                drawPile(&context)
-                drawVines(&context)
+        let running = !(scene.asleep || frozen)
+        // 在這裡讀：每一格時刻一變，這頁就重畫一次
+        let now = clock.now
+        Canvas { context, size in
+            #if DEBUG
+                let began = CACurrentMediaTime()
+                let interval = JarMeter.signposter.beginInterval("番茄堆一格")
+            #endif
+            scene.layout(width: size.width, height: size.height, beans: beans, seen: seen)
+            // 時鐘還沒開（剛醒來那一下）只畫不走：不拿停下來之前的舊時刻算
+            if let now {
+                scene.advance(now: now)
             }
+            drawPile(&context)
+            drawVines(&context)
+            #if DEBUG
+                JarMeter.signposter.endInterval("番茄堆一格", interval)
+                if let now {
+                    let spent = CACurrentMediaTime() - began
+                    clock.meter.frame(now: now, steps: scene.lastSteps, work: spent)
+                }
+            #endif
         }
+        .onAppear { clock.run(running) }
+        .onDisappear { clock.stop() }
+        .onChange(of: running) { _, next in clock.run(next) }
     }
 
     /// 畫的是前後兩步之間的位置：物理一秒固定走 120 步，螢幕刷新落在哪裡就補到哪裡。
+    /// 每種顏色先畫好的圖只做位移、旋轉、縮放；靜止版亮著的那陣子顏色會變，照原本一筆一筆畫。
     private func drawPile(_ context: inout GraphicsContext) {
         let blend = scene.blend
+        var resolved: [TomatoColor: GraphicsContext.ResolvedImage] = [:]
         for body in scene.world.bodies {
             let shown = body.between(blend)
-            TomatoArt.draw(
-                &context,
-                center: CGPoint(x: shown.x, y: shown.y),
-                radius: shown.radius,
-                angle: shown.angle,
-                fill: fill(body)
-            )
+            let tag = scene.color(of: body)
+            if resolved[tag] == nil, !scene.glow.isOn {
+                let image = sprites.image(tag, displayScale: displayScale)
+                resolved[tag] = image.map { context.resolve($0) }
+            }
+            guard let sprite = resolved[tag] else {
+                TomatoArt.draw(
+                    &context,
+                    center: CGPoint(x: shown.x, y: shown.y),
+                    radius: shown.radius,
+                    angle: shown.angle,
+                    fill: fill(body)
+                )
+                continue
+            }
+            var layer = context
+            layer.translateBy(x: shown.x, y: shown.y)
+            layer.rotate(by: .radians(shown.angle))
+            let side = shown.radius * 2
+            let spot = CGRect(x: -shown.radius, y: -shown.radius, width: side, height: side)
+            layer.draw(sprite, in: spot)
         }
     }
 

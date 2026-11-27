@@ -7,13 +7,16 @@ extension AppModel {
 
     /// 開始一顆。只有第一次（還沒問過）才會真的跳通知權限的框；問不到也照樣開始。
     func start(typeId: String? = nil) {
-        Task {
-            let granted = await notifier.askOnce()
-            notif = granted ? .granted : .denied
-            let zone = Store.zoneNow()
-            idleLine = nil
-            commit(Machine.start(settled(), now: TimeText.nowMillis(), typeId: typeId, zone: zone))
-        }
+        Task { await startNow(typeId: typeId) }
+    }
+
+    /// 同上，開始好了才回來：鎖定畫面卡片上的開始鈕要等狀態換好（AppModel+Live）。
+    func startNow(typeId: String? = nil) async {
+        let granted = await notifier.askOnce()
+        notif = granted ? .granted : .denied
+        let zone = Store.zoneNow()
+        idleLine = nil
+        commit(Machine.start(settled(), now: TimeText.nowMillis(), typeId: typeId, zone: zone))
     }
 
     func keep(text: String) {

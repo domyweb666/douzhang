@@ -21,6 +21,8 @@ struct JarWorld {
     var landed: [Int] = []
     /// 開始鈕、分頁列：番茄撞到會被擋，可以停在上面。換的時候走 setObstacles，壓在裡面的才會搬出來
     var obstacles: [JarObstacle] = []
+    /// 這一步可能碰到的那幾對：推開與互相帶著轉都只看這些
+    private(set) var pairs: [JarPair] = []
     private var nextId = 0
 
     init(tuning: JarTuning) {
@@ -29,6 +31,7 @@ struct JarWorld {
     }
 
     /// 這顆多長（分鐘）→ 半徑：面積跟分鐘成正比，所以半徑跟√分鐘走，夾在 sizeMin–sizeMax 倍。
+    /// 這是放得下時的大小；一週的番茄放不下時，現場再照 JarFit 全部等比縮小。
     func radiusFor(minutes: Double) -> Double {
         let ratio = (minutes / tuning.sizeRefMinutes).squareRoot()
         return tuning.radius * min(tuning.sizeMax, max(tuning.sizeMin, ratio))
@@ -46,6 +49,13 @@ struct JarWorld {
         added.id = nextId
         added.markStep()
         bodies.append(added)
+    }
+
+    /// 全部等比縮放（多一顆放不下了）：只改大小不搬位置，縮出來的空隙讓重力自己補上。
+    mutating func rescale(by ratio: Double) {
+        for index in bodies.indices {
+            bodies[index].radius *= ratio
+        }
     }
 
     private mutating func integrate(_ step: Double) {
@@ -80,14 +90,12 @@ struct JarWorld {
         }
     }
 
-    private mutating func collide(_ first: Int, _ second: Int) {
-        let reach = bodies[first].radius + bodies[second].radius
-        // 左右就離得夠遠的先跳過：四十顆一步要看三千多對，整顆抄出來再看，開機安置會拖到兩倍久
-        if abs(bodies[second].x - bodies[first].x) >= reach {
-            return
-        }
-        var one = bodies[first]
-        var two = bodies[second]
+    /// 大的比較重：反彈的衝量照質量（半徑平方）分，小的撞大的會被彈開、大的幾乎不動。
+    /// 推開的距離只照半徑分：照半徑平方的話，夾在兩顆大的中間的小顆每次都被推回去，會被壓進去十幾點。
+    private mutating func collide(_ pair: JarPair) {
+        var one = bodies[pair.first]
+        var two = bodies[pair.second]
+        let reach = one.radius + two.radius
         let deltaX = two.x - one.x
         let deltaY = two.y - one.y
         let squared = deltaX * deltaX + deltaY * deltaY
@@ -97,31 +105,27 @@ struct JarWorld {
         let distance = squared.squareRoot()
         let normalX = deltaX / distance
         let normalY = deltaY / distance
-        let overlap = (reach - distance) / 2
-        one.x -= normalX * overlap
-        one.y -= normalY * overlap
-        two.x += normalX * overlap
-        two.y += normalY * overlap
+        let overlap = reach - distance
+        let pushOne = overlap * two.radius / reach
+        let pushTwo = overlap - pushOne
+        one.x -= normalX * pushOne
+        one.y -= normalY * pushOne
+        two.x += normalX * pushTwo
+        two.y += normalY * pushTwo
         let closing = (two.velX - one.velX) * normalX + (two.velY - one.velY) * normalY
         if closing < 0 {
             landOnPile(&one, &two)
-            let impulse = (-tuning.beanRest * closing) / 2
-            one.velX -= impulse * normalX
-            one.velY -= impulse * normalY
-            two.velX += impulse * normalX
-            two.velY += impulse * normalY
+            let massOne = one.radius * one.radius
+            let massTwo = two.radius * two.radius
+            let impulse = -tuning.beanRest * closing / (massOne + massTwo)
+            one.velX -= impulse * massTwo * normalX
+            one.velY -= impulse * massTwo * normalY
+            two.velX += impulse * massOne * normalX
+            two.velY += impulse * massOne * normalY
             impact = max(impact, -closing)
         }
-        bodies[first] = one
-        bodies[second] = two
-    }
-
-    private mutating func solvePairs() {
-        for first in bodies.indices {
-            for second in bodies.indices where second > first {
-                collide(first, second)
-            }
-        }
+        bodies[pair.first] = one
+        bodies[pair.second] = two
     }
 
     /// 撞牆：反彈保留 wallRest；回報最大撞擊速度。位置由呼叫端壓回牆內。回傳有沒有真的撞上去。
@@ -134,19 +138,20 @@ struct JarWorld {
         return true
     }
 
-    private mutating func solveWalls(_ seconds: Double) {
+    /// 壓回牆內、反彈；碰到了什麼記在 touches，摩擦等這一步最後再扣。
+    private mutating func solveWalls(_ touches: inout [JarTouch]) {
         for index in bodies.indices {
             var body = bodies[index]
             let radius = body.radius
             if body.x < radius {
                 body.x = radius
                 bounce(&body.velX, sign: -1)
-                body.velY *= tuning.wallFric
+                touches[index].wall = true
             }
             if body.x > width - radius {
                 body.x = width - radius
                 bounce(&body.velX, sign: 1)
-                body.velY *= tuning.wallFric
+                touches[index].wall = true
             }
             if body.y > height - radius {
                 body.y = height - radius
@@ -155,7 +160,7 @@ struct JarWorld {
                     body.fresh = false
                     landed.append(body.id)
                 }
-                body.velX = tuning.rolled(body.velX, seconds: seconds)
+                touches[index].floor = true
             }
             // 上緣：從上面外面掉進來的可以在上面；落定的、已經整顆進來過的（斷藤那顆）不准飛出去
             if body.y < radius, !body.fresh || body.prevY >= radius {
@@ -164,7 +169,9 @@ struct JarWorld {
             }
             // 牆之後才擋路的東西：牆把被擠出去的壓回來時會壓進分頁列的圓頭，最後一步要是推出來（推的時候不出牆）
             for obstacle in obstacles {
-                push(&body, from: obstacle, seconds: seconds)
+                if let normal = push(&body, from: obstacle) {
+                    touches[index].surface = normal
+                }
             }
             bodies[index] = body
         }
@@ -176,19 +183,25 @@ struct JarWorld {
             bodies[index].markStep()
         }
         integrate(seconds)
+        pairs = JarWorld.nearPairs(bodies, slack: tuning.pairSlack)
+        var touches = Array(repeating: JarTouch(), count: bodies.count)
         for _ in 0 ..< tuning.iterations {
-            solvePairs()
-            solveWalls(seconds)
+            for pair in pairs {
+                collide(pair)
+            }
+            solveWalls(&touches)
         }
+        rub(touches, seconds: seconds)
         roll(seconds)
     }
 
     /// 開機安置：照每顆的半徑隨機撒，靜置重力預跑 settleSteps 步，進畫面時番茄已經落定。
+    /// 超過顆數上限只撒最後（最近）的那些。
     mutating func seed(_ radii: [Double]) {
         bodies = []
         landed = []
         guard width > 0, height > 0 else { return }
-        for radius in radii.prefix(tuning.maxBeans) {
+        for radius in radii.suffix(tuning.maxBeans) {
             let x = radius + Double.random(in: 0 ... 1) * max(0, width - 2 * radius)
             let y = radius + Double.random(in: 0 ... 1) * max(0, height - 2 * radius)
             addBody(JarBody(id: 0, x: x, y: y, radius: radius))
@@ -209,7 +222,10 @@ struct JarWorld {
             bodies[index].markStep()
         }
     }
+}
 
+/// 點一下。
+extension JarWorld {
     /// 點一下：影響半徑內的番茄往上彈、往離開手指的方向推。
     mutating func tap(x: Double, y: Double) {
         for index in bodies.indices {
@@ -229,70 +245,5 @@ struct JarWorld {
         let near = bodies.min { hypot($0.x - x, $0.y - y) < hypot($1.x - x, $1.y - y) }
         guard let near, hypot(near.x - x, near.y - y) < tuning.tapRadius else { return nil }
         return near.id
-    }
-}
-
-extension JarWorld {
-    /// 轉動：只算每顆的角度，不回頭動位置與速度，所以原本怎麼掉、怎麼堆都不變。
-    /// 用「這一步實際移動了多少」算，不用速度：躺好的番茄速度每步都在抖，位置才是真的沒動。
-    /// 實際移動還要再平滑過：擠在堆裡的番茄會原地來回抖，不濾掉的話位置沒動、臉卻慢慢轉走。
-    /// 貼著底的往「滾動不打滑」靠；兩顆貼在一起的互相帶（像齒輪）；半空中的照原本的轉速慢慢停。
-    /// 牆不帶轉：整排落回底時，貼著左右牆的那兩顆會被牆搓到每秒轉好幾圈，再一顆帶一顆。
-    private mutating func roll(_ seconds: Double) {
-        let spin = tuning.spin
-        for index in bodies.indices {
-            var body = bodies[index]
-            body.easedX += ((body.x - body.prevX) / seconds - body.easedX) * spin.smooth
-            body.easedY += ((body.y - body.prevY) / seconds - body.easedY) * spin.smooth
-            if body.y >= height - body.radius - spin.touch {
-                body.spin += (moved(body.easedX) / body.radius - body.spin) * spin.grip
-            } else if let normal = touching(body) {
-                // 貼著開始鈕、分頁列：跟在底上一樣沿著表面滾不打滑，不然從圓頂滑下去像冰塊
-                let along = body.easedY * normal.x - body.easedX * normal.y
-                body.spin += (moved(along) / body.radius - body.spin) * spin.grip
-            }
-            bodies[index] = body
-        }
-        for first in bodies.indices {
-            for second in bodies.indices where second > first {
-                gear(first, second)
-            }
-        }
-        for index in bodies.indices {
-            var turning = bodies[index].spin * spin.air
-            if abs(turning) < spin.sleep {
-                turning = 0
-            }
-            bodies[index].spin = turning
-            bodies[index].angle += turning * seconds
-        }
-    }
-
-    /// 不到 still 的移動當作沒動。
-    private func moved(_ speed: Double) -> Double {
-        abs(speed) > tuning.spin.still ? speed : 0
-    }
-
-    /// 兩顆貼在一起：沿著接觸面，兩顆實際的相對移動；扣掉各自轉動帶的，
-    /// 剩下的是接觸點互搓多少，兩顆各分一半。
-    private mutating func gear(_ first: Int, _ second: Int) {
-        let reach = bodies[first].radius + bodies[second].radius + tuning.spin.touch
-        if abs(bodies[second].x - bodies[first].x) > reach {
-            return
-        }
-        let one = bodies[first]
-        let two = bodies[second]
-        let deltaX = two.x - one.x
-        let deltaY = two.y - one.y
-        let distance = hypot(deltaX, deltaY)
-        if distance > reach || distance <= JarWorld.minTouchGap {
-            return
-        }
-        let relative = (two.easedX - one.easedX) * -deltaY + (two.easedY - one.easedY) * deltaX
-        let along = relative / distance
-        let carried = one.spin * one.radius + two.spin * two.radius
-        let slip = (moved(along) - carried) * tuning.spin.grip / 2
-        bodies[first].spin += slip / one.radius
-        bodies[second].spin += slip / two.radius
     }
 }

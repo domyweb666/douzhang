@@ -78,23 +78,35 @@ extension JarLab {
     }
 }
 
-/// 卡在原地抖的堆也會睡；正常掉、斜、滾的時候，睡著的那一步跟每顆怎麼動都跟改前一樣。
+/// 堆會睡：掉、斜、滾、點過之後都會再睡著，以前卡在原地抖的那幾堆也是。
+/// 原地抖本身的判斷在 JarQuietTests（不靠物理，直接餵抖的位置）。
 final class JarShakeTests: XCTestCase {
     private func step(_ seconds: Double) -> Int {
         JarLab.steps(seconds)
     }
 
-    func test掉落傾斜滾動時睡著那一步與每顆的位置跟改前一樣() {
+    /// 2026-11-27 物理改過（空氣阻力、摩擦一步一次、八次迭代、照大小分推開），改前逐顆的位置不再適用，
+    /// 改成看這一整段走完會睡、每顆都在罐子裡、沒有兩顆疊得太深。
+    func test掉落傾斜滾動之後會睡而且每顆都好好的() throws {
         let (tick, world) = JarLab.dropTiltRoll()
-        XCTAssertEqual(tick, JarShakeTests.beforeTick)
-        XCTAssertEqual(world.bodies.count, JarShakeTests.beforeSpots.count)
-        for (body, spot) in zip(world.bodies, JarShakeTests.beforeSpots) {
-            XCTAssertEqual(body.x, spot.x, accuracy: 0.01)
-            XCTAssertEqual(body.y, spot.y, accuracy: 0.01)
+        XCTAssertGreaterThan(try XCTUnwrap(tick), step(3.5))
+        XCTAssertEqual(world.bodies.count, 21)
+        for body in world.bodies {
+            XCTAssertGreaterThanOrEqual(body.x, body.radius - 0.5)
+            XCTAssertLessThanOrEqual(body.x, 402 - body.radius + 0.5)
+            XCTAssertLessThanOrEqual(body.y, 874 - body.radius + 0.5)
+        }
+        // 夾在大顆中間的小顆還是會被壓進去一點（推開照半徑平方分的話會到十幾點）
+        for (index, one) in world.bodies.enumerated() {
+            for two in world.bodies.dropFirst(index + 1) {
+                let apart = hypot(one.x - two.x, one.y - two.y) - one.radius - two.radius
+                XCTAssertGreaterThan(apart, -10)
+            }
         }
     }
 
-    /// 改前一直抖、不睡的堆（seed 照 seed × 7919 + 顆數；mixed 是大小隨機）。
+    /// 改物理前一直抖、不睡的堆（seed 照 seed × 7919 + 顆數；mixed 是大小隨機）。
+    /// 改了之後在模擬裡已經不抖了，留著確認照樣會睡。
     private struct Shaking {
         var seed: UInt32
         var count: Int
@@ -130,43 +142,36 @@ final class JarShakeTests: XCTestCase {
         return nil
     }
 
-    func test卡在原地抖的堆四秒內會睡停下那一下每顆走不到半點() throws {
+    func test以前會抖的堆四秒內會睡停下那一下每顆走不到半點() {
         for index in shaking.indices {
             var world = shakingPile(index)
             var quiet = JarQuiet()
-            let tick = try XCTUnwrap(untilSettled(&world, &quiet, limit: step(4)), "第 \(index) 堆")
+            XCTAssertNotNil(untilSettled(&world, &quiet, limit: step(4)), "第 \(index) 堆")
             let lastStep = world.bodies.map { hypot($0.x - $0.prevX, $0.y - $0.prevY) }.max() ?? 0
             XCTAssertLessThan(lastStep, 0.5, "第 \(index) 堆")
-            // 真的是抖的那種：放著不管再走 4 秒，之後那 1 秒還是有顆每 1/60 秒走超過門檻
-            var going = world
-            for _ in 0 ..< step(4) {
-                going.step(JarTuning.tick)
-            }
-            var most = 0.0
-            for _ in 0 ..< step(1) / 2 {
-                let before = going.bodies
-                going.step(JarTuning.tick)
-                going.step(JarTuning.tick)
-                for (old, new) in zip(before, going.bodies) {
-                    most = max(most, abs(new.x - old.x), abs(new.y - old.y))
-                }
-            }
-            XCTAssertGreaterThan(most, Tokens.Motion.quietDistance, "第 \(index) 堆，第 \(tick) 步睡")
         }
     }
 
-    func test抖到睡著後點一下會動起來動完再睡() throws {
+    func test睡著後點一下會動起來動完再睡() throws {
         var world = shakingPile(0)
         var quiet = JarQuiet()
         XCTAssertNotNil(untilSettled(&world, &quiet, limit: step(4)))
         let before = world.bodies
-        // 醒來：畫面那邊點一下就重新開始看
+        // 醒來：畫面那邊點一下就重新開始看。看彈起來時最遠離開多遠，落回去可能剛好回到原位附近
         quiet.restart()
         world.tap(x: 201, y: 850)
-        let again = try XCTUnwrap(untilSettled(&world, &quiet, limit: step(10)))
-        XCTAssertGreaterThan(again, step(0.5))
-        let moved = zip(before, world.bodies).map { hypot($1.x - $0.x, $1.y - $0.y) }.max() ?? 0
-        XCTAssertGreaterThan(moved, 10)
+        var farthest = 0.0
+        var again: Int?
+        for tick in 1 ... step(10) where again == nil {
+            world.step(JarTuning.tick)
+            let moved = zip(before, world.bodies).map { hypot($1.x - $0.x, $1.y - $0.y) }.max() ?? 0
+            farthest = max(farthest, moved)
+            if quiet.settled(world.bodies, isBusy: false) {
+                again = tick
+            }
+        }
+        XCTAssertGreaterThan(try XCTUnwrap(again), step(0.5))
+        XCTAssertGreaterThan(farthest, 10)
     }
 
     @MainActor
@@ -188,32 +193,4 @@ final class JarShakeTests: XCTestCase {
         XCTAssertTrue(scene.asleep)
         XCTAssertEqual(scene.world.bodies.count, beans.count + 1)
     }
-}
-
-/// 改前（2026-11-26，只看每 1/60 秒走不到 0.5 點、半秒淨移動不到 1 點）在模擬器上跑 dropTiltRoll 量到的。
-extension JarShakeTests {
-    static let beforeTick: Int? = 801
-    static let beforeSpots: [(x: Double, y: Double)] = [
-        (x: 86.2393, y: 860.0000),
-        (x: 124.3959, y: 769.3453),
-        (x: 110.5130, y: 642.3556),
-        (x: 236.7427, y: 829.5465),
-        (x: 38.3917, y: 835.6083),
-        (x: 269.9381, y: 758.4612),
-        (x: 365.7079, y: 837.6317),
-        (x: 304.3268, y: 847.7337),
-        (x: 314.6444, y: 699.9157),
-        (x: 70.6754, y: 731.8347),
-        (x: 271.2212, y: 648.8958),
-        (x: 21.6887, y: 777.9098),
-        (x: 183.2132, y: 755.8513),
-        (x: 154.3931, y: 835.6083),
-        (x: 311.4655, y: 798.5300),
-        (x: 238.8241, y: 699.4561),
-        (x: 29.0985, y: 670.1599),
-        (x: 362.8000, y: 762.2085),
-        (x: 96.1497, y: 801.6892),
-        (x: 349.1697, y: 614.1807),
-        (x: 180.9315, y: 681.3654),
-    ]
 }

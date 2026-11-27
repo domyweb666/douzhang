@@ -22,21 +22,17 @@ extension AppModel: CloudHost {
 
 /// 合併時的番茄堆：別台來的當成早就看過、直接躺好；這台自己收的那顆照樣從上面掉下來。
 extension AppModel {
-    /// 番茄堆照這個順序放：今天的照時間排，這台最近收的那顆排最後（番茄堆只掉最後一顆）。
-    /// 照時間排不夠：休息中合進來的、別支手機時鐘快的，會排到它後面，掉下來的就是別人的。
+    /// 番茄堆照這個順序放：這週的照時間排，這台最近收的那顆排最後（番茄堆只掉最後一顆）。
+    /// 同一週換日清單不變，番茄堆不重新安置；跨到下週一清單變空，番茄堆跟著清空。
     var jarBeans: [Bean] {
-        var list = (state.days[todayKey]?.beans ?? []).stableSorted { $0.keptAt }
-        if let mine = list.firstIndex(where: { $0.id == jarFresh }) {
-            list.append(list.remove(at: mine))
-        }
-        return list
+        JarWeek.beans(state, todayKey: todayKey, fresh: jarFresh)
     }
 
     /// 合完之後「上次看到幾顆」：扣掉這台收了、還沒掉下來的。
     /// 待機而且都掉完了是 nil，番茄堆當場照新的躺好。
     private func jarSeenAfter(_ merged: AppState) -> Int? {
-        let before = state.days[todayKey]?.beans.count ?? 0
-        let after = merged.days[todayKey]?.beans.count ?? 0
+        let before = JarWeek.count(state, todayKey: todayKey)
+        let after = JarWeek.count(merged, todayKey: todayKey)
         let unseen = max(0, before - (jarSeen ?? before))
         if phase == .idle, unseen == 0 {
             return nil

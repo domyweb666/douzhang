@@ -49,10 +49,6 @@ final class RackCrowdTests: XCTestCase {
         let blocks = RackCalendar.dayBlocks(day, key: key, minHours: minHours, roomyHours: 0.5)
         XCTAssertEqual(blocks.count, 7)
         try assertStacked(blocks)
-        // 天檢視照舊並排，不會當
-        let sides = RackCalendar.dayBlocks(day, key: key, minHours: minHours, sideBySide: true)
-        XCTAssertEqual(sides.last?.lanes, 7)
-        XCTAssertNotNil(RackCalendar.axisHours([sides]))
     }
 
     func test真的重疊的並排後面擠到的推到兩欄都空的地方() {
@@ -69,5 +65,51 @@ final class RackCrowdTests: XCTestCase {
         XCTAssertEqual(blocks[1].top, 9 + minHours, accuracy: 1e-9)
         XCTAssertEqual(blocks[2].top, 9 + minHours, accuracy: 1e-9)
         XCTAssertEqual(blocks[3].top, 9 + minHours * 2, accuracy: 1e-9)
+    }
+}
+
+/// 天檢視（多米 2026-11-27）：最矮放得下標籤名與長度，寫了字的下面有空才長。
+final class RackDayTests: XCTestCase {
+    private let key = "2026-11-17"
+
+    func test天檢視最矮放得下標籤名與長度兩行() {
+        let twoLines = Tokens.Layout.tight + Tokens.Rack.timelineLineDay * 2
+        XCTAssertGreaterThanOrEqual(
+            Tokens.Rack.timelineBlockMin,
+            twoLines + Tokens.Rack.timelineLaneGap
+        )
+    }
+
+    func test寫了在做什麼或筆記的下面有空才長到放得下沒寫的不長() {
+        var wrote = November.bean(17, 9, 0, len: 5)
+        wrote.clue = "寫完開頭"
+        let plain = November.bean(17, 10, 0, len: 5)
+        var squeezed = November.bean(17, 11, 0, len: 5)
+        squeezed.doing = "寫稿"
+        let next = November.bean(17, 11, 15, len: 25)
+        let blocks = RackCalendar.dayBlocks(
+            November.day(wrote, plain, squeezed, next),
+            key: key,
+            minHours: 0.25,
+            wordyHours: 0.75
+        )
+        XCTAssertEqual(Array(blocks.map(\.height).prefix(2)), [0.75, 0.25])
+        // 下一顆 15 分鐘後就開始：只長到碰到它為止
+        XCTAssertEqual(blocks[2].height, 0.25, accuracy: 1e-9)
+    }
+
+    func test作廢有寫在做什麼也不跟著長() {
+        var day = DayRecord()
+        var voided = VoidEntry(
+            voidedAt: Moment.local(2026, 11, 17, 10, 7),
+            typeId: "t1",
+            minute: 7,
+            reason: "",
+            text: ""
+        )
+        voided.doing = "寫稿"
+        day.voids = [voided]
+        let blocks = RackCalendar.dayBlocks(day, key: key, minHours: 0.25, wordyHours: 0.75)
+        XCTAssertEqual(blocks.first?.height, 0.25)
     }
 }

@@ -86,7 +86,8 @@ struct MonthDayCard: View {
     }
 }
 
-/// 那天的一顆番茄：標籤色底，左邊開始的時刻，中間做了什麼與寫給自己的那句，右邊多長。
+/// 那天的一顆番茄：標籤色底，左邊開始的時刻，中間標籤名、在做什麼、專注筆記，右邊多長。
+/// 跟時間軸的方塊一樣以標籤名為主（多米 2026-11-27）。
 struct MonthBeanRow: View {
     var item: TimelineItem
     var type: TagType
@@ -95,7 +96,7 @@ struct MonthBeanRow: View {
     @Environment(\.dynamicTypeSize) private var typeSize
 
     private var name: String {
-        Receipt.workName(item.doing, type: type)
+        type.name
     }
 
     var body: some View {
@@ -125,9 +126,13 @@ struct MonthBeanRow: View {
         .accessibilityLabel(Words.monthBeanA11y(item, name: name))
     }
 
+    /// 每樣最多兩行，筆記再長也只露兩行，結尾「…」。
     private var words: some View {
         VStack(alignment: .leading, spacing: Tokens.Layout.tight) {
             Text(name).font(Tokens.Fonts.bodyStrong)
+            if !item.doing.isEmpty {
+                Text(item.doing).font(Tokens.Fonts.sub)
+            }
             if !item.clue.isEmpty {
                 Text(item.clue).font(Tokens.Fonts.caption)
             }

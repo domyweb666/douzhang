@@ -61,16 +61,16 @@ struct DaySheet: View {
     @ViewBuilder
     private func row(_ row: ReceiptRow) -> some View {
         if row.kind == .bean {
-            // 有寫在做什麼就是主字，那句退到下面一行；沒寫的照舊只有那句
-            let hasDoing = !row.doing.isEmpty
+            // 主字是在做什麼與標記，專注筆記退到下面一行；只有筆記的那列筆記就是主字
+            let head = beanLine(row)
             // 整列是按鈕，右邊的箭頭跟設定頁標籤那列同一個樣子：看得出點得開
             Button { editing = row } label: {
                 HStack(spacing: Tokens.Layout.group) {
                     line(
                         time: row.time,
-                        text: beanLine(row),
-                        sub: hasDoing ? row.clue : "",
-                        muted: !hasDoing && row.clue.isEmpty
+                        text: head.isEmpty ? row.clue : head,
+                        sub: head.isEmpty ? "" : row.clue,
+                        muted: row.doing.isEmpty && row.clue.isEmpty
                     )
                     Image(systemName: "chevron.right")
                         .font(Tokens.Fonts.caption.weight(.semibold))
@@ -92,7 +92,8 @@ struct DaySheet: View {
         }
     }
 
-    /// 在做什麼（沒寫就是那句，再沒有就是「沒留話」），後面帶雙番茄、延長、記過幾筆的標記。
+    /// 在做什麼（沒寫、也沒筆記就是「沒留話」），後面帶雙番茄、延長、記過幾筆的標記。
+    /// 筆記不放這一行：筆記可以很長，接在後面的標記會被「…」切掉。都沒有回空字串。
     private func beanLine(_ row: ReceiptRow) -> String {
         var marks: [String] = []
         if row.isDouble {
@@ -104,9 +105,9 @@ struct DaySheet: View {
         if row.notes > 0 || row.pings > 0 {
             marks.append(Words.jotMark(notes: row.notes, pings: row.pings))
         }
-        let note = row.clue.isEmpty ? Words.noNoteMark : row.clue
+        let note = row.clue.isEmpty ? Words.noNoteMark : ""
         let text = row.doing.isEmpty ? note : row.doing
-        return ([text] + marks).joined(separator: "　")
+        return ([text] + marks).filter { !$0.isEmpty }.joined(separator: "　")
     }
 
     private func line(time: Millis?, text: String, sub: String = "", muted: Bool) -> some View {
@@ -116,6 +117,7 @@ struct DaySheet: View {
                     .font(Tokens.Fonts.sub)
                     .foregroundStyle(Tokens.Colors.textSecondary)
             }
+            // 專注筆記可以很長：每樣最多露 listLines 行，結尾「…」，全文點進去看
             VStack(alignment: .leading, spacing: Tokens.Layout.tight) {
                 Text(text)
                     .font(Tokens.Fonts.body)
@@ -128,14 +130,15 @@ struct DaySheet: View {
                         .foregroundStyle(Tokens.Colors.textSecondary)
                 }
             }
+            .lineLimit(Tokens.Notebook.listLines)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.vertical, Tokens.Layout.item)
     }
 }
 
-/// 改收下的那一顆：在做什麼（一行）、寫給自己的那句（可以多行，跟筆記本一樣）。
-/// 按「好」才存；下滑關掉就是不改。
+/// 改收下的那一顆：在做什麼（一行）、專注筆記（點了開整頁的筆記本，跟鈴響頁同一本）。
+/// 按「好」才存；下滑關掉就是不改。筆記本只寫回這裡的草稿，存不存照舊由「好」決定。
 struct BeanWordsSheet: View {
     var row: ReceiptRow
 
@@ -143,7 +146,7 @@ struct BeanWordsSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var doing: String
     @State private var clue: String
-    @FocusState private var clueFocused: Bool
+    @State private var notebookOpen = false
 
     /// 字在一開始就放好，不在 onAppear 才填：填的那一下會觸發超過上限就切掉，
     /// 兩台合過、超過上限的那句沒動也會被切短。
@@ -161,22 +164,16 @@ struct BeanWordsSheet: View {
                 text: $doing,
                 maxLength: Params.doingMaxChars
             )
-            label(Words.noteTitle)
-                .padding(.top, Tokens.Layout.group)
-            TextField(Words.notePlaceholder, text: $clue, axis: .vertical)
-                .focused($clueFocused)
-                .onChange(of: clue) { _, next in
-                    if next.count > Params.noteMaxChars {
-                        clue = String(next.prefix(Params.noteMaxChars))
-                    }
-                }
-                .modifier(FieldChrome(focused: clueFocused))
+            // 不另外寫欄名：沒寫時橫線上就是「專注筆記」與筆，跟鈴響頁一樣，再寫一次會重複
+            NoteLines(draft: clue) { notebookOpen = true }
+                .padding(.top, Tokens.Layout.section)
             BigButton(label: Words.confirm) {
                 model.editWords(id: row.id, doing: doing, clue: clue)
                 dismiss()
             }
             .padding(.top, Tokens.Layout.group)
         }
+        .sheet(isPresented: $notebookOpen) { NotebookSheet(text: $clue) }
     }
 
     private func label(_ text: String) -> some View {

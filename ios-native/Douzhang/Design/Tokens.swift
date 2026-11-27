@@ -143,24 +143,24 @@ enum Tokens {
 
     /// 番茄架：時間軸、月檢視、分析的尺寸。
     enum Rack {
-        /// 一小時多高。3 天、週拉高才放得下字（跟著字級放大），沒番茄的鐘頭收成一條
-        static let timelineHour: CGFloat = 64
+        /// 一小時多高（跟著字級放大）。天照 FocusPomo（55 分約 165 點）取八成；3 天、週空的鐘頭收成一條
+        static let timelineHour: CGFloat = 144
         static let timelineHourTall: CGFloat = 108
         static let timelineHourFlat: CGFloat = 28
         static let timelineGutter: CGFloat = 52
-        /// 一顆再短也至少這麼高，放得下一行字。3 天、週的跟 timelineHourTall 一起放大
-        static let timelineBlockMin: CGFloat = 28
+        /// 一顆再短也至少這麼高，跟一小時一起放大。天放得下標籤名與長度兩行（留白＋兩行＋縫，多 2 點餘裕）
+        static let timelineBlockMin: CGFloat = 44
         static let timelineBlockMinThree: CGFloat = 26
         static let timelineBlockMinWeek: CGFloat = 24
-        /// 3 天、週：下面有空就長到這麼高，放得下兩行字
+        /// 下面有空就長到這麼高：3 天、週放得下兩行字；天只有寫了在做什麼或筆記的才長，放得下五行
         static let timelineRoomThree: CGFloat = 46
         static let timelineRoomWeek: CGFloat = 42
-        /// 週檢視一行字多高（跟著字級放大）；3 天、週方塊的圓角
+        static let timelineRoomDay: CGFloat = 100
+        /// 週、天檢視一行字多高（跟著字級放大）；3 天、週方塊的圓角
         static let timelineLineWeek: CGFloat = 17
+        static let timelineLineDay: CGFloat = 18
         static let timelineRadius = DomyTokens.Radius.sm
         static let timelineRadiusWeek = Space.xs
-        /// 天檢視：至少這麼高才多寫一行那句
-        static let timelineNoteMin: CGFloat = 44
         static let timelineLaneGap: CGFloat = 2
         static let monthDot: CGFloat = 10
         static let monthWeek: CGFloat = 60
@@ -194,11 +194,11 @@ enum Tokens {
         static let dropDelay = 0.18
         /// 傾斜：重力乘多少、每一幀往新方向靠多少、每幀分幾個子步、一幀最長算多久
         static let tiltScale = 115.0
-        /// 加速度計給的單位是 g：乘上每個 g 多少 m/s² 再乘 tiltScale
+        /// 感測器給的重力單位是 g：乘上每個 g 多少 m/s² 再乘 tiltScale
         static let tiltPerG = 9.80665 * tiltScale
         /// 睡著時，重力要偏掉這麼多才醒來（大約傾斜一兩度）
         static let tiltWake = 25.0
-        /// 睡著時加速度計一秒讀幾次（醒著 60 次）。12 次加平滑，慢慢斜的醒來最多晚 134ms，15 次晚 104ms
+        /// 睡著時感測器一秒讀幾次（醒著 JarTuning.tiltRate 次）。12 次加平滑，慢慢斜的醒來最多晚 134ms，15 次晚 104ms
         static let restRate = 15.0
         /// 睡著時讀數平滑，每讀一次往新讀數靠幾成：手抖壓到一半上下，一下子斜 5° 第一個讀數就醒
         static let restSmooth = 0.55
@@ -208,7 +208,7 @@ enum Tokens {
         static let quietFrames = 30
         /// 卡在原地抖的：之後連續這麼多個半秒，平均位置都沒離開第一個半秒的平均 quietDrift，也算躺好
         static let shakeHalves = 2
-        static let tiltSmooth = 0.15
+        static let tiltSmooth = 0.4
         static let substeps = 2
         static let frameMax = 0.033
         /// 換頁之後多久算停穩（秒）：感測器等停穩才開關；iOS 17 沒有捲動開始、結束的通知，也等這麼久

@@ -60,10 +60,11 @@ struct RuledText: UIViewRepresentable {
     var text: String
     var color: Color
     var pitch: CGFloat
+    /// 最多幾行，最後一行結尾「…」
+    var lines: Int
 
     func makeUIView(context _: Context) -> UILabel {
         let label = UILabel()
-        label.numberOfLines = 0
         label.isAccessibilityElement = false
         return label
     }
@@ -78,6 +79,9 @@ struct RuledText: UIViewRepresentable {
             .paragraphStyle: style,
         ]
         label.attributedText = NSAttributedString(string: text, attributes: ink)
+        label.numberOfLines = lines
+        // 放字之後才設：字帶的段落樣式會把它蓋回折行不加「…」。不寫進段落樣式：那樣每段只剩一行
+        label.lineBreakMode = .byTruncatingTail
     }
 
     /// 不寫這個的話只認一行的寬，長句不會折行。

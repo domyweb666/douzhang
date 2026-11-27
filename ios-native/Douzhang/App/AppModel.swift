@@ -12,6 +12,8 @@ struct Pulses: Equatable {
     var kept = 0
     /// 拿掉東西：作廢、停下來、刪標籤、清空
     var removed = 0
+    /// 開著 app 時剛好到點響了。勿擾模式會把通知聲擋掉，手上就只剩這一下
+    var rang = 0
 }
 
 /// 殼：開機讀檔、每一拍看時鐘、到點換畫面、每次改動就存、狀態變了就重排通知。
@@ -76,6 +78,8 @@ final class AppModel {
     @ObservationIgnored let backups: BackupFiles
     @ObservationIgnored let cloud: CloudLink
     @ObservationIgnored let notifier = Notifier()
+    /// 鎖定畫面與動態島那張卡（AppModel+Live）
+    @ObservationIgnored let live = LiveIsland()
     @ObservationIgnored let soundscape = Soundscape()
     @ObservationIgnored let shield = AppShield()
     @ObservationIgnored let poseWatch = PoseWatch()
@@ -97,12 +101,17 @@ final class AppModel {
 
     /// 開機讀檔，然後每一拍看一次時鐘，直到畫面收掉。
     func run() async {
-        if !loaded, !loading {
-            await load()
-        }
+        await loadOnce()
         while !Task.isCancelled {
             tick()
             try? await Task.sleep(for: .milliseconds(Params.tickMs))
+        }
+    }
+
+    /// 讀過、正在讀就不再讀：畫面重掛時 run 會再叫，卡片上的開始鈕也可能在畫面出來前先叫醒 app。
+    func loadOnce() async {
+        if !loaded, !loading {
+            await load()
         }
     }
 
@@ -132,6 +141,10 @@ final class AppModel {
             }
             let next = Machine.phaseOf(state, now: time)
             if next != phase {
+                if next == .bell, phase == .focus, let run = state.focusRun,
+                   time - run.endAt < Params.bellBuzzWindowMs {
+                    pulses.rang += 1
+                }
                 enter(next)
             }
         }
@@ -154,6 +167,7 @@ final class AppModel {
             page = .home
         }
         syncGates()
+        live.sync(state, now: TimeText.nowMillis())
     }
 
     /// 狀態改了之後：算現在哪一態、對齊通知與那幾個跟著狀態走的開關。
@@ -167,6 +181,7 @@ final class AppModel {
             syncGates()
         }
         notifier.sync(state, now: time, force: force)
+        live.sync(state, now: time, force: force)
     }
 
     /// 現在這一態（過期的休息先收掉）。動作都從這份算新狀態。
@@ -226,6 +241,10 @@ final class AppModel {
         tick()
         refreshNotif()
         cloud.becameActive()
+        // 鎖定畫面的卡片：接回殺掉前那張、收掉待機太久的。還沒讀完檔不對（空狀態會把計時中那張收掉）
+        if loaded {
+            live.sync(state, now: TimeText.nowMillis(), force: true)
+        }
     }
 
     /// 權限從沒允許翻成允許時，要重排一次通知。

@@ -20,8 +20,10 @@ targets:
     platform: iOS
     sources:
       - Douzhang
+      - Shared # 鎖定畫面卡片的型別與開始鈕的動作：app 與擴充都要編進去
     dependencies:
       - package: VeggieKit
+      - target: DouzhangLive
     # Info.plist 由 XcodeGen 每次產生（不進 repo）。
     info:
       path: Douzhang/Info.plist
@@ -46,6 +48,8 @@ targets:
         # 白噪音：鎖屏、切到別的 app 也繼續播。只有 audio，沒有別的背景模式
         UIBackgroundModes:
           - audio
+        # 鎖定畫面與動態島的卡片（DouzhangLive）。倒數由系統自己走，不用頻繁更新，所以不開 FrequentUpdates
+        NSSupportsLiveActivities: true
     # 計時中擋住其他 app（螢幕使用時間 API）。這個檔由 XcodeGen 每次產生，不進 repo
     entitlements:
       path: Douzhang/Douzhang.entitlements
@@ -68,6 +72,35 @@ targets:
         # 只給 iPhone（1）。不宣告的話 Apple 用 iPad 多工規格審（ITMS-90023／90474／90475）
         TARGETED_DEVICE_FAMILY: "1"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+
+  # 鎖定畫面與動態島的卡片（Live Activity）。做法照茄記的擴充與米說的即時動態：
+  # 卡片型別與開始鈕的動作放 Shared 兩邊都編；顏色字級只帶 DomyTokens 這一個檔，番茄色與字由 app 放進卡片。
+  # 不用 App Group：開始鈕是 LiveActivityIntent，系統在 app 的行程裡跑。
+  DouzhangLive:
+    type: app-extension
+    platform: iOS
+    sources:
+      - DouzhangLive
+      - Shared
+      - path: Douzhang/Design/DomyTokens.swift
+    info:
+      path: DouzhangLive/Info.plist
+      properties:
+        CFBundleDisplayName: 番茄帳
+        CFBundleDevelopmentRegion: zh-Hant
+        CFBundleLocalizations:
+          - zh-Hant
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.domyweb.douzhang.Live
+        # 版本號要跟 app 一樣，不然上傳會被擋（打包時 build 號由 workflow 從命令列一起蓋掉）
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+        TARGETED_DEVICE_FAMILY: "1"
 
   DouzhangTests:
     type: bundle.unit-test

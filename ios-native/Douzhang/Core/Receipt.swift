@@ -62,11 +62,6 @@ enum Receipt {
         state.days.values.contains { hasRecord($0) }
     }
 
-    /// 一筆紀錄做的是什麼：有寫在做什麼就是那句，沒寫就是標籤名。
-    static func workName(_ doing: String, type: TagType) -> String {
-        doing.isEmpty ? type.name : doing
-    }
-
     /// 番茄串上的格子，依時間排。
     static func podItems(_ day: DayRecord) -> [PodItem] {
         let beans = day.beans.map { bean in

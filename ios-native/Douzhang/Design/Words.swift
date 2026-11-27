@@ -14,8 +14,9 @@ enum Words {
     static let backFromRest = "回來了，開始下一顆"
     static let ripeTitle = "熟了，又收下一顆"
     static let today = "今天"
-    static let noteTitle = "寫一句給自己"
-    static let notePlaceholder = "這顆做了什麼、下次從哪接"
+    /// 以前叫「寫一句給自己」；可以寫很多字之後改名（多米 2026-11-27）
+    static let noteTitle = "專注筆記"
+    static let notePlaceholder = "記下這顆的想法、下次從哪接"
 
     // MARK: 中途
 
@@ -169,7 +170,8 @@ enum Words {
     static let leafDay = "這天掛的是一片葉子。"
     static let noNoteMark = "沒留話"
     static let doublePea = "雙番茄"
-    static let todayBeans = "今天的番茄"
+    /// 番茄堆一週一堆（週一清空）的讀屏名字
+    static let weekBeans = "這週的番茄"
 
     /// 收下後那幾句，輪替、不連續重複。可愛的話只准由這裡說。
     static let restLines = [

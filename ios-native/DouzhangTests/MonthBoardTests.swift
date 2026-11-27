@@ -42,7 +42,7 @@ final class MonthBoardTests: XCTestCase {
         let record = November.day(November.bean(17, 9, 0, len: 25, typeId: "deleted"))
         let made = state([key: record])
         let names = MonthBoard.beans(made, key: key).map { item in
-            Receipt.workName(item.doing, type: Machine.typeOf(made, item.typeId))
+            Machine.typeOf(made, item.typeId).name
         }
         XCTAssertEqual(names, [Words.removedTag])
     }
@@ -103,19 +103,31 @@ final class MonthBoardTests: XCTestCase {
         XCTAssertEqual(Words.dayHead("2026-11-01"), "11月1日 週日")
     }
 
-    func test一列讀屏念時刻做了什麼多長與那句() {
+    func test一列讀屏念時刻標籤名多長在做什麼與筆記() {
         var wrote = November.bean(17, 5, 24, len: 25, flow: 15)
+        wrote.doing = "寫稿"
         wrote.clue = "寫完開頭"
         let plain = November.bean(17, 9, 0, len: 1)
         let found = MonthBoard.beans(state([key: November.day(wrote, plain)]), key: key)
         XCTAssertEqual(
-            found.map { Words.monthBeanA11y($0, name: "寫稿") },
-            ["05:24，寫稿，25 分＋15，寫完開頭", "09:00，寫稿，1 分"]
+            found.map { Words.monthBeanA11y($0, name: "專注") },
+            ["05:24，專注，25 分＋15，寫稿，寫完開頭", "09:00，專注，1 分"]
+        )
+    }
+
+    func test時間軸一顆讀屏念標籤名長度在做什麼與筆記沒寫的不念() {
+        var wrote = November.bean(17, 9, 0, len: 25)
+        wrote.doing = "寫第三節"
+        wrote.clue = "寫完開頭"
+        let items = Receipt.timeline(November.day(wrote, November.bean(17, 10, 0, len: 50)))
+        XCTAssertEqual(
+            items.map { Words.blockA11y($0, name: "專注") },
+            ["專注，25 分，寫第三節，寫完開頭", "專注，50 分"]
         )
     }
 }
 
-/// 「在做什麼」帶進時間軸與收據，當主字。
+/// 「在做什麼」帶進時間軸與收據（時間軸主字是標籤名，在做什麼排在長度後面）。
 final class DoingTitleTests: XCTestCase {
     func test時間軸與收據都帶著在做什麼作廢也帶() {
         var kept = November.bean(17, 9, 0, len: 25)
@@ -126,12 +138,6 @@ final class DoingTitleTests: XCTestCase {
         let day = DayRecord(beans: [kept], voids: [voided])
         XCTAssertEqual(Receipt.timeline(day).map(\.doing), ["寫稿", "剪片"])
         XCTAssertEqual(Receipt.rows(day).map(\.doing), ["寫稿", "剪片"])
-    }
-
-    func test有寫在做什麼就用那句沒寫用標籤名() {
-        let type = Store.defaultType
-        XCTAssertEqual(Receipt.workName("寫稿", type: type), "寫稿")
-        XCTAssertEqual(Receipt.workName("", type: type), type.name)
     }
 
     func test作廢那行有寫在做什麼就放最前面() {

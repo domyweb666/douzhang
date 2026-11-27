@@ -142,6 +142,13 @@ extension Words {
         "\(name)・" + lenWithFlow(len, flow: flow)
     }
 
+    /// 時間軸一顆讀屏念的那一句：「專注，25 分，寫第三節，寫完開頭」。name 是標籤名；沒寫的那樣不念。
+    static func blockA11y(_ item: TimelineItem, name: String) -> String {
+        [name, lenWithFlow(item.len, flow: item.flow), item.doing, item.clue]
+            .filter { !$0.isEmpty }
+            .joined(separator: "，")
+    }
+
     /// 這顆多長：「25 分」，延長過是「25 分＋15」。
     static func lenWithFlow(_ len: Double, flow: Double) -> String {
         typeLen(len) + (flow > 0 ? "＋\(number(flow))" : "")
@@ -236,11 +243,9 @@ extension Words {
         "\(monthDay(key)) 週" + weekdayShort[DayKeys.weekdayIndex(key)]
     }
 
-    /// 月檢視下面那塊的一列讀屏念的那一句：「05:24，寫稿，25 分，寫完開頭」。
+    /// 月檢視下面那塊的一列讀屏念的那一句：「05:24，專注，25 分，寫稿，寫完開頭」。
+    /// name 是標籤名，後面接跟時間軸方塊同一句。
     static func monthBeanA11y(_ item: TimelineItem, name: String) -> String {
-        let length = lenWithFlow(item.len, flow: item.flow)
-        return [TimeText.hhmm(item.start), name, length, item.clue]
-            .filter { !$0.isEmpty }
-            .joined(separator: "，")
+        TimeText.hhmm(item.start) + "，" + blockA11y(item, name: name)
     }
 }

@@ -83,22 +83,17 @@ final class RackCalendarTests: XCTestCase {
         XCTAssertEqual(blocks[1].from, 5 + 8.0 / 60, accuracy: 1e-9)
     }
 
-    func test天檢視兩顆很短又很近的照舊左右並排各佔一半() {
+    func test天檢視兩顆很短又很近的也往下推不並排() {
+        let dayMin = Double(Tokens.Rack.timelineBlockMin / Tokens.Rack.timelineHour)
         let day = November.day(
             November.bean(17, 5, 0, len: 5),
             November.bean(17, 5, 8, len: 5),
             November.bean(17, 6, 0, len: 25)
         )
-        let blocks = RackCalendar.dayBlocks(
-            day,
-            key: key,
-            minHours: minHours,
-            sideBySide: true
-        )
-        XCTAssertEqual(lanes(blocks), [[0, 2], [1, 2], [0, 1]])
-        // 再短也畫到最小高度；各在自己的時刻，不往下推
-        XCTAssertEqual(blocks[0].height, minHours)
-        XCTAssertEqual(blocks.map(\.top), blocks.map(\.from))
+        let blocks = RackCalendar.dayBlocks(day, key: key, minHours: dayMin)
+        XCTAssertEqual(lanes(blocks), [[0, 1], [0, 1], [0, 1]])
+        XCTAssertEqual(blocks[1].top, 5 + dayMin, accuracy: 1e-9)
+        XCTAssertEqual(blocks[2].top, 6)
     }
 
     func test被推下來的那顆結尾照舊後面的追回真的時刻() {

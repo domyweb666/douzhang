@@ -2,5 +2,6 @@
 # SwiftUI 版（ios-native/）：Xcode 專案與 Info.plist 由 CI 用 XcodeGen 產生，不進 repo
 ios-native/*.xcodeproj/
 ios-native/Douzhang/Info.plist
+ios-native/DouzhangLive/Info.plist
 ios-native/DerivedData/
 ios-native/Douzhang/Douzhang.entitlements

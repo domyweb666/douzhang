@@ -44,9 +44,9 @@ final class JarVineTests: XCTestCase {
             before = now
             now = next
         }
-        // 最後那一下還沒到頂就斷了
+        // 晃到一邊、再往另一邊，還沒到頂就斷了（照擺長的自然頻率晃，只晃一個來回不到）
         peaks.append(now)
-        XCTAssertEqual(peaks.count, 3)
+        XCTAssertEqual(peaks.count, 2)
         for (last, next) in zip(peaks, peaks.dropFirst()) {
             XCTAssertLessThan(last * next, 0)
             XCTAssertGreaterThan(abs(next), abs(last))

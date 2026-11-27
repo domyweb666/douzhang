@@ -33,6 +33,7 @@ final class JarRollTests: XCTestCase {
         return time
     }
 
+    /// 2026-11-27 空氣阻力從 0.996 改 0.9995，底的摩擦跟著補回去（每步空氣×摩擦不變），秒數照舊。
     func test斜著滾過四百點的秒數跟挑數字時的模擬一樣() {
         XCTAssertEqual(timeToRoll(400, degrees: 15), 2.69, accuracy: 0.1)
         XCTAssertEqual(timeToRoll(400, degrees: 5), 7.29, accuracy: 0.2)
@@ -153,14 +154,15 @@ final class JarRollTests: XCTestCase {
         XCTAssertFalse(watch.tooSlow)
     }
 
-    /// 開機安置要多久：回待機那一下在主執行緒上做的。
+    /// 開機安置要多久：回待機那一下在主執行緒上做的。一週一堆最多 120 顆（縮小到放得下）。
     /// 這裡是除錯版，比上架版慢很多倍，只拿來跟自己比；量上架版要用 Release 跑。
-    func test四十顆開機安置的時間() {
+    func test一百二十顆開機安置的時間() {
         let options = XCTMeasureOptions()
         options.iterationCount = 3
         measure(options: options) {
             var world = JarLab.world(width: 402)
-            world.seed((0 ..< 40).map { [14.0, 18, 22, 28, 31][$0 % 5] })
+            world.height = 874
+            world.seed((0 ..< 120).map { [9.0, 12, 14, 18, 20][$0 % 5] })
         }
     }
 }

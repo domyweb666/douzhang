@@ -103,7 +103,8 @@ final class JarPhysicsTests: XCTestCase {
     func test重力基準半徑顆數上限與參數表同值() {
         XCTAssertEqual(tuning.gravity, 1100)
         XCTAssertEqual(tuning.radius, 28)
-        XCTAssertEqual(tuning.maxBeans, 40)
+        // 一週一堆：上限看效能，放不下由 fillShare 縮小
+        XCTAssertEqual(tuning.maxBeans, 120)
     }
 
     func test番茄大小跟分鐘走太小太大夾住() {
@@ -169,10 +170,51 @@ final class JarPhysicsTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(hypot(two.x - one.x, two.y - one.y), 30 + 12 - 1)
     }
 
-    func test超過顆數上限不再撒() {
+    func test超過顆數上限只撒最近的那些() {
         var world = JarLab.world()
-        world.seed(Array(repeating: 18, count: 100))
-        XCTAssertEqual(world.bodies.count, 40)
+        // 前 30 顆是早的（小），後 120 顆是近的（大）
+        world.seed((0 ..< 150).map { $0 < 30 ? 6.0 : 8.0 })
+        XCTAssertEqual(world.bodies.count, 120)
+        XCTAssertEqual(Set(world.bodies.map(\.radius)), [8])
+    }
+
+    // MARK: 摩擦一步只扣一次（以前在迭代裡，一步扣好幾次）
+
+    func test貼著牆往下滑一步只扣一次摩擦() throws {
+        var world = JarLab.world()
+        // 往左斜壓著左牆，往下滑
+        world.gravityX = -1100
+        world.addBody(JarLab.body(28, 28, 200, velX: -50, velY: 300))
+        world.step(JarTuning.tick)
+        let fell = (300 + 1100 * JarTuning.tick) * tuning.airDamp
+        let body = try XCTUnwrap(world.bodies.first)
+        XCTAssertEqual(body.velY, tuning.rolled(fell, seconds: JarTuning.tick), accuracy: 1e-9)
+    }
+
+    func test底下那顆被上面壓著一步也只扣一次摩擦() throws {
+        var world = JarLab.world()
+        // 疊成一直排一起往右走：推開的方向是上下，不碰左右的速度，只有底的摩擦會扣
+        world.addBody(JarLab.body(28, 150, 400 - 28, velX: 100))
+        world.addBody(JarLab.body(28, 150, 400 - 28 * 3, velX: 100))
+        world.step(JarTuning.tick)
+        let bottom = try XCTUnwrap(world.bodies.first)
+        let top = try XCTUnwrap(world.bodies.last)
+        let rubbed = tuning.rolled(100 * tuning.airDamp, seconds: JarTuning.tick)
+        XCTAssertEqual(bottom.velX, rubbed, accuracy: 1e-9)
+        XCTAssertEqual(top.velX, 100 * tuning.airDamp, accuracy: 1e-9)
+    }
+
+    func test大的比較重小的撞上去被彈開大的幾乎不動() throws {
+        var world = JarLab.world()
+        world.gravityY = 0
+        world.addBody(JarLab.body(14, 100, 200, velX: 200))
+        world.addBody(JarLab.body(42, 155.5, 200))
+        world.step(JarTuning.tick)
+        let small = try XCTUnwrap(world.bodies.first)
+        let big = try XCTUnwrap(world.bodies.last)
+        XCTAssertLessThan(small.velX, 0)
+        XCTAssertGreaterThan(big.velX, 0)
+        XCTAssertGreaterThan(abs(small.velX - 200), big.velX * 5)
     }
 
     func test還沒量到寬高時安置什麼都不撒() {

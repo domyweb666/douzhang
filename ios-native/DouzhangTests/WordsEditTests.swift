@@ -46,10 +46,15 @@ final class WordsEditTests: XCTestCase {
 
     func test頭尾空白去掉上限跟寫的時候一樣清空就是不寫() throws {
         let state = SyncSample.state(key, sample())
-        let long = String(repeating: "字", count: 200)
+        // 專注筆記可以寫一大堆話：上限 2000 字，超過的切掉
+        XCTAssertEqual(Params.noteMaxChars, 2000)
+        let long = String(repeating: "字", count: Params.noteMaxChars + 1)
         let edited = try only(edit(state, doing: "  \(long) ", clue: "\n\(long)\n", at: base))
         XCTAssertEqual(edited.doing.count, Params.doingMaxChars)
         XCTAssertEqual(edited.clue.count, Params.noteMaxChars)
+        let lines = "第一段\n\n第二段\n第三段"
+        let paragraphs = try only(edit(state, doing: "寫稿", clue: "\(lines)\n", at: base))
+        XCTAssertEqual(paragraphs.clue, lines)
         let cleared = try only(edit(state, doing: "  ", clue: "", at: base))
         XCTAssertEqual(cleared.doing, "")
         XCTAssertEqual(cleared.clue, "")

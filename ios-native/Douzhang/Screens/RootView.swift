@@ -23,8 +23,9 @@ struct RootView: View {
                 }
             }
         }
-        // 震動只留給有意義的那幾刻：收下、拿掉東西、出錯。切換選項的輕觸在各自的元件上
+        // 震動只留給有意義的那幾刻：響了、收下、拿掉東西、出錯。切換選項的輕觸在各自的元件上
         .haptic(.success, trigger: model.pulses.kept)
+        .haptic(.success, trigger: model.pulses.rang)
         .haptic(.impact(weight: .light), trigger: model.pulses.removed)
         .haptic(.error, trigger: model.saveFailed) { $0 }
         .haptic(.error, trigger: model.backupProblem) { $0 != nil }

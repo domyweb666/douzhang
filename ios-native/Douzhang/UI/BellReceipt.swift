@@ -171,8 +171,9 @@ struct TodayRow: View {
     }
 }
 
-/// 寫給自己的那句，寫在橫線上：沒寫是提示與一支筆，寫過就是那句；點了開筆記本。至少兩條線。
-/// 不在這一頁打字：鍵盤會蓋住收據。
+/// 專注筆記，寫在橫線上：沒寫是提示與一支筆，寫過就是筆記；點了開整頁的筆記本。至少兩條線。
+/// 筆記可以寫很長，這裡只露前幾行、結尾「…」，不把收據撐長；全文在筆記本裡看。
+/// 不在這一頁打字：鍵盤會蓋住收據。番茄架「改這顆的字」也用這一塊，跟鈴響頁同一本筆記本。
 struct NoteLines: View {
     var draft: String
     var action: () -> Void
@@ -189,7 +190,8 @@ struct NoteLines: View {
                 RuledText(
                     text: isBlank ? Words.noteTitle : draft,
                     color: isBlank ? Tokens.Colors.textSecondary : Tokens.Colors.textPrimary,
-                    pitch: pitch
+                    pitch: pitch,
+                    lines: Tokens.Notebook.receiptLines
                 )
                 .frame(maxWidth: .infinity, alignment: .leading)
                 // 裡面是 UIKit 的字：點擊交給整塊按鈕，不讓它擋在前面

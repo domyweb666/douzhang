@@ -2,7 +2,7 @@ import Foundation
 
 /// 番茄堆的傾斜：什麼時候接感測器、讀數怎麼變成重力方向、斜多少才醒來。
 extension JarScene {
-    /// 傾斜：加速度計換成重力向量的目標值；關掉時回到靜置重力。沒有加速度計（模擬器）就什麼都不做。
+    /// 傾斜：感測器的重力換成番茄堆重力的目標值；關掉時回到靜置重力。沒有感測器（模擬器）就什麼都不做。
     /// 只是滑走的話留著原本的方向：滑回來還沒接上感測器的那一下，番茄不會自己滾。
     func setTilt(_ isOn: Bool) {
         sensor.stop(for: self)
@@ -21,8 +21,9 @@ extension JarScene {
         if frozen {
             return
         }
-        targetX = x * Tokens.Motion.tiltPerG
-        targetY = -y * Tokens.Motion.tiltPerG
+        let pull = JarPull.gravity(x: x, y: y)
+        targetX = pull.x
+        targetY = pull.y
         sensor.pace(for: self)
         guard asleep else {
             sensor.calm.forget()
@@ -41,9 +42,9 @@ extension JarScene {
         }
     }
 
-    /// 加速度計多久讀一次：睡著時讀慢一點省電，醒著每秒 60 次
+    /// 感測器多久讀一次：睡著時讀慢一點省電，醒著每秒 tiltRate 次
     var sensorInterval: TimeInterval {
-        asleep ? 1 / Tokens.Motion.restRate : JarWorld.frame
+        1 / (asleep ? Tokens.Motion.restRate : JarTuning.tiltRate)
     }
 
     /// 停穩在別頁才關感測器，停穩回這一頁才接上。滑到一半又滑回來的不動它。

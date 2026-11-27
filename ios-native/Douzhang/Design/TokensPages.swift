@@ -38,8 +38,12 @@ extension Tokens {
     }
 
     /// 筆記本：一行多高（跟著系統字級放大）。
+    /// 專注筆記可以寫很長：收據上、那天的收據清單只露前幾行，結尾「…」；番茄架方塊上的筆記字淡一點。
     enum Notebook {
         static let line: CGFloat = 36
+        static let receiptLines = 3
+        static let listLines = 3
+        static let blockFade = 0.75
     }
 
     /// 聚焦模式：兩個大數字中間一顆番茄。字級與番茄是「佔整個畫面寬的幾成」，番茄有上限。

@@ -57,7 +57,7 @@ final class JarCalmTests: XCTestCase {
     func test睡著讀慢點一下醒來馬上讀快() async {
         let scene = JarScene()
         scene.layout(width: 393, height: 852, beans: [JarBean(len: 5, color: .yellow)], seen: 1)
-        XCTAssertEqual(scene.sensorInterval, JarWorld.frame)
+        XCTAssertEqual(scene.sensorInterval, 1 / JarTuning.tiltRate)
         for _ in 0 ..< 100 where !scene.asleep {
             JarLab.play(scene, seconds: 0.1)
             await Task.yield()
@@ -66,6 +66,6 @@ final class JarCalmTests: XCTestCase {
         XCTAssertEqual(scene.sensorInterval, 1 / Tokens.Motion.restRate)
         scene.tap(x: 196, y: 800)
         XCTAssertFalse(scene.asleep)
-        XCTAssertEqual(scene.sensorInterval, JarWorld.frame)
+        XCTAssertEqual(scene.sensorInterval, 1 / JarTuning.tiltRate)
     }
 }

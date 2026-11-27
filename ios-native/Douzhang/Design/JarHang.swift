@@ -9,17 +9,20 @@ enum JarHang {
     static let gap = 40.0
     /// 還沒垂下來時藏在螢幕頂上面，藏半徑的幾倍
     static let hidden = 1.2
-    /// 垂下來、晃、斷了之後藤縮回去各多久（秒）
+    /// 垂下來、斷了之後藤縮回去各多久（秒）
     static let growTime = 0.3
-    static let swayTime = 0.9
     static let retractTime = 0.3
-    /// 擺到多大（弧度）：從這麼小一路到這麼大，換成左右是 12、23、33pt
+    /// 擺到多大（弧度）：從這麼小一路到這麼大，換成左右是 6、33pt
     static let swayFrom = 0.05
     static let swayTo = 0.28
-    /// 晃到哪個相位斷：一邊、另一邊、再一邊，快到頂的前一點點。停在頂會直直掉，
-    /// 過了中間斷會被甩去撞牆；這裡斷開時橫向約 70pt/秒，落地時偏出去大約 100pt
-    static let swayEnd = 2.5 * Double.pi - 0.15
-    /// 從開始垂到藤斷一共多久
+    /// 晃得多快（弧度/秒）：照擺長的自然頻率 √(g/L)，一個來回約 2 秒。
+    /// 原本 0.9 秒晃 1.25 個來回，等於用八倍重力在甩，斷了卻用一倍重力掉，前後兩段的快慢接不起來
+    static let swing = (JarTuning.standard.gravity / reach).squareRoot()
+    /// 晃到哪個相位斷：一邊、另一邊，快到頂之前。停在頂會直直掉，過了中間斷會被甩去撞牆；
+    /// 這裡斷開時橫向約 64pt/秒，落地時偏出去大約 75pt
+    static let swayEnd = 1.5 * Double.pi - 0.5
+    /// 晃多久（秒）、從開始垂到藤斷一共多久
+    static let swayTime = swayEnd / swing
     static let cutAt = growTime + swayTime
 
     /// 藤的綠色有多粗（半徑的幾成，夾在最細最粗之間）、描邊是綠色的幾成

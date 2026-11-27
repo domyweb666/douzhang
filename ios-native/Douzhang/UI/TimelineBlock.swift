@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// 時間軸上的一顆番茄或一次作廢。寫多少字看檢視：天＝一行做什麼與長度，3 天＝名字一行與長度，週＝名字露一行。
+/// 時間軸上的一顆番茄或一次作廢。第一行一律是標籤名，再來長度、在做什麼、筆記，放得下多少寫多少
+/// （多米 2026-11-27，照 FocusPomo）。天全寫；3 天每樣一行、放得下才加；週只露名字一行。
 struct TimelineBlock: View {
     var block: DayBlock
     var view: RackView
@@ -10,14 +11,15 @@ struct TimelineBlock: View {
     var action: () -> Void
 
     @ScaledMetric(relativeTo: .caption) private var weekLine = Tokens.Rack.timelineLineWeek
+    @ScaledMetric(relativeTo: .footnote) private var dayLine = Tokens.Rack.timelineLineDay
 
     private var isVoid: Bool {
         block.item.kind == .voided
     }
 
-    /// 天檢視：夠高（tall）字靠上、可以多寫一行那句；不夠高字置中。3 天、週一律靠上。
-    private var isTall: Bool {
-        view != .day || height >= Double(Tokens.Rack.timelineNoteMin)
+    /// 天檢視的作廢只寫一行，字置中；其他一律靠上。
+    private var alignTop: Bool {
+        view != .day || !isVoid
     }
 
     private var radius: CGFloat {
@@ -31,7 +33,7 @@ struct TimelineBlock: View {
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: radius)
         Button(action: action) {
-            ZStack(alignment: isTall ? .topLeading : .leading) {
+            ZStack(alignment: alignTop ? .topLeading : .leading) {
                 if isVoid {
                     // 作廢只畫虛線框，不靠顏色
                     shape.stroke(Tokens.Colors.textSecondary, style: Tokens.Rack.voidStroke)
@@ -48,7 +50,7 @@ struct TimelineBlock: View {
     }
 
     private var name: String {
-        Receipt.workName(block.item.doing, type: type)
+        type.name
     }
 
     private var length: String {
@@ -85,33 +87,56 @@ struct TimelineBlock: View {
         }
     }
 
-    /// 天：沒有並排才寫完整的（做什麼・長度，夠高再加那句），並排只寫做什麼。
+    /// 天放得下幾行：扣掉上緣留白，一行 dayLine。行數用算的、不用 ViewThatFits：
+    /// 筆記要寫到剛好放滿再接「…」，試排只分得出全部放得下或放不下。
+    private var dayFit: Int {
+        max(1, Int((height - Double(Tokens.Layout.tight)) / Double(dayLine)))
+    }
+
+    /// 天：標籤名、長度、在做什麼、筆記，照這個順序有幾行寫幾行，筆記放不下結尾「…」。
+    /// 時間真的重疊的並排，欄窄，只寫標籤名。
     private var dayText: some View {
-        VStack(alignment: .leading, spacing: .zero) {
+        let item = block.item
+        let fit = dayFit
+        let hasDoing = !item.doing.isEmpty && fit > 2
+        let clueLines = fit - 2 - (hasDoing ? 1 : 0)
+        return VStack(alignment: .leading, spacing: .zero) {
             if block.lanes > 1 {
                 if !isVoid {
-                    Text(name).lineLimit(1)
+                    Text(name).fontWeight(.semibold).lineLimit(1)
                 }
             } else if isVoid {
                 Text(voidLine).foregroundStyle(Tokens.Colors.textSecondary).lineLimit(1)
             } else {
-                Text(title).fontWeight(.semibold).lineLimit(1)
-                if isTall, !block.item.clue.isEmpty {
-                    Text(block.item.clue).lineLimit(2)
+                Text(name).fontWeight(.semibold).lineLimit(1)
+                if fit > 1 {
+                    Text(length).lineLimit(1)
+                }
+                if hasDoing {
+                    Text(item.doing).lineLimit(1)
+                }
+                if clueLines > 0, !item.clue.isEmpty {
+                    Text(item.clue)
+                        .opacity(Tokens.Notebook.blockFade)
+                        .lineLimit(clueLines)
                 }
             }
         }
         .font(Tokens.Fonts.caption)
         .padding(.horizontal, Tokens.Layout.item)
-        .padding(.top, isTall ? Tokens.Layout.tight : .zero)
+        .padding(.top, alignTop ? Tokens.Layout.tight : .zero)
     }
 
-    /// 3 天：名字只佔一行，太長結尾「…」（多米 2026-11-26：長名字折兩行太擠）。
-    /// 放得下多少寫多少：名字＋長度＋那句、名字＋長度、只有一行。
+    /// 3 天：每樣只佔一行，太長結尾「…」（多米 2026-11-26：長名字折兩行太擠）。
+    /// 放得下多少寫多少：連筆記、連在做什麼、標籤名＋長度、只有一行。
     private var threeText: some View {
-        ViewThatFits(in: .vertical) {
-            if !block.item.clue.isEmpty {
-                threeLines(hasClue: true)
+        let item = block.item
+        return ViewThatFits(in: .vertical) {
+            if !item.doing.isEmpty || !item.clue.isEmpty {
+                threeLines(hasDoing: true, hasClue: true)
+            }
+            if !item.doing.isEmpty, !item.clue.isEmpty {
+                threeLines(hasDoing: true)
             }
             threeLines()
             // 一行：長度放不下就只寫名字，名字比長度重要
@@ -125,12 +150,16 @@ struct TimelineBlock: View {
         .padding(.vertical, Tokens.Rack.timelineLaneGap)
     }
 
-    private func threeLines(hasClue: Bool = false) -> some View {
-        VStack(alignment: .leading, spacing: .zero) {
+    private func threeLines(hasDoing: Bool = false, hasClue: Bool = false) -> some View {
+        let item = block.item
+        return VStack(alignment: .leading, spacing: .zero) {
             Text(name).fontWeight(.semibold).lineLimit(1)
             Text(length).lineLimit(1)
-            if hasClue {
-                Text(block.item.clue).lineLimit(2)
+            if hasDoing, !item.doing.isEmpty {
+                Text(item.doing).lineLimit(1)
+            }
+            if hasClue, !item.clue.isEmpty {
+                Text(item.clue).opacity(Tokens.Notebook.blockFade).lineLimit(2)
             }
         }
     }
@@ -151,11 +180,8 @@ struct TimelineBlock: View {
             .padding(Tokens.Rack.timelineLaneGap)
     }
 
-    /// 讀屏念的那一句：番茄是「專注・25 分，那句」，作廢是「作廢，第幾分鐘…」。
+    /// 讀屏念的那一句：番茄是「專注，25 分，寫第三節，寫完開頭」，作廢是「作廢，第幾分鐘…」。
     private var a11yLabel: String {
-        if isVoid {
-            return voidLine
-        }
-        return title + (block.item.clue.isEmpty ? "" : "，\(block.item.clue)")
+        isVoid ? voidLine : Words.blockA11y(block.item, name: name)
     }
 }

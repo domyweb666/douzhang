@@ -68,16 +68,19 @@ extension JarWorld {
         }
     }
 
-    /// 撞到了：跟撞牆一樣壓出來、沿法線反彈留 wallRest；貼著表面滑跟在底上滾一樣慢下來。
-    /// 從上面掉進來第一次碰到它也算落地。
-    mutating func push(_ body: inout JarBody, from obstacle: JarObstacle, seconds: Double) {
+    /// 撞到了：跟撞牆一樣壓出來、沿法線反彈留 wallRest。回碰到的方向（從它指向這顆），沒碰到回 nil；
+    /// 貼著表面滑的摩擦由 rub 在這一步最後扣一次。從上面掉進來第一次碰到它也算落地。
+    mutating func push(
+        _ body: inout JarBody,
+        from obstacle: JarObstacle
+    ) -> (x: Double, y: Double)? {
         let core = obstacle.core(x: body.x, y: body.y)
         let reach = obstacle.corner + body.radius
         let deltaX = body.x - core.x
         let deltaY = body.y - core.y
         let squared = deltaX * deltaX + deltaY * deltaY
         if squared >= reach * reach {
-            return
+            return nil
         }
         let distance = squared.squareRoot()
         // 中心剛好在中線上分不出方向：往上推
@@ -96,14 +99,14 @@ extension JarWorld {
             body.y = core.y + (normalY > 0 ? rise : -rise)
         }
         var outward = body.velX * normalX + body.velY * normalY
-        var along = body.velY * normalX - body.velX * normalY
+        let along = body.velY * normalX - body.velX * normalY
         if bounce(&outward, sign: -1), body.fresh {
             body.fresh = false
             landed.append(body.id)
         }
-        along = tuning.rolled(along, seconds: seconds)
         body.velX = outward * normalX - along * normalY
         body.velY = outward * normalY + along * normalX
+        return (x: normalX, y: normalY)
     }
 
     /// 貼著哪個擋路的東西：回從它指向這顆的方向；都沒貼著回 nil。

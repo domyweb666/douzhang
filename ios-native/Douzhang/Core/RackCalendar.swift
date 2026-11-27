@@ -62,7 +62,7 @@ struct MonthWeek: Equatable {
 }
 
 /// 番茄帳 番茄架的行事曆。純函式，只讀不寫。翻自 Expo 版 core/calendar.js。
-/// 真的重疊的並排、同一群平分欄寬；太短的畫到最小高度，擠到的天檢視並排、3 天與週往下推；
+/// 真的重疊的並排、同一群平分欄寬；太短的畫到最小高度，擠到的往下推；
 /// 跨過午夜的只畫到當天 24:00。
 enum RackCalendar {
     private static let hoursPerDay = 24.0
@@ -96,19 +96,18 @@ enum RackCalendar {
         return last >= todayKey
     }
 
-    /// 一天的方塊排好位置。minHours：再短也畫這麼高；roomyHours：下面有空的話長到這麼高。
-    /// 兩顆很短又很近的：3 天、週往下推、不並排（一次只做一顆，真的重疊的是兩台同時），欄寬整條留給字，
-    /// 被推下來的那顆結尾照舊，所以隔一會兒就追回真的時刻。天（sideBySide）欄夠寬，照舊左右並排。
+    /// 一天的方塊排好位置。minHours：再短也畫這麼高；roomyHours：下面有空的話長到這麼高；
+    /// wordyHours：寫了在做什麼或筆記的番茄，下面有空的話長到這麼高（天檢視：有字才需要長）。
+    /// 兩顆很短又很近的往下推、不並排（一次只做一顆，真的重疊的是兩台同時），欄寬整條留給字，
+    /// 被推下來的那顆結尾照舊，所以隔一會兒就追回真的時刻。天檢視也一樣（多米 2026-11-27）。
     static func dayBlocks(
         _ day: DayRecord?,
         key: String,
         minHours: Double,
         roomyHours: Double = 0,
-        sideBySide: Bool = false
+        wordyHours: Double = 0
     ) -> [DayBlock] {
         let base = DayKeys.start(key)
-        // 一塊佔住它那一欄到幾點：並排的算到畫出來的底，往下推的算到真的結束
-        let held = { (block: DayBlock) in sideBySide ? block.bottom : block.upTo }
         var blocks: [DayBlock] = []
         var cluster: [Int] = []
         // 前面幾群畫到哪裡：這一群從那裡以下才有位子
@@ -119,13 +118,12 @@ enum RackCalendar {
             // 整顆在這天之後的（別的時區收的）都夾在同一個位子，不是真的重疊：不佔時間，往下推就不會並排
             let isAfter = start >= hoursPerDay
             let upTo = isAfter ? from : max(from, inDay((item.end - base) / Params.msPerHour))
-            let apart = isAfter && !sideBySide
-            if apart || cluster.allSatisfy({ held(blocks[$0]) <= from }) {
+            if isAfter || cluster.allSatisfy({ blocks[$0].upTo <= from }) {
                 closeCluster(&blocks, cluster)
                 taken = cluster.map { blocks[$0].bottom }.reduce(taken, max)
                 cluster = []
             }
-            let busyLanes = cluster.filter { held(blocks[$0]) > from }.map { blocks[$0].lane }
+            let busyLanes = cluster.filter { blocks[$0].upTo > from }.map { blocks[$0].lane }
             var lane = 0
             while busyLanes.contains(lane) {
                 lane += 1
@@ -144,15 +142,23 @@ enum RackCalendar {
             ))
         }
         closeCluster(&blocks, cluster)
-        return stretched(blocks, roomyHours: roomyHours)
+        return stretched(blocks, roomyHours: roomyHours, wordyHours: wordyHours)
     }
 
-    /// 沒有並排的那些，下面空著就長高一點，字多放一行；不會碰到下一塊。
-    private static func stretched(_ blocks: [DayBlock], roomyHours: Double) -> [DayBlock] {
+    /// 沒有並排的那些，下面空著就長高一點，字多放幾行；不會碰到下一塊。
+    /// 作廢只寫一行，不跟著有字的長。
+    private static func stretched(
+        _ blocks: [DayBlock],
+        roomyHours: Double,
+        wordyHours: Double
+    ) -> [DayBlock] {
         var result = blocks
         for index in result.indices where result[index].lanes == 1 {
+            let item = result[index].item
+            let hasWords = item.kind == .bean && !(item.doing.isEmpty && item.clue.isEmpty)
+            let reach = hasWords ? max(roomyHours, wordyHours) : roomyHours
             let next = index + 1 < result.count ? result[index + 1].top : hoursPerDay
-            let room = min(roomyHours, next - result[index].top)
+            let room = min(reach, next - result[index].top)
             result[index].height = max(result[index].height, room)
         }
         return result

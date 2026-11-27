@@ -12,12 +12,14 @@ enum Params {
 
     /// 畫面時鐘多久刷新一次（毫秒）
     static let tickMs = 250
+    /// 響的那一刻 app 開著才震：到點後這麼久內換成鈴響才算（毫秒）。切回來才看到收據的那次早就響過，不震
+    static let bellBuzzWindowMs = 2000.0
     /// 鈴響頁寫那一句：停手這麼久才存（毫秒）。每個字都存的話，注音組字每一步都整份寫一次檔
     static let draftSaveMs = 500
     /// 設定頁做完一件事的那一句（已複製版本資訊）留多久（毫秒）
     static let noticeMs = 2600
-    /// 選填的那一句、記一筆一行、作廢原因那一行最多幾個字
-    static let noteMaxChars = 120
+    /// 專注筆記（多米 2026-11-27：可以寫一大堆話，不只一句）、記一筆一行、作廢原因那一行最多幾個字
+    static let noteMaxChars = 2000
     static let jotMaxChars = 60
     static let voidTextMaxChars = 40
     /// 「在做什麼」最多幾個字

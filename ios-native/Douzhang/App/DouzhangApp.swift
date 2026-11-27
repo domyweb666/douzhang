@@ -4,7 +4,8 @@ import VeggieKit
 @main
 struct DouzhangApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var delegate
-    @State private var model = AppModel()
+    /// 卡片上的開始鈕也要找得到同一份（AppModel+Live）
+    @State private var model = AppModel.main
     @State private var shop = Purchases()
     @Environment(\.scenePhase) private var scenePhase
 
