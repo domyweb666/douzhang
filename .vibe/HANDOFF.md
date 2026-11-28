@@ -1,6 +1,6 @@
 # Handoff：QC-0008 與效能前三項在 1.0.0 (106) 上 TestFlight 了，等多米真機驗
 
-> 2026-11-28（最新）：多米 11/27 給七項（icon、番茄架方塊改標籤名＋展開在做什麼與筆記、「寫一句給自己」改「專注筆記」可寫 2000 字、鈴響震動、番茄堆一週一堆、番茄動畫不順、鎖定畫面＋動態島）。全做在分支 `feat-20261127-seven`（從 `feat-20261126-four` 長出，worktree `.claude/worktrees/four`），已推、CI 編譯＋測試過。沒打包（下一個 tag `tfn-8`），手機沒驗。真機驗收在操作清單最上面 S1–S18 與代決。番茄動畫有 DEBUG 量測（Console 篩 org.domyweb.douzhang 的 jar 分類）；手感要真機看，不對先量再改。Live Activity 截圖在 `.vibe/seven/截圖/`。
+> 2026-11-28（最新）：多米 11/27 給七項（icon、番茄架方塊改標籤名＋展開在做什麼與筆記、「寫一句給自己」改「專注筆記」可寫 2000 字、鈴響震動、番茄堆一週一堆、番茄動畫不順、鎖定畫面＋動態島）。全做在分支 `feat-20261127-seven`（從 `feat-20261126-four` 長出，worktree `.claude/worktrees/four`），已推、CI 編譯＋測試過。1.0.0 (108) 已上 TestFlight（tag `tfn-8`，下一個 `tfn-9`），手機沒驗。真機驗收在操作清單最上面 S1–S18 與代決。番茄動畫有 DEBUG 量測（Console 篩 org.domyweb.douzhang 的 jar 分類）；手感要真機看，不對先量再改。Live Activity 截圖在 `.vibe/seven/截圖/`。
 
 > 2026-11-26：多米說「先出一版testflight」，分支已推、tag `tfn-6` run 45743704312 全綠，**1.0.0 (106) 已上傳**。下一個 tag `tfn-7`。v1.1 分支還沒合進 QC-0008 與效能這兩個 commit。
 
