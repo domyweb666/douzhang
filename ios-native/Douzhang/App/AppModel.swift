@@ -141,9 +141,8 @@ final class AppModel {
             }
             let next = Machine.phaseOf(state, now: time)
             if next != phase {
-                if next == .bell, phase == .focus, let run = state.focusRun,
-                   time - run.endAt < Params.bellBuzzWindowMs
-                {
+                let sinceEnd = state.focusRun.map { time - $0.endAt } ?? .infinity
+                if next == .bell, phase == .focus, sinceEnd < Params.bellBuzzWindowMs {
                     pulses.rang += 1
                 }
                 enter(next)
